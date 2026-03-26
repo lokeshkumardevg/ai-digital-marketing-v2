@@ -16,6 +16,7 @@ import { CampaignsModule } from './campaigns/campaigns.module';
 import { ContentModule } from './content/content.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { ProductsModule } from './products/products.module';
 import { BillingModule } from './billing/billing.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -42,7 +43,8 @@ import { WorkflowsModule } from './workflows/workflows.module';
     UsersModule,
     SocialModule,
     RolesModule,
-    WorkflowsModule
+    WorkflowsModule,
+    ProductsModule
   ],
   controllers: [AppController],
   providers: [AppService],

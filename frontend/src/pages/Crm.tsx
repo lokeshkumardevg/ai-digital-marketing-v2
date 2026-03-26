@@ -1,155 +1,222 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { GlassCard } from '../components/GlassCard';
-import { Activity, Zap } from 'lucide-react';
-import { fetchAudiences, createAudience } from '../store/slices/crmSlice';
-import { addNotification } from '../store/slices/notificationSlice';
-import { SmartTable } from '../components/SmartTable';
-import type { AppDispatch } from '../store';
-import toast from 'react-hot-toast';
+
+// AdsGo-style Home = KPI Dashboard with date filters + line chart + metrics
+const dateRanges = ['Last 7 days', 'Last 14 days', 'Last 30 days', 'Last 90 days', 'Today'];
+
+// Mock spark data for mini line chart simulation
+const spendData = [44, 55, 78, 90, 80, 72, 100, 95, 88, 85, 60, 20, 10, 5];
+const roasData = [1.1, 1.2, 1.5, 2.0, 1.8, 1.6, 2.5, 2.3, 2.1, 2.0, 1.5, 0.8, 0.5, 0.2];
+
+const dates = ['2025-08-19', '2025-08-20', '2025-08-21', '2025-08-22', '2025-08-23', '2025-08-24', '2025-08-25'];
+
+const kpis = [
+  { label: 'Spend', value: '$425.05', color: '#7c3aed', checked: true },
+  { label: 'CPM', value: '$5.55', color: '#94a3b8', checked: false },
+  { label: 'CPC', value: '$0.07', color: '#94a3b8', checked: false },
+  { label: 'CTR', value: '7.45%', color: '#94a3b8', checked: false },
+  { label: 'ROAS', value: '1.83', color: '#16a34a', checked: true },
+  { label: 'Purchase Value', value: '$0', color: '#94a3b8', checked: false },
+];
+
+const dailyRows = [
+  { date: '2025-08-25', spend: '$5.38', cpm: '$5.38', cpc: '$1.00', ctr: '0.54%', roas: '0.00', purchase: '$0' },
+  { date: '2025-08-24', spend: '$80.56', cpm: '$5.20', cpc: '$0.06', ctr: '8.43%', roas: '0.00', purchase: '$0' },
+  { date: '2025-08-23', spend: '$88.25', cpm: '$5.43', cpc: '$0.06', ctr: '8.58%', roas: '4.56', purchase: '$402.5' },
+  { date: '2025-08-22', spend: '$100.78', cpm: '$6.00', cpc: '$0.07', ctr: '9.20%', roas: '5.11', purchase: '$515' },
+  { date: '2025-08-21', spend: '$78.34', cpm: '$5.10', cpc: '$0.05', ctr: '7.90%', roas: '3.21', purchase: '$251' },
+  { date: '2025-08-20', spend: '$55.22', cpm: '$4.80', cpc: '$0.05', ctr: '7.10%', roas: '2.50', purchase: '$138' },
+  { date: '2025-08-19', spend: '$44.10', cpm: '$4.60', cpc: '$0.04', ctr: '6.80%', roas: '2.10', purchase: '$93' },
+];
+
+// Simple SVG polyline chart
+const ChartLine: React.FC<{ data: number[]; color: string; height: number; width: number }> = ({ data, color, height, width }) => {
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * width;
+    const y = height - ((v - min) / range) * (height - 10) - 5;
+    return `${x},${y}`;
+  }).join(' ');
+  return (
+    <svg width={width} height={height} style={{ overflow: 'visible' }}>
+      <defs>
+        <linearGradient id={`grad-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.15" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={`0,${height} ${pts} ${width},${height}`} fill={`url(#grad-${color.replace('#', '')})`} />
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+};
 
 export const Crm: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { audiences, status, generating } = useSelector((state: any) => state.crm);
-  const { websites, activeWebsiteId } = useSelector((state: any) => state.workspace);
-  
-  const activeWebsite = websites.find((w: any) => w.id === activeWebsiteId);
-  
-  const [goalInput, setGoalInput] = useState('');
+  const [activeRange, setActiveRange] = useState('Last 7 days');
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const [kpis, setKpis] = useState([
+    { label: 'Spend', value: '$0.00', color: '#7c3aed', checked: true, key: 'spend' },
+    { label: 'CPM', value: '$0.00', color: '#94a3b8', checked: false, key: 'cpm' },
+    { label: 'CPC', value: '$0.00', color: '#94a3b8', checked: false, key: 'cpc' },
+    { label: 'CTR', value: '0.00%', color: '#94a3b8', checked: false, key: 'ctr' },
+    { label: 'ROAS', value: '0.00', color: '#16a34a', checked: true, key: 'roas' },
+    { label: 'Purchase Value', value: '$0', color: '#94a3b8', checked: false, key: 'purchaseValue' },
+  ]);
 
   useEffect(() => {
-    if (status === 'idle') {
-      dispatch(fetchAudiences());
-    }
-  }, [status, dispatch]);
-
-  const handleGenerate = async () => {
-    if (!goalInput.trim()) {
-      toast.error('Please enter a marketing goal.', { icon: '⚠️' });
-      return;
-    }
-
-    try {
-      const promise = dispatch(createAudience(goalInput)).unwrap();
-      toast.promise(promise, {
-        loading: 'Generating audience...',
-        success: 'Audience segment created successfully!',
-        error: 'Failed to generate audience.'
+    fetch('http://localhost:3000/analytics/dashboard', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+    })
+      .then(res => res.json())
+      .then(json => {
+        setData(json);
+        setKpis(prev => prev.map(k => ({
+          ...k,
+          value: k.key === 'ctr' || k.key === 'roas' ? json.summary[k.key] : `$${json.summary[k.key]}`
+        })));
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Analytics fetch failed', err);
+        setLoading(false);
       });
-      await promise;
-      dispatch(addNotification({ id: Date.now().toString(), title: 'Demographics Modeled', message: `Quantum Segment generated for "${goalInput.substring(0,30)}..."`, type: 'success', time: new Date().toISOString(), read: false }));
-      setGoalInput('');
-    } catch (err) {
-      console.error(err);
-      dispatch(addNotification({ id: Date.now().toString(), title: 'Generation Failed', message: `Audience AI generation timeout.`, type: 'error', time: new Date().toISOString(), read: false }));
-    }
+  }, []);
+
+  const toggleKpi = (i: number) => {
+    const newKpis = [...kpis];
+    newKpis[i].checked = !newKpis[i].checked;
+    setKpis(newKpis);
   };
 
+  if (loading) return (
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f6fa' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div className="animate-fade-in" style={{ fontSize: '1rem', color: '#64748b', fontWeight: 600 }}>Quantum Analytics Loading...</div>
+      </div>
+    </div>
+  );
+
+  const activeDates = data.daily.map((d: any) => d.date);
+  const activeSpend = data.daily.map((d: any) => d.spend);
+  const activeRoas = data.daily.map((d: any) => d.roas);
+
   return (
-    <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
-            Target <span className="text-gradient">Audience Builder</span>
-          </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Build target audiences using AI for {activeWebsite?.name || 'your brand'}.</p>
+    <div style={{ minHeight: '100%', background: '#f5f6fa' }}>
+      {/* Header */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #e8eaf0', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a' }}>Home</span>
+          <a href="#" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem', color: '#7c3aed', textDecoration: 'none', fontWeight: 500 }}>
+            📖 How to use?
+          </a>
         </div>
-        <button className="btn btn-secondary">
-          <Activity size={18} style={{ marginRight: '8px' }} /> Synchronize Data
-        </button>
+        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>🌐 Time Zone: UTC+5:5</div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '24px' }}>
-        {/* Input Interface */}
-        <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '20px', position: 'sticky', top: '24px' }}>
-          <div>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Zap size={20} color="var(--accent-primary)" /> AI Audience Builder
-            </h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Describe your target customer. The AI will generate demographics, interests, and pain points.</p>
+      <div style={{ padding: '20px 32px' }}>
+        {/* Date Range Filter */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          {dateRanges.map(r => (
+            <button key={r} onClick={() => setActiveRange(r)} style={{
+              padding: '6px 16px', borderRadius: '99px', border: activeRange === r ? '1.5px solid #7c3aed' : '1px solid #e2e8f0',
+              background: activeRange === r ? '#7c3aed' : '#fff', color: activeRange === r ? '#fff' : '#475569',
+              fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s'
+            }}>{r}</button>
+          ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '99px', border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.8rem', color: '#475569', cursor: 'pointer', marginLeft: '4px' }}>
+            📅 {activeDates[0]} → {activeDates[6]}
           </div>
+        </div>
 
-          <div className="input-group">
-            <label>Marketing Goal</label>
-            <textarea 
-              rows={4} 
-              className="input-field" 
-              placeholder="e.g. Generate high-ticket leads for a SaaS CRM targeting real estate brokers in North America..."
-              value={goalInput}
-              onChange={(e) => setGoalInput(e.target.value)}
-              disabled={generating}
-            />
+        {/* KPI Cards */}
+        <div style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: '12px', padding: '20px 24px', marginBottom: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+            {kpis.map((kpi, i) => (
+              <div key={kpi.label} onClick={() => toggleKpi(i)} style={{ padding: '14px 16px', borderRadius: '10px', border: `1.5px solid ${kpi.checked ? kpi.color + '50' : '#f1f5f9'}`, background: kpi.checked ? kpi.color + '05' : '#fafafa', cursor: 'pointer', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', transition: 'all 0.15s' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                    <div style={{ width: '12px', height: '3px', borderRadius: '2px', background: kpi.checked ? kpi.color : '#e2e8f0' }} />
+                    <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 500 }}>{kpi.label}</span>
+                  </div>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: kpi.checked ? kpi.color : '#94a3b8', fontFamily: 'Outfit' }}>{kpi.value}</div>
+                </div>
+                <input type="checkbox" checked={kpi.checked} readOnly style={{ accentColor: '#7c3aed', width: '16px', height: '16px', cursor: 'pointer', marginTop: '2px' }} />
+              </div>
+            ))}
           </div>
+        </div>
 
-          <button 
-            className="btn btn-primary" 
-            onClick={handleGenerate}
-            disabled={generating}
-            style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
-          >
-            {generating ? (
-              <><Activity size={18} className="animate-fade-in" style={{ animationIterationCount: 'infinite' }} /> Creating...</>
-            ) : 'Create Audience'}
-          </button>
-        </GlassCard>
-
-        {/* Audience List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflowX: 'auto' }}>
-          {status === 'loading' && audiences.length === 0 ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
-              <Activity size={32} className="animate-fade-in" style={{ animationIterationCount: 'infinite' }} />
+        {/* Line Chart */}
+        <div style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: '12px', padding: '20px 24px', marginBottom: '20px', position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>Spend($)</div>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 500 }}>ROAS</div>
+          </div>
+          <div style={{ position: 'relative', height: '160px' }}>
+            {/* Grid lines */}
+            {[0, 25, 50, 75, 100].map(pct => (
+              <div key={pct} style={{ position: 'absolute', top: `${100 - pct}%`, left: 0, right: 0, height: '1px', background: '#f1f5f9' }} />
+            ))}
+            {/* Chart Lines overlaid */}
+            <div style={{ position: 'absolute', inset: 0 }}>
+              <ChartLine data={activeSpend} color="#7c3aed" height={160} width={900} />
             </div>
-          ) : (
-            <SmartTable 
-              title="Target Segments"
-              searchPlaceholder="Search audiences..."
-              columns={[
-                { 
-                  key: 'name', 
-                  label: 'Segment Name', 
-                  sortable: true,
-                  render: (row) => (
-                    <div>
-                       <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{row.name}</div>
-                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>{(row.sourceGoal || row.description || 'Global Region').substring(0,40)}...</div>
-                    </div>
-                  )
-                },
-                { 
-                  key: 'demographics', 
-                  label: 'Demographics',
-                  render: (row) => (
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                       {row.generatedData?.demographics || row.description || 'Not set'}
-                    </div>
-                  )
-                },
-                {
-                  key: 'interests',
-                  label: 'Interests',
-                  render: (row) => (
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                       {row.generatedData?.interests || row.targetingCriteria?.interests?.join(', ') || 'Not set'}
-                    </div>
-                  )
-                },
-                {
-                   key: 'size',
-                   label: 'Est. Size',
-                   sortable: true,
-                   render: (row) => (
-                    <div style={{ background: 'rgba(236, 72, 153, 0.1)', color: 'var(--accent-primary)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600, width: 'fit-content' }}>
-                       {row.estimatedSize ? (row.estimatedSize / 1000).toFixed(0) + 'k' : '850k'}
-                    </div>
-                   )
-                }
-              ]}
-              data={audiences}
-              actions={() => <button className="btn btn-secondary" style={{ padding: '6px' }}><Zap size={14} /></button>}
-            />
-          )}
+            <div style={{ position: 'absolute', inset: 0 }}>
+              <ChartLine data={activeRoas.map((v: number) => v * 40)} color="#16a34a" height={160} width={900} />
+            </div>
+          </div>
+          {/* X-axis dates */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
+            {activeDates.map((d: string) => <span key={d} style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{d}</span>)}
+          </div>
+          {/* Legend */}
+          <div style={{ display: 'flex', gap: '16px', marginTop: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div style={{ width: '16px', height: '3px', background: '#7c3aed', borderRadius: '2px' }} />
+              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Spend</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div style={{ width: '16px', height: '3px', background: '#16a34a', borderRadius: '2px' }} />
+              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>ROAS</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Daily Performance Table */}
+        <div style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>
+            Daily Performance
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#fafafa', borderBottom: '1px solid #f1f5f9' }}>
+                {['Date', 'Spend', 'CPM', 'CPC', 'CTR', 'ROAS', 'Purchase Value'].map(h => (
+                  <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.daily.slice().reverse().map((row: any, i: number) => (
+                <tr key={i} style={{ borderBottom: i < data.daily.length - 1 ? '1px solid #f8fafc' : 'none', cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#fafafa')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#0f172a', fontWeight: 600 }}>{row.date}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#7c3aed', fontWeight: 700 }}>${row.spend.toFixed(2)}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#475569' }}>${row.cpm.toFixed(2)}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#475569' }}>${row.cpc.toFixed(2)}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#475569' }}>{row.ctr.toFixed(2)}%</td>
+                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#16a34a', fontWeight: 700 }}>{row.roas.toFixed(2)}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#475569' }}>${row.purchaseValue.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   );
 };
+

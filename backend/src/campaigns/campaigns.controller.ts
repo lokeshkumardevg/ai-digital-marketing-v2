@@ -19,4 +19,8 @@ export class CampaignsController {
   async launchCampaign(@Param('id') campaignId: string) {
     return this.campaignsService.launchCampaign(campaignId);
   }
+  @Post('deep-research')
+  async deepResearch(@Body() body: { url: string }) {
+    return this.campaignsService.deepResearch(body.url);
+  }
 }

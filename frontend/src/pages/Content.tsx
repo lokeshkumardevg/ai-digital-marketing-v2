@@ -1,182 +1,160 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { GlassCard } from '../components/GlassCard';
-import { 
-  FileText, Share2, Globe, FileCode2, Clock, 
-  ThumbsUp, BarChart2, Hash, ArrowUpRight
-} from 'lucide-react';
-import { fetchContent, createContent } from '../store/slices/contentSlice';
-import { addNotification } from '../store/slices/notificationSlice';
-import type { AppDispatch } from '../store';
-import toast from 'react-hot-toast';
+import { Plus, Sparkles, Image, Video, AlignLeft, Search, Calendar, Package, MoreHorizontal, Inbox } from 'lucide-react';
+
+// AdsGo-style Creative Hub: "All Creatives" tab, Upload Date/Lifetime filters, Add Creative + AI Creative Generation
+const typeIcon: Record<string, React.ElementType> = { image: Image, video: Video, text: AlignLeft };
 
 export const Content: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { items: contents, status, generating } = useSelector((state: any) => state.content);
-
-  const [topic, setTopic] = useState('');
-  const [format, setFormat] = useState('seo-blog');
+  const [activeTab, setActiveTab] = useState('All Creatives');
+  const [search, setSearch] = useState('');
+  const [creatives, setCreatives] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === 'idle') {
-      dispatch(fetchContent());
-    }
-  }, [status, dispatch]);
+    fetch('http://localhost:3000/content', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
+    })
+    .then(res => res.json())
+    .then(json => {
+      const mapped = json.map((c: any) => ({
+        id: c._id,
+        name: c.title || 'Untitled Creative',
+        type: c.contentType === 'video' ? 'video' : 'image',
+        platform: c.platforms?.[0] || 'Meta',
+        uploadDate: new Date(c.createdAt).toISOString().split('T')[0],
+        lifetime: '2026-03-27 → 2026-04-27',
+        status: c.status || 'draft'
+      }));
+      setCreatives(mapped);
+      setLoading(false);
+    })
+    .catch(err => {
+      console.error('Content fetch failed', err);
+      setLoading(false);
+    });
+  }, []);
 
-  const handleGenerate = async () => {
-    if (!topic.trim()) {
-      toast.error('Content Topic is strictly required.');
-      return;
-    }
+  const filtered = creatives.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
 
-    try {
-      const promise = dispatch(createContent({ topic, format })).unwrap();
-      toast.promise(promise, {
-        loading: 'Generating content...',
-        success: 'Content created successfully!',
-        error: 'Failed to generate content.'
-      });
-      await promise;
-      dispatch(addNotification({ id: Date.now().toString(), title: 'AI Content Generated', message: `A new ${format.replace('-', ' ')} about "${topic.substring(0,30)}..." is ready for review.`, type: 'success', time: new Date().toISOString(), read: false }));
-      setTopic('');
-    } catch (err) {
-      console.error(err);
-      dispatch(addNotification({ id: Date.now().toString(), title: 'Generation Error', message: `AI Orchestrator failed compiling topic.`, type: 'error', time: new Date().toISOString(), read: false }));
-    }
-  };
+  if (loading) return (
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f6fa' }}>
+      <div className="animate-fade-in" style={{ fontSize: '1rem', color: '#64748b', fontWeight: 600 }}>Loading Creative Hub...</div>
+    </div>
+  );
 
   return (
-    <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
-            <span className="text-gradient">Content Generator</span>
-        </h1>
-        <p style={{ color: 'var(--text-secondary)' }}>Create blog posts and social media content using AI.</p>
+    <div style={{ minHeight: '100%', background: '#f5f6fa' }}>
+      {/* Header breadcrumb strip */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #e8eaf0', padding: '0 32px' }}>
+        <div style={{ display: 'flex', gap: '0', padding: '0' }}>
+          {['All Creatives'].map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{
+              padding: '14px 20px', border: 'none', background: 'none', cursor: 'pointer',
+              fontSize: '0.88rem', fontWeight: 600,
+              color: activeTab === tab ? '#7c3aed' : '#64748b',
+              borderBottom: activeTab === tab ? '2px solid #7c3aed' : '2px solid transparent',
+            }}>{tab}</button>
+          ))}
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 1.2fr) 2fr', gap: '24px' }}>
-        
-        {/* Creator Panel */}
-        <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'fit-content', position: 'sticky', top: '24px' }}>
-          <div>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FileCode2 size={20} color="var(--accent-primary)" /> Content Settings
-            </h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Enter a topic and the AI will write the content for you.</p>
-          </div>
-
-          <div className="input-group">
-            <label>Topic</label>
-            <textarea 
-              rows={3} 
-              className="input-field" 
-              placeholder="e.g. 5 Reasons Why Graph Databases Outperform SQL in 2026..."
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              disabled={generating}
-            />
-          </div>
-
-          <div className="input-group">
-            <label>Content Format</label>
-            <select className="input-field" value={format} onChange={(e) => setFormat(e.target.value)} disabled={generating}>
-              <option value="seo-blog">SEO Optimized Blog Post</option>
-              <option value="linkedin-post">LinkedIn Viral Thought Leadership</option>
-              <option value="twitter-thread">Twitter Thread Hook & Body</option>
-            </select>
-          </div>
-
-          <button 
-            className="btn btn-primary" 
-            onClick={handleGenerate} 
-            disabled={generating}
-            style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
-          >
-            {generating ? 'Generating content...' : 'Generate Content'}
+      <div style={{ padding: '20px 32px' }}>
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
+            <Plus size={14} /> Add Creative
           </button>
-        </GlassCard>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', border: '1.5px solid #c4b5fd', background: 'transparent', color: '#7c3aed', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+            <Sparkles size={14} /> AI Creative Generation
+          </button>
+        </div>
 
-        {/* Content Feed */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {status === 'loading' && contents.length === 0 ? (
-            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading content...</div>
-          ) : contents.length === 0 ? (
-             <GlassCard style={{ textAlign: 'center', padding: '60px', color: 'var(--text-secondary)' }}>
-                <FileText size={48} style={{ opacity: 0.3, margin: '0 auto 16px' }} />
-                <h3>No Content Generated Yet</h3>
-                <p>Use the generation node to start building out your organic pipeline.</p>
-             </GlassCard>
+        {/* Filters Row */}
+        <div style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: '12px', padding: '16px 20px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Upload Date */}
+            <div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Upload Date</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#fafafa', cursor: 'pointer', fontSize: '0.82rem', color: '#64748b' }}>
+                <Calendar size={13} /> Start date → End date
+              </div>
+            </div>
+            {/* Limited Lifetime */}
+            <div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Limited Lifetime</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#fafafa', cursor: 'pointer', fontSize: '0.82rem', color: '#64748b' }}>
+                <Calendar size={13} /> Start date → End date
+              </div>
+            </div>
+            {/* Item */}
+            <div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Item</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '8px', background: '#fafafa', cursor: 'pointer', fontSize: '0.82rem', color: '#64748b', minWidth: '140px' }}>
+                <Package size={13} /> Please select
+              </div>
+            </div>
+            <div style={{ marginLeft: 'auto' }}>
+              <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#64748b', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Search</div>
+              <div style={{ position: 'relative' }}>
+                <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search creatives..."
+                  style={{ padding: '8px 12px 8px 30px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.82rem', color: '#334155', outline: 'none', background: '#fafafa', width: '200px' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Creatives Table / Empty State */}
+        <div style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: '12px', overflow: 'hidden' }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding: '80px 32px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Inbox size={28} color="#94a3b8" />
+              </div>
+              <div style={{ fontWeight: 600, color: '#475569' }}>No creatives found.</div>
+              <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Add creative to get started.</div>
+            </div>
           ) : (
-            contents.map((content: any) => (
-              <GlassCard key={content._id} className="animate-fade-in" style={{ padding: '0', overflow: 'hidden' }}>
-                <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '8px', borderRadius: '8px', color: 'var(--accent-primary)' }}>
-                      {content.contentType === 'Blog Post' ? <Globe size={20} /> : <Share2 size={20} />}
-                    </div>
-                    <div>
-                      <h3 style={{ fontSize: '1.1rem', margin: '0 0 4px 0', textTransform: 'capitalize' }}>
-                        {(content.title || '').substring(0, 45)}{(content.title || '').length > 45 ? '...' : ''}
-                      </h3>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', gap: '12px' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Clock size={12} /> {new Date(content.createdAt).toLocaleDateString()}</span>
-                        <span style={{ textTransform: 'uppercase', fontWeight: 600, color: 'var(--info)' }}>{(content.contentType || 'social').replace('-', ' ')}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {content.status === 'draft' && (
-                    <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-                      Publish <ArrowUpRight size={14} style={{ display: 'inline', marginLeft: '4px' }} />
-                    </button>
-                  )}
-                  {content.status === 'published' && (
-                     <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', fontSize: '0.75rem', padding: '4px 12px', borderRadius: '12px', border: '1px solid var(--success)', fontWeight: 600 }}>
-                        PUBLISHED
-                     </div>
-                  )}
-                </div>
-
-                <div style={{ padding: '24px' }}>
-                  <div style={{ 
-                    background: 'var(--bg-secondary)', 
-                    padding: '20px', 
-                    borderRadius: '8px', 
-                    border: '1px solid var(--glass-border)',
-                    fontSize: '0.9rem',
-                    lineHeight: '1.6',
-                    color: 'var(--text-primary)',
-                    maxHeight: '250px',
-                    overflowY: 'auto',
-                    whiteSpace: 'pre-wrap',
-                    fontFamily: 'Inter, sans-serif'
-                  }}>
-                    {content.body}
-                  </div>
-                </div>
-
-                {content.seoMetrics && (
-                  <div style={{ padding: '16px 24px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid var(--glass-border)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}><BarChart2 size={12} /> Readability</div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{content.seoMetrics?.readabilityScore || 85}/100</div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}><Hash size={12} /> Target SEO Rank</div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--success)' }}>Top {content.seoMetrics?.estimatedRank || 3}</div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}><ThumbsUp size={12} /> Keyword Density</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--info)' }}>
-                         {content.seoMetrics?.keywordDensity || 2}% Organic
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </GlassCard>
-            ))
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#fafafa', borderBottom: '1px solid #f1f5f9' }}>
+                  {['Creative', 'Type', 'Platform', 'Upload Date', 'Lifetime', 'Status', ''].map(h => (
+                    <th key={h} style={{ padding: '11px 16px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((c, i) => {
+                  const Icon = typeIcon[c.type] || Image;
+                  return (
+                    <tr key={c.id} style={{ borderBottom: i < filtered.length - 1 ? '1px solid #f8fafc' : 'none', cursor: 'pointer' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#fafafa')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                      <td style={{ padding: '13px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Icon size={16} color="#7c3aed" />
+                        </div>
+                        <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#0f172a' }}>{c.name}</span>
+                      </td>
+                      <td style={{ padding: '13px 16px' }}>
+                        <span style={{ padding: '3px 9px', borderRadius: '6px', background: '#f1f5f9', color: '#475569', fontSize: '0.75rem', fontWeight: 600, textTransform: 'capitalize' }}>{c.type}</span>
+                      </td>
+                      <td style={{ padding: '13px 16px', fontSize: '0.85rem', color: '#475569' }}>{c.platform}</td>
+                      <td style={{ padding: '13px 16px', fontSize: '0.85rem', color: '#475569' }}>{c.uploadDate}</td>
+                      <td style={{ padding: '13px 16px', fontSize: '0.82rem', color: '#64748b' }}>{c.lifetime}</td>
+                      <td style={{ padding: '13px 16px' }}>
+                        <span style={{ padding: '3px 9px', borderRadius: '99px', background: c.status === 'active' || c.status === 'published' ? '#f0fdf4' : '#f8fafc', color: c.status === 'active' || c.status === 'published' ? '#16a34a' : '#64748b', fontSize: '0.75rem', fontWeight: 600, textTransform: 'capitalize' }}>{c.status}</span>
+                      </td>
+                      <td style={{ padding: '13px 16px' }}>
+                        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px', borderRadius: '4px' }}>
+                          <MoreHorizontal size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
       </div>

@@ -18,6 +18,14 @@ import { Agents } from './pages/Agents';
 import { Roles } from './pages/Roles';
 import { Workflows } from './pages/Workflows';
 import { Messaging } from './pages/Messaging';
+import { AdsManager } from './pages/AdsManager';
+import { DraftAiRecs } from './pages/DraftAiRecs';
+import { AdInsights } from './pages/AdInsights';
+import { AiAnalysis } from './pages/AiAnalysis';
+import { OptimizeGoal } from './pages/OptimizeGoal';
+import { BrandProfile } from './pages/BrandProfile';
+import { Products } from './pages/Products';
+import { LandingPage } from './pages/LandingPage';
 import { hydrateSession } from './store/slices/authSlice';
 import { addNotification } from './store/slices/notificationSlice';
 import io from 'socket.io-client';
@@ -57,6 +65,35 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="main-content">
         <Header />
         <div className="page-container">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Full-bleed layout: no padding wrapper, pages manage their own spacing
+const DashboardLayoutFull = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="app-container">
+      <Sidebar />
+      <div className="main-content">
+        <Header />
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Campaign page gets no sidebar/header — pure full-screen wizard
+const CampaignLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="app-container">
+      <Sidebar />
+      <div className="main-content">
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
           {children}
         </div>
       </div>
@@ -108,14 +145,15 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/landing" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* Dashboard Routes Monolith */}
-        <Route path="/" element={<ProtectedRoute><DashboardLayout><Crm /></DashboardLayout></ProtectedRoute>} />
-        <Route path="/crm" element={<ProtectedRoute><DashboardLayout><Crm /></DashboardLayout></ProtectedRoute>} />
-        <Route path="/campaigns" element={<ProtectedRoute><DashboardLayout><Campaigns /></DashboardLayout></ProtectedRoute>} />
-        <Route path="/content" element={<ProtectedRoute><DashboardLayout><Content /></DashboardLayout></ProtectedRoute>} />
+        {/* Dashboard Routes — AdsGo full-bleed pages */}
+        <Route path="/crm" element={<ProtectedRoute><DashboardLayoutFull><Crm /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/campaigns" element={<ProtectedRoute><CampaignLayout><Campaigns /></CampaignLayout></ProtectedRoute>} />
+        <Route path="/content" element={<ProtectedRoute><DashboardLayoutFull><Content /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/chatbot" element={<ProtectedRoute><DashboardLayout><ChatbotBuilder /></DashboardLayout></ProtectedRoute>} />
         <Route path="/analytics" element={<ProtectedRoute><DashboardLayout><Analytics /></DashboardLayout></ProtectedRoute>} />
         <Route path="/billing" element={<ProtectedRoute><DashboardLayout><Billing /></DashboardLayout></ProtectedRoute>} />
@@ -126,6 +164,19 @@ const App: React.FC = () => {
         <Route path="/roles" element={<ProtectedRoute requiredPermission="settings"><DashboardLayout><Roles /></DashboardLayout></ProtectedRoute>} />
         <Route path="/workflows" element={<ProtectedRoute><DashboardLayout><Workflows /></DashboardLayout></ProtectedRoute>} />
         <Route path="/messaging" element={<ProtectedRoute><DashboardLayout><Messaging /></DashboardLayout></ProtectedRoute>} />
+
+        {/* AI Optimize Sub-routes */}
+        <Route path="/ai/ads-manager" element={<ProtectedRoute requiredPermission="ads"><DashboardLayoutFull><AdsManager /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/ai/draft-recs" element={<ProtectedRoute requiredPermission="ads"><DashboardLayoutFull><DraftAiRecs /></DashboardLayoutFull></ProtectedRoute>} />
+
+        {/* Analytics Sub-routes */}
+        <Route path="/analytics/insights" element={<ProtectedRoute requiredPermission="analytics"><DashboardLayoutFull><AdInsights /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/analytics/ai-analysis" element={<ProtectedRoute requiredPermission="analytics"><DashboardLayoutFull><AiAnalysis /></DashboardLayoutFull></ProtectedRoute>} />
+
+        {/* Brand Center Sub-routes */}
+        <Route path="/brand/goal" element={<ProtectedRoute requiredPermission="settings"><DashboardLayoutFull><OptimizeGoal /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/brand/profile" element={<ProtectedRoute requiredPermission="settings"><DashboardLayoutFull><BrandProfile /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/brand/products" element={<ProtectedRoute requiredPermission="settings"><DashboardLayoutFull><Products /></DashboardLayoutFull></ProtectedRoute>} />
       </Routes>
     </Router>
   );

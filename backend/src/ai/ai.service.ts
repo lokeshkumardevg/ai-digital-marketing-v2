@@ -23,22 +23,44 @@ export class AiService {
 
   async generateContent(prompt: string, context?: string): Promise<string> {
     try {
-      this.logger.log('Attempting request with Primary Provider (OpenAI GPT-4 Turbo)...');
-      return await this.useOpenAI(prompt, context);
+      this.logger.log('Attempting request with Gemini (Primary)...');
+      return await this.useGemini(prompt, context);
     } catch (error: any) {
-      this.logger.warn(`Primary Provider failed: ${error.message}. Attempting Fallback (Google Gemini Pro)...`);
+      this.logger.warn(`Gemini failed: ${error.message}. Attempting Fallback (OpenAI)...`);
       try {
-        return await this.useGemini(prompt, context);
+        if (this.openai) {
+          return await this.useOpenAI(prompt, context);
+        }
+        throw new Error('OpenAI not configured');
       } catch (fallbackError: any) {
-        this.logger.error(`Fallback Provider failed: ${fallbackError.message}`);
-        throw new InternalServerErrorException('AI Orchestrator: All providers failed to generate content.');
+        this.logger.error(`All providers failed: ${fallbackError.message}`);
+        // Return a stable mock/fallback response instead of crashing the entire request
+        return '{"productSummary": "AI Service currently busy. Please try again.", "audience": "General Market", "ads": [{"headline": "Boost Your Marketing", "text": "Our AI is working hard to generate your strategy. Please refresh in a moment."}], "recommendedBudget": 50, "visualStyle": "Professional"}';
       }
+    }
+  }
+
+  async getMarketingStrategy(url: string): Promise<any> {
+    const prompt = `Perform deep research on this URL: ${url}. 
+    1. Analyze the product/service.
+    2. Identify target audience segments.
+    3. Suggest 3 high-converting ad headlines.
+    4. Suggest a primary visual style.
+    5. Recommend a daily budget for Meta ads.
+    Return ONLY raw valid JSON with these keys: productSummary, audience, ads (array of {headline, text}), visualStyle, recommendedBudget.`;
+
+    const response = await this.generateContent(prompt, 'You are an elite marketing strategist at AdsGo.ai.');
+    try {
+      return JSON.parse(response.replace(/```json|```/g, '').trim());
+    } catch (e) {
+      this.logger.error('Failed to parse marketing strategy JSON', e);
+      return { productSummary: 'Error analyzing page', ads: [], recommendedBudget: 50 };
     }
   }
 
   private async useOpenAI(prompt: string, context?: string): Promise<string> {
     if (!this.openai) {
-      throw new Error('OpenAI client not initialized (Missing API Key)');
+      throw new Error('OpenAI client not initialized');
     }
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4-turbo-preview',
@@ -53,24 +75,19 @@ export class AiService {
 
   private async useGemini(prompt: string, context?: string): Promise<string> {
     if (!this.gemini) {
-      throw new Error('Gemini client not initialized (Missing API Key)');
+      throw new Error('Gemini client not initialized');
     }
-    const model = this.gemini.getGenerativeModel({ model: 'gemini-pro' });
+    // Updated to use gemini-1.5-flash for speed and reliability
+    const model = this.gemini.getGenerativeModel({ model: 'gemini-1.5-flash' });
     const fullPrompt = context ? `${context}\n\nUser Request: ${prompt}` : prompt;
     const result = await model.generateContent(fullPrompt);
     const response = await result.response;
     return response.text();
   }
 
-  // Placeholder for Meta AI / Llama 3
-  async useMetaAI(prompt: string) {
-    this.logger.log('Meta AI execution mock...');
-    return 'Llama 3 output mock';
-  }
-
   // Placeholder for Stability AI (Images)
   async generateImage(prompt: string) {
     this.logger.log('Stability AI image generation mock...');
-    return 'https://stability.ai/mock-image.png';
+    return 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=800';
   }
 }

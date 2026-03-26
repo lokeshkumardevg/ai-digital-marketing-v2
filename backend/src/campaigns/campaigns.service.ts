@@ -78,4 +78,8 @@ export class CampaignsService {
     campaign.cpc = Math.random() * 2 + 0.5; // Random CPC between $0.50 and $2.50
     return await campaign.save();
   }
+  async deepResearch(url: string): Promise<any> {
+    this.logger.log(`Performing deep research for URL: ${url}`);
+    return await this.aiService.getMarketingStrategy(url);
+  }
 }

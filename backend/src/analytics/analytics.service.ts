@@ -14,66 +14,37 @@ export class AnalyticsService {
   ) {}
 
   async getDashboardMetrics(): Promise<any> {
-    // Determine the past 7 days of dummy data for visualization
     const historicalData = [];
     const today = new Date();
     
-    let baseTraffic = 1200;
-    let baseRevenue = 4500;
-
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
       
       historicalData.push({
-        date: d.toISOString().split('T')[0],
-        traffic: Math.floor(baseTraffic + (Math.random() * 400 - 100)),
-        revenue: Math.floor(baseRevenue + (Math.random() * 1200 - 300)),
-        isPrediction: false
+        date: dateStr,
+        spend: 40 + Math.random() * 60,
+        cpm: 4 + Math.random() * 2,
+        cpc: 0.05 + Math.random() * 0.05,
+        ctr: 5 + Math.random() * 5,
+        roas: 1.5 + Math.random() * 1.5,
+        purchaseValue: Math.random() > 0.5 ? Math.random() * 500 : 0
       });
-      baseTraffic += 150;
-      baseRevenue += 600;
     }
 
-    // Call the AI Orchestrator to "predict" the next 7 days based on the trajectory!
-    let predictiveData = [];
-    try {
-      const prompt = `Analyze this historical 7-day SaaS marketing data: ${JSON.stringify(historicalData)}.
-      Predict the exact next 7 days of 'traffic' and 'revenue' assuming a continuing successful AI marketing campaign push resulting in 15% WoW growth.
-      Return ONLY raw JSON in this format: [{"date": "YYYY-MM-DD", "traffic": 1234, "revenue": 5678, "isPrediction": true}]`;
-      
-      const predictionResponse = await this.aiService.generateContent(prompt, 'You are a highly accurate data science predictor determining SaaS KPIs.');
-      predictiveData = JSON.parse(predictionResponse.replace(/```json|```/g, '').trim());
-      
-      // Ensure the "isPrediction" flag is set correctly on AI objects
-      predictiveData = predictiveData.map((pd: any) => ({ ...pd, isPrediction: true }));
-    } catch (e) {
-      this.logger.error('Failed to parse AI predictions, using heuristics', e);
-      // Fallback heuristics
-      for (let i = 1; i <= 7; i++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() + i);
-        predictiveData.push({
-          date: d.toISOString().split('T')[0],
-          traffic: Math.floor(baseTraffic + (Math.random() * 500)),
-          revenue: Math.floor(baseRevenue + (Math.random() * 1500)),
-          isPrediction: true
-        });
-        baseTraffic += 200;
-        baseRevenue += 800;
-      }
-    }
+    const currentTotal = {
+      spend: historicalData.reduce((s, c) => s + c.spend, 0).toFixed(2),
+      cpm: (historicalData.reduce((s, c) => s + c.cpm, 0) / 7).toFixed(2),
+      cpc: (historicalData.reduce((s, c) => s + c.cpc, 0) / 7).toFixed(2),
+      ctr: (historicalData.reduce((s, c) => s + c.ctr, 0) / 7).toFixed(2) + '%',
+      roas: (historicalData.reduce((s, c) => s + c.roas, 0) / 7).toFixed(2),
+      purchaseValue: historicalData.reduce((s, c) => s + c.purchaseValue, 0).toFixed(2)
+    };
 
     return {
-      historical: historicalData,
-      predictions: predictiveData,
-      summary: {
-        totalTraffic: historicalData.reduce((acc, curr) => acc + curr.traffic, 0),
-        totalRevenue: historicalData.reduce((acc, curr) => acc + curr.revenue, 0),
-        predictedTrafficGrowth: '+18.4%',
-        predictedRevenueGrowth: '+22.1%',
-        aiConfidenceScore: 92
-      }
+      daily: historicalData,
+      summary: currentTotal
     };
   }
 }
