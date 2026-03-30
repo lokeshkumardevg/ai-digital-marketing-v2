@@ -10,18 +10,10 @@ import {
   Settings,
   ChevronRight,
   BrainCircuit,
-  FileEdit,
-  TrendingUp,
-  LineChart,
-  Target,
-  UserCircle,
-  Package,
   GitBranch,
-  Share2,
-  MessageSquare,
   CreditCard,
   ShieldAlert,
-  Bot
+  LayoutTemplate
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 
@@ -49,6 +41,12 @@ const MENU_ITEMS: MenuItem[] = [
     path: '/campaigns',
     label: 'New Campaign',
     icon: Megaphone,
+    permission: 'ads',
+  },
+  {
+    path: '/templates',
+    label: 'AI Templates',
+    icon: LayoutTemplate,
     permission: 'ads',
   },
   {

@@ -26,6 +26,7 @@ import { OptimizeGoal } from './pages/OptimizeGoal';
 import { BrandProfile } from './pages/BrandProfile';
 import { Products } from './pages/Products';
 import { LandingPage } from './pages/LandingPage';
+import { Templates } from './pages/Templates';
 import { hydrateSession } from './store/slices/authSlice';
 import { addNotification } from './store/slices/notificationSlice';
 import io from 'socket.io-client';
@@ -153,6 +154,7 @@ const App: React.FC = () => {
         {/* Dashboard Routes — AdsGo full-bleed pages */}
         <Route path="/crm" element={<ProtectedRoute><DashboardLayoutFull><Crm /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/campaigns" element={<ProtectedRoute><CampaignLayout><Campaigns /></CampaignLayout></ProtectedRoute>} />
+        <Route path="/templates" element={<ProtectedRoute><DashboardLayoutFull><Templates /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/content" element={<ProtectedRoute><DashboardLayoutFull><Content /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/chatbot" element={<ProtectedRoute><DashboardLayout><ChatbotBuilder /></DashboardLayout></ProtectedRoute>} />
         <Route path="/analytics" element={<ProtectedRoute><DashboardLayout><Analytics /></DashboardLayout></ProtectedRoute>} />
