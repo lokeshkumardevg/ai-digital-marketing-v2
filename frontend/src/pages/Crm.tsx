@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SmartTable } from '../components/SmartTable';
 
 // AdsGo-style Home = KPI Dashboard with date filters + line chart + metrics
 const dateRanges = ['Last 7 days', 'Last 14 days', 'Last 30 days', 'Last 90 days', 'Today'];
@@ -99,6 +100,17 @@ export const Crm: React.FC = () => {
     </div>
   );
 
+  if (!data || !data.daily) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f6fa' }}>
+        <div style={{ textAlign: 'center', color: '#64748b' }}>
+          <h3>No Analytics Data Available</h3>
+          <p>The backend could not provide the necessary CRM data.</p>
+        </div>
+      </div>
+    );
+  }
+
   const activeDates = data.daily.map((d: any) => d.date);
   const activeSpend = data.daily.map((d: any) => d.spend);
   const activeRoas = data.daily.map((d: any) => d.roas);
@@ -186,34 +198,21 @@ export const Crm: React.FC = () => {
         </div>
 
         {/* Daily Performance Table */}
-        <div style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: '12px', overflow: 'hidden' }}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f5f9', fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>
-            Daily Performance
-          </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#fafafa', borderBottom: '1px solid #f1f5f9' }}>
-                {['Date', 'Spend', 'CPM', 'CPC', 'CTR', 'ROAS', 'Purchase Value'].map(h => (
-                  <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.daily.slice().reverse().map((row: any, i: number) => (
-                <tr key={i} style={{ borderBottom: i < data.daily.length - 1 ? '1px solid #f8fafc' : 'none', cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#fafafa')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#0f172a', fontWeight: 600 }}>{row.date}</td>
-                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#7c3aed', fontWeight: 700 }}>${row.spend.toFixed(2)}</td>
-                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#475569' }}>${row.cpm.toFixed(2)}</td>
-                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#475569' }}>${row.cpc.toFixed(2)}</td>
-                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#475569' }}>{row.ctr.toFixed(2)}%</td>
-                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#16a34a', fontWeight: 700 }}>{row.roas.toFixed(2)}</td>
-                  <td style={{ padding: '12px 16px', fontSize: '0.85rem', color: '#475569' }}>${row.purchaseValue.toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ marginTop: '24px' }}>
+           <SmartTable 
+             title="Daily Performance Logs"
+             searchPlaceholder="Search dates or performance metrics..."
+             columns={[
+               { key: 'date', label: 'Date', sortable: true, render: (row) => <span style={{ fontWeight: 600, color: '#0f172a' }}>{row.date}</span> },
+               { key: 'spend', label: 'Spend', sortable: true, render: (row) => <span style={{ color: '#7c3aed', fontWeight: 700 }}>${row.spend.toFixed(2)}</span> },
+               { key: 'cpm', label: 'CPM', sortable: true, render: (row) => <span style={{ color: '#475569' }}>${row.cpm.toFixed(2)}</span> },
+               { key: 'cpc', label: 'CPC', sortable: true, render: (row) => <span style={{ color: '#475569' }}>${row.cpc.toFixed(2)}</span> },
+               { key: 'ctr', label: 'CTR', sortable: true, render: (row) => <span style={{ color: '#475569' }}>{row.ctr.toFixed(2)}%</span> },
+               { key: 'roas', label: 'ROAS', sortable: true, render: (row) => <span style={{ color: '#16a34a', fontWeight: 700 }}>{row.roas.toFixed(2)}</span> },
+               { key: 'purchaseValue', label: 'Purchase Val', sortable: true, render: (row) => <span style={{ color: '#475569' }}>${row.purchaseValue.toFixed(2)}</span> }
+             ]}
+             data={data.daily.slice().reverse()}
+           />
         </div>
       </div>
     </div>

@@ -116,7 +116,7 @@ export const Seo: React.FC = () => {
                   <Zap size={20} color="var(--accent-primary)" /> Actionable Insights
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {result.issues.map((issue: any, i: number) => (
+                  {(result?.issues || []).map((issue: any, i: number) => (
                     <div key={i} style={{ 
                       display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px',
                       background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)' 

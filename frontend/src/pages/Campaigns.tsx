@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Loader2, Target, Globe, Search, MapPin, DollarSign, Image as ImageIcon, CheckCircle2, ArrowRight, LayoutTemplate, BriefcaseBusiness } from 'lucide-react';
+import { Sparkles, Loader2, Target, Globe, Search, DollarSign, Image as ImageIcon, CheckCircle2, ArrowRight, LayoutTemplate, BriefcaseBusiness, Zap, Activity, ShieldCheck } from 'lucide-react';
+import './Campaigns.css'; // Premium CSS
 
-// Inline brand icons (lucide-react does not export Facebook/Instagram)
-const FacebookIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="#1877f2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>;
-const InstagramIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e1306c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>;
+// Inline brand icons
+const FacebookIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="#3b82f6"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>;
+const InstagramIcon = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ec4899" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>;
 
 type Message = {
   role: 'user' | 'bot';
@@ -22,7 +23,8 @@ export const Campaigns: React.FC = () => {
   // Campaign State
   const [selectedGoal, setSelectedGoal] = useState<string>('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [budget, setBudget] = useState<number>(50);
+  const [budget, setBudget] = useState<number>(100);
+  const [campaignData, setCampaignData] = useState<any>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -32,47 +34,72 @@ export const Campaigns: React.FC = () => {
     scrollToBottom();
   }, [messages, loading]);
 
-  const handleDeepResearch = () => {
+  const handleDeepResearch = async () => {
     if (!url.trim()) return;
     setIsChatMode(true);
     setMessages([{ role: 'user', type: 'text', content: url }]);
     setLoading(true);
 
-    // AI Deep Research Terminal Animation
-    setTimeout(() => {
+    // Initial terminal lines display
+    setMessages(prev => [
+      ...prev,
+      {
+        role: 'bot',
+        type: 'text',
+        content: 'Initializing Neural Engine... Fetching real-time market telemetry via backend AI layer:'
+      },
+      {
+        role: 'bot',
+        type: 'research',
+        content: {}
+      }
+    ]);
+
+    try {
+      const response = await fetch('http://localhost:3000/campaigns/deep-research', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url })
+      });
+
+      if (!response.ok) {
+        throw new Error('Backend AI request failed');
+      }
+
+      const data = await response.json();
+      setCampaignData(data);
+      if (data.recommendedBudget) {
+        setBudget(data.recommendedBudget);
+      }
+
       setLoading(false);
       setMessages(prev => [
         ...prev,
         {
           role: 'bot',
           type: 'text',
-          content: 'I have started deep-researching your URL to understand your brand, audience, and competitors. Here is the live progress:'
+          content: `Real-time Analysis Complete.\n\nProduct Synopsis: ${data.productSummary}\nIdentified Market: ${data.audience}\n\nTo calibrate the autonomous agent, please specify the primary optimization metric:`
         },
         {
           role: 'bot',
-          type: 'research',
-          content: {}
+          type: 'form',
+          content: { step: 'goal', options: ['Maximized Conversions', 'Lead Generation & B2B', 'Omnichannel Awareness', 'Direct ROI Scaling'] }
         }
       ]);
-
-      // Complete research after 4s
-      setTimeout(() => {
-        setMessages(prev => [
-          ...prev,
-          {
-            role: 'bot',
-            type: 'text',
-            content: 'Research complete! 🚀 I found some high-converting angles. First, what is the primary business goal for this campaign?'
-          },
-          {
-            role: 'bot',
-            type: 'form',
-            content: { step: 'goal', options: ['Drive Sales', 'Generate Leads', 'Increase Traffic', 'Brand Awareness'] }
-          }
-        ]);
-        scrollToBottom();
-      }, 4500);
-    }, 1000);
+    } catch (e) {
+      console.error(e);
+      setLoading(false);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'bot',
+          type: 'text',
+          content: 'Error: Connection to Neural Engine failed. Ensure backend server is running and API keys are valid.'
+        }
+      ]);
+    }
   };
 
   const handleGoalSelection = (goal: string) => {
@@ -87,7 +114,7 @@ export const Campaigns: React.FC = () => {
         {
           role: 'bot',
           type: 'text',
-          content: `Excellent. To achieve "${goal}", I recommend a multi-channel approach. Which platforms would you like to run ads on?`
+          content: `Parameter locked: "${goal}". Activating cross-channel matrix. Please select target networks for deployment:`
         },
         {
           role: 'bot',
@@ -95,13 +122,13 @@ export const Campaigns: React.FC = () => {
           content: {}
         }
       ]);
-    }, 1200);
+    }, 1500);
   };
 
   const handlePlatformConfirm = (platforms: string[]) => {
     if (platforms.length === 0) return;
     setSelectedPlatforms(platforms);
-    setMessages(prev => [...prev, { role: 'user', type: 'text', content: `Selected: ${platforms.join(', ')}` }]);
+    setMessages(prev => [...prev, { role: 'user', type: 'text', content: `Activated: ${platforms.join(', ')}` }]);
     setLoading(true);
 
     setTimeout(() => {
@@ -111,7 +138,7 @@ export const Campaigns: React.FC = () => {
         {
           role: 'bot',
           type: 'text',
-          content: 'Great choice! I have used your website data to generate some highly targeted ad creatives. Please review them below:'
+          content: 'Synthesizing generative hyper-creatives dynamically matched to your brand tone. Review proposed assets:'
         },
         {
           role: 'bot',
@@ -119,11 +146,11 @@ export const Campaigns: React.FC = () => {
           content: {}
         }
       ]);
-    }, 1500);
+    }, 2000);
   };
 
   const handleCreativesConfirm = () => {
-    setMessages(prev => [...prev, { role: 'user', type: 'text', content: 'Creatives look good. Proceed.' }]);
+    setMessages(prev => [...prev, { role: 'user', type: 'text', content: 'Creatives approved.' }]);
     setLoading(true);
 
     setTimeout(() => {
@@ -133,7 +160,7 @@ export const Campaigns: React.FC = () => {
         {
           role: 'bot',
           type: 'text',
-          content: 'Almost ready to launch! Let\'s finalize your daily budget and review the campaign summary.'
+          content: 'System ready. Finalize your daily allocation strategy to initiate orbital launch.'
         },
         {
           role: 'bot',
@@ -141,247 +168,310 @@ export const Campaigns: React.FC = () => {
           content: {}
         }
       ]);
-    }, 1200);
+    }, 1500);
+  };
+
+  const handleExecuteDeployment = async () => {
+    setMessages(prev => [...prev, { role: 'user', type: 'text', content: 'Execute operations.' }]);
+    setLoading(true);
+
+    try {
+      // Step 1: Auto-generate campaign record in backend database via AI Orchestrator
+      const genRes = await fetch('http://localhost:3000/campaigns/auto-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          name: `NEXUS Dynamic Setup - ${new URL(url || 'https://example.com').hostname}`, 
+          audienceId: campaignData?.audience || 'General Market', 
+          platform: selectedPlatforms.join(', '), 
+          productUrl: url, 
+          baseBudget: budget 
+        })
+      });
+      
+      if (!genRes.ok) throw new Error('Failed to generate campaign structure');
+      const generatedData = await genRes.json();
+      
+      // Step 2: Trigger the launch sequencer (Pushes to Google/Meta integration points)
+      await fetch(`http://localhost:3000/campaigns/${generatedData._id}/launch`, { 
+        method: 'PATCH' 
+      });
+
+      setLoading(false);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'bot',
+          type: 'text',
+          content: `🚀 Deployment sequence complete. Campaign '${generatedData.name}' has been successfully provisioned in the database and active across ${selectedPlatforms.join(' and ')}.`
+        }
+      ]);
+    } catch (err) {
+      console.error('Deployment error:', err);
+      setLoading(false);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'bot',
+          type: 'text',
+          content: '⚠️ Node connection failure during deployment sequence. Please check backend integration logs.'
+        }
+      ]);
+    }
   };
 
   const TopHeader = () => (
-    <motion.div initial={{ y: -50 }} animate={{ y: 0 }} style={{ position: 'fixed', top: 0, left: 250, right: 0, padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(16px)', zIndex: 100, borderBottom: '1px solid #f1f5f9', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+    <motion.div initial={{ y: -50 }} animate={{ y: 0 }} style={{ position: 'sticky', top: 0, padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(20px)', zIndex: 100, borderBottom: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 30px rgba(0,0,0,0.5)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-          <Sparkles size={16} />
+        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)' }}>
+          <Zap size={20} />
         </div>
-        <span style={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e293b' }}>AI Campaign Builder</span>
+        <div>
+          <span style={{ display: 'block', fontWeight: 800, fontSize: '1.2rem', color: '#f8fafc', fontFamily: "'Outfit', sans-serif" }}>NEXUS AI</span>
+          <span style={{ display: 'block', fontSize: '0.75rem', color: '#38bdf8', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>Active Session</span>
+        </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <input
-          disabled
-          value={url}
-          style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#64748b', fontSize: '0.85rem', width: '280px', textOverflow: 'ellipsis' }}
-        />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '8px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', fontSize: '0.85rem' }}>
+          <Activity size={14} color="#10b981" /> Target: <span style={{color: '#f8fafc', fontWeight: 600}}>{url}</span>
+        </div>
         <button
+          className="glow-button"
           onClick={() => { setIsChatMode(false); setUrl(''); setMessages([]); }}
-          style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#1e293b', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
-          onMouseEnter={e => e.currentTarget.style.borderColor = '#cbd5e1'}
-          onMouseLeave={e => e.currentTarget.style.borderColor = '#e2e8f0'}
+          style={{ padding: '8px 20px', borderRadius: '8px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: '#f8fafc', fontSize: '0.85rem', cursor: 'pointer', fontWeight: 600 }}
         >
-          New Deep Research
+          Terminate & Restart
         </button>
       </div>
     </motion.div>
   );
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: isChatMode ? '#f8fafc' : 'linear-gradient(135deg, #f8f9ff 0%, #ffffff 50%, #f0f4ff 100%)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: isChatMode ? 'flex-start' : 'center',
-      position: 'relative',
-      paddingTop: isChatMode ? '80px' : '0'
-    }}>
+    <>
+      <div className="bg-effects"></div>
+      <div className="bg-grid"></div>
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: isChatMode ? 'flex-start' : 'center',
+        position: 'relative',
+        zIndex: 1,
+        paddingBottom: '80px'
+      }}>
 
-      {!isChatMode && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center', maxWidth: '800px', padding: '0 24px', width: '100%' }}>
-
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '-8px', marginBottom: '28px' }}>
-            {['🤖', '👩🏻', '👨🏼', '👩🏽', '👨🏾', '👩🏿'].map((emoji, i) => (
-              <div key={i} style={{
-                width: '56px', height: '56px', borderRadius: '50%', background: i === 0 ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : `hsl(${i * 45}, 60%, 90%)`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: i === 0 ? '1.5rem' : '1.3rem',
-                marginLeft: i === 0 ? 0 : '-12px', border: '3px solid #fff', boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                position: 'relative', zIndex: 10 - i, transition: 'transform 0.2s',
-              }}>{emoji}</div>
-            ))}
-          </div>
-
-          <h1 style={{ fontSize: '2.8rem', fontWeight: 900, color: '#0f172a', marginBottom: '16px', lineHeight: 1.1, fontFamily: 'Outfit, sans-serif', letterSpacing: '-0.02em' }}>
-            <span style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Which page</span> would you like to promote?
-          </h1>
-          <p style={{ fontSize: '1.1rem', color: '#64748b', marginBottom: '48px', lineHeight: 1.6, maxWidth: '600px', margin: '0 auto 48px auto' }}>
-            Paste any landing page, product page, or social profile. Our AI will instantly analyze your brand and build a full campaign.
-          </p>
-
-          <div style={{ display: 'flex', gap: '12px', maxWidth: '680px', margin: '0 auto', background: '#fff', padding: '8px', borderRadius: '99px', boxShadow: '0 10px 40px rgba(124, 58, 237, 0.08)', border: '1px solid rgba(124, 58, 237, 0.1)' }}>
-            <input
-              value={url}
-              onChange={e => setUrl(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleDeepResearch()}
-              placeholder="e.g. https://wheedletechnologies.ai"
-              disabled={loading}
-              style={{
-                flex: 1, padding: '16px 24px', borderRadius: '99px', border: 'none',
-                fontSize: '1.05rem', color: '#1e293b', outline: 'none', background: 'transparent',
-              }}
-            />
-            <button
-              onClick={handleDeepResearch}
-              disabled={loading || !url}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '8px', padding: '16px 40px',
-                borderRadius: '99px', background: 'linear-gradient(135deg, #1e1b4b 0%, #3b0764 100%)',
-                color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '1.05rem',
-                whiteSpace: 'nowrap', transition: 'all 0.2s', opacity: (loading || !url) ? 0.7 : 1
-              }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+        {!isChatMode && (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, ease: "easeOut" }} style={{ textAlign: 'center', maxWidth: '850px', padding: '0 24px', width: '100%', position: 'relative', zIndex: 10 }}>
+            
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '99px', background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.2)', color: '#38bdf8', fontSize: '0.85rem', fontWeight: 600, marginBottom: '32px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
             >
-              {loading ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
-              Deep Research
-            </button>
-          </div>
-        </motion.div>
-      )}
+              <Sparkles size={14} /> Next-Gen Enterprise Automation
+            </motion.div>
 
-      {isChatMode && (
-        <>
-          <TopHeader />
-          <div style={{ width: '100%', maxWidth: '850px', padding: '40px 24px 140px 24px', display: 'flex', flexDirection: 'column', gap: '32px', margin: '0 auto' }}>
-            <AnimatePresence>
-              {messages.map((msg, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, type: 'spring' }}
+            <h1 style={{ fontSize: '4.5rem', fontWeight: 900, marginBottom: '24px', lineHeight: 1.1, letterSpacing: '-0.02em', textShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+              Initialize <span className="ai-gradient-text">Autonomous</span> Growth
+            </h1>
+            <p style={{ fontSize: '1.25rem', color: '#94a3b8', marginBottom: '56px', lineHeight: 1.6, maxWidth: '650px', margin: '0 auto 56px auto', fontWeight: 400 }}>
+              Deploy enterprise-grade neural networks to scan your brand, structure complex conversion funnels, and launch self-optimizing campaigns instantly.
+            </p>
+
+            <div style={{ position: 'relative', maxWidth: '750px', margin: '0 auto', display: 'flex' }}>
+              <div style={{ position: 'absolute', inset: '-2px', background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899)', borderRadius: '99px', filter: 'blur(10px)', opacity: 0.5, zIndex: -1, animation: 'pulse 3s infinite alternate' }} />
+              <div style={{ display: 'flex', gap: '12px', width: '100%', background: 'rgba(2, 6, 23, 0.8)', backdropFilter: 'blur(20px)', padding: '8px', borderRadius: '99px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <input
+                  value={url}
+                  onChange={e => setUrl(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleDeepResearch()}
+                  placeholder="https://your-enterprise-domain.com"
+                  disabled={loading}
                   style={{
-                    display: 'flex',
-                    justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                    width: '100%'
+                    flex: 1, padding: '20px 32px', borderRadius: '99px', border: 'none',
+                    fontSize: '1.1rem', color: '#f8fafc', outline: 'none', background: 'transparent',
+                    fontFamily: "'Inter', sans-serif"
+                  }}
+                />
+                <button
+                  className="glow-button"
+                  onClick={handleDeepResearch}
+                  disabled={loading || !url}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', padding: '20px 48px',
+                    borderRadius: '99px', background: 'linear-gradient(135deg, #2563eb, #7c3aed)',
+                    color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '1.1rem',
+                    whiteSpace: 'nowrap', opacity: (loading || !url) ? 0.6 : 1,
+                    boxShadow: '0 0 20px rgba(37, 99, 235, 0.4)'
                   }}
                 >
-                  {/* Avatar for Bot */}
-                  {msg.role === 'bot' && (
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', flexShrink: 0, marginRight: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', marginTop: '4px', boxShadow: '0 4px 10px rgba(124, 58, 237, 0.2)' }}>
-                      <Sparkles size={18} />
-                    </div>
-                  )}
+                  {loading ? <Loader2 className="animate-spin" size={20} /> : <Target size={20} />}
+                  Commence Analysis
+                </button>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '32px', marginTop: '64px', opacity: 0.6 }}>
+               {/* Decorative trust indicators */}
+               {['SOC2 Certified', 'Enterprise Grade', '99.99% Uptime'].map(text => (
+                 <div key={text} style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94a3b8', fontSize: '0.85rem', fontWeight: 500 }}>
+                   <ShieldCheck size={16} /> {text}
+                 </div>
+               ))}
+            </div>
 
-                  <div style={{ width: msg.role === 'user' ? 'auto' : 'calc(100% - 52px)' }}>
-                    {msg.type === 'text' && (
-                      <div style={{
-                        background: msg.role === 'user' ? 'linear-gradient(135deg, #f3e8ff, #e0e7ff)' : '#fff',
-                        color: msg.role === 'user' ? '#4c1d95' : '#334155',
-                        padding: '16px 24px',
-                        borderRadius: msg.role === 'user' ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
-                        display: 'inline-block',
-                        boxShadow: msg.role === 'user' ? 'none' : '0 4px 20px rgba(0,0,0,0.03)',
-                        border: msg.role === 'bot' ? '1px solid #f1f5f9' : '1px solid rgba(124,58,237,0.1)',
-                        fontSize: '1rem',
-                        lineHeight: 1.6,
-                        fontWeight: msg.role === 'user' ? 600 : 400
-                      }}>
-                        {msg.content}
+          </motion.div>
+        )}
+
+        {isChatMode && (
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+            <TopHeader />
+            <div style={{ width: '100%', maxWidth: '900px', padding: '40px 24px', display: 'flex', flexDirection: 'column', gap: '40px', margin: '0 auto', position: 'relative', zIndex: 10 }}>
+              <AnimatePresence>
+                {messages.map((msg, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 30, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.5, type: 'spring', damping: 20 }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
+                      width: '100%',
+                      alignItems: 'flex-start'
+                    }}
+                  >
+                    {/* Avatars */}
+                    {msg.role === 'bot' && (
+                      <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', flexShrink: 0, marginRight: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)', marginTop: '4px' }}>
+                        <Zap size={20} />
+                      </div>
+                    )}
+                    {msg.role === 'user' && (
+                      <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', flexShrink: 0, marginLeft: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f8fafc', marginTop: '4px' }}>
+                        <div style={{ width: '16px', height: '16px', background: '#38bdf8', borderRadius: '50%', boxShadow: '0 0 10px #38bdf8' }} />
                       </div>
                     )}
 
-                    {msg.type === 'research' && <ResearchTerminal />}
+                    <div style={{ width: msg.role === 'user' ? 'auto' : 'calc(100% - 60px)' }}>
+                      {msg.type === 'text' && (
+                        <div className={msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-bot'} style={{
+                          padding: '20px 28px',
+                          borderRadius: msg.role === 'user' ? '20px 4px 20px 20px' : '4px 20px 20px 20px',
+                          display: 'inline-block',
+                          fontSize: '1.05rem',
+                          lineHeight: 1.6,
+                          color: '#f8fafc',
+                          fontWeight: 400,
+                          backdropFilter: 'blur(10px)'
+                        }}>
+                          {msg.content}
+                        </div>
+                      )}
 
-                    {msg.type === 'form' && msg.content.step === 'goal' && (
-                      <GoalSelector options={msg.content.options} onSelect={handleGoalSelection} />
-                    )}
+                      {msg.type === 'research' && <ResearchTerminal url={url} />}
+                      {msg.type === 'form' && msg.content.step === 'goal' && <GoalSelector options={msg.content.options} onSelect={handleGoalSelection} />}
+                      {msg.type === 'platforms' && <PlatformSelector onConfirm={handlePlatformConfirm} />}
+                      {msg.type === 'creatives' && <CreativeGallery onConfirm={handleCreativesConfirm} url={url} ads={campaignData?.ads} />}
+                      {msg.type === 'review' && <FinalReview goal={selectedGoal} platforms={selectedPlatforms} budget={budget} setBudget={setBudget} url={url} onExecute={handleExecuteDeployment} />}
+                    </div>
+                  </motion.div>
+                ))}
 
-                    {msg.type === 'platforms' && (
-                      <PlatformSelector onConfirm={handlePlatformConfirm} />
-                    )}
-
-                    {msg.type === 'creatives' && (
-                      <CreativeGallery onConfirm={handleCreativesConfirm} url={url} />
-                    )}
-
-                    {msg.type === 'review' && (
-                      <FinalReview
-                        goal={selectedGoal}
-                        platforms={selectedPlatforms}
-                        budget={budget}
-                        setBudget={setBudget}
-                        url={url}
-                      />
-                    )}
-
-                  </div>
-                </motion.div>
-              ))}
-
-              {loading && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', flexShrink: 0, marginRight: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 10px rgba(124, 58, 237, 0.2)' }}>
-                    <Sparkles size={18} />
-                  </div>
-                  <div style={{ background: '#fff', padding: '16px 24px', borderRadius: '24px 24px 24px 4px', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', width: 'fit-content' }}>
-                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: '#94a3b8', borderRadius: '50%', animation: 'pulse 1.4s infinite' }} />
-                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: '#94a3b8', borderRadius: '50%', animation: 'pulse 1.4s infinite 0.2s' }} />
-                    <div className="typing-dot" style={{ width: '6px', height: '6px', background: '#94a3b8', borderRadius: '50%', animation: 'pulse 1.4s infinite 0.4s' }} />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <div ref={messagesEndRef} />
+                {loading && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'flex', justifyContent: 'flex-start', width: '100%', marginTop: '16px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'transparent', flexShrink: 0, marginRight: '20px' }}></div>
+                    <div style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '8px', color: '#38bdf8', fontSize: '0.9rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      <Loader2 className="animate-spin" size={16} /> Processing Neural Link...
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div ref={messagesEndRef} style={{ height: '40px' }} />
+            </div>
           </div>
-        </>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 };
 
-// --- Custom Subcomponents for UI Fidelity ---
+// --- Custom Subcomponents for Premium UI ---
 
-const ResearchTerminal: React.FC = () => {
-  const [steps, setSteps] = useState(0);
+const ResearchTerminal: React.FC<{url: string}> = ({url}) => {
+  const [logs, setLogs] = useState<string[]>([`> Establishing secure connection to [${url}]...`]);
 
   useEffect(() => {
-    const intervals = [800, 1800, 2800, 3800];
-    intervals.forEach((time, index) => setTimeout(() => setSteps(index + 1), time));
+    const lines = [
+      '> Extracting DOM structure and semantic payload...',
+      '> Analyzing color contrast and typographic hierarchy...',
+      '[SUCCESS] Brand palette identified.',
+      '> Querying competitor matrices...',
+      '> Running NLP on product descriptions...',
+      '[SUCCESS] Core value propositions extracted.',
+      '> Generating multi-variate ad angles for high CTR...',
+      '> Compiling final telemetry packet...'
+    ];
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < lines.length) {
+        setLogs(prev => [...prev, lines[i]]);
+        i++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 600);
+    return () => clearInterval(interval);
   }, []);
 
-  const items = [
-    { label: 'Scraping landing page text & context', icon: <Globe size={16} /> },
-    { label: 'Analyzing target audience demographics', icon: <Target size={16} /> },
-    { label: 'Extracting product images & assets', icon: <ImageIcon size={16} /> },
-    { label: 'Generating winning ad angles', icon: <BriefcaseBusiness size={16} /> },
-  ];
-
   return (
-    <div style={{ background: '#0f172a', padding: '24px', borderRadius: '16px', border: '1px solid #1e293b', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', width: '100%', maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444' }} />
-        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b' }} />
-        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }} />
-        <span style={{ marginLeft: '12px', fontSize: '0.8rem', color: '#64748b', fontFamily: 'monospace' }}>AI_Research_Process.sh</span>
-      </div>
-      {items.map((item, idx) => (
-        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', opacity: steps > idx ? 1 : 0.3, transition: 'opacity 0.3s' }}>
-          {steps > idx ? <CheckCircle2 size={18} color="#10b981" /> : <Loader2 className="animate-spin" size={18} color="#94a3b8" />}
-          <span style={{ color: steps > idx ? '#e2e8f0' : '#94a3b8', fontSize: '0.9rem', fontFamily: 'monospace' }}>{item.label}</span>
+    <div className="glass-panel" style={{ padding: '24px', borderRadius: '16px', borderTop: '4px solid #3b82f6', width: '100%', maxWidth: '700px', display: 'flex', flexDirection: 'column', gap: '8px', fontFamily: 'monospace', fontSize: '0.9rem', marginTop: '16px', background: '#020617' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444' }} />
+          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#f59e0b' }} />
+          <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#10b981' }} />
         </div>
+        <span style={{ color: '#64748b' }}>nexus_ai_engine.exe</span>
+      </div>
+      {logs.map((log, idx) => (
+        <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} key={idx} style={{ color: log?.startsWith('[SUCCESS]') ? '#10b981' : '#38bdf8', marginBottom: '4px' }}>
+          {log}
+        </motion.div>
       ))}
+      <div style={{ color: '#f8fafc' }}>
+        <span className="terminal-cursor"></span>
+      </div>
     </div>
   );
 };
 
 const GoalSelector: React.FC<{ options: string[], onSelect: (g: string) => void }> = ({ options, onSelect }) => (
-  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', width: '100%', maxWidth: '600px' }}>
+  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', width: '100%', maxWidth: '800px', marginTop: '16px' }}>
     {options.map((opt) => (
       <button
         key={opt}
+        className="card-hover glow-button"
         onClick={() => onSelect(opt)}
-        style={{ padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0', background: '#fff', color: '#1e293b', fontWeight: 600, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = '#7c3aed'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(124,58,237,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.02)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+        style={{ padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(15, 23, 42, 0.8)', color: '#f8fafc', fontWeight: 600, textAlign: 'left', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backdropFilter: 'blur(10px)' }}
       >
-        <span>{opt}</span>
-        <ArrowRight size={18} color="#cbd5e1" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '10px', borderRadius: '12px' }}><Target size={20} color="#38bdf8" /></div>
+          <span style={{ fontSize: '1.05rem' }}>{opt}</span>
+        </div>
+        <ArrowRight size={20} color="#64748b" />
       </button>
     ))}
   </div>
 );
 
 const PlatformSelector: React.FC<{ onConfirm: (p: string[]) => void }> = ({ onConfirm }) => {
-  const [selected, setSelected] = useState<string[]>(['Google Search', 'Facebook']);
+  const [selected, setSelected] = useState<string[]>(['Google', 'LinkedIn']);
   const platforms = [
-    { name: 'Google Search', icon: <Search size={24} color="#ea4335" /> },
+    { name: 'Google', icon: <Search size={28} color="#38bdf8" /> },
+    { name: 'LinkedIn', icon: <BriefcaseBusiness size={28} color="#8b5cf6" /> },
     { name: 'Facebook', icon: <FacebookIcon /> },
     { name: 'Instagram', icon: <InstagramIcon /> },
-    { name: 'TikTok', icon: <Target size={24} color="#000000" /> },
   ];
 
   const toggle = (name: string) => {
@@ -390,106 +480,136 @@ const PlatformSelector: React.FC<{ onConfirm: (p: string[]) => void }> = ({ onCo
   };
 
   return (
-    <div style={{ background: '#fff', padding: '24px', borderRadius: '24px', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', width: '100%', maxWidth: '600px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        {platforms.map(p => (
-          <div
-            key={p.name}
-            onClick={() => toggle(p.name)}
-            style={{ padding: '20px', borderRadius: '16px', border: `2px solid ${selected.includes(p.name) ? '#7c3aed' : '#e2e8f0'}`, background: selected.includes(p.name) ? '#faf5ff' : '#fff', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', transition: 'all 0.2s', position: 'relative' }}
-          >
-            {selected.includes(p.name) && <div style={{ position: 'absolute', top: 8, right: 8 }}><CheckCircle2 size={16} color="#7c3aed" /></div>}
-            {p.icon}
-            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#334155' }}>{p.name}</span>
-          </div>
-        ))}
+    <div className="glass-panel" style={{ padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '750px', marginTop: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+        {platforms.map(p => {
+          const isSelected = selected.includes(p.name);
+          return (
+            <div
+              key={p.name}
+              className="card-hover"
+              onClick={() => toggle(p.name)}
+              style={{
+                padding: '28px 20px', borderRadius: '20px',
+                border: `2px solid ${isSelected ? '#3b82f6' : 'rgba(255,255,255,0.05)'}`,
+                background: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'rgba(15, 23, 42, 0.5)',
+                cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', position: 'relative'
+              }}
+            >
+              {isSelected && <div style={{ position: 'absolute', top: 12, right: 12 }}><CheckCircle2 size={20} color="#3b82f6" fill="rgba(59, 130, 246, 0.2)" /></div>}
+              {p.icon}
+              <span style={{ fontWeight: 600, fontSize: '1rem', color: isSelected ? '#fff' : '#94a3b8' }}>{p.name}</span>
+            </div>
+          )
+        })}
       </div>
       <button
+        className="glow-button"
         onClick={() => onConfirm(selected)}
         disabled={selected.length === 0}
-        style={{ width: '100%', padding: '16px', borderRadius: '12px', background: selected.length > 0 ? '#1e293b' : '#94a3b8', color: '#fff', fontWeight: 600, border: 'none', cursor: selected.length > 0 ? 'pointer' : 'not-allowed', transition: 'background 0.2s' }}
+        style={{ width: '100%', padding: '20px', borderRadius: '16px', background: selected.length > 0 ? 'linear-gradient(135deg, #2563eb, #7c3aed)' : 'rgba(255,255,255,0.05)', color: selected.length > 0 ? '#fff' : '#64748b', fontWeight: 700, fontSize: '1.1rem', border: 'none', cursor: selected.length > 0 ? 'pointer' : 'not-allowed', transition: 'all 0.3s' }}
       >
-        Confirm Platforms
+        Compile Network Matrix
       </button>
     </div>
   );
 };
 
-const CreativeGallery: React.FC<{ onConfirm: () => void, url: string }> = ({ onConfirm, url }) => {
+const CreativeGallery: React.FC<{ onConfirm: () => void, url: string, ads: any[] }> = ({ onConfirm, url, ads }) => {
+  const domain = new URL(url || 'https://example.com').hostname.replace('www.', '');
+  const ad1 = ads?.[0] || { headline: 'Amplify Your Digital Sovereignty', text: 'Deploy scalable neural architectures designed specifically for next-gen market leaders. Experience absolute operational clarity.' };
+  const ad2 = ads?.[1] || { headline: 'AI-Driven Protocol Optimization', text: 'Automate redundant pathways and unlock exponential growth using our proprietary multi-agent platform technology.' };
+
   return (
-    <div style={{ background: '#fff', padding: '24px', borderRadius: '24px', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', width: '100%', maxWidth: '700px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+    <div className="glass-panel" style={{ padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '850px', marginTop: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '24px', marginBottom: '32px' }}>
         {/* Ad 1 */}
-        <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden' }}>
-          <div style={{ height: '140px', background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ImageIcon size={32} color="#94a3b8" />
+        <div className="card-hover" style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', overflow: 'hidden', background: 'rgba(15, 23, 42, 0.4)' }}>
+          <div style={{ height: '180px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'url(https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=400&q=80) center/cover', opacity: 0.5 }}></div>
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15, 23, 42, 1), transparent)' }}></div>
+            <ImageIcon size={40} color="rgba(255,255,255,0.5)" style={{ zIndex: 1 }} />
           </div>
-          <div style={{ padding: '16px' }}>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>Sponsored · {new URL(url || 'https://example.com').hostname.replace('www.', '')}</div>
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem', color: '#1e293b', fontWeight: 700 }}>Unlock Your Digital Potential Today</h4>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', lineHeight: 1.5 }}>Join thousands scaling their businesses with our AI-driven automation tools. Book your demo now.</p>
+          <div style={{ padding: '24px' }}>
+            <div style={{ fontSize: '0.8rem', color: '#38bdf8', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <Globe size={14} /> Sponsored • {domain}
+            </div>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', color: '#f8fafc', fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>{ad1.headline}</h4>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.6 }}>{ad1.text}</p>
           </div>
         </div>
         {/* Ad 2 */}
-        <div style={{ border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden' }}>
-          <div style={{ height: '140px', background: 'linear-gradient(135deg, #f8fafc, #cbd5e1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <LayoutTemplate size={32} color="#64748b" />
+        <div className="card-hover" style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', overflow: 'hidden', background: 'rgba(15, 23, 42, 0.4)' }}>
+          <div style={{ height: '180px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'url(https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=400&q=80) center/cover', opacity: 0.5 }}></div>
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15, 23, 42, 1), transparent)' }}></div>
+            <LayoutTemplate size={40} color="rgba(255,255,255,0.5)" style={{ zIndex: 1 }} />
           </div>
-          <div style={{ padding: '16px' }}>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>Sponsored · {new URL(url || 'https://example.com').hostname.replace('www.', '')}</div>
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95rem', color: '#1e293b', fontWeight: 700 }}>The Future of Automation is Here</h4>
-            <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b', lineHeight: 1.5 }}>Stop wasting time on manual tasks. See how our platform automates your workflow instantly.</p>
+          <div style={{ padding: '24px' }}>
+             <div style={{ fontSize: '0.8rem', color: '#8b5cf6', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              <Globe size={14} /> Sponsored • {domain}
+            </div>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '1.1rem', color: '#f8fafc', fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>{ad2.headline}</h4>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.6 }}>{ad2.text}</p>
           </div>
         </div>
       </div>
       <button
+        className="glow-button"
         onClick={onConfirm}
-        style={{ width: '100%', padding: '16px', borderRadius: '12px', background: '#1e293b', color: '#fff', fontWeight: 600, border: 'none', cursor: 'pointer' }}
+        style={{ width: '100%', padding: '20px', borderRadius: '16px', background: 'linear-gradient(135deg, #2563eb, #7c3aed)', color: '#fff', fontWeight: 700, fontSize: '1.1rem', border: 'none', cursor: 'pointer' }}
       >
-        Approve Creatives & Continue
+        Sign & Authorize Creatives
       </button>
     </div>
   );
 }
 
-const FinalReview: React.FC<{ goal: string, platforms: string[], budget: number, setBudget: (v: number) => void, url: string }> = ({ goal, platforms, budget, setBudget, url }) => {
+const FinalReview: React.FC<{ goal: string, platforms: string[], budget: number, setBudget: (v: number) => void, url: string, onExecute: () => void }> = ({ goal, platforms, budget, setBudget, url, onExecute }) => {
   return (
-    <div style={{ background: '#fff', padding: '32px', borderRadius: '24px', border: '1px solid #f1f5f9', boxShadow: '0 8px 30px rgba(0,0,0,0.06)', width: '100%', maxWidth: '600px' }}>
-      <h3 style={{ margin: '0 0 24px 0', fontSize: '1.4rem', color: '#0f172a', fontWeight: 800 }}>Campaign Ready for Launch 🚀</h3>
+    <div className="glass-panel" style={{ padding: '40px', borderRadius: '24px', width: '100%', maxWidth: '750px', marginTop: '16px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 0, right: 0, width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)', zIndex: 0 }} />
+      
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '1.8rem', color: '#f8fafc', fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>Deployment Overview</h3>
+        <p style={{ margin: '0 0 32px 0', color: '#94a3b8' }}>System is primed. Review telemetry before final orbital launch.</p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
-          <span style={{ color: '#64748b', fontWeight: 500 }}>Target URL</span>
-          <span style={{ color: '#0f172a', fontWeight: 600 }}>{new URL(url || 'https://example.com').hostname}</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
-          <span style={{ color: '#64748b', fontWeight: 500 }}>Objective</span>
-          <span style={{ color: '#0f172a', fontWeight: 600 }}>{goal}</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
-          <span style={{ color: '#64748b', fontWeight: 500 }}>Networks</span>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {platforms.map(p => <span key={p} style={{ background: '#f1f5f9', padding: '4px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, color: '#334155' }}>{p}</span>)}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <span style={{ color: '#94a3b8', fontWeight: 500 }}>Target Root Node</span>
+            <span style={{ color: '#38bdf8', fontWeight: 600 }}>{new URL(url || 'https://example.com').hostname}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <span style={{ color: '#94a3b8', fontWeight: 500 }}>Optimization Vector</span>
+            <span style={{ color: '#f8fafc', fontWeight: 600 }}>{goal}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', alignItems: 'center' }}>
+            <span style={{ color: '#94a3b8', fontWeight: 500 }}>Active Nodes</span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {platforms.map(p => <span key={p} style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600, color: '#38bdf8' }}>{p}</span>)}
+            </div>
+          </div>
+
+          <div style={{ marginTop: '16px', background: 'rgba(0,0,0,0.3)', padding: '24px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: 600, color: '#f8fafc', marginBottom: '16px' }}>Compute Allocation (USD/day)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '12px', borderRadius: '12px' }}>
+                <DollarSign size={24} color="#10b981" />
+              </div>
+              <input
+                type="number"
+                value={budget}
+                onChange={e => setBudget(Number(e.target.value))}
+                style={{ flex: 1, border: 'none', background: 'transparent', fontSize: '1.8rem', fontWeight: 800, color: '#f8fafc', outline: 'none', fontFamily: "'Outfit', sans-serif" }}
+              />
+            </div>
           </div>
         </div>
 
-        <div style={{ marginTop: '8px' }}>
-          <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: '#334155', marginBottom: '12px' }}>Daily Budget (USD)</label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#f8fafc', padding: '12px 16px', borderRadius: '12px', border: '2px solid #e2e8f0' }}>
-            <DollarSign size={20} color="#64748b" />
-            <input
-              type="number"
-              value={budget}
-              onChange={e => setBudget(Number(e.target.value))}
-              style={{ flex: 1, border: 'none', background: 'transparent', fontSize: '1.2rem', fontWeight: 700, color: '#0f172a', outline: 'none' }}
-            />
-          </div>
-        </div>
+        <button onClick={onExecute} className="glow-button" style={{ width: '100%', padding: '20px', borderRadius: '16px', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontWeight: 800, fontSize: '1.2rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', boxShadow: '0 8px 30px rgba(16, 185, 129, 0.3)' }}>
+          <Zap size={24} /> Execute Deployment
+        </button>
       </div>
-
-      <button style={{ width: '100%', padding: '18px', borderRadius: '16px', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', fontWeight: 800, fontSize: '1.1rem', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 8px 20px rgba(124,58,237,0.3)', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-        <Sparkles size={20} /> Publish Campaign
-      </button>
     </div>
   );
 };

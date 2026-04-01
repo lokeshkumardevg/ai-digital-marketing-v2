@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrainCircuit, TrendingUp, Zap, BarChart2, RefreshCw, Search, MoreHorizontal, ArrowUpRight } from 'lucide-react';
+import { SmartTable } from '../components/SmartTable';
 
 const statusStyles: Record<string, { bg: string; color: string; dot: string }> = {
   active: { bg: '#f0fdf4', color: '#16a34a', dot: '#22c55e' },
@@ -126,47 +127,36 @@ export const AdsManager: React.FC = () => {
         </div>
 
         {/* Table */}
-        <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e8eaf0', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                {['Campaign', 'Platform', 'Status', 'Impressions', 'Spend', 'ROAS', 'CTR', 'AI Score', ''].map(col => (
-                  <th key={col} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '0.72rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', background: '#fafafa', whiteSpace: 'nowrap' }}>{col}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((ad, i) => {
-                const st = statusStyles[ad.status];
-                return (
-                  <tr key={ad.id} style={{ borderBottom: i < filtered.length - 1 ? '1px solid #f8fafc' : 'none', transition: 'background 0.1s', cursor: 'pointer' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#fafafa')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                    <td style={{ padding: '14px 16px', fontWeight: 600, fontSize: '0.875rem', color: '#0f172a' }}>{ad.name}</td>
-                    <td style={{ padding: '14px 16px' }}><span style={{ padding: '3px 9px', borderRadius: '6px', background: '#f1f5f9', color: '#475569', fontSize: '0.75rem', fontWeight: 600 }}>{ad.platform}</span></td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '99px', background: st.bg, color: st.color, fontSize: '0.75rem', fontWeight: 600, textTransform: 'capitalize' }}>
-                        <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: st.dot }} />{ad.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '14px 16px', fontSize: '0.85rem', color: '#475569' }}>{ad.impressions}</td>
-                    <td style={{ padding: '14px 16px', fontSize: '0.85rem', color: '#0f172a', fontWeight: 600 }}>{ad.spend}</td>
-                    <td style={{ padding: '14px 16px', fontSize: '0.85rem', fontWeight: 700, color: '#16a34a' }}>{ad.roas}</td>
-                    <td style={{ padding: '14px 16px', fontSize: '0.85rem', color: '#475569' }}>{ad.ctr}</td>
-                    <td style={{ padding: '14px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '64px', height: '5px', borderRadius: '99px', background: '#f1f5f9' }}>
-                          <div style={{ height: '100%', width: `${ad.score}%`, background: ad.score > 80 ? '#22c55e' : ad.score > 60 ? '#f59e0b' : '#ef4444', borderRadius: '99px' }} />
-                        </div>
-                        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: ad.score > 80 ? '#16a34a' : ad.score > 60 ? '#d97706' : '#dc2626' }}>{ad.score}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px 16px' }}><button style={{ padding: '4px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', borderRadius: '4px' }}><MoreHorizontal size={15} /></button></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div style={{ marginTop: '32px' }}>
+          <SmartTable 
+            title="Active Optimization Campaigns"
+            searchPlaceholder="Search campaigns by name..."
+            columns={[
+              { key: 'name', label: 'Campaign', sortable: true, render: (row) => <span style={{ fontWeight: 600, color: '#0f172a' }}>{row.name}</span> },
+              { key: 'platform', label: 'Platform', sortable: true, render: (row) => <span style={{ padding: '3px 9px', borderRadius: '6px', background: '#f1f5f9', color: '#475569', fontSize: '0.75rem', fontWeight: 600 }}>{row.platform}</span> },
+              { key: 'status', label: 'Status', sortable: true, render: (row) => {
+                  const st = statusStyles[row.status] || statusStyles.draft;
+                  return (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '99px', background: st.bg, color: st.color, fontSize: '0.75rem', fontWeight: 600, textTransform: 'capitalize' }}>
+                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: st.dot }} />{row.status}
+                    </span>
+                  );
+              }},
+              { key: 'impressions', label: 'Impressions', sortable: true, render: (row) => <span style={{ color: '#475569' }}>{row.impressions}</span> },
+              { key: 'spend', label: 'Spend', sortable: true, render: (row) => <span style={{ color: '#0f172a', fontWeight: 600 }}>{row.spend}</span> },
+              { key: 'roas', label: 'ROAS', sortable: true, render: (row) => <span style={{ color: '#16a34a', fontWeight: 700 }}>{row.roas}</span> },
+              { key: 'ctr', label: 'CTR', sortable: true, render: (row) => <span style={{ color: '#475569' }}>{row.ctr}</span> },
+              { key: 'score', label: 'AI Score', sortable: true, render: (row) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '64px', height: '5px', borderRadius: '99px', background: '#f1f5f9' }}>
+                    <div style={{ height: '100%', width: `${row.score}%`, background: row.score > 80 ? '#22c55e' : row.score > 60 ? '#f59e0b' : '#ef4444', borderRadius: '99px' }} />
+                  </div>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: row.score > 80 ? '#16a34a' : row.score > 60 ? '#d97706' : '#dc2626' }}>{row.score}</span>
+                </div>
+              )}
+            ]}
+            data={filtered}
+          />
         </div>
       </div>
     </div>

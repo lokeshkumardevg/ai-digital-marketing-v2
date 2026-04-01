@@ -13,7 +13,7 @@ export const fetchSocialPosts = createAsyncThunk('social/fetchPosts', async (wor
 });
 
 export const scheduleSocialPost = createAsyncThunk('social/schedulePost', async (dto: any) => {
-  const response = await api.post('/social', dto);
+  const response = await api.post('/social/schedule', dto);
   return response.data.data;
 });
 

@@ -63,7 +63,7 @@ export class AiService {
       throw new Error('OpenAI client not initialized');
     }
     const response = await this.openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
+      model: 'gpt-3.5-turbo',
       messages: [
         { role: 'system', content: context || 'You are an expert AI Marketing Assistant.' },
         { role: 'user', content: prompt }
@@ -77,8 +77,8 @@ export class AiService {
     if (!this.gemini) {
       throw new Error('Gemini client not initialized');
     }
-    // Updated to use gemini-1.5-flash for speed and reliability
-    const model = this.gemini.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Updated to use gemini-pro for stable API compatibility
+    const model = this.gemini.getGenerativeModel({ model: 'gemini-pro' });
     const fullPrompt = context ? `${context}\n\nUser Request: ${prompt}` : prompt;
     const result = await model.generateContent(fullPrompt);
     const response = await result.response;

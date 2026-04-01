@@ -26,6 +26,7 @@ import { OptimizeGoal } from './pages/OptimizeGoal';
 import { BrandProfile } from './pages/BrandProfile';
 import { Products } from './pages/Products';
 import { LandingPage } from './pages/LandingPage';
+import { Pricing } from './pages/Pricing';
 import { Templates } from './pages/Templates';
 import { hydrateSession } from './store/slices/authSlice';
 import { addNotification } from './store/slices/notificationSlice';
@@ -148,6 +149,7 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/landing" element={<LandingPage />} />
+        <Route path="/pricing" element={<Pricing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 

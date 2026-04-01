@@ -118,11 +118,13 @@ export const Header: React.FC = () => {
 
         <button 
           className="btn-secondary" 
+          onClick={() => navigate('/chatbot')}
           style={{ 
             borderRadius: 'var(--radius-pill)', padding: '10px 16px', 
             display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem',
             background: 'var(--accent-gradient)', color: '#fff', border: 'none',
-            boxShadow: '0 8px 16px rgba(112, 51, 245, 0.15)'
+            boxShadow: '0 8px 16px rgba(112, 51, 245, 0.15)',
+            cursor: 'pointer'
           }}
         >
           <Sparkles size={16} />

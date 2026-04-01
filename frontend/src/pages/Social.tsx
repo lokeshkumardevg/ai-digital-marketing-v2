@@ -14,6 +14,24 @@ export const Social: React.FC = () => {
   const { activeWebsiteId } = useSelector((state: any) => state.workspace);
   
   const [content, setContent] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [scheduledTime, setScheduledTime] = useState('');
+  
+  // Dummy state for connected networks
+  const [connectedNetworks, setConnectedNetworks] = useState({
+    linkedin: false,
+    twitter: true,
+    facebook: false
+  });
+
+  const handleConnect = (network: 'linkedin' | 'twitter' | 'facebook') => {
+    // In a real app, this would redirect to backend OAuth routes: window.location.href = `/api/auth/${network}`
+    toast.success(`Redirecting to ${network.charAt(0).toUpperCase() + network.slice(1)} authorization gateway...`);
+    setTimeout(() => {
+      setConnectedNetworks(prev => ({ ...prev, [network]: true }));
+      toast.success(`${network.charAt(0).toUpperCase() + network.slice(1)} Successfully Linked!`);
+    }, 1500);
+  };
 
   useEffect(() => {
     if (status === 'idle') {
@@ -27,7 +45,8 @@ export const Social: React.FC = () => {
     try {
       const promise = dispatch(scheduleSocialPost({ 
         content, 
-        workspaceId: activeWebsiteId 
+        workspaceId: activeWebsiteId,
+        scheduledFor: scheduledTime || undefined
       })).unwrap();
 
       toast.promise(promise, {
@@ -46,6 +65,8 @@ export const Social: React.FC = () => {
         read: false 
       }));
       setContent('');
+      setScheduledTime('');
+      setShowDatePicker(false);
     } catch (err) {
       console.error(err);
       dispatch(addNotification({ 
@@ -71,6 +92,57 @@ export const Social: React.FC = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(400px, 1fr) 1fr', gap: '24px' }}>
         
+        {/* Composer and Connections Column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Network Connections */}
+          <GlassCard>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Share2 size={20} color="var(--accent-primary)" /> Linked Networks
+            </h3>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>Authorize AI agents to post directly to your social endpoints.</p>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {/* LinkedIn */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#0077b5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>in</div>
+                  <span style={{ fontWeight: 600 }}>LinkedIn Profile</span>
+                </div>
+                {connectedNetworks.linkedin ? (
+                  <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600, padding: '4px 12px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '16px' }}>Connected</span>
+                ) : (
+                  <button onClick={() => handleConnect('linkedin')} className="btn-secondary" style={{ padding: '6px 16px', fontSize: '0.8rem' }}>Link Account</button>
+                )}
+              </div>
+              
+              {/* Twitter */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#1da1f2', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>X</div>
+                  <span style={{ fontWeight: 600 }}>Twitter / X</span>
+                </div>
+                {connectedNetworks.twitter ? (
+                  <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600, padding: '4px 12px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '16px' }}>Connected</span>
+                ) : (
+                  <button onClick={() => handleConnect('twitter')} className="btn-secondary" style={{ padding: '6px 16px', fontSize: '0.8rem' }}>Link Account</button>
+                )}
+              </div>
+
+              {/* Facebook */}
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#1877f2', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>f</div>
+                  <span style={{ fontWeight: 600 }}>Facebook Page</span>
+                </div>
+                {connectedNetworks.facebook ? (
+                  <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: 600, padding: '4px 12px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '16px' }}>Connected</span>
+                ) : (
+                  <button onClick={() => handleConnect('facebook')} className="btn-secondary" style={{ padding: '6px 16px', fontSize: '0.8rem' }}>Link Account</button>
+                )}
+              </div>
+            </div>
+          </GlassCard>
+
         {/* Composer */}
         <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'fit-content' }}>
           <div>
@@ -92,9 +164,31 @@ export const Social: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               <button className="btn-secondary" style={{ padding: '8px 12px' }} title="Attach Image"><ImageIcon size={18} /></button>
-              <button className="btn-secondary" style={{ padding: '8px 12px' }} title="Schedule Later"><Clock size={18} /></button>
+              <button 
+                className="btn-secondary" 
+                style={{ 
+                  padding: '8px 12px', 
+                  background: showDatePicker ? 'var(--accent-primary)' : '', 
+                  color: showDatePicker ? '#fff' : '', 
+                  border: showDatePicker ? 'none' : '' 
+                }} 
+                title="Schedule Later" 
+                onClick={() => setShowDatePicker(!showDatePicker)}
+              >
+                <Clock size={18} />
+              </button>
+              
+              {showDatePicker && (
+                <input 
+                  type="datetime-local" 
+                  className="input-field" 
+                  style={{ padding: '6px 12px', height: 'auto', background: 'rgba(255,255,255,0.05)', fontSize: '0.85rem' }} 
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                />
+              )}
             </div>
             <button 
               className="btn btn-primary" 
@@ -102,10 +196,11 @@ export const Social: React.FC = () => {
               disabled={scheduling}
               style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              {scheduling ? 'Broadcasting...' : <><Send size={16} /> Publish Now</>}
+              {scheduling ? 'Broadcasting...' : <><Send size={16} /> {scheduledTime ? 'Schedule Post' : 'Publish Now'}</>}
             </button>
           </div>
         </GlassCard>
+        </div>
 
         {/* Recent & Upcoming Posts Grid */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflowX: 'auto' }}>

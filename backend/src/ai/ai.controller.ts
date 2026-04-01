@@ -50,6 +50,10 @@ export class AiController {
       const aiResponse = await this.aiService.generateContent(prompt, 'You are a veteran technical SEO crawler.');
       const parsedAudit = JSON.parse(aiResponse.replace(/```json|```/g, '').trim());
 
+      if (parsedAudit.score === undefined || !parsedAudit.issues) {
+        throw new Error('Invalid JSON structure returned by Orchestrator');
+      }
+
       return {
         success: true,
         data: {
@@ -59,17 +63,17 @@ export class AiController {
         }
       };
 
-    } catch (error) {
+    } catch (error: any) {
        console.error("SEO Audit backend error", error);
-       // Fallback on structural timeout mock if fetch fails (e.g., CORS/Target down)
+       
        return {
          success: true,
          data: {
-           score: 74,
-           loadTime: '2.1s',
+           score: 0,
+           loadTime: '0.0s',
            issues: [
-             { type: 'error', text: 'Target Server blocked scraper or timed out.' },
-             { type: 'warning', text: 'Render-blocking resources natively inferred.' }
+             { type: 'error', text: `Dynamic Audit Error: ${error.message || 'Unknown network or AI generation failure'}` },
+             { type: 'warning', text: 'Check if the target URL allows scraping or if your Gemini API key is active.' }
            ]
          }
        }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/GlassCard';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -20,6 +20,21 @@ const mockAnalytics = [
 ];
 
 export const Dashboard: React.FC = () => {
+  const [data, setData] = useState<{ daily: any[], summary: any } | null>(null);
+
+  useEffect(() => {
+    fetch('http://localhost:3000/analytics/dashboard')
+      .then(res => res.json())
+      .then(d => setData(d))
+      .catch(console.error);
+  }, []);
+
+  const chartData = data?.daily ? data.daily.map((d: any) => ({
+    name: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
+    traffic: Math.floor(d.spend * 50),
+    conversion: Math.floor(d.spend * 12 * d.roas)
+  })).reverse() : mockAnalytics;
+
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
@@ -57,7 +72,9 @@ export const Dashboard: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '8px' }}>{stat.label}</div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 600, fontFamily: 'Outfit' }}>{stat.value}</div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 600, fontFamily: 'Outfit' }}>
+                  {i === 1 && data ? `${data.summary.roas}x` : i === 3 && data ? Math.floor(data.summary.spend * 12) : stat.value}
+                </div>
               </div>
               <div style={{ 
                 padding: '10px', 
@@ -85,7 +102,7 @@ export const Dashboard: React.FC = () => {
           <h3 style={{ marginBottom: '24px', fontSize: '1.2rem' }}>Traffic vs Conversions (AI Predictive)</h3>
           <div style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockAnalytics}>
+              <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorTraffic" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="var(--accent-primary)" stopOpacity={0.3}/>
