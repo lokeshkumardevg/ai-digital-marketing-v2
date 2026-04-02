@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/GlassCard';
 import { 
   MessageCircle, 
@@ -14,6 +14,17 @@ import toast from 'react-hot-toast';
 export const Messaging: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'whatsapp' | 'email'>('whatsapp');
   const [message, setMessage] = useState('');
+  const [audiences, setAudiences] = useState<any[]>([]);
+  const [selectedAudience, setSelectedAudience] = useState<string>('');
+
+  useEffect(() => {
+    import('../api/axios').then(({ api }) => {
+      api.get('/crm/audiences').then(res => {
+        setAudiences(res.data);
+        if(res.data.length > 0) setSelectedAudience(res.data[0]._id);
+      }).catch(() => {});
+    });
+  }, []);
 
   const demos = activeTab === 'whatsapp' ? [
     { id: 1, to: '+1 234 567 890', status: 'delivered', time: '2m ago', content: 'Hey! Your cart is waiting. Use code AI20 for 20% off.' },
@@ -60,10 +71,17 @@ export const Messaging: React.FC = () => {
            </div>
 
            <div className="input-group">
-              <label>Broadcasting to Audience Segment</label>
-              <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                 <Users size={16} color="var(--info)" /> <strong>Segment:</strong> Q4 Early Adopters (1,240 users)
-              </div>
+              <label>Target Audience Segment</label>
+              <select 
+                className="input-field" 
+                value={selectedAudience} 
+                onChange={e => setSelectedAudience(e.target.value)}
+                style={{ padding: '12px', background: '#ffffff', color: '#141414', cursor: 'pointer' }}
+              >
+                {audiences.length > 0 ? audiences.map(a => (
+                  <option key={a._id} value={a._id}>{a.name} ({a.estimatedSize || 0} users)</option>
+                )) : <option>No segments found...</option>}
+              </select>
            </div>
 
            <div className="input-group">

@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Sparkles, Image, Video, AlignLeft, Search, Calendar, Package, MoreHorizontal, Inbox } from 'lucide-react';
+import { Plus, Sparkles, Image, Video, AlignLeft, Search, Calendar, Package, MoreHorizontal, Inbox, X, Wand2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { api } from '../api/axios';
+import toast from 'react-hot-toast';
+import { GlassCard } from '../components/GlassCard';
 
 // AdsGo-style Creative Hub: "All Creatives" tab, Upload Date/Lifetime filters, Add Creative + AI Creative Generation
 const typeIcon: Record<string, React.ElementType> = { image: Image, video: Video, text: AlignLeft };
@@ -9,30 +13,75 @@ export const Content: React.FC = () => {
   const [search, setSearch] = useState('');
   const [creatives, setCreatives] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showGenModal, setShowGenModal] = useState(false);
+  
+  // Generation Form State
+  const [genTopic, setGenTopic] = useState('');
+  const [genType, setGenType] = useState('blog');
+  const [genTone, setGenTone] = useState('professional');
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
-    fetch('http://localhost:3000/content', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-    })
-    .then(res => res.json())
-    .then(json => {
+    fetchCreatives();
+  }, []);
+
+  const fetchCreatives = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get('/content');
+      const json = response.data;
       const mapped = json.map((c: any) => ({
         id: c._id,
         name: c.title || 'Untitled Creative',
-        type: c.contentType === 'video' ? 'video' : 'image',
-        platform: c.platforms?.[0] || 'Meta',
-        uploadDate: new Date(c.createdAt).toISOString().split('T')[0],
-        lifetime: '2026-03-27 → 2026-04-27',
+        type: c.contentType === 'blog' ? 'text' : (c.contentType === 'video' ? 'video' : 'image'),
+        platform: Array.isArray(c.platforms) ? c.platforms[0] || 'Meta' : 'Meta',
+        uploadDate: new Date(c.createdAt).toLocaleDateString(),
+        lifetime: c.scheduledFor ? `${new Date(c.scheduledFor).toLocaleDateString()} (Scheduled)` : 'Active Forever',
         status: c.status || 'draft'
       }));
       setCreatives(mapped);
-      setLoading(false);
-    })
-    .catch(err => {
+    } catch (err) {
       console.error('Content fetch failed', err);
+    } finally {
       setLoading(false);
-    });
-  }, []);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!genTopic) return toast.error('Please enter a topic for AI generation.');
+    
+    setGenerating(true);
+    toast.loading('AI Agents are drafting your content...', { id: 'gen-content' });
+    
+    try {
+      await api.post('/content/generate', {
+        topic: genTopic,
+        contentType: genType,
+        tone: genTone
+      });
+      toast.success('AI Content Generated & Saved!', { id: 'gen-content' });
+      setShowGenModal(false);
+      setGenTopic('');
+      fetchCreatives();
+    } catch (err) {
+      toast.error('AI Generation failed. Check backend logs.', { id: 'gen-content' });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleAddMock = async () => {
+    toast.loading('Adding creative draft...', { id: 'add-mock' });
+    try {
+      await api.post('/content/generate', { 
+        topic: 'Manual Concept Upload', 
+        contentType: 'image', 
+        tone: 'professional' 
+      }); 
+      toast.success('Creative Added!', { id: 'add-mock' });
+      fetchCreatives();
+    } catch (e) { toast.error('Failed to add content.', { id: 'add-mock' }); }
+  };
 
   const filtered = creatives.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -61,10 +110,10 @@ export const Content: React.FC = () => {
       <div style={{ padding: '20px 32px' }}>
         {/* Action Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
+          <button onClick={handleAddMock} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
             <Plus size={14} /> Add Creative
           </button>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', border: '1.5px solid #c4b5fd', background: 'transparent', color: '#7c3aed', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+          <button onClick={() => setShowGenModal(true)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 18px', borderRadius: '8px', border: '1.5px solid #c4b5fd', background: 'transparent', color: '#7c3aed', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
             <Sparkles size={14} /> AI Creative Generation
           </button>
         </div>
@@ -158,6 +207,59 @@ export const Content: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* AI Generation Modal Overlay */}
+      {showGenModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ width: '100%', maxWidth: '500px' }}>
+            <GlassCard style={{ padding: '32px', position: 'relative' }}>
+               <button onClick={() => setShowGenModal(false)} style={{ position: 'absolute', top: '16px', right: '16px', color: '#94a3b8' }}><X size={20} /></button>
+               
+               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                    <Wand2 size={20} />
+                 </div>
+                 <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>AI Creative Draft</h2>
+               </div>
+
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div className="input-group">
+                    <label>Content Topic / Product Name</label>
+                    <input type="text" className="input-field" value={genTopic} onChange={e => setGenTopic(e.target.value)} placeholder="e.g. AI-Powered Marketing" />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div className="input-group">
+                      <label>Content Type</label>
+                      <select className="input-field" value={genType} onChange={e => setGenType(e.target.value)} style={{ background: '#fff' }}>
+                        <option value="blog">SEO Blog Post</option>
+                        <option value="social_post">Viral Social Post</option>
+                        <option value="image">Image Prompt Only</option>
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <label>Tone of Voice</label>
+                      <select className="input-field" value={genTone} onChange={e => setGenTone(e.target.value)} style={{ background: '#fff' }}>
+                        <option value="professional">Professional</option>
+                        <option value="witty">Witty & Viral</option>
+                        <option value="educational">Educational</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={handleGenerate} 
+                    disabled={generating}
+                    className="btn btn-primary" 
+                    style={{ width: '100%', padding: '16px', fontSize: '1rem', marginTop: '10px' }}
+                  >
+                    {generating ? 'Drafting with AI Agents...' : 'Generate New Creative'}
+                  </button>
+               </div>
+            </GlassCard>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

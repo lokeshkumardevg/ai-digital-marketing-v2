@@ -25,7 +25,7 @@ export const Signup: React.FC = () => {
         error: 'Failed to create account. Email may already be registered.'
       });
       await promise;
-      navigate('/');
+      navigate('/crm');
     } catch (err) {
       console.error('Failed to register:', err);
     }

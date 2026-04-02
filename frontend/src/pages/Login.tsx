@@ -24,7 +24,7 @@ export const Login: React.FC = () => {
         error: 'Login failed. Check your email and password.'
       });
       await promise;
-      navigate('/');
+      navigate('/crm');
     } catch (err) {
       console.error('Failed to log in:', err);
     }

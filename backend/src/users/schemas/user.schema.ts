@@ -16,6 +16,12 @@ export class User {
 
   @Prop({ default: 'free' })
   subscriptionTier: string;
+
+  @Prop({ default: 'client' })
+  role: string; // 'admin', 'client', 'agency'
+
+  @Prop({ default: 0 })
+  walletBalance: number;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

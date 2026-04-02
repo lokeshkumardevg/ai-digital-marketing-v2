@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/GlassCard';
 import { api } from '../api/axios';
+import { SmartTable } from '../components/SmartTable';
 import { 
   CreditCard, CheckCircle2, Crown, Activity
 } from 'lucide-react';
@@ -8,7 +9,9 @@ import {
 export const Billing: React.FC = () => {
   const [sub, setSub] = useState<any>(null);
   const [plans, setPlans] = useState<any>({});
+  const [wallet, setWallet] = useState<any>({ balance: 0, history: [] });
   const [loadingCheckout, setLoadingCheckout] = useState('');
+  const [rechargeAmount, setRechargeAmount] = useState(1000);
 
   useEffect(() => {
     fetchBillingData();
@@ -16,12 +19,14 @@ export const Billing: React.FC = () => {
 
   const fetchBillingData = async () => {
     try {
-      const [subRes, plansRes] = await Promise.all([
+      const [subRes, plansRes, walletRes] = await Promise.all([
         api.get('/billing/subscription'),
-        api.get('/billing/plans')
+        api.get('/billing/plans'),
+        api.get('/billing/wallet').catch(() => ({ data: { balance: 0, history: [] } })) // Fallback
       ]);
       setSub(subRes.data);
       setPlans(plansRes.data);
+      setWallet(walletRes.data);
     } catch (err) {
       // Setup Mock if backend is unreachable
       setPlans({
@@ -56,167 +61,191 @@ export const Billing: React.FC = () => {
     }
   };
 
+  const handleWalletRecharge = async () => {
+    try {
+      await api.post('/billing/wallet/recharge', { amount: rechargeAmount });
+      const walletRes = await api.get('/billing/wallet');
+      setWallet(walletRes.data);
+      alert(`Successfully recharged ₹${rechargeAmount} to your wallet!`);
+    } catch (err) {
+      console.error('Wallet Recharge Failed:', err);
+    }
+  };
+
   if (!sub || !plans.pro) return <div style={{ padding: '40px', color: 'var(--text-secondary)' }}>Loading SaaS Limits...</div>;
 
   const usagePercent = Math.min((sub.aiTokensUsedCurrentBillingCycle / sub.aiTokenLimit) * 100, 100);
   const isDanger = usagePercent > 90;
 
+  const txnColumns = [
+    { key: 'createdAt', label: 'Date', sortable: true, render: (row: any) => new Date(row.createdAt).toLocaleDateString() + ' ' + new Date(row.createdAt).toLocaleTimeString() },
+    { key: 'description', label: 'Description', sortable: true },
+    { key: 'type', label: 'Type', sortable: true, render: (row: any) => (
+       <div style={{ fontWeight: 700, background: row.type === 'CREDIT' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: row.type === 'CREDIT' ? 'var(--success)' : 'var(--error)', padding: '4px 10px', borderRadius: '50px', display: 'inline-block', fontSize: '0.75rem' }}>
+          {row.type}
+       </div>
+    )},
+    { key: 'amount', label: 'Amount', sortable: true, render: (row: any) => (
+       <div style={{ fontWeight: 800 }}>{row.type === 'CREDIT' ? '+' : '-'}₹{row.amount.toLocaleString()}</div>
+    )}
+  ];
+
   return (
-    <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
+    <div className="animate-fade-in" style={{ padding: '0px 20px', maxWidth: '1200px', margin: '0 auto' }}>
+      
+      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <div>
           <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
-            SaaS <span className="text-gradient">Subscriptions & Limits</span>
+            <span style={{ color: 'var(--text-primary)' }}>Billing &</span> <span className="text-gradient">Wallet Systems</span>
           </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Manage your workspace usage and upgrade limits via Stripe.</p>
+          <p style={{ color: 'var(--text-secondary)' }}>Manage your AI limits, recharge your balance, and control billing.</p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 1.2fr) 2fr', gap: '24px', marginBottom: '40px' }}>
+      {/* Top 3 Metric Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginBottom: '32px' }}>
         
-        {/* Left Column: Current Plan & Usage Meter */}
+        {/* Workspace Plan */}
+        <GlassCard>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+             <Crown size={20} color="var(--warning)" />
+             <div style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Active Plan</div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+             <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>{plans[sub.plan]?.name || 'Hobbyist'}</div>
+             <div style={{ background: 'var(--success)', color: '#000', padding: '4px 10px', borderRadius: '50px', fontSize: '0.7rem', fontWeight: 700 }}>{sub.status.toUpperCase()}</div>
+          </div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '12px' }}>
+             Renews {new Date(sub.currentPeriodEnd).toLocaleDateString()}
+          </div>
+        </GlassCard>
+
+        {/* AI Tokens Metric */}
+        <GlassCard>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+             <Activity size={20} color="var(--info)" />
+             <div style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Monthly API Tokens</div>
+          </div>
+          <div style={{ fontSize: '1.8rem', fontWeight: 800 }}>
+             {sub.aiTokensUsedCurrentBillingCycle.toLocaleString()} <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>/ {sub.aiTokenLimit.toLocaleString()}</span>
+          </div>
+          <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden', marginTop: '12px' }}>
+            <div style={{ height: '100%', width: `${usagePercent}%`, background: isDanger ? 'var(--fail)' : 'var(--info)' }}></div>
+          </div>
+        </GlassCard>
+
+        {/* Prepared Wallet */}
+        <GlassCard>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+             <CreditCard size={20} color="var(--success)" />
+             <div style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Prepaid Wallet Balance</div>
+          </div>
+          <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--success)' }}>
+             ₹{wallet.balance.toLocaleString()}
+          </div>
+        </GlassCard>
+
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 1.5fr', gap: '24px', marginBottom: '32px' }}>
+        
+        {/* Left Side: Wallet Top-Up */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          <GlassCard style={{ padding: '0', overflow: 'hidden' }}>
-            <div style={{ background: 'var(--accent-primary)', padding: '24px', color: 'white' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Crown size={20} />
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Plan</span>
-                </div>
-                <div style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>
-                  {sub.status.toUpperCase()}
-                </div>
-              </div>
-              <h2 style={{ fontSize: '2.5rem', fontWeight: 700, margin: '0 0 4px 0' }}>{plans[sub.plan].name}</h2>
-              <div style={{ opacity: 0.9, fontSize: '0.9rem' }}>
-                Renews {new Date(sub.currentPeriodEnd).toLocaleDateString()}
-              </div>
-            </div>
-
-            <div style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>
-                  <Activity size={18} color="var(--info)" /> AI Model Token Usage
-                </div>
-                <div style={{ fontSize: '0.85rem', color: isDanger ? 'var(--fail)' : 'var(--text-secondary)' }}>
-                  {sub.aiTokensUsedCurrentBillingCycle.toLocaleString()} / {sub.aiTokenLimit.toLocaleString()} Used
-                </div>
-              </div>
-              
-              {/* Progress Bar */}
-              <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden', marginBottom: '8px' }}>
-                <div style={{ 
-                  height: '100%', 
-                  width: `${usagePercent}%`, 
-                  background: isDanger ? 'var(--fail)' : 'var(--info)',
-                  transition: 'width 1s ease-in-out',
-                  borderRadius: '4px'
-                }}></div>
-              </div>
-
-              {isDanger && (
-                <div style={{ fontSize: '0.8rem', color: 'var(--fail)', marginTop: '8px', fontWeight: 600 }}>
-                  Approaching Monthly Soft-Limit! Features will be restricted soon.
-                </div>
-              )}
-            </div>
-          </GlassCard>
-
           <GlassCard>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <CreditCard size={18} /> Payment Methods
-            </h3>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '40px', height: '24px', background: '#333', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 600 }}>
-                  Visa
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>•••• •••• •••• 4242</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Expires 12/28</div>
-                </div>
-              </div>
-              <button className="btn" style={{ padding: '6px 12px', fontSize: '0.8rem', background: 'transparent', border: '1px solid var(--glass-border)' }}>Update</button>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '16px' }}>Quick Recharge</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+              {[1000, 5000, 10000].map(amt => (
+                <button 
+                  key={amt} onClick={() => setRechargeAmount(amt)}
+                  className="btn"
+                  style={{ 
+                    padding: '12px', 
+                    background: rechargeAmount === amt ? 'var(--accent-primary)' : 'var(--bg-secondary)', 
+                    border: '1px solid var(--glass-border)', 
+                    color: rechargeAmount === amt ? 'white' : 'var(--text-primary)', 
+                    fontWeight: 600,
+                  }}>
+                  ₹{amt}
+                </button>
+              ))}
+            </div>
+            <button onClick={handleWalletRecharge} className="btn btn-primary" style={{ width: '100%', padding: '14px', fontSize: '1rem' }}>
+              Recharge ₹{rechargeAmount}
+            </button>
+            <div style={{ marginTop: '16px', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+              Secure Payment Processed via Razorpay/Stripe
             </div>
           </GlassCard>
 
         </div>
 
-        {/* Right Column: Pricing Matrix & Checkout */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <h2 style={{ fontSize: '1.4rem', marginBottom: '8px' }}>Upgrade Workflow via Stripe</h2>
+        {/* Right Side: Saas Plans */}
+        <GlassCard>
+          <h2 style={{ fontSize: '1.2rem', marginBottom: '20px', color: '#141414' }}>SaaS Plans & Limits</h2>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-             {/* Pro Plan Card */}
-             <GlassCard style={{ border: sub.plan === 'pro' ? '2px solid var(--accent-primary)' : '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
-               <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)', marginBottom: '8px' }}>Most Popular</div>
-               <h3 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{plans.pro.name}</h3>
-               <div style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '24px', color: 'var(--text-primary)' }}>
-                 ${plans.pro.price}<span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--text-secondary)' }}>/mo</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Pro Plan */}
+            <div style={{ border: sub.plan === 'pro' ? '2px solid var(--accent-primary)' : '1px solid #e2e8f0', background: '#ffffff', borderRadius: '12px', padding: '24px', color: '#141414' }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                 <div>
+                   <h3 style={{ fontSize: '1.4rem', color: '#141414', margin: 0 }}>Growth Pro</h3>
+                   <div style={{ fontSize: '2rem', fontWeight: 800, color: '#141414' }}>$99<span style={{ fontSize: '1rem', color: '#64748b' }}>/mo</span></div>
+                 </div>
+                 {sub.plan === 'pro' && <span style={{ background: 'var(--accent-primary)', color: '#ffffff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Active</span>}
                </div>
                
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px', flex: 1 }}>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                   <CheckCircle2 size={16} color="var(--success)" /> 250,000 AI Tokens
-                 </div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                   <CheckCircle2 size={16} color="var(--success)" /> Meta & Google Ads APIs
-                 </div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                   <CheckCircle2 size={16} color="var(--success)" /> Priority Bot Support
-                 </div>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}><CheckCircle2 size={16} color="var(--success)"/> 250,000 Tokens</div>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}><CheckCircle2 size={16} color="var(--success)"/> Meta & Google Ads Integration</div>
                </div>
-               
-               {sub.plan === 'pro' ? (
-                 <button className="btn btn-secondary" disabled style={{ width: '100%', opacity: 0.5, cursor: 'not-allowed' }}>Current Active Plan</button>
-               ) : (
-                 <button 
-                  className="btn btn-primary" style={{ width: '100%' }} onClick={() => handleUpgrade('pro')}
-                  disabled={loadingCheckout !== ''}
-                 >
-                   {loadingCheckout === 'pro' ? 'Initializing Stripe...' : 'Upgrade Now'}
-                 </button>
-               )}
-             </GlassCard>
 
-             {/* Enterprise Plan Card */}
-             <GlassCard style={{ border: sub.plan === 'enterprise' ? '2px solid var(--warning)' : '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
-               <div style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--warning)', marginBottom: '8px', fontWeight: 600 }}>Dedicated Scaling</div>
-               <h3 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{plans.enterprise.name}</h3>
-               <div style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '24px', color: 'var(--text-primary)' }}>
-                 ${plans.enterprise.price}<span style={{ fontSize: '1rem', fontWeight: 400, color: 'var(--text-secondary)' }}>/mo</span>
+               <button 
+                  onClick={() => handleUpgrade('pro')} disabled={sub.plan === 'pro' || loadingCheckout !== ''}
+                  className={sub.plan === 'pro' ? "btn btn-secondary" : "btn btn-primary"}
+                  style={{ width: '100%', color: sub.plan === 'pro' ? '#141414' : '#ffffff', opacity: sub.plan === 'pro' ? 0.7 : 1 }}>
+                  {loadingCheckout === 'pro' ? 'Redirecting...' : sub.plan === 'pro' ? 'Current Plan (Active)' : 'Upgrade to Pro'}
+               </button>
+            </div>
+
+            {/* Enterprise */}
+            <div style={{ border: sub.plan === 'enterprise' ? '2px solid var(--warning)' : '1px solid #e2e8f0', background: '#ffffff', borderRadius: '12px', padding: '24px', color: '#141414' }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                 <div>
+                   <h3 style={{ fontSize: '1.4rem', color: '#141414', margin: 0 }}>Enterprise</h3>
+                   <div style={{ fontSize: '2rem', fontWeight: 800, color: '#141414' }}>$499<span style={{ fontSize: '1rem', color: '#64748b' }}>/mo</span></div>
+                 </div>
+                 {sub.plan === 'enterprise' && <span style={{ background: 'var(--warning)', color: '#000000', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Active</span>}
                </div>
-               
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px', flex: 1 }}>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                   <CheckCircle2 size={16} color="var(--warning)" /> 2,000,000 AI Tokens
-                 </div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                   <CheckCircle2 size={16} color="var(--warning)" /> Custom LLM Fine-Tuning
-                 </div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                   <CheckCircle2 size={16} color="var(--warning)" /> White-Label Reports
-                 </div>
+
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}><CheckCircle2 size={16} color="var(--warning)"/> 2,000,000 Tokens</div>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}><CheckCircle2 size={16} color="var(--warning)"/> Dedicated Account Manager</div>
                </div>
-               
-               {sub.plan === 'enterprise' ? (
-                 <button className="btn btn-secondary" disabled style={{ width: '100%', opacity: 0.5, cursor: 'not-allowed' }}>Current Active Plan</button>
-               ) : (
-                 <button 
-                  className="btn" 
-                  style={{ width: '100%', background: 'transparent', border: '1px solid var(--warning)', color: 'var(--warning)' }} 
-                  onClick={() => handleUpgrade('enterprise')}
-                  disabled={loadingCheckout !== ''}
-                 >
-                   {loadingCheckout === 'enterprise' ? 'Processing...' : 'Contact Sales (Upgrade)'}
-                 </button>
-               )}
-             </GlassCard>
+
+               <button 
+                  onClick={() => handleUpgrade('enterprise')} disabled={sub.plan === 'enterprise' || loadingCheckout !== ''}
+                  className="btn btn-secondary"
+                  style={{ width: '100%', color: '#141414', fontWeight: 700, border: '2px solid var(--warning)', opacity: sub.plan === 'enterprise' ? 0.7 : 1 }}>
+                  {loadingCheckout === 'enterprise' ? 'Processing...' : sub.plan === 'enterprise' ? 'Current Plan (Active)' : 'Contact Sales'}
+               </button>
+            </div>
           </div>
-        </div>
+        </GlassCard>
 
       </div>
+
+      {/* Transaction History Datatable using SmartTable */}
+      <GlassCard>
+         <SmartTable 
+            title="Wallet Transactions History"
+            columns={txnColumns}
+            data={wallet.history || []}
+            searchPlaceholder="Search by ID or description..."
+         />
+      </GlassCard>
+
     </div>
   );
 };

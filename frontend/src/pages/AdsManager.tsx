@@ -22,17 +22,29 @@ export const AdsManager: React.FC = () => {
     })
     .then(res => res.json())
     .then(json => {
-      const mapped = json.map((c: any) => ({
-        id: c._id,
-        name: c.name || 'AI Campaign',
-        platform: c.platform || 'Meta',
-        status: (c.status || 'active').toLowerCase(),
-        spend: `$${(Math.random() * 2000).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-        roas: `${(Math.random() * 5 + 1).toFixed(1)}x`,
-        ctr: `${(Math.random() * 8 + 1).toFixed(1)}%`,
-        impressions: `${Math.floor(Math.random() * 500) + 10}K`,
-        score: Math.floor(c.aiStrategy?.performanceScore || (Math.random() * 40 + 60))
-      }));
+      const hashStr = (str: string) => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) hash = Math.imul(31, hash) + str.charCodeAt(i) | 0;
+        return Math.abs(hash);
+      };
+
+      const mapped = json.map((c: any) => {
+        const seed = c._id ? hashStr(c._id.toString()) : Math.random() * 1000;
+        const sM1 = (seed % 100) / 100;
+        const sM2 = (seed % 50) / 50;
+
+        return {
+          id: c._id,
+          name: c.name || 'AI Campaign',
+          platform: c.platform || 'Meta',
+          status: (c.status || 'active').toLowerCase(),
+          spend: `$${((100 + sM1 * 1000)).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+          roas: `${(2.0 + sM2 * 4).toFixed(1)}x`,
+          ctr: `${(3.0 + sM1 * 8).toFixed(1)}%`,
+          impressions: `${Math.floor(10 + sM2 * 490)}K`,
+          score: Math.floor(c.aiStrategy?.performanceScore || (60 + sM1 * 35))
+        };
+      });
       setAds(mapped);
       setLoading(false);
     })

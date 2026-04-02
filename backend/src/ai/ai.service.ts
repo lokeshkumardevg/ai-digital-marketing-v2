@@ -23,19 +23,22 @@ export class AiService {
 
   async generateContent(prompt: string, context?: string): Promise<string> {
     try {
-      this.logger.log('Attempting request with Gemini (Primary)...');
-      return await this.useGemini(prompt, context);
+      if (this.openai) {
+        this.logger.log('Executing AI Request with OpenAI GPT-4 (Primary)...');
+        return await this.useOpenAI(prompt, context);
+      }
+      throw new Error('OpenAI client not configured.');
     } catch (error: any) {
-      this.logger.warn(`Gemini failed: ${error.message}. Attempting Fallback (OpenAI)...`);
+      this.logger.warn(`OpenAI high-priority request failed: ${error.message}. Routing to Gemini (Secondary)...`);
       try {
-        if (this.openai) {
-          return await this.useOpenAI(prompt, context);
+        if (this.gemini) {
+          return await this.useGemini(prompt, context);
         }
-        throw new Error('OpenAI not configured');
+        throw new Error('Gemini fallback unavailable.');
       } catch (fallbackError: any) {
-        this.logger.error(`All providers failed: ${fallbackError.message}`);
+        this.logger.error(`Critical: Both OpenAI and Gemini providers failed: ${fallbackError.message}`);
         // Return a stable mock/fallback response instead of crashing the entire request
-        return '{"productSummary": "AI Service currently busy. Please try again.", "audience": "General Market", "ads": [{"headline": "Boost Your Marketing", "text": "Our AI is working hard to generate your strategy. Please refresh in a moment."}], "recommendedBudget": 50, "visualStyle": "Professional"}';
+        return '{"productSummary": "AI Core busy. Standard response activated.", "audience": "General Market", "ads": [{"headline": "Boost Your Marketing", "text": "Our agents are currently optimizing your results."}], "recommendedBudget": 50, "visualStyle": "Professional"}';
       }
     }
   }
@@ -63,12 +66,13 @@ export class AiService {
       throw new Error('OpenAI client not initialized');
     }
     const response = await this.openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o', // Using GPT-4o for High Quality Real-time Creative Hub Logic
       messages: [
-        { role: 'system', content: context || 'You are an expert AI Marketing Assistant.' },
+        { role: 'system', content: context || 'You are an elite AI Marketing strategist and copywriter.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
+      max_tokens: 1500
     });
     return response.choices[0].message.content || '';
   }
