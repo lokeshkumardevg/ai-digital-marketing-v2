@@ -10,6 +10,7 @@ export class AiService {
   private gemini: GoogleGenerativeAI | null = null;
 
   constructor(private configService: ConfigService) {
+    console.log('AI Service Constructor', this.configService.get<string>('OPENAI_API_KEY'));
     const openAiKey = this.configService.get<string>('OPENAI_API_KEY');
     if (openAiKey) {
       this.openai = new OpenAI({ apiKey: openAiKey });
