@@ -1,0 +1,42 @@
+import React from 'react';
+
+interface ContentTabsProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
+
+const ContentTabs: React.FC<ContentTabsProps> = ({ activeTab, onTabChange }) => {
+  return (
+    <div
+      style={{
+        background: '#fff',
+        borderBottom: '1px solid #e8eaf0',
+        padding: '0 32px',
+      }}
+    >
+      <div style={{ display: 'flex', gap: '0', padding: '0' }}>
+        {['All Creatives'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => onTabChange(tab)}
+            style={{
+              padding: '14px 20px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              color: activeTab === tab ? '#7c3aed' : '#64748b',
+              borderBottom:
+                activeTab === tab ? '2px solid #7c3aed' : '2px solid transparent',
+            }}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default ContentTabs;

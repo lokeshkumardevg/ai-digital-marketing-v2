@@ -1,8 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+   app.use(express.json({ limit: '15mb' }));
+  app.use(express.urlencoded({ limit: '15mb', extended: true }));
   
   // Enable Global CORS for React Frontend Client
   app.enableCors({

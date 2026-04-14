@@ -1,3 +1,5 @@
+
+
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
@@ -9,13 +11,25 @@ export class Content {
   title: string;
 
   @Prop({ required: true })
-  contentType: string; // 'blog', 'social_post', 'email'
+contentType: string; // 'blog', 'social_post', 'email', 'image', 'video', 'text'
 
   @Prop()
   body: string;
 
   @Prop()
   imageUrl: string;
+
+  @Prop()
+thumbnailUrl: string;
+
+@Prop()
+lifetimeStart: Date;
+
+@Prop()
+lifetimeEnd: Date;
+
+@Prop({ default: false })
+isManualCreative: boolean;
 
   @Prop([String])
   platforms: string[]; // e.g., ['linkedin', 'twitter', 'wordpress']

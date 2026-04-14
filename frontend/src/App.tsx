@@ -30,6 +30,7 @@ import { Pricing } from './pages/Pricing';
 import { Templates } from './pages/Templates';
 import { hydrateSession } from './store/slices/authSlice';
 import { addNotification } from './store/slices/notificationSlice';
+
 import io from 'socket.io-client';
 import type { AppDispatch } from './store';
 import { Activity } from 'lucide-react';
@@ -181,6 +182,8 @@ const App: React.FC = () => {
         <Route path="/brand/goal" element={<ProtectedRoute requiredPermission="settings"><DashboardLayoutFull><OptimizeGoal /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/brand/profile" element={<ProtectedRoute requiredPermission="settings"><DashboardLayoutFull><BrandProfile /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/brand/products" element={<ProtectedRoute requiredPermission="settings"><DashboardLayoutFull><Products /></DashboardLayoutFull></ProtectedRoute>} />
+        
+        
       </Routes>
     </Router>
   );
