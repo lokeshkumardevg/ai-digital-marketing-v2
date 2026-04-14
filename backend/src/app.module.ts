@@ -1,13 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RedisModule } from '@nestjs-modules/ioredis';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AiModule } from './ai/ai.module';
-// Future Module Imports
-// import { AuthModule } from './auth/auth.module';
-// import { CampaignsModule } from './campaigns/campaigns.module';
-// import { BillingModule } from './billing/billing.module';
-
 import { AppGateway } from './app.gateway';
 import { GatewayModule } from './gateway.module';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -30,10 +26,18 @@ import { WorkflowsModule } from './workflows/workflows.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    RedisModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'single',
+        url: configService.get('REDIS_URL') || 'redis://localhost:6379',
+      }),
+      inject: [ConfigService],
+    }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI') || 'mongodb://localhost:27017/nexgen_marketing',
+        uri: configService.get<string>('mongodb+srv://devclientg:SCpLNaejWusV7mcR@cluster0.vyinynw.mongodb.net/ai_digital?retryWrites=true&w=majority') || 'mongodb+srv://devclientg:SCpLNaejWusV7mcR@cluster0.vyinynw.mongodb.net/ai_digital?retryWrites=true&w=majority',
       }),
       inject: [ConfigService],
     }),
@@ -56,3 +60,4 @@ import { WorkflowsModule } from './workflows/workflows.module';
   providers: [AppService],
 })
 export class AppModule {}
+

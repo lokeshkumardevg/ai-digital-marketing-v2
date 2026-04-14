@@ -60,12 +60,19 @@ export const Crm: React.FC = () => {
       setAudiences(resAud.data);
       
       const summary = resAnal.data.summary;
-      setKpis(prev => prev.map(k => ({
-        ...k,
-        value: k.key === 'ctr' || k.key === 'roas' ? 
-               (typeof summary[k.key] === 'string' ? summary[k.key] : summary[k.key].toFixed(2)) + (k.key === 'ctr' ? '%' : '') : 
-               `$${parseFloat(summary[k.key]).toLocaleString()}`
-      })));
+   setKpis(prev => prev.map(k => {
+  const rawValue = summary?.[k.key]; // safe access with ?
+  
+  if (rawValue === undefined || rawValue === null) {
+    return { ...k, value: k.key === 'ctr' ? '0%' : '$0' };
+  }
+
+  const formattedValue = (k.key === 'ctr' || k.key === 'roas')
+    ? (typeof rawValue === 'string' ? rawValue : rawValue.toFixed(2)) + (k.key === 'ctr' ? '%' : '')
+    : `$${parseFloat(rawValue).toLocaleString()}`;
+
+  return { ...k, value: formattedValue };
+}));
       setLoading(false);
     } catch (error) {
       console.error('CRM Fetch Failed', error);
@@ -202,20 +209,20 @@ export const Crm: React.FC = () => {
         </div>
 
         {/* RESTORED Original Table Section */}
-        <div style={{ marginTop: '32px' }}>
-          <SmartTable 
-            title="Daily Performance Analytics"
-            columns={[
-              { key: 'date', label: 'Node Date', sortable: true, render: (row) => <span style={{ fontWeight: 700, color: '#1a202c' }}>{row.date}</span> },
-              { key: 'spend', label: 'Daily Spend', sortable: true, render: (row) => <span style={{ fontWeight: 800, color: '#7c3aed' }}>${row.spend.toFixed(2)}</span> },
-              { key: 'cpm', label: 'CPM', sortable: true, render: (r) => `$${r.cpm.toFixed(2)}` },
-              { key: 'cpc', label: 'CPC', sortable: true, render: (r) => `$${r.cpc.toFixed(2)}` },
-              { key: 'ctr', label: 'CTR Matrix', sortable: true, render: (r) => <span style={{ fontWeight: 600 }}>{r.ctr.toFixed(2)}%</span> },
-              { key: 'roas', label: 'ROAS Factor', sortable: true, render: (r) => <span style={{ fontWeight: 800, color: '#16a34a' }}>{r.roas.toFixed(2)}x</span> }
-            ]}
-            data={analyticsData.daily.slice().reverse()}
-          />
-        </div>
+<div style={{ marginTop: '32px' }}>
+  <SmartTable 
+    title="Daily Performance Analytics"
+    columns={[
+      { key: 'date', label: 'Node Date', sortable: true, render: (row) => <span style={{ fontWeight: 700, color: '#1a202c' }}>{row.date}</span> },
+      { key: 'spend', label: 'Daily Spend', sortable: true, render: (row) => <span style={{ fontWeight: 800, color: '#7c3aed' }}>${row.spend?.toFixed(2) ?? '0.00'}</span> },
+      { key: 'cpm', label: 'CPM', sortable: true, render: (r) => `$${r.cpm?.toFixed(2) ?? '0.00'}` },
+      { key: 'cpc', label: 'CPC', sortable: true, render: (r) => `$${r.cpc?.toFixed(2) ?? '0.00'}` },
+      { key: 'ctr', label: 'CTR Matrix', sortable: true, render: (r) => <span style={{ fontWeight: 600 }}>{r.ctr?.toFixed(2) ?? '0.00'}%</span> },
+      { key: 'roas', label: 'ROAS Factor', sortable: true, render: (r) => <span style={{ fontWeight: 800, color: '#16a34a' }}>{r.roas?.toFixed(2) ?? '0.00'}x</span> }
+    ]}
+    data={analyticsData?.daily?.slice().reverse() ?? []}
+  />
+</div>
 
       </div>
     </div>

@@ -22,6 +22,28 @@ export class User {
 
   @Prop({ default: 0 })
   walletBalance: number;
+
+  @Prop()
+  googleDeveloperToken?: string;
+
+  @Prop()
+  googleClientId?: string;
+
+  @Prop()
+  googleClientSecret?: string;
+
+  @Prop()
+  googleRefreshToken?: string;
+
+  @Prop()
+  metaAppId?: string;
+
+  @Prop()
+  metaAppSecret?: string;
+
+  @Prop()
+  metaAccessToken?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UnauthorizedException, Get, Request, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException, Get, Request, UseGuards, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -31,4 +31,17 @@ export class AuthController {
   async updateProfile(@Request() req: any, @Body() updateDto: any) {
     return this.authService.updateProfile(req.user.id, updateDto);
   }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('google/callback')
+  async googleCallback(@Request() req: any, @Body() body: { code: string }) {
+    return this.authService.handleGoogleCallback(req.user.id, body.code);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('meta/callback')
+  async metaCallback(@Request() req: any, @Body() body: { code: string; state: string }) {
+    return this.authService.handleMetaCallback(req.user.id, body.code, body.state);
+  }
 }
+

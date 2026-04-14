@@ -1,139 +1,106 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, Logger, UseGuards, Request, Param, Delete, Query } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AiService } from './ai.service';
-import * as cheerio from 'cheerio';
 
 @Controller('ai')
 export class AiController {
+  private readonly logger = new Logger(AiController.name);
+
   constructor(private readonly aiService: AiService) {}
 
-  @Post('generate')
+  @UseGuards(AuthGuard('jwt'))
+  @Post('market-research')
   @HttpCode(HttpStatus.OK)
-  async generateText(@Body() body: { prompt: string; context?: string }) {
-    const result = await this.aiService.generateContent(body.prompt, body.context || '');
-
-    return {
-      success: true,
-      data: result,
-      orchestrator_route: 'resolved',
-    };
+  async runMarketResearch(
+    @Body() body: { url: string; brandName: string },
+    @Request() req: any,
+  ) {
+    this.logger.log(`Market research request for: ${body.brandName}`);
+    return this.aiService.runMarketResearch(body.url, body.brandName, req.user?.id);
   }
 
-  @Post('seo-audit')
+  @UseGuards(AuthGuard('jwt'))
+  @Post('competitor-analysis')
   @HttpCode(HttpStatus.OK)
-  async runSeoAudit(@Body() body: { url: string }) {
-    try {
-      const startTime = Date.now();
+  async runCompetitorAnalysis(
+    @Body() body: { url: string; brandName: string },
+    @Request() req: any,
+  ) {
+    this.logger.log(`Competitor analysis request for: ${body.brandName}`);
+    return this.aiService.runCompetitorAnalysis(body.url, body.brandName, req.user?.id);
+  }
 
-      const response = await fetch(body.url, {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
-      });
+  @UseGuards(AuthGuard('jwt'))
+  @Post('audience-insights')
+  @HttpCode(HttpStatus.OK)
+  async runAudienceInsights(
+    @Body() body: { url: string; brandName: string },
+    @Request() req: any,
+  ) {
+    this.logger.log(`Audience insights request for: ${body.brandName}`);
+    return this.aiService.runAudienceInsights(body.url, body.brandName, req.user?.id);
+  }
 
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
-      }
+  @UseGuards(AuthGuard('jwt'))
+  @Post('campaign-strategy')
+  @HttpCode(HttpStatus.OK)
+  async runCampaignStrategy(
+    @Body() body: { url: string; brandName: string },
+    @Request() req: any,
+  ) {
+    this.logger.log(`Campaign strategy request for: ${body.brandName}`);
+    return this.aiService.runCampaignStrategy(body.url, body.brandName, req.user?.id);
+  }
 
-      const htmlText = await response.text();
-      const loadTime = ((Date.now() - startTime) / 1000).toFixed(1) + 's';
+  @UseGuards(AuthGuard('jwt'))
+  @Post('copy-generation')
+  @HttpCode(HttpStatus.OK)
+  async runCopyGeneration(
+    @Body() body: { url: string; brandName: string },
+    @Request() req: any,
+  ) {
+    this.logger.log(`Copy generation request for: ${body.brandName}`);
+    return this.aiService.runCopyGeneration(body.url, body.brandName, req.user?.id);
+  }
 
-      const $ = cheerio.load(htmlText);
+  @UseGuards(AuthGuard('jwt'))
+  @Post('creative-testing')
+  @HttpCode(HttpStatus.OK)
+  async runCreativeTesting(
+    @Body() body: { url: string; brandName: string },
+    @Request() req: any,
+  ) {
+    this.logger.log(`Creative testing request for: ${body.brandName}`);
+    return this.aiService.runCreativeTesting(body.url, body.brandName, req.user?.id);
+  }
 
-      const meta = {
-        title: $('title').text() || 'No title found',
-        description: $('meta[name="description"]').attr('content') || 'No meta description found',
-        canonical: $('link[rel="canonical"]').attr('href') || 'Not set',
-        ogTitle: $('meta[property="og:title"]').attr('content') || 'Not set',
-        ogImage: $('meta[property="og:image"]').attr('content') || 'Not set',
-        h1: $('h1')
-          .map((i, el) => $(el).text())
-          .get()
-          .slice(0, 3)
-          .join(', '),
-        h2Count: $('h2').length,
-        images: $('img').length,
-        imagesWithAlt: $('img[alt]').length,
-        links: $('a').length,
-        externalLinks: $('a[href^="http"]').length,
-      };
+  /**
+   * GET /ai/history - Fetch user's analysis history
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Get('history')
+  @HttpCode(HttpStatus.OK)
+  async getAnalysisHistory(
+    @Query('limit') limit: string = '50',
+    @Request() req: any,
+  ) {
+    this.logger.log(`Fetching analysis history for user: ${req.user?.id}`);
+    const limitNum = Math.min(parseInt(limit) || 50, 100); // Cap at 100
+    return this.aiService.getAnalysisHistory(req.user?.id, limitNum);
+  }
 
-      const prompt = `Act as an elite Technical SEO Auditor at Semrush. Analyze the extracted data for ${body.url}:
-      
-Title: ${meta.title}
-Description: ${meta.description}
-Canonical: ${meta.canonical}
-H1 Tags: ${meta.h1}
-H2 Count: ${meta.h2Count}
-Total Images: ${meta.images} (Alt text present: ${meta.imagesWithAlt})
-Total Links: ${meta.links} (External: ${meta.externalLinks})
-Load Time: ${loadTime}
-
-Based on these metrics, return a SEMRUSH-STYLE SEO Audit.
-
-Return ONLY raw JSON in this exact structure:
-{
-  "score": <number 1-100 indicating Site Health>,
-  "stats": {
-    "totalErrors": <count>,
-    "totalWarnings": <count>,
-    "totalNotices": <count>
-  },
-  "details": {
-    "titleLength": <number of characters>,
-    "titleStatus": "optimal" | "too_long" | "too_short" | "missing",
-    "descLength": <number of characters>,
-    "descStatus": "optimal" | "too_long" | "too_short" | "missing",
-    "hasSsl": <boolean>,
-    "mobileFriendly": <boolean>,
-    "altOptimization": <number 1-100>
-  },
-  "issues": [
-     {"type": "error" | "warning" | "notice", "category": "Crawlability" | "HTTPS" | "On-Page" | "Performance", "text": "Specific recommendation"}
-  ]
-}`;
-
-      const aiResponse = await this.aiService.generateContent(
-        prompt,
-        'You are a veteran technical SEO crawler and analyst at Semrush.',
-      );
-
-      const cleanedResponse = aiResponse.replace(/```json|```/g, '').trim();
-      const parsedAudit = JSON.parse(cleanedResponse);
-
-      return {
-        success: true,
-        data: {
-          score: parsedAudit.score,
-          loadTime,
-          meta,
-          details: parsedAudit.details,
-          issues: parsedAudit.issues,
-        },
-      };
-    } catch (error: any) {
-      console.error('SEO Audit backend error', error);
-
-      return {
-        success: false,
-        error: error.message || 'Unknown network or AI generation failure',
-        data: {
-          score: 0,
-          loadTime: '0.0s',
-          issues: [
-            {
-              type: 'error',
-              category: 'Network',
-              text: `Dynamic Audit Error: ${error.message}`,
-            },
-            {
-              type: 'warning',
-              category: 'Access',
-              text: 'Target site might be blocking AI crawlers. Check robots.txt.',
-            },
-          ],
-        },
-      };
-    }
+  /**
+   * DELETE /ai/history/:id - Delete a specific analysis
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Delete('history/:id')
+  @HttpCode(HttpStatus.OK)
+  async deleteAnalysis(
+    @Param('id') analysisId: string,
+    @Request() req: any,
+  ) {
+    this.logger.log(`Deleting analysis ${analysisId} for user: ${req.user?.id}`);
+    await this.aiService.deleteAnalysis(analysisId, req.user?.id);
+    return { success: true, message: 'Analysis deleted' };
   }
 }
