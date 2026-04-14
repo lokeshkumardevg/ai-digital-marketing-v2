@@ -59,6 +59,18 @@ export const Settings: React.FC = () => {
     }
   };
 
+  const connectGoogle = () => {
+    const clientId = user?.googleClientId || 'YOUR_GOOGLE_CLIENT_ID'; // Replace with actual or from env
+    const state = btoa(JSON.stringify({ userId: user?.id }));
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=http://localhost:3001/callback&response_type=code&scope=https://www.googleapis.com/auth/adwords&state=${state}&access_type=offline&prompt=consent`;
+  };
+
+  const connectMeta = () => {
+    const appId = user?.metaAppId || 'YOUR_META_APP_ID';
+    const state = btoa(JSON.stringify({ userId: user?.id }));
+    window.location.href = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}&redirect_uri=http://localhost:3001/callback&scope=ads_read,ads_management&response_type=code&state=${state}`;
+  };
+
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
       <div style={{ marginBottom: '32px' }}>
@@ -127,7 +139,7 @@ export const Settings: React.FC = () => {
             {activeTab === 'api' && (
               <div className="animate-fade-in">
                 <h3 style={{ fontSize: '1.2rem', marginBottom: '24px' }}>API Integrations</h3>
-                <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.9rem' }}>Connect third-party models to bypass SaaS token limits.</p>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '0.9rem' }}>Connect third-party models and ad platforms.</p>
                 
                 <div className="input-group">
                   <label>OpenAI Secret Key</label>
@@ -136,6 +148,38 @@ export const Settings: React.FC = () => {
                 <div className="input-group">
                   <label>Google Gemini Key</label>
                   <input type="password" placeholder="AIza..." className="input-field" value={geminiKey} onChange={e => setGeminiKey(e.target.value)} />
+                </div>
+
+                <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
+                  <h4 style={{ fontSize: '1rem', marginBottom: '16px', color: '#374151' }}>Ad Platforms</h4>
+                  
+                  <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
+                    <button 
+                      onClick={connectGoogle}
+                      disabled={!user?.id}
+                      style={{ 
+                        flex: 1, padding: '12px', 
+                        background: user?.googleRefreshToken ? '#d1d5db' : 'linear-gradient(135deg, #4285f4, #34a853)', 
+                        color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.googleRefreshToken ? 'default' : 'pointer' 
+                      }}
+                    >
+                      🔗 {user?.googleRefreshToken ? 'Google Ads Connected ✓' : 'Connect Google Ads'}
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <button 
+                      onClick={connectMeta}
+                      disabled={!user?.id}
+                      style={{ 
+                        flex: 1, padding: '12px', 
+                        background: user?.metaAccessToken ? '#d1d5db' : 'linear-gradient(135deg, #1877f2, #0e5a8a)', 
+                        color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.metaAccessToken ? 'default' : 'pointer' 
+                      }}
+                    >
+                      𝕄 {user?.metaAccessToken ? 'Meta Ads Connected ✓' : 'Connect Meta Ads'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -182,3 +226,4 @@ export const Settings: React.FC = () => {
     </div>
   );
 };
+

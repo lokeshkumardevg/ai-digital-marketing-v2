@@ -21,6 +21,8 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@nestjs-modules/ioredis": "^2.2.1",
+    "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
@@ -32,7 +34,9 @@
     "@nestjs/platform-socket.io": "^11.1.17",
     "@nestjs/websockets": "^11.1.17",
     "bcrypt": "^6.0.0",
+    "cache-manager": "^7.2.8",
     "cheerio": "^1.2.0",
+    "google-ads-api": "^23.0.0",
     "ioredis": "^5.10.1",
     "mongoose": "^9.3.2",
     "openai": "^6.32.0",
