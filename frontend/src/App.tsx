@@ -1,33 +1,34 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Header } from './components/Header';
-import { Sidebar } from './components/Sidebar';
-import { Crm } from './pages/Crm';
-import { Campaigns } from './pages/Campaigns';
-import { Content } from './pages/Content';
-import { ChatbotBuilder } from './pages/Chatbot';
-import { Analytics } from './pages/Analytics';
-import { Billing } from './pages/Billing';
-import { Login } from './pages/Login';
-import { Signup } from './pages/Signup';
-import { Settings } from './pages/Settings';
-import { Seo } from './pages/Seo';
-import { Social } from './pages/Social';
-import { Agents } from './pages/Agents';
-import { Roles } from './pages/Roles';
-import { Workflows } from './pages/Workflows';
-import { Messaging } from './pages/Messaging';
-import { AdsManager } from './pages/AdsManager';
-import { DraftAiRecs } from './pages/DraftAiRecs';
-import { AdInsights } from './pages/AdInsights';
-import { AiAnalysis } from './pages/AiAnalysis';
-import { OptimizeGoal } from './pages/OptimizeGoal';
-import { BrandProfile } from './pages/BrandProfile';
-import { Products } from './pages/Products';
-import { LandingPage } from './pages/LandingPage';
-import { Pricing } from './pages/Pricing';
-import { Templates } from './pages/Templates';
+import { Header } from './dashboard/components/Header';
+import { Sidebar } from './dashboard/components/Sidebar';
+import { Crm } from './dashboard/pages/Crm';
+import { Campaigns } from './dashboard/pages/Campaigns';
+import { Content } from './dashboard/pages/Content';
+import { ChatbotBuilder } from './dashboard/pages/Chatbot';
+import { Analytics } from './dashboard/pages/Analytics';
+import { Billing } from './dashboard/pages/Billing';
+// @ts-ignore
+import Home from './landing/pages/Home';
+// @ts-ignore
+import Register from './landing/pages/Register';
+import { Settings } from './dashboard/pages/Settings';
+import { Seo } from './dashboard/pages/Seo';
+import { Social } from './dashboard/pages/Social';
+import { Agents } from './dashboard/pages/Agents';
+import { Roles } from './dashboard/pages/Roles';
+import { Workflows } from './dashboard/pages/Workflows';
+import { Messaging } from './dashboard/pages/Messaging';
+import { AdsManager } from './dashboard/pages/AdsManager';
+import { DraftAiRecs } from './dashboard/pages/DraftAiRecs';
+import { AdInsights } from './dashboard/pages/AdInsights';
+import { AiAnalysis } from './dashboard/pages/AiAnalysis';
+import { OptimizeGoal } from './dashboard/pages/OptimizeGoal';
+import { BrandProfile } from './dashboard/pages/BrandProfile';
+import { Products } from './dashboard/pages/Products';
+
+import { Templates } from './dashboard/pages/Templates';
 import { hydrateSession } from './store/slices/authSlice';
 import { addNotification } from './store/slices/notificationSlice';
 
@@ -148,11 +149,11 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/landing" element={<LandingPage />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/landing" element={<Home />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Register />} />
+        <Route path="/signup" element={<Register />} />
 
         {/* Dashboard Routes — AdsGo full-bleed pages */}
         <Route path="/crm" element={<ProtectedRoute><DashboardLayoutFull><Crm /></DashboardLayoutFull></ProtectedRoute>} />

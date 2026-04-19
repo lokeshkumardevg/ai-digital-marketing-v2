@@ -38,3 +38,4 @@ prisma/migrations/
 
 # Uploads / generated
 uploads/
+.npm-cache/
