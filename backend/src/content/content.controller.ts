@@ -52,12 +52,27 @@ export class ContentController {
   }
 
   @Post('fetch-url-images')
-  async fetchUrlImages(@Body() body: FetchUrlImagesDto) {
-    return this.contentService.fetchUrlImages(body.url);
+  async fetchUrlImages(@Body() dto: FetchUrlImagesDto) {
+    return this.contentService.fetchUrlImages(dto.url);
   }
 
   @Post('generate-reference-creative')
   async generateReferenceCreative(@Body() body: GenerateReferenceCreativeDto) {
     return this.contentService.generateReferenceCreative(body);
   }
+
+  @Patch(':id')
+async updateContent(
+  @Param('id') id: string,
+  @Body()
+  body: {
+    title?: string;
+    thumbnailUrl?: string;
+    lifetimeStart?: string;
+    lifetimeEnd?: string;
+    status?: string;
+  },
+) {
+  return this.contentService.updateContent(id, body);
+}
 }
