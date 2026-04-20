@@ -1,8 +1,13 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { chromium } from 'playwright';
 import axios from 'axios';
-import * as cheerio from 'cheerio';
 import { Content, ContentDocument } from './schemas/content.schema';
 import { AiService } from '../ai/ai.service';
 
@@ -14,6 +19,245 @@ export class ContentService {
     @InjectModel(Content.name) private readonly contentModel: Model<ContentDocument>,
     private readonly aiService: AiService,
   ) {}
+
+ async fetchUrlImages(url: string) {
+  if (!url?.trim()) {
+    throw new BadRequestException('URL is required');
+  }
+
+  let normalizedUrl: string;
+  try {
+    normalizedUrl = new URL(url).href;
+  } catch {
+    throw new BadRequestException('Please enter a valid URL');
+  }
+
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
+
+  try {
+    browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 2200 },
+      userAgent:
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      locale: 'en-US',
+      javaScriptEnabled: true,
+    });
+
+    const page = await context.newPage();
+
+    const networkImageSet = new Set<string>();
+
+    page.on('response', async (response) => {
+      try {
+        const headers = response.headers();
+        const contentType = String(headers['content-type'] || '').toLowerCase();
+        const responseUrl = response.url();
+
+        if (
+          contentType.startsWith('image/') ||
+          /\.(jpg|jpeg|png|webp|gif|svg)(\?|$)/i.test(responseUrl)
+        ) {
+          networkImageSet.add(responseUrl);
+        }
+      } catch {
+        // ignore response parsing issues
+      }
+    });
+
+    await page.goto(normalizedUrl, {
+      waitUntil: 'domcontentloaded',
+      timeout: 45000,
+    });
+
+    try {
+      await page.waitForLoadState('networkidle', { timeout: 10000 });
+    } catch {
+      // some sites never become fully idle
+    }
+
+    await page.waitForTimeout(3000);
+
+    await page.evaluate(async () => {
+      const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+      const step = 700;
+      const maxScroll = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight
+      );
+
+      let current = 0;
+      while (current < maxScroll) {
+        window.scrollTo({ top: current, behavior: 'auto' });
+        current += step;
+        await wait(300);
+      }
+
+      await wait(1200);
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    });
+
+    await page.waitForTimeout(2000);
+
+    const domImages = await page.evaluate(() => {
+      const found = new Set<string>();
+
+      const toAbsolute = (src?: string | null) => {
+        if (!src) return null;
+        const cleaned = src.trim();
+        if (!cleaned) return null;
+        if (
+          cleaned.startsWith('data:') ||
+          cleaned.startsWith('blob:') ||
+          cleaned.startsWith('javascript:')
+        ) {
+          return null;
+        }
+
+        try {
+          return new URL(cleaned, window.location.href).href;
+        } catch {
+          return null;
+        }
+      };
+
+      const add = (src?: string | null) => {
+        const absolute = toAbsolute(src);
+        if (absolute) found.add(absolute);
+      };
+
+      document
+        .querySelectorAll('meta[property="og:image"], meta[name="twitter:image"]')
+        .forEach((el) => add(el.getAttribute('content')));
+
+      document.querySelectorAll('link[rel="image_src"]').forEach((el) => {
+        add(el.getAttribute('href'));
+      });
+
+      document.querySelectorAll('img').forEach((img) => {
+        add(img.getAttribute('src'));
+        add(img.getAttribute('data-src'));
+        add(img.getAttribute('data-lazy-src'));
+        add(img.getAttribute('data-original'));
+        add(img.getAttribute('data-fallback-src'));
+
+        const srcset =
+          img.getAttribute('srcset') ||
+          img.getAttribute('data-srcset') ||
+          img.getAttribute('data-lazy-srcset');
+
+        if (srcset) {
+          srcset.split(',').forEach((entry) => {
+            const urlPart = entry.trim().split(' ')[0];
+            add(urlPart);
+          });
+        }
+      });
+
+      document.querySelectorAll<HTMLElement>('*').forEach((el) => {
+        const style = window.getComputedStyle(el);
+
+        const bgImage = style.backgroundImage;
+        if (bgImage && bgImage !== 'none') {
+          const matches = [...bgImage.matchAll(/url\((['"]?)(.*?)\1\)/g)];
+          matches.forEach((match) => add(match[2]));
+        }
+      });
+
+      document.querySelectorAll('script[type="application/ld+json"]').forEach((script) => {
+        const raw = script.textContent;
+        if (!raw) return;
+
+        try {
+          const parsed = JSON.parse(raw);
+          const blocks = Array.isArray(parsed) ? parsed : [parsed];
+
+          blocks.forEach((block: any) => {
+            if (!block) return;
+
+            if (block.image) {
+              const imgs = Array.isArray(block.image) ? block.image : [block.image];
+              imgs.forEach((img: string) => add(img));
+            }
+
+            if (block.primaryImageOfPage?.contentUrl) {
+              add(block.primaryImageOfPage.contentUrl);
+            }
+          });
+        } catch {
+          // ignore invalid json
+        }
+      });
+
+      return Array.from(found);
+    });
+
+    const shouldKeep = (src: string) => {
+      const lower = src.toLowerCase();
+
+      if (
+        lower.includes('favicon') ||
+        lower.includes('sprite') ||
+        lower.includes('/icons/') ||
+        lower.includes('icon-') ||
+        lower.includes('logo-small')
+      ) {
+        return false;
+      }
+
+      return true;
+    };
+
+    const finalImages = Array.from(
+      new Set([...domImages, ...Array.from(networkImageSet)])
+    )
+      .filter(shouldKeep)
+      .slice(0, 30);
+
+    this.logger.log(`Scraped ${finalImages.length} images from ${normalizedUrl}`);
+
+    return {
+      success: true,
+      url: normalizedUrl,
+      total: finalImages.length,
+      images: finalImages,
+    };
+  } catch (error: any) {
+    this.logger.error('fetchUrlImages failed', {
+      message: error?.message,
+      code: error?.code,
+      url: normalizedUrl,
+    });
+
+    if (error?.message?.includes('ERR_NAME_NOT_RESOLVED')) {
+      throw new BadRequestException('Website domain not found. Please check the URL.');
+    }
+
+    if (error?.message?.includes('net::ERR_CERT')) {
+      throw new BadRequestException('Website SSL certificate is invalid.');
+    }
+
+    if (error?.message?.includes('Timeout')) {
+      throw new BadRequestException('Website request timed out.');
+    }
+
+    if (error instanceof BadRequestException) {
+      throw error;
+    }
+
+    throw new InternalServerErrorException(
+      error?.message || 'Failed to fetch website images.',
+    );
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
 
   async getAllContent(): Promise<Content[]> {
     try {
@@ -121,35 +365,70 @@ export class ContentService {
     return await content.save();
   }
 
-  async createManualCreative(data: {
-    title: string;
-    contentType: string;
-    imageUrl: string;
-    thumbnailUrl?: string;
-    lifetimeStart?: string;
-    lifetimeEnd?: string;
-    platforms?: string[];
-  }): Promise<Content> {
-    const newContent = new this.contentModel({
-      title: data.title,
-      contentType: data.contentType,
-      body: '',
-      imageUrl: data.imageUrl,
-      thumbnailUrl: data.thumbnailUrl || data.imageUrl,
-      lifetimeStart: data.lifetimeStart ? new Date(data.lifetimeStart) : null,
-      lifetimeEnd: data.lifetimeEnd ? new Date(data.lifetimeEnd) : null,
-      platforms: data.platforms || [],
-      status: 'draft',
-      isManualCreative: true,
-      seoMetrics: {
-        keywordDensity: 0,
-        readabilityScore: 0,
-        estimatedRank: 0,
-      },
-    });
 
-    return await newContent.save();
-  }
+  async createManualCreative(data: {
+  title: string;
+  contentType: string;
+  imageUrl: string;
+  thumbnailUrl?: string;
+  lifetimeStart?: string;
+  lifetimeEnd?: string;
+  platforms?: string[];
+}): Promise<Content> {
+  const lifetimeStartDate = data.lifetimeStart ? new Date(data.lifetimeStart) : null;
+  const lifetimeEndDate = data.lifetimeEnd ? new Date(data.lifetimeEnd) : null;
+
+  const newContent = new this.contentModel({
+    title: data.title,
+    contentType: data.contentType,
+    body: '',
+    imageUrl: data.imageUrl,
+    thumbnailUrl: data.thumbnailUrl || data.imageUrl,
+    lifetimeStart: lifetimeStartDate,
+    lifetimeEnd: lifetimeEndDate,
+    scheduledFor: lifetimeEndDate,
+    platforms: data.platforms || ['Meta'],
+    status: 'draft',
+    isManualCreative: true,
+    seoMetrics: {
+      keywordDensity: 0,
+      readabilityScore: 0,
+      estimatedRank: 0,
+    },
+  });
+
+  return await newContent.save();
+}
+
+  // async createManualCreative(data: {
+  //   title: string;
+  //   contentType: string;
+  //   imageUrl: string;
+  //   thumbnailUrl?: string;
+  //   lifetimeStart?: string;
+  //   lifetimeEnd?: string;
+  //   platforms?: string[];
+  // }): Promise<Content> {
+  //   const newContent = new this.contentModel({
+  //     title: data.title,
+  //     contentType: data.contentType,
+  //     body: '',
+  //     imageUrl: data.imageUrl,
+  //     thumbnailUrl: data.thumbnailUrl || data.imageUrl,
+  //     lifetimeStart: data.lifetimeStart ? new Date(data.lifetimeStart) : null,
+  //     lifetimeEnd: data.lifetimeEnd ? new Date(data.lifetimeEnd) : null,
+  //     platforms: data.platforms || [],
+  //     status: 'draft',
+  //     isManualCreative: true,
+  //     seoMetrics: {
+  //       keywordDensity: 0,
+  //       readabilityScore: 0,
+  //       estimatedRank: 0,
+  //     },
+  //   });
+
+  //   return await newContent.save();
+  // }
 
   async deleteContent(id: string) {
     const deleted = await this.contentModel.findByIdAndDelete(id);
@@ -164,143 +443,147 @@ export class ContentService {
     };
   }
 
-  async fetchUrlImages(url: string) {
-    if (!url?.trim()) {
-      throw new BadRequestException('URL is required');
-    }
+  async updateContent(
+  id: string,
+  data: {
+    title?: string;
+    thumbnailUrl?: string;
+    lifetimeStart?: string;
+    lifetimeEnd?: string;
+    status?: string;
+  },
+) {
+  const content = await this.contentModel.findById(id);
 
-    let normalizedUrl: string;
-    try {
-      normalizedUrl = new URL(url).href;
-    } catch {
-      throw new BadRequestException('Please enter a valid URL');
-    }
-
-    const { data: html } = await axios.get(normalizedUrl, {
-      timeout: 15000,
-      maxRedirects: 5,
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml',
-      },
-    });
-
-    const $ = cheerio.load(html);
-    const imageSet = new Set<string>();
-
-    const toAbsolute = (src?: string | null) => {
-      if (!src) return null;
-      try {
-        return new URL(src, normalizedUrl).href;
-      } catch {
-        return null;
-      }
-    };
-
-    const shouldKeep = (src: string) => {
-      const lower = src.toLowerCase();
-
-      if (
-        lower.includes('logo') ||
-        lower.includes('icon') ||
-        lower.includes('avatar') ||
-        lower.includes('sprite') ||
-        lower.includes('favicon') ||
-        lower.endsWith('.svg')
-      ) {
-        return false;
-      }
-
-      return true;
-    };
-
-    const ogImage = $('meta[property="og:image"]').attr('content');
-    const ogAbs = toAbsolute(ogImage);
-    if (ogAbs && shouldKeep(ogAbs)) {
-      imageSet.add(ogAbs);
-    }
-
-    const twitterImage = $('meta[name="twitter:image"]').attr('content');
-    const twAbs = toAbsolute(twitterImage);
-    if (twAbs && shouldKeep(twAbs)) {
-      imageSet.add(twAbs);
-    }
-
-    $('script[type="application/ld+json"]').each((_, el) => {
-      const raw = $(el).html();
-      if (!raw) return;
-
-      try {
-        const parsed = JSON.parse(raw);
-        const blocks = Array.isArray(parsed) ? parsed : [parsed];
-
-        blocks.forEach((block: any) => {
-          const type = block?.['@type'];
-          if (type === 'Product' && block.image) {
-            const images = Array.isArray(block.image) ? block.image : [block.image];
-            images.forEach((img: string) => {
-              const abs = toAbsolute(img);
-              if (abs && shouldKeep(abs)) {
-                imageSet.add(abs);
-              }
-            });
-          }
-        });
-      } catch {
-        // ignore invalid json-ld
-      }
-    });
-
-    $('img').each((_, el) => {
-      const src =
-        $(el).attr('src') ||
-        $(el).attr('data-src') ||
-        $(el).attr('data-lazy-src') ||
-        $(el).attr('data-original');
-
-      const abs = toAbsolute(src);
-      if (abs && shouldKeep(abs)) {
-        imageSet.add(abs);
-      }
-    });
-
-    const images = Array.from(imageSet).slice(0, 20);
-
-    return {
-      success: true,
-      url: normalizedUrl,
-      images,
-    };
+  if (!content) {
+    throw new BadRequestException('Creative not found');
   }
 
-  async generateReferenceCreative(data: {
-    prompt: string;
-    referenceImages: string[];
-    productUrl?: string;
-    size?: string;
-    quality?: 'low' | 'medium' | 'high' | 'auto';
-  }) {
-    if (!data.prompt?.trim()) {
-      throw new BadRequestException('Prompt is required');
-    }
+  if (typeof data.title === 'string' && data.title.trim()) {
+    content.title = data.title.trim();
+  }
 
-    if (!data.referenceImages?.length) {
-      throw new BadRequestException('At least one reference image is required');
-    }
+  if (typeof data.thumbnailUrl === 'string' && data.thumbnailUrl.trim()) {
+    content.thumbnailUrl = data.thumbnailUrl.trim();
+  }
 
-    const generatedImageUrl = await this.aiService.generateImageFromReferences({
-      prompt: data.prompt,
-      referenceImages: data.referenceImages,
-      size: data.size || '1024x1024',
-      quality: data.quality || 'auto',
-    });
+  if (data.lifetimeStart) {
+    content.lifetimeStart = new Date(data.lifetimeStart);
+  } else {
+    content.lifetimeStart = null as any;
+  }
+
+  if (data.lifetimeEnd) {
+    const endDate = new Date(data.lifetimeEnd);
+    content.lifetimeEnd = endDate;
+    content.scheduledFor = endDate;
+  } else {
+    content.lifetimeEnd = null as any;
+    content.scheduledFor = null as any;
+  }
+
+  if (typeof data.status === 'string' && data.status.trim()) {
+    content.status = data.status.trim();
+  }
+
+  await content.save();
+
+  return {
+    success: true,
+    message: 'Creative updated successfully',
+    data: content,
+  };
+}
+
+async generateReferenceCreative(data: {
+  prompt: string;
+  referenceImages: string[];
+  productUrl?: string;
+  size?: string;
+  quality?: 'low' | 'medium' | 'high' | 'auto';
+  aspectRatio?: '1:1' | '4:3' | '3:4' | '16:9' | '9:16';
+  imageCount?: '1' | '2' | '3' | '4';
+}) {
+  if (!data.prompt?.trim()) {
+    throw new BadRequestException('Prompt is required');
+  }
+
+  // if (!data.referenceImages?.length) {
+  //   throw new BadRequestException('At least one reference image is required');
+  // }
+  const hasReferences =
+  Array.isArray(data.referenceImages) &&
+  data.referenceImages.length > 0;
+
+  const ratioToSizeMap: Record<string, string> = {
+    '1:1': '1024x1024',
+    '4:3': '1536x1024',
+    '3:4': '1024x1536',
+    '16:9': '1536x1024',
+    '9:16': '1024x1536',
+  };
+
+  const count = Number(data.imageCount || '1');
+  const finalSize = data.size || ratioToSizeMap[data.aspectRatio || '1:1'] || '1024x1024';
+
+  // const generatedImages = await Promise.all(
+  //   Array.from({ length: count }).map(async (_, index) => {
+  //     const generatedImageUrl = await this.aiService.generateImageFromReferences({
+  //       prompt: `${data.prompt}\nVariation ${index + 1} of ${count}`,
+  //       referenceImages: data.referenceImages,
+  //       size: finalSize,
+  //       quality: data.quality || 'auto',
+  //     });
+
+  //     return {
+  //       id: `${Date.now()}-${index + 1}`,
+  //       imageUrl: generatedImageUrl,
+  //       size: finalSize,
+  //       variation: index + 1,
+  //       createdAt: new Date().toISOString(),
+  //     };
+  //   }),
+  // );
+
+  const generatedImages = await Promise.all(
+  Array.from({ length: count }).map(async (_, index) => {
+    const finalPrompt = `${data.prompt}\nVariation ${index + 1} of ${count}`;
+
+    let generatedImageUrl = '';
+
+    if (hasReferences) {
+      generatedImageUrl = await this.aiService.generateImageFromReferences({
+        prompt: finalPrompt,
+        referenceImages: data.referenceImages,
+        size: finalSize,
+        quality: data.quality || 'auto',
+      });
+    } else {
+      generatedImageUrl = await this.aiService.generateImage(finalPrompt);
+    }
 
     return {
-      success: true,
+      id: `${Date.now()}-${index + 1}`,
       imageUrl: generatedImageUrl,
-      usedReferences: data.referenceImages,
-      productUrl: data.productUrl || null,
+      size: finalSize,
+      variation: index + 1,
+      createdAt: new Date().toISOString(),
     };
-  }
+  }),
+);
+  return {
+    success: true,
+    images: generatedImages,
+    usedReferences: hasReferences ? data.referenceImages : [],
+mode: hasReferences ? 'reference' : 'prompt-only',
+    productUrl: data.productUrl || null,
+    meta: {
+      prompt: data.prompt,
+      aspectRatio: data.aspectRatio || '1:1',
+      imageCount: count,
+      size: finalSize,
+      quality: data.quality || 'auto',
+    },
+  };
+}
 }
