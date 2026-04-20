@@ -20,7 +20,8 @@ export class AiService {
 
   constructor(
     private configService: ConfigService,
-    @InjectModel(AiAnalysis.name) private aiAnalysisModel: Model<AiAnalysisDocument>,
+    @InjectModel(AiAnalysis.name)
+    private aiAnalysisModel: Model<AiAnalysisDocument>,
   ) {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     if (!apiKey) {
@@ -47,11 +48,9 @@ this.googleGenAi = new GoogleGenAI({
 
   }
 
-  /**
-   * Market Research Analysis
-   * Analyzes market size, trends, segments, and growth opportunities
-   */
-  async runMarketResearch(url: string, brandName: string, userId?: string): Promise<any> {
+  // ── MARKET RESEARCH ───────────────────────────────────────
+
+  async runMarketResearch(url: string, brandName: string, userId?: string) {
     const prompt = `You are an expert market research analyst. Analyze the brand "${brandName}" at URL: ${url}.
 Return ONLY raw valid JSON with these exact keys:
 {
@@ -68,11 +67,9 @@ Return ONLY raw valid JSON with these exact keys:
     return this.analyzeWithAI(prompt, 'market-research', url, brandName, userId);
   }
 
-  /**
-   * Competitor Analysis
-   * Identifies competitors, strengths, weaknesses, and market threats
-   */
-  async runCompetitorAnalysis(url: string, brandName: string, userId?: string): Promise<any> {
+  // ── COMPETITOR ────────────────────────────────────────────
+
+  async runCompetitorAnalysis(url: string, brandName: string, userId?: string) {
     const prompt = `You are a competitive intelligence expert. Analyze competitors of "${brandName}" (URL: ${url}).
 Return ONLY raw valid JSON with these exact keys:
 {
@@ -87,11 +84,9 @@ Return ONLY raw valid JSON with these exact keys:
     return this.analyzeWithAI(prompt, 'competitor-analysis', url, brandName, userId);
   }
 
-  /**
-   * Audience Insights Analysis
-   * Profiles target audience demographics, interests, and messaging strategy
-   */
-  async runAudienceInsights(url: string, brandName: string, userId?: string): Promise<any> {
+  // ── AUDIENCE ──────────────────────────────────────────────
+
+  async runAudienceInsights(url: string, brandName: string, userId?: string) {
     const prompt = `You are a digital marketing audience strategist. Analyze the target audience for "${brandName}" at ${url}.
 Return ONLY raw valid JSON with these exact keys:
 {
@@ -106,11 +101,9 @@ Return ONLY raw valid JSON with these exact keys:
     return this.analyzeWithAI(prompt, 'audience-insights', url, brandName, userId);
   }
 
-  /**
-   * Campaign Strategy Analysis
-   * Develops comprehensive campaign objectives, budgets, timelines, and KPIs
-   */
-  async runCampaignStrategy(url: string, brandName: string, userId?: string): Promise<any> {
+  // ── CAMPAIGN ──────────────────────────────────────────────
+
+  async runCampaignStrategy(url: string, brandName: string, userId?: string) {
     const prompt = `You are a digital advertising campaign strategist. Create a campaign strategy for "${brandName}" at ${url}.
 Return ONLY raw valid JSON with these exact keys:
 {
@@ -125,11 +118,9 @@ Return ONLY raw valid JSON with these exact keys:
     return this.analyzeWithAI(prompt, 'campaign-strategy', url, brandName, userId);
   }
 
-  /**
-   * Copy Generation Analysis
-   * Generates high-converting ad headlines, body copy, and CTAs
-   */
-  async runCopyGeneration(url: string, brandName: string, userId?: string): Promise<any> {
+  // ── COPY ─────────────────────────────────────────────────
+
+  async runCopyGeneration(url: string, brandName: string, userId?: string) {
     const prompt = `You are an elite advertising copywriter. Generate high-converting ad copy for "${brandName}" at ${url}.
 Return ONLY raw valid JSON with these exact keys:
 {
@@ -144,11 +135,9 @@ Return ONLY raw valid JSON with these exact keys:
     return this.analyzeWithAI(prompt, 'copy-generation', url, brandName, userId);
   }
 
-  /**
-   * Creative Testing Strategy
-   * Recommends A/B testing approach, creative formats, and success metrics
-   */
-  async runCreativeTesting(url: string, brandName: string, userId?: string): Promise<any> {
+  // ── CREATIVE TESTING ─────────────────────────────────────
+
+async runCreativeTesting(url: string, brandName: string, userId?: string) {
     const prompt = `You are a performance marketing creative strategist. Suggest A/B testing strategy for "${brandName}" at ${url}.
 Return ONLY raw valid JSON with these exact keys:
 {
@@ -163,177 +152,164 @@ Return ONLY raw valid JSON with these exact keys:
     return this.analyzeWithAI(prompt, 'creative-testing', url, brandName, userId);
   }
 
-  /**
-   * Internal: Core AI analysis handler with JSON parsing and MongoDB persistence
-   */
+  async getMarketingStrategy(url: string): Promise<any> {
+    const prompt = `You are an expert marketing strategist. Analyze the website at ${url} and generate a comprehensive digital marketing strategy.
+    
+Return ONLY raw valid JSON with these keys:
+{
+  "overview": "1-2 sentence strategy summary",
+  "targetAudience": "primary audience description",
+  "channels": ["channel1", "channel2", "channel3"],
+  "contentStrategy": "content pillar recommendations",
+  "budgetAllocation": { "channel1": "%", "channel2": "%" },
+  "timeline": { "phase1": "weeks 1-4", "phase2": "weeks 5-8" },
+  "kpis": ["kpi1 target", "kpi2 target"],
+  "recommendations": ["action1", "action2"]
+}`;
+
+    try {
+      const systemPrompt = 'Expert digital marketing strategist. Return ONLY valid JSON, no explanations.';
+      const response = await this.generateContent(prompt, systemPrompt);
+      return typeof response === 'string' ? JSON.parse(response.replace(/```json|```/g, '').trim()) : response;
+    } catch (error) {
+      this.logger.error('Marketing strategy generation failed', error);
+      return { error: 'Strategy generation failed' };
+    }
+  }
+
+  // ── CORE ENGINE ───────────────────────────────────────────
+
   private async analyzeWithAI(
     prompt: string,
-    analysisType: string,
-    brandUrl: string,
-    brandName: string,
+    type: string,
+    url: string,
+    brand: string,
     userId?: string,
-  ): Promise<any> {
+  ) {
     try {
       const systemPrompt = `You are an expert AI marketing analyst at AdsGo.ai. Always return ONLY raw valid JSON, no markdown, no explanation.`;
 
       const response = await this.generateContent(prompt, systemPrompt);
 
-      // Clean and parse JSON response
-      const cleaned = response.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(cleaned);
+      const parsed =
+        typeof response === 'string'
+          ? JSON.parse(response.replace(/```json|```/g, '').trim())
+          : response;
 
       const result = {
         success: true,
         data: parsed,
-        type: analysisType,
+        type,
         timestamp: new Date().toISOString(),
       };
 
-      // Save to MongoDB if userId is provided
       if (userId) {
-        try {
-          await this.aiAnalysisModel.create({
-            userId,
-            type: analysisType,
-            brandName,
-            brandUrl,
-            result: parsed,
-          });
-          this.logger.log(`Analysis saved for user ${userId}: ${analysisType}`);
-        } catch (saveError) {
-          this.logger.warn(`Failed to save analysis to MongoDB`, saveError);
-          // Don't throw - analysis still succeeded, just couldn't persist
-        }
+        await this.aiAnalysisModel.create({
+          userId,
+          type,
+          brandName: brand,
+          brandUrl: url,
+          result: parsed,
+        });
       }
 
       return result;
-    } catch (error) {
-      this.logger.error(`Failed to complete ${analysisType} analysis`, error);
-      throw new BadRequestException(`Failed to complete ${analysisType} analysis: ${error.message}`);
+    } catch (error: any) {
+      this.logger.error(`Failed ${type}`, error);
+      throw new BadRequestException(
+        `Failed ${type}: ${error.message || 'Unknown error'}`,
+      );
     }
   }
 
-  /**
-   * Fetch analysis history for a specific user
-   */
-  async getAnalysisHistory(userId: string, limit: number = 50): Promise<any[]> {
+  // ── OPENAI (UPGRADED) ─────────────────────────────────────
+
+  async generateContent(
+    userPrompt: string,
+    systemPrompt: string,
+    schema?: any,
+  ): Promise<any> {
     try {
-      const analyses = await this.aiAnalysisModel
-        .find({ userId })
-        .sort({ createdAt: -1 })
-        .limit(limit)
-        .lean()
-        .exec();
-
-      return analyses;
-    } catch (error) {
-      this.logger.error(`Failed to fetch analysis history for user ${userId}`, error);
-      throw new BadRequestException('Failed to fetch analysis history: ' + error.message);
-    }
-  }
-
-  /**
-   * Delete an analysis record
-   */
-  async deleteAnalysis(analysisId: string, userId: string): Promise<void> {
-    try {
-      const result = await this.aiAnalysisModel.findByIdAndDelete(analysisId);
-
-      // Verify the analysis belonged to the user
-      if (!result || result.userId.toString() !== userId) {
-        throw new BadRequestException('Analysis not found or unauthorized');
-      }
-
-      this.logger.log(`Analysis ${analysisId} deleted for user ${userId}`);
-    } catch (error) {
-      this.logger.error(`Failed to delete analysis ${analysisId}`, error);
-      throw new BadRequestException('Failed to delete analysis: ' + error.message);
-    }
-  }
-
-  /**
-   * Generate content using OpenAI API
-   */
-  async generateContent(userPrompt: string, systemPrompt: string): Promise<string> {
-    try {
-      const message = await this.openai.chat.completions.create({
+      const completion = await this.openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: userPrompt,
-          },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
         ],
-        temperature: 0.7,
-        max_tokens: 2000,
+        temperature: 0.3,
+        max_tokens: 4000,
+        response_format: schema
+          ? { type: 'json_schema', json_schema: schema }
+          : undefined,
       });
 
-      return message.choices[0].message.content || '';
-    } catch (error) {
-      this.logger.error('OpenAI API Error', error);
-      throw new BadRequestException('Failed to generate content: ' + error.message);
+      const content = completion.choices[0].message.content || '';
+
+      return schema ? JSON.parse(content) : content;
+    } catch (error: any) {
+      this.logger.error('OpenAI Error', error);
+      throw new BadRequestException(
+        'Failed to generate content: ' + (error.message || 'Unknown error'),
+      );
     }
   }
 
-  /**
-   * Generate images using OpenAI DALL-E (placeholder implementation)
-   */
-  async generateImage(prompt: string): Promise<string> {
-    try {
-      const image = await this.openai.images.generate({
-        model: 'dall-e-3',
-        prompt: prompt,
-        n: 1,
-        size: '1024x1024',
-      });
+  // ── BRAND PROFILE (FULL VERSION KEPT) ─────────────────────
 
-      if (image?.data?.[0]?.url) {
-        return image.data[0].url;
-      }
-      return 'https://via.placeholder.com/1024x1024?text=AI+Generated+Image';
-    } catch (error) {
-      this.logger.warn('Image generation failed, returning placeholder', error);
-      // Return a placeholder URL if image generation fails
-      return 'https://via.placeholder.com/1024x1024?text=AI+Generated+Image';
-    }
-  }
+ async generateBrandProfile(url: string, brandName: string, scrapedContext?: string) {
+  const prompt = `You are an expert brand strategist.
 
-  /**
-   * Get comprehensive marketing strategy based on URL
-   * Used for deep research and campaign planning
-   */
-  async getMarketingStrategy(url: string): Promise<any> {
-    const prompt = `You are a strategic marketing consultant. Based on the website at ${url}, provide a comprehensive marketing strategy.
-Return ONLY raw valid JSON with these exact keys:
+Analyze "${brandName}" at ${url}.
+
+Return ONLY valid JSON in this format:
+
 {
-  "overview": "strategic overview",
-  "targetAudience": "description of target audience",
-  "marketOpportunities": ["opportunity1", "opportunity2", "opportunity3"],
-  "recommendedChannels": ["channel1", "channel2"],
-  "budgetAllocation": { "channel1": "percentage", "channel2": "percentage" },
-  "keyMetrics": ["metric1", "metric2", "metric3"],
-  "timeline": "recommended campaign timeline"
+  "name": "${brandName}",
+  "website": "${url}",
+  "industry": "",
+  "value_proposition": "",
+  "target_audience": [],
+  "brand_personality": [],
+  "key_messages": [],
+  "strengths": [],
+  "weaknesses": [],
+  "opportunities": [],
+  "threats": []
 }`;
 
-    try {
-      const systemPrompt = `You are an expert strategic marketing consultant. Always return ONLY raw valid JSON, no markdown, no explanation.`;
-      const response = await this.generateContent(prompt, systemPrompt);
-      const cleaned = response.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(cleaned);
+  const response = await this.generateContent(
+    prompt,
+    'Return ONLY raw JSON. No markdown. No explanation.'
+  );
 
-      return {
-        success: true,
-        data: parsed,
-        timestamp: new Date().toISOString(),
-      };
-    } catch (error) {
-      this.logger.error('Failed to get marketing strategy', error);
-      throw new BadRequestException('Failed to generate marketing strategy: ' + error.message);
+  let parsed;
+
+  try {
+    parsed =
+      typeof response === 'string'
+        ? JSON.parse(response.replace(/```json|```/g, '').trim())
+        : response;
+  } catch (e) {
+    this.logger.error('JSON parse failed, returning fallback', e);
+    throw new BadRequestException('Invalid AI JSON response');
+  }
+
+  return {
+    success: true,
+    data: {
+      brand: parsed
     }
+  };
+}
+
+  // ── HISTORY ───────────────────────────────────────────────
+
+  async getAnalysisHistory(userId: string, limit = 50) {
+    return this.aiAnalysisModel
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
   }
 
 
@@ -407,21 +383,31 @@ async generateImageFromReferences(payload: {
 }): Promise<string> {
   try {
     this.logger.log('Generating image from references with OpenAI image edit...');
+  async deleteAnalysis(id: string, userId: string) {
+    const res = await this.aiAnalysisModel.findByIdAndDelete(id);
 
-    const {
-      prompt,
-      referenceImages = [],
-      size = '1024x1024',
-      quality = 'auto',
-    } = payload;
+    if (!res || res.userId.toString() !== userId) {
+      throw new BadRequestException('Not found or unauthorized');
+    }
+  }
 
-    this.logger.log(
-      `Prompt: ${prompt}, References: ${referenceImages.length}, Size: ${size}, Quality: ${quality}`,
-    );
+  // ── IMAGE ────────────────────────────────────────────────
 
     if (!prompt?.trim()) {
       throw new BadRequestException('Prompt is required');
+  async generateImage(prompt: string): Promise<string> {
+    try {
+      const image = await this.openai.images.generate({
+        model: 'dall-e-3',
+        prompt,
+        size: '1024x1024',
+      });
+
+      return image?.data?.[0]?.url || '';
+    } catch {
+      return 'https://via.placeholder.com/1024x1024';
     }
+  }
 
     // if (!referenceImages.length) {
     //   throw new BadRequestException('At least one reference image is required');
@@ -544,6 +530,15 @@ Requirements:
 }
 
     throw new InternalServerErrorException(rawMessage);
+async generateImageFromReferences(payload: {
+    prompt: string;
+    referenceImages?: string[];
+    size?: string;
+    quality?: string;
+  }) {
+    this.logger.log(`Generating reference image: prompt="${payload.prompt}", size="${payload.size}", quality="${payload.quality}", refs=${payload.referenceImages?.length || 0}`);
+    // TODO: Integrate Stability AI or OpenAI Vision API here
+    // For now mock with first reference or placeholder
+    return payload.referenceImages?.[0] || `https://via.placeholder.com/${payload.size || '1024x1024'}?text=AI+Creative`;
   }
-}
 }
