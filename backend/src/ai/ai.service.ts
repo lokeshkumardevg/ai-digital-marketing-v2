@@ -29,23 +29,21 @@ export class AiService {
     }
     this.openai = new OpenAI({ apiKey });
 
-     const googleApiKey =
-  this.configService.get<string>('GOOGLE_API_KEY') ||
-  this.configService.get<string>('GEMINI_API_KEY');
-  
+    const googleApiKey =
+      this.configService.get<string>('GOOGLE_API_KEY') ||
+      this.configService.get<string>('GEMINI_API_KEY');
 
-if (!googleApiKey) {
-  this.logger.warn('GOOGLE_API_KEY / GEMINI_API_KEY not configured');
-}
+    if (!googleApiKey) {
+      this.logger.warn('GOOGLE_API_KEY / GEMINI_API_KEY not configured');
+    }
 
-this.logger.log(
-  `Gemini key present: ${!!googleApiKey}, prefix: ${googleApiKey?.slice(0, 8)}, length: ${googleApiKey?.length}`
-);
+    this.logger.log(
+      `Gemini key present: ${!!googleApiKey}, prefix: ${googleApiKey?.slice(0, 8)}, length: ${googleApiKey?.length}`,
+    );
 
-this.googleGenAi = new GoogleGenAI({
-  apiKey: googleApiKey,
-});
-
+    this.googleGenAi = new GoogleGenAI({
+      apiKey: googleApiKey,
+    });
   }
 
   // ── MARKET RESEARCH ───────────────────────────────────────
@@ -137,7 +135,7 @@ Return ONLY raw valid JSON with these exact keys:
 
   // ── CREATIVE TESTING ─────────────────────────────────────
 
-async runCreativeTesting(url: string, brandName: string, userId?: string) {
+  async runCreativeTesting(url: string, brandName: string, userId?: string) {
     const prompt = `You are a performance marketing creative strategist. Suggest A/B testing strategy for "${brandName}" at ${url}.
 Return ONLY raw valid JSON with these exact keys:
 {
@@ -222,7 +220,7 @@ Return ONLY raw valid JSON with these keys:
     }
   }
 
-  // ── OPENAI (UPGRADED) ─────────────────────────────────────
+  // ── OPENAI ────────────────────────────────────────────────
 
   async generateContent(
     userPrompt: string,
@@ -254,10 +252,10 @@ Return ONLY raw valid JSON with these keys:
     }
   }
 
-  // ── BRAND PROFILE (FULL VERSION KEPT) ─────────────────────
+  // ── BRAND PROFILE ─────────────────────────────────────────
 
- async generateBrandProfile(url: string, brandName: string, scrapedContext?: string) {
-  const prompt = `You are an expert brand strategist.
+  async generateBrandProfile(url: string, brandName: string, scrapedContext?: string) {
+    const prompt = `You are an expert brand strategist.
 
 Analyze "${brandName}" at ${url}.
 
@@ -277,30 +275,30 @@ Return ONLY valid JSON in this format:
   "threats": []
 }`;
 
-  const response = await this.generateContent(
-    prompt,
-    'Return ONLY raw JSON. No markdown. No explanation.'
-  );
+    const response = await this.generateContent(
+      prompt,
+      'Return ONLY raw JSON. No markdown. No explanation.',
+    );
 
-  let parsed;
+    let parsed;
 
-  try {
-    parsed =
-      typeof response === 'string'
-        ? JSON.parse(response.replace(/```json|```/g, '').trim())
-        : response;
-  } catch (e) {
-    this.logger.error('JSON parse failed, returning fallback', e);
-    throw new BadRequestException('Invalid AI JSON response');
-  }
-
-  return {
-    success: true,
-    data: {
-      brand: parsed
+    try {
+      parsed =
+        typeof response === 'string'
+          ? JSON.parse(response.replace(/```json|```/g, '').trim())
+          : response;
+    } catch (e) {
+      this.logger.error('JSON parse failed, returning fallback', e);
+      throw new BadRequestException('Invalid AI JSON response');
     }
-  };
-}
+
+    return {
+      success: true,
+      data: {
+        brand: parsed,
+      },
+    };
+  }
 
   // ── HISTORY ───────────────────────────────────────────────
 
@@ -312,77 +310,6 @@ Return ONLY valid JSON in this format:
       .lean();
   }
 
-
-  private async urlToInlinePart(imageUrl: string): Promise<{
-  inlineData: { mimeType: string; data: string };
-}> {
-  const response = await axios.get<ArrayBuffer>(imageUrl, {
-    responseType: 'arraybuffer',
-    timeout: 30000,
-  });
-
-  const contentTypeHeader = String(response.headers['content-type'] || '').toLowerCase();
-  const mimeType = contentTypeHeader.startsWith('image/')
-    ? contentTypeHeader
-    : 'image/png';
-
-  const base64 = Buffer.from(response.data).toString('base64');
-
-  return {
-    inlineData: {
-      mimeType,
-      data: base64,
-    },
-  };
-}
-
-private async urlToOpenAiFile(imageUrl: string, index: number): Promise<File | null> {
-  const response = await axios.get<ArrayBuffer>(imageUrl, {
-    responseType: 'arraybuffer',
-    timeout: 30000,
-  });
-
-  const contentType = String(response.headers['content-type'] || '').toLowerCase();
-
-  // OpenAI edits supports only jpeg/png/webp
-  const supportedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-
-  if (!supportedTypes.includes(contentType)) {
-    this.logger.warn(
-      `Skipping unsupported reference image: ${imageUrl} (${contentType || 'unknown'})`,
-    );
-    return null;
-  }
-
-  const ext =
-    contentType === 'image/png'
-      ? 'png'
-      : contentType === 'image/webp'
-      ? 'webp'
-      : 'jpg';
-
-  return new File(
-    [Buffer.from(response.data)],
-    `reference-${index + 1}.${ext}`,
-    { type: contentType },
-  );
-}
-
-private mapAspectRatioFromSize(size?: string): '1:1' | '16:9' | '9:16' {
-  if (size === '1536x1024') return '16:9';
-  if (size === '1024x1536') return '9:16';
-  return '1:1';
-}
-
-
-async generateImageFromReferences(payload: {
-  prompt: string;
-  referenceImages?: string[];
-  size?: string;
-  quality?: string;
-}): Promise<string> {
-  try {
-    this.logger.log('Generating image from references with OpenAI image edit...');
   async deleteAnalysis(id: string, userId: string) {
     const res = await this.aiAnalysisModel.findByIdAndDelete(id);
 
@@ -393,8 +320,6 @@ async generateImageFromReferences(payload: {
 
   // ── IMAGE ────────────────────────────────────────────────
 
-    if (!prompt?.trim()) {
-      throw new BadRequestException('Prompt is required');
   async generateImage(prompt: string): Promise<string> {
     try {
       const image = await this.openai.images.generate({
@@ -409,73 +334,130 @@ async generateImageFromReferences(payload: {
     }
   }
 
-    // if (!referenceImages.length) {
-    //   throw new BadRequestException('At least one reference image is required');
-    // }
+  // ── PRIVATE HELPERS ───────────────────────────────────────
 
-    // If no reference images, generate directly from prompt
-if (!referenceImages.length) {
-  this.logger.log('No reference images found. Using prompt-only generation.');
+  private async urlToInlinePart(imageUrl: string): Promise<{
+    inlineData: { mimeType: string; data: string };
+  }> {
+    const response = await axios.get<ArrayBuffer>(imageUrl, {
+      responseType: 'arraybuffer',
+      timeout: 30000,
+    });
 
-  const generated = await this.openai.images.generate({
-    model: 'gpt-image-1',
-    prompt,
-    size: size as '1024x1024' | '1536x1024' | '1024x1536',
-    quality: quality as 'low' | 'medium' | 'high' | 'auto',
-    n: 1,
-  });
+    const contentTypeHeader = String(response.headers['content-type'] || '').toLowerCase();
+    const mimeType = contentTypeHeader.startsWith('image/')
+      ? contentTypeHeader
+      : 'image/png';
 
-  const base64 = generated?.data?.[0]?.b64_json;
-  const url = generated?.data?.[0]?.url;
+    const base64 = Buffer.from(response.data).toString('base64');
 
-  if (base64) {
-    return `data:image/png;base64,${base64}`;
+    return {
+      inlineData: {
+        mimeType,
+        data: base64,
+      },
+    };
   }
 
-  if (url) {
-    return url;
+  private async urlToOpenAiFile(imageUrl: string, index: number): Promise<File | null> {
+    const response = await axios.get<ArrayBuffer>(imageUrl, {
+      responseType: 'arraybuffer',
+      timeout: 30000,
+    });
+
+    const contentType = String(response.headers['content-type'] || '').toLowerCase();
+
+    // OpenAI edits supports only jpeg/png/webp
+    const supportedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+    if (!supportedTypes.includes(contentType)) {
+      this.logger.warn(
+        `Skipping unsupported reference image: ${imageUrl} (${contentType || 'unknown'})`,
+      );
+      return null;
+    }
+
+    const ext =
+      contentType === 'image/png'
+        ? 'png'
+        : contentType === 'image/webp'
+        ? 'webp'
+        : 'jpg';
+
+    return new File(
+      [Buffer.from(response.data)],
+      `reference-${index + 1}.${ext}`,
+      { type: contentType },
+    );
   }
 
-  throw new InternalServerErrorException(
-    'No generated image returned from OpenAI',
-  );
-}
+  private mapAspectRatioFromSize(size?: string): '1:1' | '16:9' | '9:16' {
+    if (size === '1536x1024') return '16:9';
+    if (size === '1024x1536') return '9:16';
+    return '1:1';
+  }
 
-    // Download selected reference images as buffers/files
+  // ── GENERATE IMAGE FROM REFERENCES ────────────────────────
 
-    const inputImagesRaw = await Promise.all(
-  referenceImages.slice(0, 4).map((imageUrl, index) => this.urlToOpenAiFile(imageUrl, index)),
-);
+  async generateImageFromReferences(payload: {
+    prompt: string;
+    referenceImages?: string[];
+    size?: string;
+    quality?: string;
+  }): Promise<string> {
+    const { prompt, referenceImages = [], size, quality } = payload;
 
-const inputImages = inputImagesRaw.filter(Boolean) as File[];
+    try {
+      this.logger.log('Generating image from references with OpenAI image edit...');
 
-if (!inputImages.length) {
-  throw new BadRequestException(
-    'Selected reference images are not supported. Please select JPG, PNG, or WEBP images.',
-  );
-}
-    // const inputImages = await Promise.all(
-    //   referenceImages.slice(0, 4).map(async (imageUrl, index) => {
-    //     const response = await axios.get<ArrayBuffer>(imageUrl, {
-    //       responseType: 'arraybuffer',
-    //       timeout: 30000,
-    //     });
+      if (!prompt?.trim()) {
+        throw new BadRequestException('Prompt is required');
+      }
 
-    //     const contentType = String(response.headers['content-type'] || '').toLowerCase();
-    //     const ext =
-    //       contentType.includes('png') ? 'png' :
-    //       contentType.includes('webp') ? 'webp' :
-    //       'jpg';
+      // If no reference images, generate directly from prompt
+      if (!referenceImages.length) {
+        this.logger.log('No reference images found. Using prompt-only generation.');
 
-    //     return new File(
-    //       [Buffer.from(response.data)],
-    //       `reference-${index + 1}.${ext}`,
-    //       { type: contentType || 'image/jpeg' }
-    //     );
-    //   })
-    // );
+        const generated = await this.openai.images.generate({
+          model: 'gpt-image-1',
+          prompt,
+          size: size as '1024x1024' | '1536x1024' | '1024x1536',
+          quality: quality as 'low' | 'medium' | 'high' | 'auto',
+          n: 1,
+        });
 
-    const editPrompt = `
+        const base64 = generated?.data?.[0]?.b64_json;
+        const url = generated?.data?.[0]?.url;
+
+        if (base64) {
+          return `data:image/png;base64,${base64}`;
+        }
+
+        if (url) {
+          return url;
+        }
+
+        throw new InternalServerErrorException(
+          'No generated image returned from OpenAI',
+        );
+      }
+
+      // Download selected reference images as buffers/files
+      const inputImagesRaw = await Promise.all(
+        referenceImages.slice(0, 4).map((imageUrl, index) =>
+          this.urlToOpenAiFile(imageUrl, index),
+        ),
+      );
+
+      const inputImages = inputImagesRaw.filter(Boolean) as File[];
+
+      if (!inputImages.length) {
+        throw new BadRequestException(
+          'Selected reference images are not supported. Please select JPG, PNG, or WEBP images.',
+        );
+      }
+
+      const editPrompt = `
 Create a new marketing creative based on the provided reference image(s).
 
 User prompt:
@@ -487,58 +469,51 @@ Requirements:
 - Keep composition commercially usable.
 - Make it look premium and polished.
 - Follow the prompt closely while staying visually consistent with the selected reference image(s).
-    `.trim();
+      `.trim();
 
-    const image = await this.openai.images.edit({
-      model: 'gpt-image-1.5',
-      image: inputImages,
-      prompt: editPrompt,
-      size: size as '1024x1024' | '1536x1024' | '1024x1536',
-      quality: quality as 'low' | 'medium' | 'high' | 'auto',
-      input_fidelity: 'high',
-      n: 1,
-    });
+      const image = await this.openai.images.edit({
+        model: 'gpt-image-1.5',
+        image: inputImages,
+        prompt: editPrompt,
+        size: size as '1024x1024' | '1536x1024' | '1024x1536',
+        quality: quality as 'low' | 'medium' | 'high' | 'auto',
+        input_fidelity: 'high',
+        n: 1,
+      });
 
-    const base64 = image?.data?.[0]?.b64_json;
-    const url = image?.data?.[0]?.url;
+      const base64 = image?.data?.[0]?.b64_json;
+      const url = image?.data?.[0]?.url;
 
-    if (base64) {
-      return `data:image/png;base64,${base64}`;
+      if (base64) {
+        return `data:image/png;base64,${base64}`;
+      }
+
+      if (url) {
+        return url;
+      }
+
+      throw new InternalServerErrorException(
+        'No generated image returned from OpenAI',
+      );
+    } catch (error: any) {
+      this.logger.error('Error generating image from references', error);
+
+      const rawMessage =
+        error?.message ||
+        error?.response?.data?.error?.message ||
+        'Failed to generate image from references';
+
+      if (
+        rawMessage.includes('unsupported mimetype') ||
+        rawMessage.includes('unsupported_file_mimetype') ||
+        rawMessage.includes('image/svg+xml')
+      ) {
+        throw new BadRequestException(
+          'Selected reference image format is not supported. Please use JPG, PNG, or WEBP images.',
+        );
+      }
+
+      throw new InternalServerErrorException(rawMessage);
     }
-
-    if (url) {
-      return url;
-    }
-
-    throw new InternalServerErrorException('No generated image returned from OpenAI');
-  } catch (error: any) {
-    this.logger.error('Error generating image from references', error);
-
-    const rawMessage =
-      error?.message ||
-      error?.response?.data?.error?.message ||
-      'Failed to generate image from references';
-
-   if (
-  rawMessage.includes('unsupported mimetype') ||
-  rawMessage.includes('unsupported_file_mimetype') ||
-  rawMessage.includes('image/svg+xml')
-) {
-  throw new BadRequestException(
-    'Selected reference image format is not supported. Please use JPG, PNG, or WEBP images.',
-  );
-}
-
-    throw new InternalServerErrorException(rawMessage);
-async generateImageFromReferences(payload: {
-    prompt: string;
-    referenceImages?: string[];
-    size?: string;
-    quality?: string;
-  }) {
-    this.logger.log(`Generating reference image: prompt="${payload.prompt}", size="${payload.size}", quality="${payload.quality}", refs=${payload.referenceImages?.length || 0}`);
-    // TODO: Integrate Stability AI or OpenAI Vision API here
-    // For now mock with first reference or placeholder
-    return payload.referenceImages?.[0] || `https://via.placeholder.com/${payload.size || '1024x1024'}?text=AI+Creative`;
   }
 }
