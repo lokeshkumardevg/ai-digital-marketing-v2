@@ -9,7 +9,7 @@ async function bootstrap() {
 
   // Enable Global CORS for React Frontend Client
   app.enableCors({
-    origin: 'http://localhost:5174', // Default Vite Frontend Port
+    origin: ['http://localhost:5173', 'http://localhost:5174'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });

@@ -13,7 +13,8 @@ import {
   GitBranch,
   CreditCard,
   ShieldAlert,
-  LayoutTemplate
+  LayoutTemplate,
+  Search
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 
@@ -84,6 +85,19 @@ const MENU_ITEMS: MenuItem[] = [
     ],
   },
   {
+    label: 'SEO Intelligence',
+    icon: Search,
+    permission: 'automation',
+    subItems: [
+      { path: '/seo', label: 'Dashboard' },
+      { path: '/seo/audit', label: 'Site Audit' },
+      { path: '/seo/tracking', label: 'Position Tracking' },
+      { path: '/seo/keywords', label: 'Organic Research' },
+      { path: '/seo/backlinks', label: 'Backlink Audit' },
+      { path: '/seo/link-building', label: 'Link Building' },
+    ],
+  },
+  {
     label: 'More Tools',
     icon: GitBranch,
     permission: 'automation',
@@ -93,7 +107,6 @@ const MENU_ITEMS: MenuItem[] = [
       { path: '/chatbot', label: 'AI Chatbot' },
       { path: '/crm', label: 'CRM & Audiences' },
       { path: '/messaging', label: 'Messaging' },
-      { path: '/seo', label: 'SEO Tools' },
       { path: '/ai-agents', label: 'AI Agents' },
     ],
   },

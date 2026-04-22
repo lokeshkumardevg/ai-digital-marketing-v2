@@ -14,13 +14,17 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AiService } from './ai.service';
+import { SemrushService } from './semrush.service';
 import * as cheerio from 'cheerio';
 
 @Controller('ai')
 export class AiController {
   private readonly logger = new Logger(AiController.name);
 
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly semrushService: SemrushService,
+  ) {}
 
   // ── GENERATE TEXT ─────────────────────────────────────────
 
@@ -46,41 +50,85 @@ export class AiController {
   async runSeoAudit(@Body() body: { url: string }) {
     try {
       const startTime = Date.now();
+      const targetUrl = body.url.startsWith('http') ? body.url : `https://${body.url}`;
+      const domain = new URL(targetUrl).hostname.replace('www.', '');
 
-      const response = await fetch(body.url, {
+      // 1. Existing Scrape
+      const fetchResponse = await fetch(targetUrl, {
         headers: {
           'User-Agent':
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36'
         }
       });
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      let meta = { title: '', description: '', h1: '', images: 0 };
+      if (fetchResponse.ok) {
+        const htmlText = await fetchResponse.text();
+        const $ = cheerio.load(htmlText);
+        meta = {
+          title: $('title').text(),
+          description: $('meta[name="description"]').attr('content') || '',
+          h1: $('h1').first().text(),
+          images: $('img').length
+        };
+      }
 
-      const htmlText = await response.text();
       const loadTime = ((Date.now() - startTime) / 1000).toFixed(1) + 's';
 
-      const $ = cheerio.load(htmlText);
+      // 2. Semrush Integration
+      const [semrushOverview, semrushKeywords, semrushBacklinks, semrushCompetitors] = await Promise.all([
+        this.semrushService.getDomainOverview(domain),
+        this.semrushService.getOrganicKeywords(domain),
+        this.semrushService.getBacklinksOverview(domain),
+        this.semrushService.getOrganicCompetitors(domain),
+      ]);
 
-      const meta = {
-        title: $('title').text(),
-        description: $('meta[name="description"]').attr('content'),
-        h1: $('h1').first().text(),
-        images: $('img').length
-      };
+      // 3. Enhanced AI Analysis
+      const prompt = `
+        You are a senior SEO & Market Intelligence strategist. Analyze this data for ${domain}:
+        
+        ON-PAGE META:
+        Title: ${meta.title}
+        Description: ${meta.description}
+        H1: ${meta.h1}
+        
+        SEMRUSH MARKET DATA:
+        Authority Score: ${semrushBacklinks?.ascore || 'N/A'}
+        Organic Traffic: ${semrushOverview?.Ot || 'N/A'}
+        Organic Keywords: ${semrushOverview?.Or || 'N/A'}
+        Backlinks: ${semrushBacklinks?.total || 'N/A'}
+        Ref. Domains: ${semrushBacklinks?.domains_num || 'N/A'}
+        
+        TOP KEYWORDS:
+        ${JSON.stringify(semrushKeywords)}
+        
+        COMPETITOR LANDSCAPE:
+        ${JSON.stringify(semrushCompetitors)}
+        
+        Provide a concise, high-impact SEO audit report. Include:
+        1. A brief situational analysis of their market position vs competitors.
+        2. A 3-point technical fix list for on-page meta.
+        3. A high-level growth strategy (Keyword expansion + Backlink opportunity).
+      `;
 
-      const prompt = `Analyze SEO for ${body.url}`;
-
-      const aiResponse = await this.aiService.generateContent(prompt, 'SEO expert');
+      const aiResponse = await this.aiService.generateContent(prompt, 'Executive SEO Strategist');
 
       return {
         success: true,
         data: {
           meta,
           loadTime,
+          semrush: {
+            overview: semrushOverview,
+            keywords: semrushKeywords,
+            backlinks: semrushBacklinks,
+            competitors: semrushCompetitors
+          },
           ai: aiResponse
         }
       };
     } catch (error: any) {
+      this.logger.error(`SEO Audit failed: ${error.message}`);
       return {
         success: false,
         error: error.message
