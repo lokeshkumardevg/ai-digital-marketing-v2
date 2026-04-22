@@ -255,29 +255,79 @@ Return ONLY raw valid JSON with these keys:
   // ── BRAND PROFILE ─────────────────────────────────────────
 
   async generateBrandProfile(url: string, brandName: string, scrapedContext?: string) {
-    const prompt = `You are an expert brand strategist.
+    const prompt = `
+You are an expert brand strategist and market analyst.
 
-Analyze "${brandName}" at ${url}.
+Analyze the company "${brandName}" at ${url}.
 
-Return ONLY valid JSON in this format:
+Use the following website content as context:
+"""
+${scrapedContext || ""}
+"""
+
+IMPORTANT RULES:
+- NEVER leave fields empty
+- If exact data is not available, infer intelligently based on industry and context
+- Use realistic and professional business assumptions
+- Fill ALL fields with meaningful data
+- Return ONLY valid JSON (no markdown, no explanation)
+
+Return data in this exact structure:
 
 {
   "name": "${brandName}",
   "website": "${url}",
-  "industry": "",
-  "value_proposition": "",
-  "target_audience": [],
-  "brand_personality": [],
-  "key_messages": [],
-  "strengths": [],
-  "weaknesses": [],
-  "opportunities": [],
-  "threats": []
-}`;
+  "description": "Write a clear 2-3 line business description",
+  "industry": "Specific industry category",
+  "lifecycle": "Startup / Growth / Enterprise",
+  "company_size": "Small / Medium / Large",
+  "business_model": "B2B / B2C / SaaS / Marketplace",
+  "target_market": "Who they serve",
+
+  "brand_tone": ["tone1", "tone2"],
+  "market_keywords": ["keyword1", "keyword2"],
+
+  "value_proposition": "Clear unique value proposition",
+  "differentiators": ["point1", "point2"],
+
+  "features": [
+    {
+      "title": "Feature name",
+      "description": "Detailed explanation"
+    }
+  ],
+
+  "target_audience": [
+    {
+      "segment": "Audience type",
+      "description": "Detailed explanation",
+      "tags": ["tag1", "tag2"]
+    }
+  ],
+
+  "competitors": [
+    {
+      "name": "Competitor name",
+      "type": "core / indirect",
+      "description": "Why competitor"
+    }
+  ],
+
+  "marketing_channels": ["channel1", "channel2"],
+  "customer_hangouts": ["platform1", "platform2"],
+
+  "impact_analysis": {
+    "revenue": ["factor1"],
+    "cost": ["factor1"],
+    "technology": ["factor1"],
+    "policy": ["factor1"]
+  }
+}
+`;
 
     const response = await this.generateContent(
       prompt,
-      'Return ONLY raw JSON. No markdown. No explanation.',
+     'Return ONLY valid JSON. Do NOT include markdown, comments, or extra text. Ensure keys match exactly.',
     );
 
     let parsed;

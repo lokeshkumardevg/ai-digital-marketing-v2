@@ -150,8 +150,17 @@ export class AiController {
       const res = await fetch(url);
       const html = await res.text();
       const $ = cheerio.load(html);
+const title = $('title').text();
+const metaDesc = $('meta[name="description"]').attr('content') || '';
 
-      scrapedContext = $('body').text().slice(0, 2000);
+scrapedContext = `
+TITLE: ${title}
+DESCRIPTION: ${metaDesc}
+
+CONTENT:
+${$('body').text().replace(/\s+/g, ' ').slice(0, 3000)}
+`;
+      
     } catch {
       scrapedContext = `${brandName} ${url}`;
     }
