@@ -135,19 +135,47 @@ export const BrandProfile: React.FC = () => {
       }
 
       // Extract profile data correctly (handles nesting)
-      const profileData = json.data?.brand || json.data || {};
+      // const profileData = json.data?.brand || json.data || {};
+      const raw = json.data?.data?.brand || {};
       
       advance(3);
       await delay(500);
 
       // Merge with workspace brand info
-      const merged: BrandData = { 
-        name: activeBrand.name, 
-        url: activeBrand.url, 
-        ...profileData 
-      };
-      setBrandData(merged);
-      localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(merged));
+      const transformed: BrandData = {
+  name: raw.name,
+  url: raw.website,
+  description: raw.description,
+  lifecycle: raw.lifecycle,
+  companySize: raw.company_size,
+  businessModel: raw.business_model,
+  targetMarket: raw.target_market,
+
+  tags: raw.brand_tone,
+
+  brandDna: {
+    brandTone: raw.brand_tone?.join(', '),
+    marketKeywords: raw.market_keywords,
+  },
+
+  coreAdvantages: {
+    valueProposition: raw.value_proposition,
+    differentiators: raw.differentiators,
+  },
+
+  features: raw.features,
+  targetAudience: raw.target_audience,
+  competitors: raw.competitors,
+
+  reachAndEcosystem: {
+    marketingChannels: raw.marketing_channels,
+    customerHangouts: raw.customer_hangouts,
+  },
+
+  impactAnalysis: raw.impact_analysis,
+};
+setBrandData(transformed);
+localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transformed));
       setPhase('result');
 
     } catch (err: any) {
