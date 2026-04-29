@@ -350,7 +350,6 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
       {phase === 'result' && brandData && (
         <div style={{ padding: '24px 32px', maxWidth: '1100px', animation: 'fadeUp .3s ease-out' }}>
           {/* Debug log */}
-          {console.log('Brand data:', brandData)}
 
           {/* ── Brand Header Card ── */}
           <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e8eaf0', padding: '24px 28px', marginBottom: '20px' }}>

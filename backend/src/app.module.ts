@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { BullModule } from '@nestjs/bull';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AiModule } from './ai/ai.module';
@@ -19,6 +21,7 @@ import { UsersModule } from './users/users.module';
 import { SocialModule } from './social/social.module';
 import { RolesModule } from './roles/roles.module';
 import { WorkflowsModule } from './workflows/workflows.module';
+import { MessagingModule } from './messaging/messaging.module';
 
 @Module({
   imports: [
@@ -26,6 +29,7 @@ import { WorkflowsModule } from './workflows/workflows.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     RedisModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -34,6 +38,35 @@ import { WorkflowsModule } from './workflows/workflows.module';
       }),
       inject: [ConfigService],
     }),
+BullModule.forRootAsync({
+  imports: [ConfigModule],
+  useFactory: (configService: ConfigService) => {
+    const redisUrl =
+      configService.get<string>('REDIS_URL') || 'redis://127.0.0.1:6379';
+
+    const url = new URL(redisUrl);
+
+    return {
+      redis: {
+        host: url.hostname,
+        port: Number(url.port) || 6379,
+
+        // ✅ include username if present
+        ...(url.username ? { username: url.username } : {}),
+
+        // ✅ include password
+        ...(url.password ? { password: url.password } : {}),
+
+        // ✅ handle TLS (VERY IMPORTANT for cloud Redis)
+        ...(url.protocol === 'rediss:' ? { tls: {} } : {}),
+
+        // ✅ prevent this exact error (optional but useful)
+        maxRetriesPerRequest: null,
+      },
+    };
+  },
+  inject: [ConfigService],
+}),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -54,10 +87,10 @@ import { WorkflowsModule } from './workflows/workflows.module';
     SocialModule,
     RolesModule,
     WorkflowsModule,
-    ProductsModule
+    ProductsModule,
+    MessagingModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
-
