@@ -31,7 +31,7 @@ const NODE_THEMES: Record<string, { icon: any, color: string, label: string }> =
   agent: { icon: Bot, color: '#8b5cf6', label: 'AI Marketing Agent' },
   ads: { icon: Megaphone, color: '#ec4899', label: 'Ad Platform Sync' },
   condition: { icon: GitBranch, color: '#f43f5e', label: 'Smart Router' },
-  delay: { icon: Clock, color: '#64748b', label: 'Delay' },
+  delay: { icon: Clock, color: 'var(--text-secondary)', label: 'Delay' },
   conversion: { icon: Target, color: '#10b981', label: 'ROI Tracking' }
 };
 
@@ -162,7 +162,7 @@ export const Workflows: React.FC = () => {
       <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '24px', height: 'calc(100vh - 250px)' }}>
         
         {/* Visual Flow Canvas */}
-        <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 'var(--radius-xl)', border: '1px solid var(--glass-border)', background: '#ffffff', boxShadow: '0 10px 40px rgba(112, 51, 245, 0.05)' }}>
+        <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 'var(--radius-xl)', border: '1px solid var(--glass-border)', background: 'var(--bg-card)', boxShadow: '0 10px 40px rgba(112, 51, 245, 0.05)' }}>
             
             {/* Canvas Grid Pattern */}
             <div style={{ 
@@ -173,10 +173,10 @@ export const Workflows: React.FC = () => {
             }} />
 
             <div style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10, display: 'flex', gap: '8px' }}>
-               <div style={{ background: '#ffffff', padding: '10px 20px', borderRadius: '30px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+               <div style={{ background: 'var(--bg-card)', padding: '10px 20px', borderRadius: '30px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
                   <Activity size={14} color="var(--success)" className="animate-pulse" /> Live Analysis
                </div>
-               <div style={{ background: '#ffffff', padding: '10px 20px', borderRadius: '30px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+               <div style={{ background: 'var(--bg-card)', padding: '10px 20px', borderRadius: '30px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
                   <Globe size={14} color="var(--accent-primary)" /> Project Hub
                </div>
             </div>
@@ -220,7 +220,7 @@ export const Workflows: React.FC = () => {
                            onClick={() => setActiveNodeId(node.id)}
                            style={{ 
                              width: '300px', padding: '24px', 
-                             background: '#ffffff',
+                             background: 'var(--bg-card)',
                              borderRadius: 'var(--radius-lg)', 
                              border: `2px solid ${isActive ? theme.color : 'rgba(112, 51, 245, 0.05)'}`, 
                              boxShadow: isActive ? `0 15px 40px ${theme.color}22` : '0 10px 30px rgba(0,0,0,0.04)',
@@ -240,7 +240,7 @@ export const Workflows: React.FC = () => {
                             </div>
                             <div style={{ flex: 1 }}>
                                <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: '4px' }}>{theme.label}</div>
-                               <div style={{ fontWeight: 700, fontSize: '1rem', color: '#141414' }}>{node.data.label}</div>
+                               <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>{node.data.label}</div>
                             </div>
                             <ChevronRight size={20} color="#cbd5e1" />
 

@@ -164,7 +164,7 @@ const ALL_TEMPLATES: CampaignTemplate[] = [
     name: 'Automobile & Auto Dealer',
     category: 'Automobile',
     icon: Car,
-    color: '#64748b',
+    color: 'var(--text-secondary)',
     gradient: 'linear-gradient(135deg, #64748b, #475569)',
     description: 'Drive test drive bookings and inquiries for car dealerships and auto accessory shops.',
     tags: ['car', 'automobile', 'vehicle', 'bike', 'showroom', 'dealer', 'auto', 'service center', 'garage'],
@@ -232,7 +232,7 @@ const TemplateCard: React.FC<{ template: CampaignTemplate; isMatch: boolean; onS
       whileHover={{ y: -6, boxShadow: `0 24px 48px ${template.color}22` }}
       onClick={onSelect}
       style={{
-        background: '#fff', borderRadius: '24px', overflow: 'hidden',
+        background: 'var(--bg-card)', borderRadius: '24px', overflow: 'hidden',
         border: isMatch ? `2px solid ${template.color}` : '1.5px solid #f1f5f9',
         cursor: 'pointer', transition: 'all 0.25s', position: 'relative'
       }}
@@ -258,7 +258,7 @@ const TemplateCard: React.FC<{ template: CampaignTemplate; isMatch: boolean; onS
 
       {/* Body */}
       <div style={{ padding: '20px 24px 24px' }}>
-        <p style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>{template.description}</p>
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '20px' }}>{template.description}</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
           {[
@@ -268,7 +268,7 @@ const TemplateCard: React.FC<{ template: CampaignTemplate; isMatch: boolean; onS
           ].map(item => (
             <div key={item.label} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
               <item.icon size={14} color={template.color} style={{ marginTop: '2px', flexShrink: 0 }} />
-              <span style={{ fontSize: '0.82rem', color: '#475569' }}><strong style={{ color: '#0f172a' }}>{item.label}:</strong> {item.val}</span>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>{item.label}:</strong> {item.val}</span>
             </div>
           ))}
         </div>
@@ -326,12 +326,12 @@ const TemplateDetail: React.FC<{ template: CampaignTemplate; onBack: () => void 
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
         {/* Ad Copy Preview */}
-        <div style={{ gridColumn: '1 / -1', background: '#f8fafc', borderRadius: '20px', padding: '24px', border: '1.5px solid #e2e8f0' }}>
+        <div style={{ gridColumn: '1 / -1', background: 'var(--bg-elevated)', borderRadius: '20px', padding: '24px', border: '1.5px solid #e2e8f0' }}>
           <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Sparkles size={14} /> AI-Generated Ad Copy
           </div>
-          <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0f172a', marginBottom: '8px' }}>{template.adCopy.headline}</div>
-          <div style={{ fontSize: '0.95rem', color: '#475569', lineHeight: 1.6 }}>{template.adCopy.description}</div>
+          <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '8px' }}>{template.adCopy.headline}</div>
+          <div style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{template.adCopy.description}</div>
         </div>
 
         {[
@@ -340,27 +340,27 @@ const TemplateDetail: React.FC<{ template: CampaignTemplate; onBack: () => void 
           { label: 'Target Audience', icon: Users, val: template.audience, color: '#3b82f6' },
           { label: 'Expected ROAS', icon: TrendingUp, val: '3.5x – 6x', color: '#f59e0b' },
         ].map(item => (
-          <div key={item.label} style={{ background: '#fff', borderRadius: '16px', padding: '20px', border: '1.5px solid #f1f5f9' }}>
+          <div key={item.label} style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '20px', border: '1.5px solid #f1f5f9' }}>
             <item.icon size={18} color={item.color} style={{ marginBottom: '10px' }} />
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>{item.label}</div>
-            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>{item.val}</div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>{item.label}</div>
+            <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>{item.val}</div>
           </div>
         ))}
       </div>
 
       {/* Keywords */}
-      <div style={{ background: '#fff', borderRadius: '16px', padding: '20px', border: '1.5px solid #f1f5f9', marginBottom: '24px' }}>
-        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '14px' }}>Target Keywords</div>
+      <div style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '20px', border: '1.5px solid #f1f5f9', marginBottom: '24px' }}>
+        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '14px' }}>Target Keywords</div>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           {template.keywords.map(k => (
-            <span key={k} style={{ padding: '6px 14px', borderRadius: '99px', background: '#f1f5f9', fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{k}</span>
+            <span key={k} style={{ padding: '6px 14px', borderRadius: '99px', background: 'var(--bg-elevated)', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{k}</span>
           ))}
         </div>
       </div>
 
       {/* Platforms */}
-      <div style={{ background: '#fff', borderRadius: '16px', padding: '20px', border: '1.5px solid #f1f5f9', marginBottom: '28px' }}>
-        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '14px' }}>Ad Platforms</div>
+      <div style={{ background: 'var(--bg-card)', borderRadius: '16px', padding: '20px', border: '1.5px solid #f1f5f9', marginBottom: '28px' }}>
+        <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '14px' }}>Ad Platforms</div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           {template.platforms.map(p => (
             <div key={p} style={{ padding: '8px 18px', borderRadius: '99px', background: `${template.color}10`, color: template.color, fontWeight: 700, fontSize: '0.88rem' }}>{p}</div>
@@ -426,8 +426,8 @@ export const Templates: React.FC = () => {
             <LayoutTemplate size={20} color="#fff" />
           </div>
           <div>
-            <h1 style={{ margin: 0, fontFamily: 'Outfit', fontWeight: 900, fontSize: '1.6rem', color: '#0f172a', letterSpacing: '-0.8px' }}>AI Campaign Templates</h1>
-            <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', fontWeight: 500 }}>Apni business requirements likhein — AI best template suggest karega</p>
+            <h1 style={{ margin: 0, fontFamily: 'Outfit', fontWeight: 900, fontSize: '1.6rem', color: 'var(--text-primary)', letterSpacing: '-0.8px' }}>AI Campaign Templates</h1>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-dim)', fontWeight: 500 }}>Apni business requirements likhein — AI best template suggest karega</p>
           </div>
         </div>
       </div>
@@ -435,13 +435,13 @@ export const Templates: React.FC = () => {
       {!selectedTemplate ? (
         <>
           {/* Search Box */}
-          <div style={{ background: '#fff', borderRadius: '24px', padding: '28px', border: '1.5px solid #e2e8f0', boxShadow: '0 8px 40px rgba(124,58,237,0.06)', marginBottom: '36px' }}>
-            <label style={{ display: 'block', fontWeight: 700, color: '#0f172a', marginBottom: '10px', fontSize: '0.95rem' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: '24px', padding: '28px', border: '1.5px solid #e2e8f0', boxShadow: '0 8px 40px rgba(124,58,237,0.06)', marginBottom: '36px' }}>
+            <label style={{ display: 'block', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px', fontSize: '0.95rem' }}>
               🤖 Apni business / requirement describe karein
             </label>
             <div style={{ display: 'flex', gap: '12px' }}>
               <div style={{ flex: 1, position: 'relative' }}>
-                <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-dim)' }} />
                 <input
                   value={query}
                   onChange={e => setQuery(e.target.value)}
@@ -450,8 +450,8 @@ export const Templates: React.FC = () => {
                   style={{
                     width: '100%', padding: '16px 16px 16px 48px',
                     borderRadius: '14px', border: '1.5px solid #e2e8f0',
-                    fontSize: '0.98rem', color: '#0f172a', outline: 'none',
-                    background: '#f8fafc', boxSizing: 'border-box', transition: 'border-color 0.2s'
+                    fontSize: '0.98rem', color: 'var(--text-primary)', outline: 'none',
+                    background: 'var(--bg-elevated)', boxSizing: 'border-box', transition: 'border-color 0.2s'
                   }}
                   onFocus={e => (e.target.style.borderColor = '#7c3aed')}
                   onBlur={e => (e.target.style.borderColor = '#e2e8f0')}
@@ -478,12 +478,12 @@ export const Templates: React.FC = () => {
 
             {/* Quick tags */}
             <div style={{ marginTop: '14px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>Quick try:</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: 600 }}>Quick try:</span>
               {['Online Store', 'Restaurant Delhi', 'Doctor Clinic', 'SaaS Software', 'Real Estate', 'Car Dealer'].map(tag => (
                 <button
                   key={tag}
                   onClick={() => { setQuery(tag); }}
-                  style={{ padding: '5px 12px', borderRadius: '99px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.8rem', fontWeight: 600, color: '#475569', cursor: 'pointer', transition: 'all 0.15s' }}
+                  style={{ padding: '5px 12px', borderRadius: '99px', border: '1px solid var(--glass-border)', background: 'var(--bg-elevated)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.15s' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#7c3aed'; (e.currentTarget as HTMLElement).style.color = '#7c3aed'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#e2e8f0'; (e.currentTarget as HTMLElement).style.color = '#475569'; }}
                 >
@@ -499,7 +499,7 @@ export const Templates: React.FC = () => {
               <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} style={{ display: 'inline-block', marginBottom: '16px' }}>
                 <Sparkles size={36} color="#7c3aed" />
               </motion.div>
-              <p style={{ color: '#64748b', fontWeight: 600 }}>AI aapki requirements analyze kar raha hai...</p>
+              <p style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>AI aapki requirements analyze kar raha hai...</p>
             </div>
           )}
 
@@ -509,7 +509,7 @@ export const Templates: React.FC = () => {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
                   <CheckCircle size={18} color="#10b981" />
-                  <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1rem' }}>
                     {results.length} matching templates found for: <em style={{ color: '#7c3aed' }}>"{query}"</em>
                   </span>
                 </div>
@@ -530,7 +530,7 @@ export const Templates: React.FC = () => {
           {/* Browse All (initial state) */}
           {!searched && !loading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <p style={{ fontWeight: 700, color: '#64748b', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '20px' }}>
+              <p style={{ fontWeight: 700, color: 'var(--text-secondary)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '20px' }}>
                 — Ya sabhi templates dekhen —
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>

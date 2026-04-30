@@ -195,27 +195,27 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ minHeight: '100%', background: '#f5f6fa' }}>
+    <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
       <style>{`
         @keyframes spin    { to { transform: rotate(360deg); } }
         @keyframes fadeUp  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         @keyframes shimmer { 0%,100%{opacity:.6} 50%{opacity:1} }
         .brand-card:hover  { border-color:#c4b5fd !important; box-shadow:0 4px 20px rgba(124,58,237,.08) !important; }
-        .feat-card:hover   { border-color:#c4b5fd !important; background:#faf8ff !important; }
+        .feat-card:hover   { border-color:#a78bfa !important; background:var(--bg-elevated) !important; }
         .comp-card:hover   { border-color:#c4b5fd !important; }
       `}</style>
 
       {/* ── Page Header ── */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #e8eaf0', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--glass-border)', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '2px' }}>Brand Center</div>
-          <h1 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: '#0f172a' }}>Brand Profile</h1>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>AI-powered brand analysis and insights</div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '2px' }}>Brand Center</div>
+          <h1 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Brand Profile</h1>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '2px' }}>AI-powered brand analysis and insights</div>
         </div>
         {phase === 'result' && (
           <button
             onClick={resetAnalysis}
-            style={{ padding: '8px 18px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#475569', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}
+            style={{ padding: '8px 18px', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-card)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}
           >
             Re-analyse
           </button>
@@ -227,16 +227,16 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
       ════════════════════════════════════════ */}
       {phase === 'idle' && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)' }}>
-          <div style={{ background: '#fff', borderRadius: '20px', padding: '40px 44px', width: '420px', boxShadow: '0 8px 40px rgba(15,23,42,.10)', textAlign: 'center' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: '20px', padding: '40px 44px', width: '420px', boxShadow: '0 8px 40px rgba(0,0,0,0.5)', textAlign: 'center' }}>
             <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: 'linear-gradient(135deg,#7c3aed,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', margin: '0 auto 18px' }}>✦</div>
-            <h2 style={{ margin: '0 0 8px', fontSize: '1.15rem', fontWeight: 700, color: '#0f172a' }}>Create Brand Profile</h2>
-            <p style={{ fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6, margin: '0 0 20px' }}>
-              AI will analyse <strong style={{ color: '#0f172a' }}>{activeBrand?.name || 'your brand'}</strong> at{' '}
+            <h2 style={{ margin: '0 0 8px', fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Create Brand Profile</h2>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 20px' }}>
+              AI will analyse <strong style={{ color: 'var(--text-primary)' }}>{activeBrand?.name || 'your brand'}</strong> at{' '}
               <span style={{ color: '#7c3aed', wordBreak: 'break-all' }}>{activeBrand?.url}</span> and generate a complete brand profile.
             </p>
-            <div style={{ background: '#f8fafc', borderRadius: '10px', padding: '10px 14px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ background: 'var(--bg-elevated)', borderRadius: '10px', padding: '10px 14px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '0.85rem' }}>⏱</span>
-              <span style={{ fontSize: '0.78rem', color: '#475569' }}>2-3 min for AI to complete brand profile analysis</span>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>2-3 min for AI to complete brand profile analysis</span>
             </div>
             <button
               onClick={startAnalysis}
@@ -256,11 +256,11 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
 
           {/* Left: steps */}
           <div style={{ width: '340px', flexShrink: 0 }}>
-            <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e8eaf0', padding: '20px', marginBottom: '16px' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a', marginBottom: '6px' }}>Generation Progress</div>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--glass-border)', padding: '20px', marginBottom: '16px' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '6px' }}>Generation Progress</div>
 
               {/* Progress bar */}
-              <div style={{ height: '6px', background: '#f1f5f9', borderRadius: '99px', marginBottom: '4px', overflow: 'hidden' }}>
+              <div style={{ height: '6px', background: 'var(--bg-elevated)', borderRadius: '99px', marginBottom: '4px', overflow: 'hidden' }}>
                 <div style={{
                   height: '100%', borderRadius: '99px',
                   background: 'linear-gradient(90deg,#7c3aed,#a855f7)',
@@ -306,8 +306,8 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                     </div>
 
                     <div style={{ flex: 1, paddingLeft: '12px', paddingBottom: isLast ? '0' : '16px', paddingTop: '4px', opacity: step.status === 'pending' ? .4 : 1, transition: 'opacity .3s' }}>
-                      <div style={{ fontSize: '0.83rem', fontWeight: isActive ? 600 : 500, color: '#0f172a', marginBottom: '2px' }}>{step.label}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#64748b', lineHeight: 1.4 }}>{step.sublabel}</div>
+                      <div style={{ fontSize: '0.83rem', fontWeight: isActive ? 600 : 500, color: 'var(--text-primary)', marginBottom: '2px' }}>{step.label}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{step.sublabel}</div>
                       {isDone && (
                         <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                           {step.id === 'recog' && ['Extract Brand Information', 'Identify Industry Category'].map(t => <TaskDone key={t} label={t} />)}
@@ -325,18 +325,18 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                 <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '12px', marginTop: '12px' }}>
                   <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#dc2626', marginBottom: '4px' }}>Analysis failed</div>
                   <div style={{ fontSize: '0.75rem', color: '#ef4444' }}>{error}</div>
-                  <button onClick={resetAnalysis} style={{ marginTop: '10px', padding: '6px 14px', borderRadius: '6px', border: '1px solid #fecaca', background: '#fff', color: '#dc2626', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>Retry</button>
+                  <button onClick={resetAnalysis} style={{ marginTop: '10px', padding: '6px 14px', borderRadius: '6px', border: '1px solid #fecaca', background: 'var(--bg-card)', color: '#dc2626', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>Retry</button>
                 </div>
               )}
             </div>
           </div>
 
           {/* Right: live browser preview placeholder */}
-          <div style={{ flex: 1, background: '#fff', borderRadius: '16px', border: '1px solid #e8eaf0', overflow: 'hidden' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '.07em', textTransform: 'uppercase' }}>
+          <div style={{ flex: 1, background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '.07em', textTransform: 'uppercase' }}>
               Live Browser Preview
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px', color: '#94a3b8', fontSize: '0.82rem', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px', color: 'var(--text-dim)', fontSize: '0.82rem', flexDirection: 'column', gap: '10px' }}>
               <div style={{ width: '32px', height: '32px', border: '3px solid #e9d5ff', borderTopColor: '#7c3aed', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
               <div>Waiting for browser to start...</div>
             </div>
@@ -350,9 +350,10 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
       {phase === 'result' && brandData && (
         <div style={{ padding: '24px 32px', maxWidth: '1100px', animation: 'fadeUp .3s ease-out' }}>
           {/* Debug log */}
+          {console.log('Brand data:', brandData)}
 
           {/* ── Brand Header Card ── */}
-          <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e8eaf0', padding: '24px 28px', marginBottom: '20px' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--glass-border)', padding: '24px 28px', marginBottom: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '18px' }}>
               {/* Logo + name */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -360,7 +361,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                   {initials(brandData.name)}
                 </div>
                 <div>
-                  <h2 style={{ margin: '0 0 4px', fontSize: '1.35rem', fontWeight: 800, color: '#0f172a' }}>{brandData.name}</h2>
+                  <h2 style={{ margin: '0 0 4px', fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)' }}>{brandData.name}</h2>
                   <a href={brandData.url} target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: '#7c3aed', textDecoration: 'none' }}>🌐 {brandData.url}</a>
                   {brandData.tags?.length ? (
                     <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '8px' }}>
@@ -379,15 +380,15 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                   { label: 'BUSINESS MODEL', value: brandData.businessModel },
                 ].filter(m => m.value).map(m => (
                   <div key={m.label} style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '0.6rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '.07em', textTransform: 'uppercase', marginBottom: '2px' }}>{m.label}</div>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#0f172a', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '4px 10px' }}>{m.value}</div>
+                    <div style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '.07em', textTransform: 'uppercase', marginBottom: '2px' }}>{m.label}</div>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '6px', padding: '4px 10px' }}>{m.value}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {brandData.description && (
-              <p style={{ margin: 0, fontSize: '0.85rem', color: '#475569', lineHeight: 1.7, maxWidth: '800px' }}>{brandData.description}</p>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.7, maxWidth: '800px' }}>{brandData.description}</p>
             )}
           </div>
 
@@ -395,12 +396,12 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
 
             {/* Brand DNA */}
-            <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e8eaf0', padding: '20px' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '20px' }}>
               <SectionTitle color="#7c3aed" label="Brand DNA" />
               {brandData.brandDna?.brandTone && (
                 <>
                   <FieldLabel label="Brand Tone" />
-                  <p style={{ margin: '0 0 14px', fontSize: '0.82rem', color: '#475569', lineHeight: 1.6 }}>{brandData.brandDna.brandTone}</p>
+                  <p style={{ margin: '0 0 14px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{brandData.brandDna.brandTone}</p>
                 </>
               )}
               {brandData.brandDna?.marketKeywords?.length ? (
@@ -414,12 +415,12 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
             </div>
 
             {/* Core Advantages */}
-            <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e8eaf0', padding: '20px' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '20px' }}>
               <SectionTitle color="#f59e0b" label="Core Advantages" />
               {brandData.coreAdvantages?.valueProposition && (
                 <>
                   <FieldLabel label="Value Proposition" />
-                  <p style={{ margin: '0 0 14px', fontSize: '0.82rem', color: '#475569', lineHeight: 1.6 }}>{brandData.coreAdvantages.valueProposition}</p>
+                  <p style={{ margin: '0 0 14px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{brandData.coreAdvantages.valueProposition}</p>
                 </>
               )}
               {brandData.coreAdvantages?.differentiators?.length ? (
@@ -427,7 +428,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                   <FieldLabel label="Differentiation" />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {brandData.coreAdvantages.differentiators.map((d, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.8rem', color: '#374151' }}>
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                         <span style={{ color: '#7c3aed', fontWeight: 700, flexShrink: 0 }}>{i + 1}</span> {d}
                       </div>
                     ))}
@@ -439,14 +440,14 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
 
           {/* ── Brand Features ── */}
           {brandData.features?.length ? (
-            <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e8eaf0', padding: '20px', marginBottom: '20px' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '20px', marginBottom: '20px' }}>
               <SectionTitle color="#3b82f6" label="Brand Features" />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginTop: '14px' }}>
                 {brandData.features.map((f, i) => (
-                  <div key={i} className="feat-card" style={{ borderRadius: '12px', border: '1px solid #f1f5f9', padding: '16px', cursor: 'default', transition: 'all .15s', background: '#fafafa' }}>
+                  <div key={i} className="feat-card" style={{ borderRadius: '12px', border: '1px solid #f1f5f9', padding: '16px', cursor: 'default', transition: 'all .15s', background: 'var(--bg-elevated)' }}>
                     <div style={{ fontSize: '1.2rem', marginBottom: '8px' }}>{f.icon || '✦'}</div>
-                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0f172a', marginBottom: '6px' }}>{f.title}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>{f.description}</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '6px' }}>{f.title}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{f.description}</div>
                   </div>
                 ))}
               </div>
@@ -455,15 +456,15 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
 
           {/* ── Target Audience ── */}
           {brandData.targetAudience?.length ? (
-            <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e8eaf0', padding: '20px', marginBottom: '20px' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '20px', marginBottom: '20px' }}>
               <SectionTitle color="#10b981" label="Target Audience" />
               <div style={{ position: 'relative', overflow: 'hidden', marginTop: '14px' }}>
                 {brandData.targetAudience.map((aud, i) => (
                   <div key={i} style={{ display: i === activeAudienceIdx ? 'flex' : 'none', gap: '24px', alignItems: 'center', animation: 'fadeUp .2s ease-out' }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '.07em', textTransform: 'uppercase', marginBottom: '6px' }}>TARGET AUDIENCE OF</div>
-                      <h3 style={{ margin: '0 0 12px', fontSize: '1.5rem', fontWeight: 800, color: '#0f172a' }}>{aud.segment}</h3>
-                      <p style={{ margin: '0 0 14px', fontSize: '0.83rem', color: '#475569', lineHeight: 1.7 }}>{aud.description}</p>
+                      <div style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '.07em', textTransform: 'uppercase', marginBottom: '6px' }}>TARGET AUDIENCE OF</div>
+                      <h3 style={{ margin: '0 0 12px', fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>{aud.segment}</h3>
+                      <p style={{ margin: '0 0 14px', fontSize: '0.83rem', color: 'var(--text-secondary)', lineHeight: 1.7 }}>{aud.description}</p>
                       {aud.tags?.length && (
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                           {aud.tags.map(t => <Pill key={t} label={t} outline />)}
@@ -492,7 +493,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
 
             {/* Competitors */}
             {brandData.competitors?.length ? (
-              <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e8eaf0', padding: '20px' }}>
+              <div style={{ background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '20px' }}>
                 <SectionTitle color="#f59e0b" label="Competitors" />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
                   {brandData.competitors.map((c, i) => (
@@ -501,10 +502,10 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                         <div style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#f3f0ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#7c3aed', flexShrink: 0 }}>
                           {initials(c.name)}
                         </div>
-                        <div style={{ fontWeight: 600, fontSize: '0.83rem', color: '#0f172a' }}>{c.name}</div>
-                        <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: '#94a3b8', background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '4px', padding: '1px 6px' }}>{c.type}</span>
+                        <div style={{ fontWeight: 600, fontSize: '0.83rem', color: 'var(--text-primary)' }}>{c.name}</div>
+                        <span style={{ marginLeft: 'auto', fontSize: '0.65rem', color: 'var(--text-dim)', background: 'var(--bg-elevated)', border: '1px solid #f1f5f9', borderRadius: '4px', padding: '1px 6px' }}>{c.type}</span>
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>{c.description}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{c.description}</div>
                     </div>
                   ))}
                 </div>
@@ -513,14 +514,14 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
 
             {/* Reach & Ecosystem */}
             {brandData.reachAndEcosystem && (
-              <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e8eaf0', padding: '20px' }}>
+              <div style={{ background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '20px' }}>
                 <SectionTitle color="#3b82f6" label="Reach & Ecosystem" />
                 {brandData.reachAndEcosystem.marketingChannels?.length ? (
                   <>
                     <FieldLabel label="Marketing Channels" />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '14px' }}>
                       {brandData.reachAndEcosystem.marketingChannels.map((ch, i) => (
-                        <div key={i} style={{ fontSize: '0.78rem', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                        <div key={i} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                           <span style={{ color: '#7c3aed', marginTop: '1px' }}>›</span>{ch}
                         </div>
                       ))}
@@ -532,7 +533,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                     <FieldLabel label="Customer Hangouts" />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       {brandData.reachAndEcosystem.customerHangouts.map((ch, i) => (
-                        <div key={i} style={{ fontSize: '0.78rem', color: '#374151', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                        <div key={i} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                           <span style={{ color: '#10b981', marginTop: '1px' }}>›</span>{ch}
                         </div>
                       ))}
@@ -545,7 +546,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
 
           {/* ── Impact Analysis ── */}
           {brandData.impactAnalysis && (
-            <div style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e8eaf0', padding: '20px', marginBottom: '20px' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '20px', marginBottom: '20px' }}>
               <SectionTitle color="#ef4444" label="Impact Analysis" />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginTop: '14px' }}>
                 {[
@@ -557,11 +558,11 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                   <div key={col.key}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: col.color }} />
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0f172a' }}>{col.label}</span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)' }}>{col.label}</span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                       {col.items.map((item, i) => (
-                        <div key={i} style={{ fontSize: '0.75rem', color: '#475569', display: 'flex', alignItems: 'flex-start', gap: '5px', lineHeight: 1.4 }}>
+                        <div key={i} style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'flex-start', gap: '5px', lineHeight: 1.4 }}>
                           <span style={{ color: col.color, flexShrink: 0, marginTop: '1px' }}>·</span>{item}
                         </div>
                       ))}
@@ -592,12 +593,12 @@ const TaskDone: React.FC<{ label: string }> = ({ label }) => (
 const SectionTitle: React.FC<{ label: string; color: string }> = ({ label, color }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
     <div style={{ width: '3px', height: '16px', background: color, borderRadius: '2px' }} />
-    <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>{label}</span>
+    <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{label}</span>
   </div>
 );
 
 const FieldLabel: React.FC<{ label: string }> = ({ label }) => (
-  <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '.07em', textTransform: 'uppercase', margin: '10px 0 5px' }}>{label}</div>
+  <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '.07em', textTransform: 'uppercase', margin: '10px 0 5px' }}>{label}</div>
 );
 
 const Pill: React.FC<{ label: string; outline?: boolean }> = ({ label, outline }) => (
@@ -610,5 +611,5 @@ const Pill: React.FC<{ label: string; outline?: boolean }> = ({ label, outline }
 );
 
 const KeywordPill: React.FC<{ label: string }> = ({ label }) => (
-  <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 500, background: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569' }}>{label}</span>
+  <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 500, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)' }}>{label}</span>
 );

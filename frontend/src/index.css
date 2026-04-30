@@ -52,37 +52,40 @@
 
 
 :root {
-  /* AdsGo Inspired Premium Light Theme */
-  --bg-primary: #f8f9ff;         /* Main Layout Background */
-  --bg-secondary: #ffffff;       /* Sidebar & Header */
-  --bg-card: #ffffff;            /* Card Surfaces */
-  --text-primary: #141414;       /* Deep Charcoal */
-  --text-secondary: #64748b;     /* Slate / Muted Text */
-  
-  --accent-primary: #7033f5;     /* AdsGo Signature Purple */
-  --accent-secondary: #6366f1;   /* Indigo */
-  --accent-gradient: linear-gradient(90deg, #a78bfa 0%, #6366f1 100%);
-  
+  /* ── Wheedle.ai Dark Theme (matches landing page) ── */
+  --bg-primary:    #080d1a;
+  --bg-secondary:  #0c1220;
+  --bg-card:       #0f1629;
+  --bg-elevated:   #141d35;
+  --text-primary:  #f1f5f9;
+  --text-secondary:#94a3b8;
+  --text-dim:      #475569;
+
+  --accent-primary:   #7c3aed;
+  --accent-secondary: #6366f1;
+  --accent-gradient:  linear-gradient(90deg, #a78bfa 0%, #6366f1 100%);
+  --accent-glow:      0 0 24px rgba(124, 58, 237, 0.4);
+
   --success: #10b981;
   --warning: #f59e0b;
-  --error: #ef4444;
-  --info: #7033f5;
-  
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(112, 51, 245, 0.1);
-  --glass-shadow: 0 10px 40px rgba(112, 51, 245, 0.08);
-  --glass-blur: blur(8px);
-  
+  --error:   #ef4444;
+  --info:    #7c3aed;
+
+  --glass-bg:     rgba(15, 22, 41, 0.85);
+  --glass-border: rgba(99, 102, 241, 0.18);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --glass-blur:   blur(12px);
+
   --sidebar-width: 280px;
   --header-height: 80px;
-  
-  --radius-xl: 32px;
-  --radius-lg: 20px;
-  --radius-md: 12px;
+
+  --radius-xl:   32px;
+  --radius-lg:   20px;
+  --radius-md:   12px;
   --radius-pill: 50px;
-  
-  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-medium: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --transition-fast:   0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-medium: 0.3s  cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @layer base {
@@ -99,9 +102,10 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   /* Subtle mesh gradient background */
-  background-image: 
-    radial-gradient(at 100% 0%, rgba(112, 51, 245, 0.05) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
+  background-image:
+    radial-gradient(circle at top, rgba(49, 88, 255, 0.18), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.12), transparent 40%),
+    linear-gradient(180deg, #050a18 0%, #080d1a 100%);
   background-attachment: fixed;
 }
 
@@ -160,7 +164,7 @@ button {
 }
 
 .glass-panel:hover {
-  box-shadow: 0 20px 50px rgba(112, 51, 245, 0.12);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
 }
 
 .text-gradient {
@@ -201,7 +205,7 @@ button {
 
 .input-field:focus {
   outline: none;
-  background: #ffffff;
+  background: rgba(124, 58, 237, 0.08);
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 4px rgba(112, 51, 245, 0.1);
 }
@@ -237,14 +241,14 @@ button {
 }
 
 .btn-secondary {
-  background: #ffffff;
+  background: rgba(255,255,255,0.05);
   color: var(--text-primary);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 4px 15px rgba(112, 51, 245, 0.05);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .btn-secondary:hover {
-  background: var(--bg-primary);
+  background: rgba(124, 58, 237, 0.12);
   border-color: var(--accent-primary);
   transform: translateY(-2px);
 }

@@ -26,7 +26,7 @@ const DonutChart: React.FC<{
   return (
     <svg width={size} height={size}>
       {slices.map((s, i) => <path key={i} d={s.path} fill={s.color} />)}
-      <circle cx={cx} cy={cy} r={r * 0.55} fill="#fff" />
+      <circle cx={cx} cy={cy} r={r * 0.55} fill="var(--bg-card)" />
     </svg>
   );
 };
@@ -84,18 +84,18 @@ export const AdInsights: React.FC = () => {
   };
 
   if (loading || !data) return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f6fa' }}>
-      <div className="animate-fade-in" style={{ fontSize: '1rem', color: '#64748b', fontWeight: 600 }}>Analyzing {activePlatform} Performance...</div>
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
+      <div className="animate-fade-in" style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Analyzing {activePlatform} Performance...</div>
     </div>
   );
 
   return (
-    <div style={{ minHeight: '100%', background: '#f5f6fa' }}>
+    <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
       {/* Header */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #e8eaf0', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--glass-border)', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>Ad Insights</span>
-          <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Live Data from {activePlatform}</span>
+          <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>Ad Insights</span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>Live Data from {activePlatform}</span>
           <button 
             onClick={handleRefresh}
             style={{ fontSize: '0.78rem', color: '#7c3aed', background: 'none', border: '1px solid #c4b5fd', padding: '4px 12px', borderRadius: '5px', fontWeight: 500, cursor: 'pointer' }}
@@ -103,12 +103,12 @@ export const AdInsights: React.FC = () => {
             🔄 Refresh
           </button>
         </div>
-        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Data cached 30min • Redis powered</div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Data cached 30min • Redis powered</div>
       </div>
 
       <div style={{ padding: '0' }}>
         {/* Platform Tabs */}
-        <div style={{ background: '#fff', borderBottom: '1px solid #f1f5f9', padding: '0 32px', display: 'flex', gap: '0' }}>
+        <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid #f1f5f9', padding: '0 32px', display: 'flex', gap: '0' }}>
           {platforms.map(p => (
             <button key={p} onClick={() => setActivePlatform(p)} style={{
               padding: '14px 24px', border: 'none', background: 'none', cursor: 'pointer',
@@ -124,18 +124,18 @@ export const AdInsights: React.FC = () => {
 
         <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
           {/* Left: Audience Insight */}
-          <div style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: '12px', padding: '20px' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <div style={{ width: '3px', height: '18px', background: '#7c3aed', borderRadius: '2px' }} />
-              <span style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a' }}>Audience Insight</span>
+              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>Audience Insight</span>
             </div>
 
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#0f172a', marginBottom: '14px' }}>Spend Distribution</div>
+            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '14px' }}>Spend Distribution</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
               <DonutChart data={data.audiences || []} size={130} />
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '7px' }}>
                 {data.audiences?.map((d: any) => (
-                  <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.78rem', color: '#374151' }}>
+                  <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                     <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: d.color, flexShrink: 0 }} />
                     {d.label}
                   </div>
@@ -143,17 +143,17 @@ export const AdInsights: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#0f172a', marginBottom: '10px' }}>Top Audiences</div>
+            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '10px' }}>Top Audiences</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
               {topAudiencesMock.map((aud, i) => (
                 <div key={i} style={{ padding: '12px 0', borderBottom: i < topAudiencesMock.length - 1 ? '1px dashed #f1f5f9' : 'none' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#0f172a', marginBottom: '6px' }}>{aud.name}</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '6px' }}>{aud.name}</div>
                   <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '5px' }}>
-                    {aud.tags.map(tag => <span key={tag} style={{ padding: '2px 8px', borderRadius: '5px', background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '0.72rem', color: '#475569' }}>{tag}</span>)}
+                    {aud.tags.map(tag => <span key={tag} style={{ padding: '2px 8px', borderRadius: '5px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{tag}</span>)}
                   </div>
                   <div style={{ fontSize: '0.75rem', display: 'flex', gap: '12px' }}>
                     <span style={{ color: '#7c3aed', fontWeight: 700 }}>{aud.cpa}</span>
-                    <span style={{ color: '#94a3b8' }}>{aud.spend}</span>
+                    <span style={{ color: 'var(--text-dim)' }}>{aud.spend}</span>
                   </div>
                 </div>
               ))}
@@ -161,18 +161,18 @@ export const AdInsights: React.FC = () => {
           </div>
 
           {/* Right: Page Insights */}
-          <div style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: '12px', padding: '20px' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <div style={{ width: '3px', height: '18px', background: '#3b82f6', borderRadius: '2px' }} />
-              <span style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a' }}>Page Insights</span>
+              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>Page Insights</span>
             </div>
 
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#0f172a', marginBottom: '14px' }}>Spend Distribution</div>
+            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '14px' }}>Spend Distribution</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
               <DonutChart data={data.pages || []} size={130} />
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '7px' }}>
                 {data.pages?.map((d: any) => (
-                  <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.78rem', color: '#374151' }}>
+                  <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                     <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: d.color, flexShrink: 0 }} />
                     <span style={{ fontSize: '0.72rem', wordBreak: 'break-all' }}>{d.label}</span>
                   </div>
@@ -180,14 +180,14 @@ export const AdInsights: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#0f172a', marginBottom: '10px' }}>Top Pages</div>
+            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '10px' }}>Top Pages</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
               {topPagesMock.map((page, i) => (
                 <div key={i} style={{ padding: '12px 0', borderBottom: i < topPagesMock.length - 1 ? '1px dashed #f1f5f9' : 'none' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#0f172a', marginBottom: '4px', wordBreak: 'break-all' }}>{page.url}</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)', marginBottom: '4px', wordBreak: 'break-all' }}>{page.url}</div>
                   <div style={{ fontSize: '0.75rem', display: 'flex', gap: '12px' }}>
                     <span style={{ color: '#7c3aed', fontWeight: 700 }}>{page.cvr}</span>
-                    <span style={{ color: '#94a3b8' }}>{page.spend}</span>
+                    <span style={{ color: 'var(--text-dim)' }}>{page.spend}</span>
                   </div>
                 </div>
               ))}
@@ -197,32 +197,32 @@ export const AdInsights: React.FC = () => {
 
         {/* Creative Insight Section */}
         <div style={{ padding: '0 32px 24px' }}>
-          <div style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: '12px', padding: '20px' }}>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <div style={{ width: '3px', height: '18px', background: '#f97316', borderRadius: '2px' }} />
-              <span style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a' }}>Creative Insight</span>
+              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>Creative Insight</span>
             </div>
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#0f172a', marginBottom: '14px' }}>Creative Performance (CPA vs CTR)</div>
+            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '14px' }}>Creative Performance (CPA vs CTR)</div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
               {data.creatives?.map((c: any, i: number) => (
-                <div key={i} style={{ padding: '14px', borderRadius: '10px', border: '1px solid #e8eaf0', background: '#fafafa' }}>
+                <div key={i} style={{ padding: '14px', borderRadius: '10px', border: '1px solid var(--glass-border)', background: 'var(--bg-elevated)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: c.color }} />
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#0f172a' }}>{c.name}</span>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <div>
-                      <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>CPA</div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', fontFamily: 'Outfit' }}>${c.cpa}</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>CPA</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Outfit' }}>${c.cpa}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>CTR</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>CTR</div>
                       <div style={{ fontSize: '0.9rem', fontWeight: 800, color: c.color, fontFamily: 'Outfit' }}>{c.ctr}%</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>Spend</div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: '#475569', fontFamily: 'Outfit' }}>${c.spend}</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>Spend</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-secondary)', fontFamily: 'Outfit' }}>${c.spend}</div>
                     </div>
                   </div>
                 </div>

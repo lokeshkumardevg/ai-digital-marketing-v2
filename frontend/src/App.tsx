@@ -92,6 +92,21 @@ const DashboardLayoutFull = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+// Dark theme version for CRM
+const DarkDashboardLayoutFull = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="app-container dark-theme">
+      <Sidebar />
+      <div className="main-content">
+        <Header />
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Campaign page gets no sidebar/header — pure full-screen wizard
 const CampaignLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -157,7 +172,7 @@ const App: React.FC = () => {
         <Route path="/signup" element={<Register />} />
 
         {/* Dashboard Routes — AdsGo full-bleed pages */}
-        <Route path="/crm" element={<ProtectedRoute><DashboardLayoutFull><Crm /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/crm" element={<ProtectedRoute><DarkDashboardLayoutFull><Crm /></DarkDashboardLayoutFull></ProtectedRoute>} />
         <Route path="/campaigns" element={<ProtectedRoute><CampaignLayout><Campaigns /></CampaignLayout></ProtectedRoute>} />
         <Route path="/templates" element={<ProtectedRoute><DashboardLayoutFull><Templates /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/content" element={<ProtectedRoute><DashboardLayoutFull><Content /></DashboardLayoutFull></ProtectedRoute>} />

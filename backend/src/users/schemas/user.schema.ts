@@ -43,6 +43,9 @@ export class User {
 
   @Prop()
   metaAccessToken?: string;
+
+  @Prop({ type: [String], default: [] })
+  permissions: string[]; // e.g., ['dashboard', 'ads', 'analytics', 'superadmin']
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

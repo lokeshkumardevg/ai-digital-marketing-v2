@@ -60,7 +60,7 @@ export const Header: React.FC = () => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: '#ffffff',
+      background: 'var(--bg-secondary)',
       borderBottom: '1px solid var(--glass-border)',
       position: 'sticky',
       top: 0,
@@ -79,7 +79,7 @@ export const Header: React.FC = () => {
           placeholder="Search campaigns, settings, analytics..." 
           style={{
             paddingLeft: '48px',
-            background: 'rgba(112, 51, 245, 0.03)',
+            background: 'rgba(124, 58, 237, 0.06)',
             borderRadius: 'var(--radius-pill)',
             fontSize: '0.9rem',
             border: '1px solid transparent'
@@ -97,20 +97,20 @@ export const Header: React.FC = () => {
               value={activeWebsiteId || ''} 
               onChange={(e) => dispatch(setActiveWebsite(e.target.value))}
               style={{ 
-                background: 'transparent', border: 'none', color: '#141414', 
+                background: 'transparent', border: 'none', color: 'var(--text-primary)', 
                 outline: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, WebkitAppearance: 'none',
                 minWidth: '150px', paddingRight: '20px'
               }}
             >
               {websites.map((site: any) => (
-                <option key={site.id} value={site.id} style={{ background: '#fff' }}>
+                <option key={site.id} value={site.id} style={{ background: 'var(--bg-card)' }}>
                   {site.name}
                 </option>
               ))}
             </select>
             <ChevronDown size={14} style={{ position: 'absolute', right: 0, pointerEvents: 'none' }} />
           </div>
-          <div style={{ width: '1px', height: '16px', background: 'rgba(112, 51, 245, 0.2)', margin: '0 8px' }} />
+          <div style={{ width: '1px', height: '16px', background: 'rgba(81, 17, 209, 0.2)', margin: '0 8px' }} />
           <button style={{ color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => setShowAddWebsite(true)} title="Add New Domain">
             <PlusCircle size={16} />
           </button>
@@ -123,7 +123,7 @@ export const Header: React.FC = () => {
             borderRadius: 'var(--radius-pill)', padding: '10px 16px', 
             display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem',
             background: 'var(--accent-gradient)', color: '#fff', border: 'none',
-            boxShadow: '0 8px 16px rgba(112, 51, 245, 0.15)',
+            boxShadow: '0 8px 16px rgba(6, 5, 9, 0.15)',
             cursor: 'pointer'
           }}
         >
@@ -139,7 +139,7 @@ export const Header: React.FC = () => {
                 <div style={{
                   position: 'absolute', top: '0', right: '0',
                   minWidth: '16px', height: '16px', background: 'var(--error)',
-                  borderRadius: '10px', border: '2px solid #fff',
+                  borderRadius: '10px', border: '2px solid var(--bg-secondary)',
                   color: 'white', fontSize: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold'
                 }}>
                   {unreadCount}
@@ -149,7 +149,7 @@ export const Header: React.FC = () => {
 
             {showNotifications && (
               <div className="glass-panel animate-fade-in" style={{
-                position: 'absolute', top: '50px', right: '-10px', width: '360px', padding: '24px', zIndex: 200, display: 'flex', flexDirection: 'column', gap: '16px', background: '#ffffff', border: '1px solid var(--glass-border)', boxShadow: '0 20px 60px rgba(112, 51, 245, 0.12)'
+                position: 'absolute', top: '50px', right: '-10px', width: '360px', padding: '24px', zIndex: 200, display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--bg-card)', border: '1px solid var(--glass-border)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(112, 51, 245, 0.1)', paddingBottom: '16px' }}>
                   <span style={{ fontWeight: 700, fontSize: '1.1rem', fontFamily: 'Outfit' }}>Notifications</span>
@@ -165,7 +165,7 @@ export const Header: React.FC = () => {
                   ) : (
                     items.map((notif: any) => (
                       <div key={notif.id} style={{ display: 'flex', gap: '16px', padding: '16px', background: 'rgba(112, 51, 245, 0.03)', borderRadius: '16px', opacity: notif.read ? 0.6 : 1, border: '1px solid transparent', transition: '0.2s' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>
                           {notif.type === 'success' ? <CheckCircle2 size={16} color="var(--success)" /> : <AlertCircle size={16} color="var(--info)" />}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
@@ -183,7 +183,7 @@ export const Header: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingLeft: '24px', borderLeft: '1px solid rgba(112, 51, 245, 0.1)' }}>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#141414', fontFamily: 'Outfit' }}>{user?.name || 'Administrator'}</div>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'Outfit' }}>{user?.name || 'Administrator'}</div>
               <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{user?.subscriptionTier || 'Pro Tier'}</div>
             </div>
             <div style={{
@@ -213,10 +213,10 @@ export const Header: React.FC = () => {
           display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
           padding: '20px'
         }}>
-          <div className="glass-panel animate-fade-in" style={{ width: '450px', padding: '40px', display: 'flex', flexDirection: 'column', gap: '24px', background: '#fff' }}>
+          <div className="glass-panel animate-fade-in" style={{ width: '450px', padding: '40px', display: 'flex', flexDirection: 'column', gap: '24px', background: 'var(--bg-card)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'Outfit' }}>Sync <span className="text-gradient">Website</span></h2>
-              <button style={{ padding: '8px', borderRadius: '50%', background: 'rgba(0,0,0,0.03)' }} onClick={() => setShowAddWebsite(false)}>
+              <button style={{ padding: '8px', borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} onClick={() => setShowAddWebsite(false)}>
                 <X size={20} style={{ color: 'var(--text-secondary)' }} />
               </button>
             </div>
