@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import logo from '../../assets/fevicon.png';
 import {
   LayoutDashboard,
   Megaphone,
@@ -32,24 +33,9 @@ interface MenuItem {
 }
 
 const MENU_ITEMS: MenuItem[] = [
-  {
-    path: '/',
-    label: 'Home',
-    icon: LayoutDashboard,
-    permission: 'dashboard',
-  },
-  {
-    path: '/campaigns',
-    label: 'New Campaign',
-    icon: Megaphone,
-    permission: 'ads',
-  },
-  {
-    path: '/templates',
-    label: 'AI Templates',
-    icon: LayoutTemplate,
-    permission: 'ads',
-  },
+  { path: '/', label: 'Home', icon: LayoutDashboard, permission: 'dashboard' },
+  { path: '/campaigns', label: 'New Campaign', icon: Megaphone, permission: 'ads' },
+  // { path: '/templates', label: 'AI Templates', icon: LayoutTemplate, permission: 'ads' },
   {
     label: 'AI Optimize',
     icon: BrainCircuit,
@@ -59,12 +45,7 @@ const MENU_ITEMS: MenuItem[] = [
       { path: '/ai/draft-recs', label: 'Draft & AI Recs' },
     ],
   },
-  {
-    path: '/content',
-    label: 'Creative Hub',
-    icon: Images,
-    permission: 'content',
-  },
+  { path: '/content', label: 'Creative Hub', icon: Images, permission: 'content' },
   {
     label: 'Analytics',
     icon: BarChart3,
@@ -102,7 +83,6 @@ const MENU_ITEMS: MenuItem[] = [
     icon: GitBranch,
     permission: 'automation',
     subItems: [
-      { path: '/workflows', label: 'Omni Flows' },
       { path: '/social', label: 'Social Hub' },
       { path: '/chatbot', label: 'AI Chatbot' },
       { path: '/crm', label: 'CRM & Audiences' },
@@ -110,31 +90,16 @@ const MENU_ITEMS: MenuItem[] = [
       { path: '/ai-agents', label: 'AI Agents' },
     ],
   },
-  {
-    path: '/billing',
-    label: 'Billing',
-    icon: CreditCard,
-    permission: 'billing',
-  },
-  {
-    path: '/roles',
-    label: 'Roles & Access',
-    icon: ShieldAlert,
-    permission: 'settings',
-  },
-  {
-    path: '/settings',
-    label: 'Settings',
-    icon: Settings,
-    permission: 'settings',
-  },
+  { path: '/billing', label: 'Billing', icon: CreditCard, permission: 'billing' },
+  { path: '/roles', label: 'Roles & Access', icon: ShieldAlert, permission: 'superadmin' },
+  { path: '/settings', label: 'Settings', icon: Settings, permission: 'settings' },
 ];
 
 export const Sidebar: React.FC = () => {
   const { user } = useSelector((state: any) => state.auth);
   const location = useLocation();
+
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
-    // Auto-open parent menu if current path matches a child
     const initial: Record<string, boolean> = {};
     MENU_ITEMS.forEach((item) => {
       if (item.subItems) {
@@ -168,26 +133,46 @@ export const Sidebar: React.FC = () => {
         position: 'fixed',
         left: 0,
         top: 0,
-        background: '#ffffff',
-        borderRight: '1px solid var(--glass-border)',
+        background: '#0f0f10',
+        borderRight: '1px solid rgba(255,255,255,0.06)',
         padding: '24px 12px',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 100,
         overflowY: 'auto',
+        color: '#e5e5e5',
       }}
     >
       {/* Logo */}
       <div style={{ padding: '0 8px', marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '10px' }}>
         <div style={{
           width: '36px', height: '36px', borderRadius: '10px',
-          background: 'var(--accent-gradient)', display: 'flex',
+          // background: 'var(--accent-gradient)', display: 'flex',
           alignItems: 'center', justifyContent: 'center', color: '#fff',
-          boxShadow: '0 8px 16px rgba(112,51,245,0.25)', flexShrink: 0,
+          // boxShadow: '0 8px 16px rgba(112,51,245,0.25)', flexShrink: 0,
         }}>
-          <Sparkles size={18} />
+          <div style={{
+  width: '36px',
+  height: '36px',
+  borderRadius: '10px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  overflow: 'hidden',
+  flexShrink: 0,
+}}>
+  <img
+    src={logo}
+    alt="logo"
+    style={{
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain',
+    }}
+  />
+</div>
         </div>
-        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, letterSpacing: '-0.8px', color: '#141414', fontFamily: 'Outfit', whiteSpace: 'nowrap' }}>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, letterSpacing: '-0.8px', color: '#f5f5f5', fontFamily: 'Outfit', whiteSpace: 'nowrap' }}>
           Wheedle.ai
         </h2>
       </div>
@@ -198,7 +183,6 @@ export const Sidebar: React.FC = () => {
           if (!hasAccess(item.permission)) return null;
           const Icon = item.icon;
 
-          // ---- Simple item (no sub-menu) ----
           if (!item.subItems) {
             return (
               <NavLink
@@ -211,7 +195,7 @@ export const Sidebar: React.FC = () => {
                   gap: '10px',
                   padding: '10px 14px',
                   borderRadius: '12px',
-                  color: isActive ? '#fff' : '#555',
+                  color: isActive ? '#fff' : '#a1a1aa',
                   background: isActive ? 'var(--accent-gradient)' : 'transparent',
                   fontWeight: isActive ? 600 : 500,
                   fontSize: '0.875rem',
@@ -221,19 +205,17 @@ export const Sidebar: React.FC = () => {
                   marginBottom: '2px',
                 })}
               >
-                <Icon size={17} style={{ flexShrink: 0 }} />
+                <Icon size={17} />
                 <span>{item.label}</span>
               </NavLink>
             );
           }
 
-          // ---- Item with sub-menu ----
           const isOpen = openMenus[item.label];
           const isActive = isSubActive(item.subItems);
 
           return (
             <div key={item.label}>
-              {/* Parent toggle button */}
               <button
                 onClick={() => toggleMenu(item.label)}
                 style={{
@@ -243,7 +225,7 @@ export const Sidebar: React.FC = () => {
                   width: '100%',
                   padding: '10px 14px',
                   borderRadius: '12px',
-                  color: isActive ? 'var(--accent-primary)' : '#555',
+                  color: isActive ? 'var(--accent-primary)' : '#a1a1aa',
                   background: isActive && !isOpen ? 'rgba(112,51,245,0.07)' : 'transparent',
                   fontWeight: isActive ? 600 : 500,
                   fontSize: '0.875rem',
@@ -254,19 +236,18 @@ export const Sidebar: React.FC = () => {
                   textAlign: 'left',
                 }}
               >
-                <Icon size={17} style={{ flexShrink: 0 }} />
+                <Icon size={17} />
                 <span style={{ flex: 1 }}>{item.label}</span>
                 <ChevronRight
                   size={14}
                   style={{
                     transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
                     transition: 'transform 0.2s ease',
-                    color: '#aaa',
+                    color: '#6b7280',
                   }}
                 />
               </button>
 
-              {/* Sub-menu items */}
               <div
                 style={{
                   overflow: 'hidden',
@@ -284,7 +265,7 @@ export const Sidebar: React.FC = () => {
                       gap: '8px',
                       padding: '9px 14px 9px 40px',
                       borderRadius: '10px',
-                      color: isActive ? 'var(--accent-primary)' : '#777',
+                      color: isActive ? 'var(--accent-primary)' : '#9ca3af',
                       background: isActive ? 'rgba(112,51,245,0.08)' : 'transparent',
                       fontWeight: isActive ? 600 : 400,
                       fontSize: '0.825rem',
@@ -304,22 +285,31 @@ export const Sidebar: React.FC = () => {
         })}
       </nav>
 
-      {/* Bottom brand badge */}
+      {/* Bottom */}
       <div style={{
         marginTop: '16px',
         padding: '16px',
-        background: 'rgba(112,51,245,0.04)',
+        background: 'rgba(255,255,255,0.04)',
         borderRadius: '16px',
-        border: '1px solid rgba(112,51,245,0.1)',
+        border: '1px solid rgba(255,255,255,0.08)',
         textAlign: 'center',
-        flexShrink: 0,
       }}>
-        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '8px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Optimized by
+        <div style={{ fontSize: '0.65rem', color: '#a1a1aa', marginBottom: '8px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          Powered by
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-          <Sparkles size={14} color="var(--accent-primary)" />
-          <span style={{ fontSize: '1rem', fontWeight: 800, color: '#141414', fontFamily: 'Outfit' }}>Quantum AI</span>
+          <img
+  src={logo}
+  alt="logo"
+  style={{
+    width: '16px',
+    height: '16px',
+    objectFit: 'contain',
+  }}
+/>
+          <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f5f5f5', fontFamily: 'Outfit' }}>
+            Wheedle Technologies
+          </span>
         </div>
       </div>
     </div>

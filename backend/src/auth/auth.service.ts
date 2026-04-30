@@ -29,7 +29,8 @@ export class AuthService {
         id: user._id,
         name: user.name,
         email: user.email,
-        subscriptionTier: user.subscriptionTier
+        subscriptionTier: user.subscriptionTier,
+        permissions: user.permissions || []
       }
     };
   }

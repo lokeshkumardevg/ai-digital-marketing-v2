@@ -150,8 +150,8 @@ export const Settings: React.FC = () => {
                   <input type="password" placeholder="AIza..." className="input-field" value={geminiKey} onChange={e => setGeminiKey(e.target.value)} />
                 </div>
 
-                <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
-                  <h4 style={{ fontSize: '1rem', marginBottom: '16px', color: '#374151' }}>Ad Platforms</h4>
+                <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--glass-border)' }}>
+                  <h4 style={{ fontSize: '1rem', marginBottom: '16px', color: 'var(--text-secondary)' }}>Ad Platforms</h4>
                   
                   <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
                     <button 

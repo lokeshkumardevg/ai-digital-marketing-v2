@@ -634,7 +634,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   }
 
   return (
-    <div style={{ minHeight: '100%', background: '#f5f6fa' }}>
+    <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
       <ContentTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div style={{ padding: '20px 32px' }}>
@@ -734,7 +734,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       style={{
         width: '100%',
         maxWidth: '860px',
-        background: '#fff',
+        background: 'var(--bg-card)',
         borderRadius: '32px',
         padding: '24px',
         boxShadow: '0 30px 80px rgba(15, 23, 42, 0.18)',
@@ -767,7 +767,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             height: '42px',
             borderRadius: '999px',
             border: '1px solid #ece7f9',
-            background: '#fafafa',
+            background: 'var(--bg-elevated)',
             cursor: 'pointer',
             fontSize: '1.2rem',
           }}
@@ -784,7 +784,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           borderRadius: '20px',
           overflow: 'hidden',
           maxHeight: '70vh',
-          background: '#fff',
+          background: 'var(--bg-card)',
         }}
       >
         <img
@@ -822,7 +822,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       style={{
         width: '100%',
         maxWidth: '520px',
-        background: '#fff',
+        background: 'var(--bg-card)',
         borderRadius: '28px',
         padding: '24px',
         boxShadow: '0 24px 60px rgba(15, 23, 42, 0.16)',
@@ -862,7 +862,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         width: '100%',
         maxWidth: '520px',
         height: '100vh',
-        background: '#fff',
+        background: 'var(--bg-card)',
         boxShadow: '-20px 0 60px rgba(15, 23, 42, 0.14)',
         padding: '28px 28px 24px',
         overflowY: 'auto',
@@ -888,7 +888,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             height: '42px',
             borderRadius: '999px',
             border: '1px solid #ece7f9',
-            background: '#fafafa',
+            background: 'var(--bg-elevated)',
             cursor: 'pointer',
             fontSize: '1.2rem',
           }}
@@ -965,7 +965,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             padding: '0 24px',
             borderRadius: '999px',
             border: '1px solid #e5e7eb',
-            background: '#fff',
+            background: 'var(--bg-card)',
             color: '#18181b',
             fontWeight: 700,
             cursor: 'pointer',

@@ -43,18 +43,18 @@ export const DraftAiRecs: React.FC = () => {
   const filtered = activePlatform === 'All' ? drafts : drafts.filter(d => d.platform === activePlatform);
 
   if (loading) return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f6fa' }}>
-      <div className="animate-fade-in" style={{ fontSize: '1rem', color: '#64748b', fontWeight: 600 }}>Analyzing Opportunities...</div>
+    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
+      <div className="animate-fade-in" style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Analyzing Opportunities...</div>
     </div>
   );
 
   return (
-    <div style={{ minHeight: '100%', background: '#f5f6fa' }}>
+    <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
       {/* Header */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #e8eaf0', padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--glass-border)', padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '3px' }}>AI Optimize</div>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>Draft & AI Recs</h1>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '3px' }}>AI Optimize</div>
+          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>Draft & AI Recs</h1>
         </div>
         <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
           <Plus size={14} /> New Draft
@@ -63,7 +63,7 @@ export const DraftAiRecs: React.FC = () => {
 
       <div style={{ padding: '24px 32px' }}>
         {/* Platform Tabs */}
-        <div style={{ display: 'flex', gap: '2px', background: '#f1f5f9', borderRadius: '8px', padding: '3px', width: 'fit-content', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '2px', background: 'var(--bg-elevated)', borderRadius: '8px', padding: '3px', width: 'fit-content', marginBottom: '20px' }}>
           {platforms.map(p => (
             <button key={p} onClick={() => setActivePlatform(p)} style={{
               padding: '6px 18px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
@@ -76,13 +76,13 @@ export const DraftAiRecs: React.FC = () => {
         </div>
 
         {/* Recommended Ads */}
-        <div style={{ marginBottom: '10px', fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>
+        <div style={{ marginBottom: '10px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
           Recommended Ads <span style={{ background: '#7c3aed', color: '#fff', borderRadius: '99px', padding: '1px 8px', fontSize: '0.72rem', fontWeight: 700, marginLeft: '6px' }}>{filtered.length}</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {filtered.map((draft) => (
-            <div key={draft.id} style={{ background: '#fff', border: `1px solid ${expanded === draft.id ? '#c4b5fd' : '#e8eaf0'}`, borderRadius: '12px', overflow: 'hidden', transition: 'all 0.2s' }}>
+            <div key={draft.id} style={{ background: 'var(--bg-card)', border: `1px solid ${expanded === draft.id ? '#c4b5fd' : '#e8eaf0'}`, borderRadius: '12px', overflow: 'hidden', transition: 'all 0.2s' }}>
               {/* Card Header */}
               <div onClick={() => setExpanded(expanded === draft.id ? null : draft.id)}
                 style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
@@ -90,15 +90,15 @@ export const DraftAiRecs: React.FC = () => {
                   <Image size={18} color="#7c3aed" />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a', marginBottom: '3px' }}>{draft.name}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '3px' }}>{draft.name}</div>
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <span style={{ padding: '2px 8px', borderRadius: '5px', background: '#f1f5f9', color: '#475569', fontSize: '0.72rem', fontWeight: 600 }}>{draft.platform}</span>
+                    <span style={{ padding: '2px 8px', borderRadius: '5px', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', fontSize: '0.72rem', fontWeight: 600 }}>{draft.platform}</span>
                     <span style={{ padding: '2px 8px', borderRadius: '5px', background: draft.status === 'approved' ? '#f0fdf4' : '#fffbeb', color: draft.status === 'approved' ? '#16a34a' : '#d97706', fontSize: '0.72rem', fontWeight: 600, textTransform: 'capitalize' }}>{draft.status}</span>
                   </div>
                 </div>
                 {/* Auto-publish Toggle */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={e => e.stopPropagation()}>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Auto-publish</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Auto-publish</span>
                   <button onClick={() => setAutoPublish(prev => ({ ...prev, [draft.id]: !prev[draft.id] }))}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', color: autoPublish[draft.id] ? '#7c3aed' : '#cbd5e1', padding: 0 }}>
                     {autoPublish[draft.id] ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
@@ -107,7 +107,7 @@ export const DraftAiRecs: React.FC = () => {
                 {/* AI Score */}
                 <div style={{ textAlign: 'center', minWidth: '50px' }}>
                   <div style={{ fontSize: '1.1rem', fontWeight: 800, color: draft.score > 75 ? '#16a34a' : draft.score > 55 ? '#d97706' : '#dc2626', fontFamily: 'Outfit' }}>{draft.score}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600 }}>AI SCORE</div>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600 }}>AI SCORE</div>
                 </div>
                 <ChevronDown size={16} color="#94a3b8" style={{ transform: expanded === draft.id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
               </div>
@@ -117,7 +117,7 @@ export const DraftAiRecs: React.FC = () => {
                 <div style={{ borderTop: '1px solid #f1f5f9', padding: '16px 20px' }}>
                   {/* Ad Components */}
                   <div style={{ marginBottom: '14px' }}>
-                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Ad Components</div>
+                    <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Ad Components</div>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       {draft.components.map((comp: string) => {
                         const Icon = componentIcons[comp] || FileEdit;
@@ -135,7 +135,7 @@ export const DraftAiRecs: React.FC = () => {
                     <Sparkles size={16} color="#7c3aed" style={{ flexShrink: 0, marginTop: '1px' }} />
                     <div>
                       <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#7c3aed', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Recommendation</div>
-                      <div style={{ fontSize: '0.85rem', color: '#374151', fontWeight: 500, lineHeight: 1.5 }}>{draft.rec}</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, lineHeight: 1.5 }}>{draft.rec}</div>
                     </div>
                   </div>
 
@@ -144,10 +144,10 @@ export const DraftAiRecs: React.FC = () => {
                     <button style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '9px', borderRadius: '8px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', boxShadow: '0 4px 12px rgba(124,58,237,0.25)' }}>
                       <Wand2 size={13} /> Apply AI Fix
                     </button>
-                    <button style={{ padding: '9px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', cursor: 'pointer', color: '#475569', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem', fontWeight: 600 }}>
+                    <button style={{ padding: '9px 16px', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem', fontWeight: 600 }}>
                       <Copy size={13} /> Duplicate
                     </button>
-                    <button style={{ padding: '9px 14px', borderRadius: '8px', border: '1px solid #fee2e2', background: '#fff', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem', fontWeight: 600 }}>
+                    <button style={{ padding: '9px 14px', borderRadius: '8px', border: '1px solid #fee2e2', background: 'var(--bg-card)', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem', fontWeight: 600 }}>
                       <Trash2 size={13} />
                     </button>
                   </div>

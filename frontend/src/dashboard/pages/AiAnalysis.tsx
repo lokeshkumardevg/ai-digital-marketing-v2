@@ -233,21 +233,21 @@ export const AiAnalysis: React.FC = () => {
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ minHeight: '100%', background: '#f5f6fa', position: 'relative' }}>
+    <div style={{ minHeight: '100%', background: 'var(--bg-primary)', position: 'relative' }}>
 
       {/* CSS for spinner */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* ── Header ── */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #e8eaf0', padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--glass-border)', padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '3px' }}>Analytics</div>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#0f172a' }}>AI Analysis</h1>
-          <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>AI-driven analysis and recommendations</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '3px' }}>Analytics</div>
+          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>AI Analysis</h1>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '2px' }}>AI-driven analysis and recommendations</div>
         </div>
         <button
           onClick={() => { setShowHistory(true); setSelectedHistory(null); }}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#475569', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-card)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}
         >
           📋 View History Records
         </button>
@@ -257,10 +257,10 @@ export const AiAnalysis: React.FC = () => {
 
         {/* ── Active Brand ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-          <span style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>{activeBrand?.name || 'Your Brand'}</span>
+          <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{activeBrand?.name || 'Your Brand'}</span>
           <span style={{ padding: '3px 10px', borderRadius: '6px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>Current brand</span>
         </div>
-        <div style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '28px' }}>Select the function to start quickly</div>
+        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '28px' }}>Select the function to start quickly</div>
 
         {/* ── Phase Cards ── */}
         {phases.map((phase) => (
@@ -270,8 +270,8 @@ export const AiAnalysis: React.FC = () => {
                 {phase.number}
               </div>
               <div>
-                <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>{phase.title}</span>
-                <span style={{ fontSize: '0.82rem', color: '#94a3b8', marginLeft: '10px' }}>{phase.subtitle}</span>
+                <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{phase.title}</span>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-dim)', marginLeft: '10px' }}>{phase.subtitle}</span>
               </div>
             </div>
 
@@ -280,18 +280,18 @@ export const AiAnalysis: React.FC = () => {
                 <div
                   key={card.title}
                   onClick={() => handleCardClick(card)}
-                  style={{ background: '#fff', border: '1px solid #e8eaf0', borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'all 0.15s' }}
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'all 0.15s' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#c4b5fd'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(124,58,237,0.08)'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#e8eaf0'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; }}
                 >
                   <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: card.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', marginBottom: '14px' }}>
                     {card.icon}
                   </div>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a', marginBottom: '6px' }}>{card.title}</div>
-                  <div style={{ fontSize: '0.8rem', color: '#64748b', lineHeight: 1.5, marginBottom: '14px' }}>{card.desc}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '6px' }}>{card.title}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '14px' }}>{card.desc}</div>
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     {card.tags.map(tag => (
-                      <span key={tag} style={{ padding: '3px 10px', borderRadius: '6px', background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: '0.72rem', color: '#475569', fontWeight: 500 }}>{tag}</span>
+                      <span key={tag} style={{ padding: '3px 10px', borderRadius: '6px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{tag}</span>
                     ))}
                   </div>
                 </div>
@@ -310,7 +310,7 @@ export const AiAnalysis: React.FC = () => {
           {/* ── Confirm Modal ── */}
           {showConfirmModal && selectedCard && (
             <div style={{
-              background: '#fff', borderRadius: '20px', width: '460px',
+              background: 'var(--bg-card)', borderRadius: '20px', width: '460px',
               boxShadow: '0 24px 64px rgba(15,23,42,0.20)',
               overflow: 'hidden', position: 'relative',
             }}>
@@ -320,9 +320,9 @@ export const AiAnalysis: React.FC = () => {
                 style={{
                   position: 'absolute', top: '14px', right: '14px',
                   width: '28px', height: '28px', borderRadius: '50%',
-                  background: '#f1f5f9', border: 'none', cursor: 'pointer',
+                  background: 'var(--bg-elevated)', border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.85rem', color: '#64748b', lineHeight: 1,
+                  fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1,
                   zIndex: 2,
                 }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#e2e8f0')}
@@ -346,36 +346,36 @@ export const AiAnalysis: React.FC = () => {
                     {selectedCard.icon}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a', marginBottom: '3px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '3px' }}>
                       {selectedCard.title} Report
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
                       AI-powered analysis
                     </div>
                   </div>
                 </div>
 
                 {/* Description */}
-                <p style={{ fontSize: '0.82rem', color: '#64748b', lineHeight: 1.6, marginBottom: '20px', margin: '0 0 20px' }}>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '20px', margin: '0 0 20px' }}>
                   Integrate data from World Bank, Google Trends, Reddit and more to generate a comprehensive {selectedCard.title.toLowerCase()} report covering market size, growth trends, and actionable insights.
                 </p>
 
                 {/* Info row — brand + time */}
                 <div style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '10px 14px', background: '#f8fafc',
+                  padding: '10px 14px', background: 'var(--bg-elevated)',
                   borderRadius: '10px', border: '1px solid #f1f5f9',
                   marginBottom: '22px',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ fontSize: '0.82rem' }}>🌐</span>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#374151' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
                       {activeBrand?.name || 'Your Brand'}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ fontSize: '0.82rem' }}>⏱</span>
-                    <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
                       {selectedCard.estimatedTime}
                     </span>
                   </div>
@@ -398,8 +398,8 @@ export const AiAnalysis: React.FC = () => {
                     onClick={closeAll}
                     style={{
                       flex: 1, padding: '11px', borderRadius: '10px',
-                      border: '1px solid #e2e8f0', background: '#fff',
-                      color: '#64748b', cursor: 'pointer', fontWeight: 600,
+                      border: '1px solid var(--glass-border)', background: 'var(--bg-card)',
+                      color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600,
                       fontSize: '0.875rem', transition: 'background 0.15s',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
@@ -432,7 +432,7 @@ export const AiAnalysis: React.FC = () => {
           {/* ── Progress Panel ── */}
           {generating && (
             <div style={{
-              background: '#fff', borderRadius: '20px', width: '580px',
+              background: 'var(--bg-card)', borderRadius: '20px', width: '580px',
               maxHeight: '82vh', overflow: 'auto',
               boxShadow: '0 24px 64px rgba(15,23,42,0.20)',
               display: 'flex', flexDirection: 'column',
@@ -456,10 +456,10 @@ export const AiAnalysis: React.FC = () => {
 
                 {/* Title + brand */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {selectedCard?.title} Report
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '1px' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '1px' }}>
                     {activeBrand?.name}
                   </div>
                 </div>
@@ -470,9 +470,9 @@ export const AiAnalysis: React.FC = () => {
                     onClick={closeAll}
                     style={{
                       width: '28px', height: '28px', borderRadius: '50%',
-                      background: '#f1f5f9', border: 'none', cursor: 'pointer',
+                      background: 'var(--bg-elevated)', border: 'none', cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '0.82rem', color: '#64748b',
+                      fontSize: '0.82rem', color: 'var(--text-secondary)',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = '#e2e8f0')}
                     onMouseLeave={e => (e.currentTarget.style.background = '#f1f5f9')}
@@ -481,7 +481,7 @@ export const AiAnalysis: React.FC = () => {
               </div>
 
               {/* ── Animated Progress Bar ── */}
-              <div style={{ height: '3px', background: '#f1f5f9', flexShrink: 0, overflow: 'hidden' }}>
+              <div style={{ height: '3px', background: 'var(--bg-elevated)', flexShrink: 0, overflow: 'hidden' }}>
                 <div style={{
                   height: '100%',
                   background: 'linear-gradient(90deg, #7c3aed, #a855f7, #7c3aed)',
@@ -665,7 +665,7 @@ export const AiAnalysis: React.FC = () => {
                       onClick={closeAll}
                       style={{
                         marginTop: '12px', padding: '7px 16px', borderRadius: '8px',
-                        border: '1px solid #fecaca', background: '#fff',
+                        border: '1px solid #fecaca', background: 'var(--bg-card)',
                         color: '#dc2626', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600,
                       }}
                     >Close</button>
@@ -697,15 +697,15 @@ export const AiAnalysis: React.FC = () => {
 
           {/* ── Result Panel ── */}
           {showResult && result && (
-            <div style={{ background: '#fff', borderRadius: '16px', width: '660px', maxHeight: '82vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '16px', width: '660px', maxHeight: '82vh', overflow: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}>
               {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '18px 24px', borderBottom: '1px solid #f1f5f9', position: 'sticky', top: 0, background: '#fff', zIndex: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '18px 24px', borderBottom: '1px solid #f1f5f9', position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 10 }}>
                 <span style={{ fontSize: '1rem' }}>{selectedCard?.icon}</span>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a' }}>{selectedCard?.title} — Complete</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{selectedCard?.title} — Complete</div>
                   <div style={{ fontSize: '0.75rem', color: '#16a34a' }}>✅ Analysis done · {activeBrand?.name}</div>
                 </div>
-                <button onClick={closeAll} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: '#94a3b8' }}>✕</button>
+                <button onClick={closeAll} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: 'var(--text-dim)' }}>✕</button>
               </div>
 
               {/* Result content */}
@@ -754,7 +754,7 @@ const TYPE_ICON: Record<string, { icon: string; bg: string; color: string }> = {
 };
 
 const getTypeMeta = (type: string) =>
-  TYPE_ICON[type] || { icon: '📄', bg: '#f1f5f9', color: '#475569' };
+  TYPE_ICON[type] || { icon: '📄', bg: '#f1f5f9', color: 'var(--text-secondary)' };
 
 // ─── Group history items by date label ───────────────────────────────────────
 
@@ -827,7 +827,7 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
 
       {/* Drawer panel */}
       <div style={{
-        position: 'relative', width: '440px', background: '#fff',
+        position: 'relative', width: '440px', background: 'var(--bg-card)',
         height: '100%', display: 'flex', flexDirection: 'column',
         boxShadow: '-8px 0 48px rgba(15,23,42,0.15)',
         animation: 'slideInRight 0.22s ease-out',
@@ -851,10 +851,10 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
           {/* Top row */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '1rem', color: '#0f172a' }}>
+              <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
                 {selectedHistory ? 'Analysis Detail' : 'History Records'}
               </div>
-              <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px' }}>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-dim)', marginTop: '2px' }}>
                 {selectedHistory
                   ? `${selectedHistory.type} · ${selectedHistory.brand}`
                   : `${history.length} records saved`}
@@ -866,20 +866,20 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
               {!selectedHistory && history.length > 0 && (
                 confirmClear ? (
                   <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Sure?</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Sure?</span>
                     <button
                       onClick={() => { onClearAll(); setConfirmClear(false); }}
                       style={{ fontSize: '0.72rem', fontWeight: 700, color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', padding: '3px 8px', cursor: 'pointer' }}
                     >Yes, clear</button>
                     <button
                       onClick={() => setConfirmClear(false)}
-                      style={{ fontSize: '0.72rem', color: '#64748b', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '3px 8px', cursor: 'pointer' }}
+                      style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '6px', padding: '3px 8px', cursor: 'pointer' }}
                     >Cancel</button>
                   </div>
                 ) : (
                   <button
                     onClick={() => setConfirmClear(true)}
-                    style={{ fontSize: '0.72rem', color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px' }}
+                    style={{ fontSize: '0.72rem', color: 'var(--text-dim)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px' }}
                     onMouseEnter={e => { (e.currentTarget.style.color = '#ef4444'); (e.currentTarget.style.background = '#fef2f2'); }}
                     onMouseLeave={e => { (e.currentTarget.style.color = '#94a3b8'); (e.currentTarget.style.background = 'none'); }}
                   >Clear all</button>
@@ -891,9 +891,9 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                 onClick={onClose}
                 style={{
                   width: '30px', height: '30px', borderRadius: '50%',
-                  background: '#f1f5f9', border: 'none', cursor: 'pointer',
+                  background: 'var(--bg-elevated)', border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.85rem', color: '#64748b',
+                  fontSize: '0.85rem', color: 'var(--text-secondary)',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#e2e8f0')}
                 onMouseLeave={e => (e.currentTarget.style.background = '#f1f5f9')}
@@ -907,7 +907,7 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
               <div style={{ position: 'relative', marginBottom: '10px' }}>
                 <span style={{
                   position: 'absolute', left: '11px', top: '50%', transform: 'translateY(-50%)',
-                  fontSize: '0.82rem', color: '#94a3b8', pointerEvents: 'none',
+                  fontSize: '0.82rem', color: 'var(--text-dim)', pointerEvents: 'none',
                 }}>🔍</span>
                 <input
                   value={search}
@@ -916,8 +916,8 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                   style={{
                     width: '100%', boxSizing: 'border-box',
                     padding: '9px 12px 9px 32px', borderRadius: '10px',
-                    border: '1px solid #e2e8f0', background: '#f8fafc',
-                    fontSize: '0.82rem', color: '#0f172a', outline: 'none',
+                    border: '1px solid var(--glass-border)', background: 'var(--bg-elevated)',
+                    fontSize: '0.82rem', color: 'var(--text-primary)', outline: 'none',
                     fontFamily: 'inherit',
                   }}
                   onFocus={e => (e.target.style.borderColor = '#c4b5fd')}
@@ -929,7 +929,7 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                     style={{
                       position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
                       background: 'none', border: 'none', cursor: 'pointer',
-                      fontSize: '0.78rem', color: '#94a3b8', padding: 0,
+                      fontSize: '0.78rem', color: 'var(--text-dim)', padding: 0,
                     }}
                   >✕</button>
                 )}
@@ -978,7 +978,7 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
 
               {/* Meta card */}
               <div style={{
-                background: '#f8fafc', borderRadius: '12px', padding: '14px 16px',
+                background: 'var(--bg-elevated)', borderRadius: '12px', padding: '14px 16px',
                 marginBottom: '20px', border: '1px solid #f1f5f9',
                 display: 'flex', alignItems: 'center', gap: '12px',
               }}>
@@ -991,13 +991,13 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                   {getTypeMeta(selectedHistory.type).icon}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
                     {selectedHistory.type}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
                     {selectedHistory.brand}
                   </div>
-                  <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginTop: '1px' }}>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)', marginTop: '1px' }}>
                     {new Date(selectedHistory.date).toLocaleString('en-US', {
                       month: 'short', day: 'numeric', year: 'numeric',
                       hour: '2-digit', minute: '2-digit',
@@ -1016,10 +1016,10 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
               <div style={{ fontSize: '2.4rem', marginBottom: '12px' }}>
                 {search || filterType !== 'All' ? '🔍' : '📂'}
               </div>
-              <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#374151', marginBottom: '6px' }}>
+              <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
                 {search || filterType !== 'All' ? 'No matches found' : 'No analyses yet'}
               </div>
-              <div style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.5 }}>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', lineHeight: 1.5 }}>
                 {search || filterType !== 'All'
                   ? 'Try a different search term or filter'
                   : 'Run your first analysis to see history here'}
@@ -1027,7 +1027,7 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
               {(search || filterType !== 'All') && (
                 <button
                   onClick={() => { setSearch(''); setFilterType('All'); }}
-                  style={{ marginTop: '14px', padding: '7px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#475569', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
+                  style={{ marginTop: '14px', padding: '7px 16px', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-card)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
                 >Clear filters</button>
               )}
             </div>
@@ -1039,7 +1039,7 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                 {/* Date group label */}
                 <div style={{
                   padding: '8px 20px 4px',
-                  fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8',
+                  fontSize: '0.68rem', fontWeight: 700, color: 'var(--text-dim)',
                   letterSpacing: '0.07em', textTransform: 'uppercase',
                 }}>
                   {dateLabel}
@@ -1088,13 +1088,13 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
 
                         {/* Text */}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 600, fontSize: '0.85rem', color: '#0f172a', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {item.type}
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: '#64748b', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {item.brand}
                           </div>
-                          <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--text-dim)' }}>
                             {new Date(item.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </div>
@@ -1135,12 +1135,12 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
           <div style={{
             padding: '12px 20px', borderTop: '1px solid #f1f5f9', flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: '#fafafa',
+            background: 'var(--bg-elevated)',
           }}>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
               Showing {filtered.length} of {history.length} records
             </span>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-dim)' }}>
               Stored locally on this device
             </span>
           </div>
@@ -1164,10 +1164,10 @@ const ResultRenderer: React.FC<{ result: any }> = ({ result }) => {
         <div style={{ marginBottom: '12px' }} key={key}>
           <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>{formatKey(key)}</div>
           {value.map((item, i) => (
-            <div key={i} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 12px', marginBottom: '6px', fontSize: '0.82rem', color: '#374151', lineHeight: 1.5 }}>
+            <div key={i} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', marginBottom: '6px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               {typeof item === 'object' ? Object.entries(item).map(([k, v]) => (
                 <div key={k} style={{ marginBottom: '4px' }}>
-                  <span style={{ fontWeight: 600, color: '#475569' }}>{formatKey(k)}: </span>
+                  <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{formatKey(k)}: </span>
                   <span>{String(v)}</span>
                 </div>
               )) : String(item)}
@@ -1179,7 +1179,7 @@ const ResultRenderer: React.FC<{ result: any }> = ({ result }) => {
 
     if (typeof value === 'object') {
       return (
-        <div style={{ marginBottom: '14px', background: '#fafafa', borderRadius: '10px', padding: '12px', border: '1px solid #f1f5f9' }} key={key}>
+        <div style={{ marginBottom: '14px', background: 'var(--bg-elevated)', borderRadius: '10px', padding: '12px', border: '1px solid #f1f5f9' }} key={key}>
           <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>{formatKey(key)}</div>
           {Object.entries(value).map(([k, v]) => renderValue(k, v, depth + 1))}
         </div>
@@ -1188,8 +1188,8 @@ const ResultRenderer: React.FC<{ result: any }> = ({ result }) => {
 
     return (
       <div style={{ marginBottom: '10px', display: 'flex', gap: '10px', alignItems: 'flex-start' }} key={key}>
-        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', minWidth: '130px', paddingTop: '1px', flexShrink: 0 }}>{formatKey(key)}</span>
-        <span style={{ fontSize: '0.82rem', color: '#0f172a', lineHeight: 1.5 }}>{String(value)}</span>
+        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', minWidth: '130px', paddingTop: '1px', flexShrink: 0 }}>{formatKey(key)}</span>
+        <span style={{ fontSize: '0.82rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>{String(value)}</span>
       </div>
     );
   };

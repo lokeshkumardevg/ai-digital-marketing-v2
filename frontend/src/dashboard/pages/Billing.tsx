@@ -183,22 +183,22 @@ export const Billing: React.FC = () => {
 
         {/* Right Side: Saas Plans */}
         <GlassCard>
-          <h2 style={{ fontSize: '1.2rem', marginBottom: '20px', color: '#141414' }}>SaaS Plans & Limits</h2>
+          <h2 style={{ fontSize: '1.2rem', marginBottom: '20px', color: 'var(--text-primary)' }}>SaaS Plans & Limits</h2>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Pro Plan */}
-            <div style={{ border: sub.plan === 'pro' ? '2px solid var(--accent-primary)' : '1px solid #e2e8f0', background: '#ffffff', borderRadius: '12px', padding: '24px', color: '#141414' }}>
+            <div style={{ border: sub.plan === 'pro' ? '2px solid var(--accent-primary)' : '1px solid var(--glass-border)', background: 'var(--bg-card)', borderRadius: '12px', padding: '24px', color: 'var(--text-primary)' }}>
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                  <div>
-                   <h3 style={{ fontSize: '1.4rem', color: '#141414', margin: 0 }}>Growth Pro</h3>
-                   <div style={{ fontSize: '2rem', fontWeight: 800, color: '#141414' }}>$99<span style={{ fontSize: '1rem', color: '#64748b' }}>/mo</span></div>
+                   <h3 style={{ fontSize: '1.4rem', color: 'var(--text-primary)', margin: 0 }}>Growth Pro</h3>
+                   <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>$99<span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>/mo</span></div>
                  </div>
                  {sub.plan === 'pro' && <span style={{ background: 'var(--accent-primary)', color: '#ffffff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Active</span>}
                </div>
                
                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}><CheckCircle2 size={16} color="var(--success)"/> 250,000 Tokens</div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}><CheckCircle2 size={16} color="var(--success)"/> Meta & Google Ads Integration</div>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}><CheckCircle2 size={16} color="var(--success)"/> 250,000 Tokens</div>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}><CheckCircle2 size={16} color="var(--success)"/> Meta & Google Ads Integration</div>
                </div>
 
                <button 
@@ -210,24 +210,24 @@ export const Billing: React.FC = () => {
             </div>
 
             {/* Enterprise */}
-            <div style={{ border: sub.plan === 'enterprise' ? '2px solid var(--warning)' : '1px solid #e2e8f0', background: '#ffffff', borderRadius: '12px', padding: '24px', color: '#141414' }}>
+            <div style={{ border: sub.plan === 'enterprise' ? '2px solid var(--warning)' : '1px solid #e2e8f0', background: 'var(--bg-card)', borderRadius: '12px', padding: '24px', color: 'var(--text-primary)' }}>
                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                  <div>
-                   <h3 style={{ fontSize: '1.4rem', color: '#141414', margin: 0 }}>Enterprise</h3>
-                   <div style={{ fontSize: '2rem', fontWeight: 800, color: '#141414' }}>$499<span style={{ fontSize: '1rem', color: '#64748b' }}>/mo</span></div>
+                   <h3 style={{ fontSize: '1.4rem', color: 'var(--text-primary)', margin: 0 }}>Enterprise</h3>
+                   <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text-primary)' }}>$499<span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>/mo</span></div>
                  </div>
                  {sub.plan === 'enterprise' && <span style={{ background: 'var(--warning)', color: '#000000', padding: '4px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Active</span>}
                </div>
 
                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '24px' }}>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}><CheckCircle2 size={16} color="var(--warning)"/> 2,000,000 Tokens</div>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: '#334155' }}><CheckCircle2 size={16} color="var(--warning)"/> Dedicated Account Manager</div>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}><CheckCircle2 size={16} color="var(--warning)"/> 2,000,000 Tokens</div>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}><CheckCircle2 size={16} color="var(--warning)"/> Dedicated Account Manager</div>
                </div>
 
                <button 
                   onClick={() => handleUpgrade('enterprise')} disabled={sub.plan === 'enterprise' || loadingCheckout !== ''}
                   className="btn btn-secondary"
-                  style={{ width: '100%', color: '#141414', fontWeight: 700, border: '2px solid var(--warning)', opacity: sub.plan === 'enterprise' ? 0.7 : 1 }}>
+                  style={{ width: '100%', color: 'var(--text-primary)', fontWeight: 700, border: '2px solid var(--warning)', opacity: sub.plan === 'enterprise' ? 0.7 : 1 }}>
                   {loadingCheckout === 'enterprise' ? 'Processing...' : sub.plan === 'enterprise' ? 'Current Plan (Active)' : 'Contact Sales'}
                </button>
             </div>
