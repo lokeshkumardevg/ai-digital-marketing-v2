@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../api/axios';
 import { useSelector } from 'react-redux';
 
-const platforms = ['Meta', 'Google', 'TikTok', 'Bing'];
+const platforms = ['Meta', 'Google'];
 
 // Donut chart SVG helper
 const DonutChart: React.FC<{
@@ -52,8 +52,6 @@ export const AdInsights: React.FC = () => {
   const platformMap: { [key: string]: string } = {
     'Meta': 'meta',
     'Google': 'google',
-    'TikTok': 'tiktok',
-    'Bing': 'bing',
   };
 
   useEffect(() => {
@@ -113,7 +111,7 @@ export const AdInsights: React.FC = () => {
             <button key={p} onClick={() => setActivePlatform(p)} style={{
               padding: '14px 24px', border: 'none', background: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', fontWeight: 600,
-              color: activePlatform === p ? '#0f172a' : '#94a3b8',
+              color: activePlatform === p ? '#eaecf3' : '#94a3b8',
               borderBottom: activePlatform === p ? '2px solid #7c3aed' : '2px solid transparent',
             }}>
               <span style={{ fontSize: '1rem' }}>{p === 'Meta' ? '𝕄' : p === 'Google' ? 'G' : p === 'TikTok' ? '♪' : 'Ꞵ'}</span>

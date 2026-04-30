@@ -58,7 +58,7 @@
   --bg-card:       #0f1629;
   --bg-elevated:   #141d35;
   --text-primary:  #f1f5f9;
-  --text-secondary:#94a3b8;
+  --text-secondary:#111111;
   --text-dim:      #475569;
 
   --accent-primary:   #7c3aed;
@@ -201,6 +201,7 @@ button {
   font-size: 1rem;
   font-family: 'Inter', sans-serif;
   transition: all var(--transition-fast);
+  color: var(--text-secondary);
 }
 
 .input-field:focus {
