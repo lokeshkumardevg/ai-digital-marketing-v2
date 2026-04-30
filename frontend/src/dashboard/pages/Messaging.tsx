@@ -129,6 +129,8 @@ export const Messaging: React.FC = () => {
   const [logs, setLogs]             = useState<MessageLog[]>([]);
   const [logFilter, setLogFilter]   = useState<LogFilter>('all');
   const [loadingLogs, setLoadingLogs] = useState(false);
+  const [generatedTemplates, setGeneratedTemplates] = useState<string[]>([]);
+  const [generatingTemplates, setGeneratingTemplates] = useState(false);
 
   // ── Load audiences ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -155,6 +157,28 @@ export const Messaging: React.FC = () => {
   }, []);
 
   useEffect(() => { fetchLogs(logFilter); }, [logFilter, fetchLogs]);
+
+  // ── Generate AI templates ───────────────────────────────────────────────
+  const handleGenerateTemplates = async () => {
+    setGeneratingTemplates(true);
+    try {
+      const { api } = await import('../../api/axios');
+      const res = await api.post('/ai/generate-templates', {
+        channel: activeTab,
+        businessName: 'Your Business',
+        productOrService: 'Your Product/Service',
+        tone: 'professional and engaging',
+        context: message || 'General marketing campaign',
+      });
+      setGeneratedTemplates(res.data?.data || []);
+      setShowTemplates(true);
+      toast.success('AI templates generated!');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to generate templates');
+    } finally {
+      setGeneratingTemplates(false);
+    }
+  };
 
   // ── Build recipients ────────────────────────────────────────────────────────
   const buildUsers = useCallback((): UserRow[] => {
@@ -426,28 +450,39 @@ export const Messaging: React.FC = () => {
           {showTemplates && (
             <div style={{ background: D.purpleSoft, border: `1px solid ${D.borderGlow}`, borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, color: D.purpleText, marginBottom: 2 }}>✨ AI Templates</div>
-              {AI_TEMPLATES[activeTab].map((t, i) => (
-                <button
-                  key={i}
-                  className="msg-template-btn"
-                  onClick={() => { setMessage(t); setShowTemplates(false); toast.success('Template applied!'); }}
-                  style={{ textAlign: 'left', background: D.white004, border: `1px solid ${D.border}`, borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontSize: '0.77rem', color: D.textMuted, lineHeight: 1.5, transition: 'background 0.15s' }}
-                >
-                  {t.slice(0, 80)}...
-                </button>
-              ))}
+              {generatingTemplates ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px 12px', color: D.textMuted }}>
+                  <RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                  <span style={{ fontSize: '0.75rem' }}>Generating templates...</span>
+                </div>
+              ) : generatedTemplates.length > 0 ? (
+                generatedTemplates.map((t, i) => (
+                  <button
+                    key={i}
+                    className="msg-template-btn"
+                    onClick={() => { setMessage(t); setShowTemplates(false); toast.success('Template applied!'); }}
+                    style={{ textAlign: 'left', background: D.white004, border: `1px solid ${D.border}`, borderRadius: 8, padding: '8px 12px', cursor: 'pointer', fontSize: '0.77rem', color: D.textMuted, lineHeight: 1.5, transition: 'background 0.15s' }}
+                  >
+                    {t.slice(0, 80)}...
+                  </button>
+                ))
+              ) : (
+                <div style={{ fontSize: '0.75rem', color: D.textDim, textAlign: 'center', padding: '8px 0' }}>Click "AI Write" to generate templates</div>
+              )}
             </div>
           )}
 
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: 10 }}>
             <button
-              onClick={() => setShowTemplates(s => !s)}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px 16px', borderRadius: 10, border: `1px solid ${D.border}`, background: D.white004, color: D.textMuted, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = D.purple; e.currentTarget.style.color = D.purpleText; }}
+              onClick={handleGenerateTemplates}
+              disabled={generatingTemplates}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px 16px', borderRadius: 10, border: `1px solid ${D.border}`, background: D.white004, color: D.textMuted, fontSize: '0.82rem', fontWeight: 600, cursor: generatingTemplates ? 'not-allowed' : 'pointer', opacity: generatingTemplates ? 0.6 : 1, transition: 'all 0.2s' }}
+              onMouseEnter={e => { if (!generatingTemplates) { e.currentTarget.style.borderColor = D.purple; e.currentTarget.style.color = D.purpleText; } }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = D.border; e.currentTarget.style.color = D.textMuted; }}
             >
-              <Sparkles size={15} color={D.yellow} /> AI Write
+              {generatingTemplates ? <RefreshCw size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={15} color={D.yellow} />}
+              {generatingTemplates ? 'Generating...' : 'AI Write'}
             </button>
             <button
               onClick={handleSend}
