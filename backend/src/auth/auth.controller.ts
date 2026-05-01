@@ -39,9 +39,15 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Post('meta/callback')
-  async metaCallback(@Request() req: any, @Body() body: { code: string; state: string }) {
-    return this.authService.handleMetaCallback(req.user.id, body.code, body.state);
+  @Post('google/credentials')
+  async updateGoogleCredentials(@Request() req: any, @Body() body: { clientId: string; clientSecret: string; developerToken?: string }) {
+    return this.authService.updateGoogleCredentials(req.user.id, body.clientId, body.clientSecret, body.developerToken);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('meta/credentials')
+  async updateMetaCredentials(@Request() req: any, @Body() body: { appId: string; appSecret: string }) {
+    return this.authService.updateMetaCredentials(req.user.id, body.appId, body.appSecret);
   }
 }
 

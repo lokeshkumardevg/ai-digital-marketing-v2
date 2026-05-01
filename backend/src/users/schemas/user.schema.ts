@@ -44,6 +44,30 @@ export class User {
   @Prop()
   metaAccessToken?: string;
 
+  @Prop()
+  linkedinAccessToken?: string;
+
+  @Prop()
+  linkedinRefreshToken?: string;
+
+  @Prop()
+  linkedinPersonId?: string;
+
+  @Prop()
+  twitterAccessToken?: string;
+
+  @Prop()
+  twitterRefreshToken?: string;
+
+  @Prop()
+  twitterUserId?: string;
+
+  @Prop()
+  instagramAccessToken?: string;
+
+  @Prop()
+  instagramUserId?: string;
+
   @Prop({ type: [String], default: [] })
   permissions: string[]; // e.g., ['dashboard', 'ads', 'analytics', 'superadmin']
 }
