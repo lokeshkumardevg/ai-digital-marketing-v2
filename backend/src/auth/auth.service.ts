@@ -1,3 +1,4 @@
+ 
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -62,47 +63,177 @@ export class AuthService {
     return result;
   }
 
-  async handleGoogleCallback(userId: string, code: string): Promise<{ success: boolean; tokens: any }> {
+  // ================= GOOGLE =================
+
+  async handleGoogleCallback(userId: string, code: string) {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
+    const clientId = user.googleClientId || this.configService.get('GOOGLE_CLIENT_ID');
+    const clientSecret = user.googleClientSecret || this.configService.get('GOOGLE_CLIENT_SECRET');
+
+    if (!clientId || !clientSecret) {
+      throw new UnauthorizedException('Google credentials not configured');
+    }
+
     const params = new URLSearchParams({
       code,
-      client_id: user.googleClientId || this.configService.get('GOOGLE_CLIENT_ID') || '',
-      client_secret: user.googleClientSecret || this.configService.get('GOOGLE_CLIENT_SECRET') || '',
+      client_id: clientId,
+      client_secret: clientSecret,
       redirect_uri: 'http://localhost:3001/auth/google/callback',
       grant_type: 'authorization_code',
     });
 
-    const tokenResponse = await fetch(`https://oauth2.googleapis.com/token?${params.toString()}`, {
+    const res = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
     });
 
-    const tokens = await tokenResponse.json();
+    const tokens = await res.json();
     if (tokens.error) throw new UnauthorizedException(tokens.error_description);
 
     await this.usersService.update(userId, {
       googleRefreshToken: tokens.refresh_token,
+      googleAccessToken: tokens.access_token,
+      googleTokenExpiry: Date.now() + tokens.expires_in * 1000,
     });
 
-    return { success: true, tokens: { access_token: tokens.access_token, expires_in: tokens.expires_in } };
+    return { success: true };
   }
 
-  async handleMetaCallback(userId: string, code: string, state: string): Promise<{ success: boolean; tokens: any }> {
+  async getGoogleAccessToken(userId: string, refreshToken: string) {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
 
-    const tokenResponse = await fetch(`https://graph.facebook.com/v20.0/oauth/access_token?client_id=${user.metaAppId || this.configService.get('META_APP_ID')}&client_secret=${user.metaAppSecret || this.configService.get('META_APP_SECRET')}&redirect_uri=http://localhost:3001/auth/meta/callback&code=${code}`, { method: 'GET' });
+    const clientId = user.googleClientId || this.configService.get('GOOGLE_CLIENT_ID');
+    const clientSecret = user.googleClientSecret || this.configService.get('GOOGLE_CLIENT_SECRET');
 
-    const tokens = await tokenResponse.json();
-    if (tokens.error) throw new UnauthorizedException(tokens.error.message);
+    if (!clientId || !clientSecret) {
+      throw new UnauthorizedException('Google credentials not configured');
+    }
 
-    await this.usersService.update(userId, {
-      metaAccessToken: tokens.access_token,
+    const params = new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
     });
 
-    return { success: true, tokens };
+    const res = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      body: params,
+    });
+
+    const data = await res.json();
+    if (data.error) throw new UnauthorizedException(data.error);
+
+    return data.access_token;
+  }
+
+  async getGoogleAdsInsights(userId: string, customerId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user?.googleRefreshToken) {
+      throw new UnauthorizedException('Google not connected');
+    }
+
+    const accessToken = await this.getGoogleAccessToken(userId, user.googleRefreshToken);
+
+    const query = `
+      SELECT campaign.name, metrics.impressions, metrics.clicks, metrics.cost_micros
+      FROM campaign
+      ORDER BY metrics.impressions DESC
+      LIMIT 10
+    `;
+
+    const developerToken = user.googleDeveloperToken || this.configService.get('GOOGLE_DEVELOPER_TOKEN');
+
+    if (!developerToken) {
+      throw new UnauthorizedException('Google developer token not configured');
+    }
+
+    const res = await fetch(
+      `https://googleads.googleapis.com/v16/customers/${customerId}/googleAds:search`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'developer-token': developerToken,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+      },
+    );
+
+    return res.json();
+  }
+
+  // ================= META =================
+
+  async handleMetaCallback(userId: string, code: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const appId = user.metaAppId || this.configService.get('META_APP_ID');
+    const appSecret = user.metaAppSecret || this.configService.get('META_APP_SECRET');
+
+    // Short-lived token
+    const shortRes = await fetch(
+      `https://graph.facebook.com/v20.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&redirect_uri=http://localhost:3001/auth/meta/callback&code=${code}`
+    );
+
+    const shortToken = await shortRes.json();
+    if (shortToken.error) throw new UnauthorizedException(shortToken.error.message);
+
+    // Long-lived token
+    const longRes = await fetch(
+      `https://graph.facebook.com/v20.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${shortToken.access_token}`
+    );
+
+    const longToken = await longRes.json();
+    if (longToken.error) throw new UnauthorizedException(longToken.error.message);
+
+    await this.usersService.update(userId, {
+      metaAccessToken: longToken.access_token,
+    });
+
+    return { success: true };
+  }
+
+  async getMetaAdsInsights(userId: string, adAccountId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user?.metaAccessToken) {
+      throw new UnauthorizedException('Meta not connected');
+    }
+
+    const res = await fetch(
+      `https://graph.facebook.com/v20.0/act_${adAccountId}/insights?fields=campaign_name,impressions,clicks,spend`,
+      {
+        headers: {
+          Authorization: `Bearer ${user.metaAccessToken}`,
+        },
+      },
+    );
+
+    return res.json();
+  }
+
+  async updateGoogleCredentials(userId: string, clientId: string, clientSecret: string, developerToken?: string) {
+    await this.usersService.update(userId, {
+      googleClientId: clientId,
+      googleClientSecret: clientSecret,
+      ...(developerToken && { googleDeveloperToken: developerToken }),
+    });
+    return { success: true };
+  }
+
+  async updateMetaCredentials(userId: string, appId: string, appSecret: string) {
+    await this.usersService.update(userId, {
+      metaAppId: appId,
+      metaAppSecret: appSecret,
+    });
+    return { success: true };
   }
 }
+
 

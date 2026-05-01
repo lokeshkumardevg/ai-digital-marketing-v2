@@ -42,6 +42,29 @@ export class AiController {
     };
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Post('generate-templates')
+  @HttpCode(HttpStatus.OK)
+  async generateMessageTemplates(
+    @Body() body: { channel: 'whatsapp' | 'email' | 'both'; businessName: string; productOrService: string; tone?: string; context?: string },
+    @Request() req: any,
+  ) {
+    const { channel, businessName, productOrService, tone, context } = body;
+    const templates = await this.aiService.generateMessageTemplates(
+      channel,
+      businessName,
+      productOrService,
+      tone,
+      context,
+    );
+
+    return {
+      success: true,
+      data: templates,
+      userId: req.user?.id,
+    };
+  }
+
   // ── SEO AUDIT ─────────────────────────────────────────────
 
   @UseGuards(AuthGuard('jwt'))

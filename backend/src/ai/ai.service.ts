@@ -252,6 +252,68 @@ Return ONLY raw valid JSON with these keys:
     }
   }
 
+  // ── MESSAGE TEMPLATES ────────────────────────────────────
+
+  async generateMessageTemplates(
+    channel: 'whatsapp' | 'email' | 'both',
+    businessName: string,
+    productOrService: string,
+    tone?: string,
+    context?: string,
+  ): Promise<string[]> {
+    let prompt = `You are an expert marketing copywriter specializing in ${channel === 'whatsapp' ? 'WhatsApp' : channel === 'email' ? 'email' : 'omnichannel'} campaigns.
+
+Generate 3 professional, engaging message templates for "${businessName}" promoting "${productOrService}".`;
+
+    if (tone) {
+      prompt += `\nUse a ${tone} tone.`;
+    }
+
+    if (context) {
+      prompt += `\nContext: ${context}`;
+    }
+
+    if (channel === 'whatsapp' || channel === 'both') {
+      prompt += `\n\nWhatsApp guidelines:
+- Keep messages concise (max 160 chars ideal, up to 280 acceptable)
+- Include a clear call-to-action
+- Use professional but friendly language
+- Include optional personalization placeholder {{name}}
+- NO excessive emojis`;
+    }
+
+    if (channel === 'email' || channel === 'both') {
+      prompt += `\n\nEmail guidelines:
+- Include a compelling subject line
+- Format as "Subject: [line]\n\nBody: [content]"
+- Include optional personalization placeholder {{name}}
+- Professional formatting`;
+    }
+
+    prompt += `\n\nReturn ONLY a JSON array like:
+["template1 text", "template2 text", "template3 text"]`;
+
+    try {
+      const systemPrompt = 'Expert marketing copywriter. Return ONLY valid JSON array of strings, no markdown, no explanation.';
+      const response = await this.generateContent(prompt, systemPrompt);
+
+      const templates =
+        typeof response === 'string'
+          ? JSON.parse(response.replace(/```json|```/g, '').trim())
+          : response;
+
+      if (Array.isArray(templates)) {
+        return templates.slice(0, 3);
+      }
+      throw new Error('Invalid response format');
+    } catch (error: any) {
+      this.logger.error('Message template generation failed', error);
+      throw new BadRequestException(
+        'Failed to generate message templates: ' + (error.message || 'Unknown error'),
+      );
+    }
+  }
+
   // ── BRAND PROFILE ─────────────────────────────────────────
 
   async generateBrandProfile(url: string, brandName: string, scrapedContext?: string) {
