@@ -35,6 +35,10 @@ export class User {
   @Prop()
   googleRefreshToken?: string;
 
+  /** OAuth access token for Google Ads API (short-lived; refresh when integrating full OAuth) */
+  @Prop()
+  googleAccessToken?: string;
+
   @Prop()
   metaAppId?: string;
 

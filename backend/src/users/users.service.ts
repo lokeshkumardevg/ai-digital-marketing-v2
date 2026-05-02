@@ -20,6 +20,10 @@ export class UsersService {
     return this.userModel.findById(id).exec();
   }
 
+  async findAll(): Promise<UserDocument[]> {
+    return this.userModel.find().exec();
+  }
+
   async update(id: string, updateDto: any): Promise<UserDocument | null> {
     return this.userModel.findByIdAndUpdate(id, updateDto, { new: true }).exec();
   }
