@@ -1,6 +1,9 @@
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
+import Razorpay from 'razorpay';
 import { Subscription, SubscriptionDocument } from './schemas/subscription.schema';
 import { Transaction, TransactionDocument } from './schemas/transaction.schema';
 
@@ -18,7 +21,45 @@ export class BillingService {
   constructor(
     @InjectModel(Subscription.name) private subModel: Model<SubscriptionDocument>,
     @InjectModel(Transaction.name) private txnModel: Model<TransactionDocument>,
+    private readonly configService: ConfigService,
   ) {}
+
+  private getRazorpayInstance(): Razorpay {
+    return new Razorpay({
+      key_id: this.configService.get<string>('RAZORPAY_KEY_ID'),
+      key_secret: this.configService.get<string>('RAZORPAY_KEY_SECRET'),
+    });
+  }
+
+  async createRazorpayOrder(amount: number, tenantId: string): Promise<any> {
+    const razorpay = this.getRazorpayInstance();
+    const order = await razorpay.orders.create({
+      amount: amount * 100,
+      currency: 'INR',
+      receipt: `wallet_${tenantId}_${Date.now()}`,
+      notes: { tenantId, purpose: 'wallet_recharge' },
+    });
+    return order;
+  }
+
+  async verifyAndRecharge(
+    tenantId: string,
+    amount: number,
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string,
+  ): Promise<{ success: boolean; transaction?: Transaction; error?: string }> {
+    const body = `${razorpayOrderId}|${razorpayPaymentId}`;
+    const secret = this.configService.get<string>('RAZORPAY_KEY_SECRET') || '';
+    const expected = crypto.createHmac('sha256', secret).update(body).digest('hex');
+
+    if (expected !== razorpaySignature) {
+      return { success: false, error: 'Payment signature verification failed' };
+    }
+
+    const transaction = await this.rechargeWallet(tenantId, amount, razorpayPaymentId);
+    return { success: true, transaction };
+  }
 
   // --- WALLET SYSTEM logic ---
   async getWalletBalance(tenantId: string = 'default_tenant'): Promise<{ balance: number, history: Transaction[] }> {

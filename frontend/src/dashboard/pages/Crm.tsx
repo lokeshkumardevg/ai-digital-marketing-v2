@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { SmartTable } from '../components/SmartTable';
-import { GlassCard } from '../components/GlassCard';
-import { Users, RefreshCw, Zap, TrendingUp, Target } from 'lucide-react';
+import { Users, RefreshCw, Database, CreditCard, Wallet } from 'lucide-react';
 
 const dateRanges = ['Last 7 days', 'Last 14 days', 'Last 30 days', 'Last 90 days', 'Today'];
 
@@ -47,6 +47,7 @@ const D = {
   textDim:    '#64748b',
   white005:   'rgba(255,255,255,0.05)',
   white010:   'rgba(255,255,255,0.08)',
+  inputBg:    'rgba(255,255,255,0.04)',
 };
 
 export const Crm: React.FC = () => {
@@ -54,6 +55,8 @@ export const Crm: React.FC = () => {
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [audiences, setAudiences]       = useState<any[]>([]);
   const [loading, setLoading]           = useState(true);
+  const [rechargeAmount, setRechargeAmount] = useState(500);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [kpis, setKpis] = useState([
     { label: 'Spend',          value: '$0.00', color: D.purple,  checked: true,  key: 'spend' },
     { label: 'CPM',            value: '$0.00', color: D.textDim,  checked: false, key: 'cpm' },
@@ -63,11 +66,11 @@ export const Crm: React.FC = () => {
     { label: 'Purchase Value', value: '$0.00', color: D.textDim,  checked: false, key: 'purchaseValue' },
   ]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const { api } = await import('../../api/axios');
       const [resAnal, resAud] = await Promise.all([
-        api.get('/analytics/dashboard'),
+        api.get(`/analytics/dashboard?dateRange=${encodeURIComponent(activeRange)}`),
         api.get('/crm/audiences'),
       ]);
       setAnalyticsData(resAnal.data);
@@ -76,10 +79,10 @@ export const Crm: React.FC = () => {
       setKpis(prev => prev.map(k => {
         const rawValue = summary?.[k.key];
         if (rawValue === undefined || rawValue === null)
-          return { ...k, value: k.key === 'ctr' ? '0%' : '$0' };
+          return { ...k, value: k.key === 'ctr' ? '0%' : k.key === 'roas' ? '0.00' : '$0.00' };
         const formattedValue = (k.key === 'ctr' || k.key === 'roas')
-          ? (typeof rawValue === 'string' ? rawValue : rawValue.toFixed(2)) + (k.key === 'ctr' ? '%' : '')
-          : `$${parseFloat(rawValue).toLocaleString()}`;
+          ? (typeof rawValue === 'string' ? rawValue : Number(rawValue).toFixed(2)) + (k.key === 'ctr' ? '%' : '')
+          : `$${parseFloat(String(rawValue)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         return { ...k, value: formattedValue };
       }));
       setLoading(false);
@@ -87,9 +90,73 @@ export const Crm: React.FC = () => {
       console.error('CRM Fetch Failed', error);
       setLoading(false);
     }
-  };
+  }, [activeRange]);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    void fetchData();
+  }, [fetchData]);
+
+  useEffect(() => {
+    import('../../api/axios').then(({ api }) => {
+      api.get('/billing/wallet').then(res => {
+        setWalletBalance(res.data?.balance ?? 0);
+      }).catch(() => {});
+    });
+  }, []);
+
+  const handleRazorpayRecharge = async () => {
+    try {
+      const { api } = await import('../../api/axios');
+      const orderRes = await api.post('/billing/razorpay/create-order', {
+        amount: rechargeAmount,
+        tenantId: 'default_tenant',
+      });
+      const order = orderRes.data.order;
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: 'INR',
+        name: 'Wheedle.ai',
+        description: 'Wallet Recharge',
+        order_id: order.id,
+        handler: async (response: any) => {
+          try {
+            await api.post('/billing/razorpay/verify', {
+              tenantId: 'default_tenant',
+              amount: rechargeAmount,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            toast.success(`₹${rechargeAmount} added to wallet!`);
+            setWalletBalance(prev => prev + rechargeAmount);
+          } catch {
+            toast.error('Payment verification failed');
+          }
+        },
+        prefill: { name: 'Wheedle User', email: 'user@wheedle.ai' },
+        theme: { color: '#7c3aed' },
+      };
+
+      if (!(window as unknown as { Razorpay?: unknown }).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Razorpay SDK failed to load'));
+          document.body.appendChild(script);
+        });
+      }
+
+      const Rzp = (window as unknown as { Razorpay: new (opts: typeof options) => { open: () => void } }).Razorpay;
+      const rzp = new Rzp(options);
+      rzp.open();
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { message?: string } } };
+      toast.error(ax?.response?.data?.message || 'Failed to initiate payment');
+    }
+  };
 
   const toggleKpi = (i: number) => {
     const newKpis = [...kpis];
@@ -128,12 +195,60 @@ export const Crm: React.FC = () => {
             ● Live Node
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {import.meta.env.DEV && (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  const { api } = await import('../../api/axios');
+                  await api.post('/analytics/seed-demo');
+                  toast.success('30 days of demo data seeded!');
+                  void fetchData();
+                } catch {
+                  toast.error('Seed failed');
+                }
+              }}
+              style={{
+                fontSize: '0.75rem', fontWeight: 600, color: D.textMuted,
+                background: 'none', border: `1px dashed ${D.border}`,
+                borderRadius: 8, padding: '5px 12px', cursor: 'pointer',
+              }}
+            >
+              🌱 Seed Demo Data
+            </button>
+          )}
           <button
-            onClick={fetchData}
+            type="button"
+            onClick={async () => {
+              const t = toast.loading('Syncing Meta Ads data...');
+              try {
+                const { api } = await import('../../api/axios');
+                await api.post('/analytics/sync/meta');
+                toast.dismiss(t);
+                toast.success('Meta data synced!');
+                void fetchData();
+              } catch (e: unknown) {
+                toast.dismiss(t);
+                const ax = e as { response?: { data?: { message?: string } } };
+                toast.error(ax?.response?.data?.message || 'Sync failed — check Meta token');
+              }
+            }}
+            style={{
+              fontSize: '0.8rem', fontWeight: 600, color: D.purpleText,
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: D.purpleSoft, border: `1px solid ${D.borderGlow}`,
+              borderRadius: 8, padding: '6px 14px', cursor: 'pointer',
+            }}
+          >
+            <Database size={14} /> Sync Meta Ads
+          </button>
+          <button
+            type="button"
+            onClick={() => void fetchData()}
             style={{ fontSize: '0.8rem', fontWeight: 600, color: D.textMuted, display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer' }}
-            onMouseEnter={e => e.currentTarget.style.color = D.purpleText}
-            onMouseLeave={e => e.currentTarget.style.color = D.textMuted}
+            onMouseEnter={e => { e.currentTarget.style.color = D.purpleText; }}
+            onMouseLeave={e => { e.currentTarget.style.color = D.textMuted; }}
           >
             <RefreshCw size={14} /> Refresh Terminal
           </button>
@@ -157,7 +272,45 @@ export const Crm: React.FC = () => {
             </button>
           ))}
           <div style={{ padding: '8px 20px', borderRadius: 99, border: `1px solid ${D.border}`, background: D.white005, fontSize: '0.8rem', color: D.textDim, display: 'flex', alignItems: 'center', gap: 8 }}>
-            📅 {activeDates[0]} → {activeDates[activeDates.length - 1]}
+            📅 {activeDates[0] ?? '—'} → {activeDates[activeDates.length - 1] ?? '—'}
+          </div>
+        </div>
+
+        {/* ── Wallet Balance ── */}
+        <div style={{
+          background: D.surface, border: `1px solid ${D.border}`, borderRadius: 16,
+          padding: '16px 24px', marginBottom: 20,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: D.purpleSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Wallet size={18} color={D.purpleText} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.72rem', color: D.textDim, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ad Wallet Balance</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: D.textPrimary }}>₹{walletBalance.toLocaleString()}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <input
+              type="number"
+              value={rechargeAmount}
+              onChange={e => setRechargeAmount(Number(e.target.value))}
+              placeholder="Amount (₹)"
+              style={{ width: 120, padding: '8px 12px', borderRadius: 8, border: `1px solid ${D.border}`, background: D.inputBg, color: D.textPrimary, fontSize: '0.85rem', outline: 'none' }}
+            />
+            <button
+              type="button"
+              onClick={() => void handleRazorpayRecharge()}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 7,
+                padding: '9px 20px', borderRadius: 10, border: 'none',
+                background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer',
+              }}
+            >
+              <CreditCard size={15} /> Recharge via Razorpay
+            </button>
           </div>
         </div>
 

@@ -5,6 +5,7 @@ import { CrmController } from './crm.controller';
 import { Contact, ContactSchema } from './schemas/contact.schema';
 import { Audience, AudienceSchema } from './schemas/audience.schema';
 import { AiModule } from '../ai/ai.module'; // Needed for Orchestrator
+import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AiModule } from '../ai/ai.module'; // Needed for Orchestrator
       { name: Audience.name, schema: AudienceSchema },
     ]),
     AiModule,
+    AnalyticsModule,
   ],
   providers: [CrmService],
   controllers: [CrmController],

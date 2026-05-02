@@ -6,25 +6,55 @@ export type AnalyticsDocument = Analytics & Document;
 @Schema({ timestamps: true })
 export class Analytics {
   @Prop({ required: true })
-  date: string; // YYYY-MM-DD
+  date: Date;
+
+  @Prop({ default: 'meta' })
+  platform: string; // 'meta' | 'google' | 'manual' | 'demo'
 
   @Prop({ default: 0 })
-  websiteTraffic: number;
+  spend: number;
 
   @Prop({ default: 0 })
-  leadsGenerated: number;
+  impressions: number;
 
   @Prop({ default: 0 })
-  adSpend: number;
+  clicks: number;
+
+  @Prop({ default: 0 })
+  conversions: number;
 
   @Prop({ default: 0 })
   revenue: number;
 
   @Prop({ default: 0 })
-  aiTokensUsed: number;
+  cpm: number;
 
   @Prop({ default: 0 })
-  campaignsActive: number;
+  cpc: number;
+
+  @Prop({ default: 0 })
+  ctr: number;
+
+  @Prop({ default: 'default_tenant' })
+  workspaceId: string;
+
+  /** Legacy fields (optional, for older documents) */
+  @Prop()
+  websiteTraffic?: number;
+
+  @Prop()
+  leadsGenerated?: number;
+
+  @Prop()
+  adSpend?: number;
+
+  @Prop()
+  aiTokensUsed?: number;
+
+  @Prop()
+  campaignsActive?: number;
 }
 
 export const AnalyticsSchema = SchemaFactory.createForClass(Analytics);
+
+AnalyticsSchema.index({ date: 1, platform: 1 }, { unique: true });
