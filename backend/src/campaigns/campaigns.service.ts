@@ -229,7 +229,7 @@ private readonly SESSION_VERSION = 'v2';
       };
     } catch (error) {
       console.error('AI ERROR:', error instanceof Error ? error.message : error);
-      // throw new InternalServerErrorException('Failed to generate audit report');
+      throw new InternalServerErrorException('Failed to generate audit report');
           return {
       campaignId,
       ...MOCK_AUDIT_DATA,
@@ -377,14 +377,31 @@ private readonly SESSION_VERSION = 'v2';
     // ============================================
   // PROMPT BUILDER
   // ============================================
-  private async buildPrompt(data: {
-    brandName: string;
-    website: string;
-  }): Promise<string> {
-    const industry = await this.detectIndustry(data.website);
+private async buildPrompt(data: {
+  brandName: string;
+  website: string;
+}): Promise<string> {
+  const industry = await this.detectIndustry(data.website);
 
-    return `
-You are a senior digital marketing strategist.
+  return `
+You are a senior digital marketing strategist and data analyst.
+
+Your goal is to generate a COMPLETE brand analysis using:
+- Website analysis
+- Google search understanding
+- SEO estimation logic
+
+IMPORTANT RULES:
+- DO NOT leave fields empty
+- If exact data is not available:
+  → Use best possible estimation
+  → Mark it as "Estimated"
+- If data cannot be determined at all:
+  → Return "Not Available"
+- Always prioritize:
+  1. Website data
+  2. Google presence (assumed)
+  3. Logical SEO estimation
 
 Return ONLY JSON.
 
@@ -401,9 +418,11 @@ OUTPUT:
     "tagline": "",
     "industry": "",
     "founded": "",
+    "foundedSource": "Verified | Estimated | Not Available",
     "businessModel": "",
     "toneOfVoice": "",
     "registeredAddress": "",
+    "addressSource": "Verified | Estimated | Not Available",
     "CIN": "",
     "overallScore": 0
   },
@@ -458,8 +477,14 @@ OUTPUT:
     "roiPotential": ""
   }
 }
+
+FINAL INSTRUCTIONS:
+- Fill ALL fields
+- No empty strings
+- Use "Estimated" where needed
+- Output must be clean JSON only
 `;
-  }
+}
 
     // ============================================
   // VALIDATION
@@ -554,47 +579,67 @@ OUTPUT:
   // ============================================
 // SESSION: GET (RESTORE)
 // ============================================
+// ============================================
+// SESSION: GET (RESTORE)
+// ============================================
 async getSession(userId: string) {
   const session = this.sessions.get(userId);
 
-  if (!session) return null;
+  if (!session) return { found: false };
 
-  // ✅ version check
   if (session.version !== this.SESSION_VERSION) {
-    return null;
+    this.sessions.delete(userId);
+    return { found: false, reason: 'expired' };
   }
 
-  return session;
+  // TTL check: 30 days if live campaign, else 7 days
+  const maxAge = session.liveCampaign
+    ? 30 * 24 * 60 * 60 * 1000
+    : 7 * 24 * 60 * 60 * 1000;
+
+  const age = Date.now() - new Date(session.updatedAt).getTime();
+  if (age > maxAge) {
+    this.sessions.delete(userId);
+    return { found: false, reason: 'expired' };
+  }
+
+  return { found: true, session };
 }
 
 // ============================================
-// SESSION: SAVE (DEBOUNCED CALL FROM FRONTEND)
+// SESSION: SAVE
 // ============================================
-async saveSession(userId: string, data: any) {
+async saveSession(userId: string, body: any) {
+  // body shape from frontend: { userId, session: PersistedSession }
+  const incoming = body.session || body; // support both shapes
+
   const session = {
     userId,
-    version: data.version || this.SESSION_VERSION,
-    messages: data.messages || [],
-    msgCounter: data.msgCounter || 0,
-    updatedAt: new Date().toISOString(),
+    version:          incoming.version          || this.SESSION_VERSION,
+    url:              incoming.url              || '',
+    urlStatus:        incoming.urlStatus        || 'idle',
+    isChatMode:       incoming.isChatMode       ?? false,
+    viewMode:         incoming.viewMode         || 'landing',
+    brandDetails:     incoming.brandDetails     ?? null,
+    selectedPlatform: incoming.selectedPlatform || '',
+    budgetBreakdown:  incoming.budgetBreakdown  ?? null,
+    selectedTier:     incoming.selectedTier     ?? null,
+    liveCampaign:     incoming.liveCampaign     ?? null,
+    campaignId:       incoming.campaignId       ?? null,
+    messages:         incoming.messages         || [],
+    updatedAt:        new Date().toISOString(),
   };
 
   this.sessions.set(userId, session);
-
-  return {
-    success: true,
-    session,
-  };
+  return { success: true };
 }
 
 // ============================================
-// SESSION: DELETE (RESET)
+// SESSION: DELETE
 // ============================================
 async deleteSession(userId: string) {
   this.sessions.delete(userId);
-
-  return {
-    success: true,
-  };
+  return { success: true };
 }
+
 }

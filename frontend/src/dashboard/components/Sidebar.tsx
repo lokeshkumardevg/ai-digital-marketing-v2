@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import logo from '../../assets/fevicon.png';
+import finallogo from '../../assets/FinalWebsiteLogo.svg';
 import {
   LayoutDashboard,
   Megaphone,
@@ -177,7 +178,7 @@ const MENU_ITEMS: MenuItem[] = [
   overflow: 'hidden',
   flexShrink: 0,
 }}>
-  {/* <img
+  <img
     src={logo}
     alt="logo"
     style={{
@@ -185,7 +186,7 @@ const MENU_ITEMS: MenuItem[] = [
       height: '100%',
       objectFit: 'contain',
     }}
-  /> */}
+  />
 </div>
         </div>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, letterSpacing: '-0.8px', color: '#f5f5f5', fontFamily: 'Outfit', whiteSpace: 'nowrap' }}>
@@ -327,18 +328,16 @@ const MENU_ITEMS: MenuItem[] = [
           Powered by
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-          {/* <img
-  src={logo}
-  alt="logo"
+          <img
+  src={finallogo}
+  alt="finallogo"
   style={{
-    width: '16px',
-    height: '16px',
     objectFit: 'contain',
   }}
-/> */}
-          <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f5f5f5', fontFamily: 'Outfit' }}>
+/>
+          {/* <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f5f5f5', fontFamily: 'Outfit' }}>
             Wheedle Technologies
-          </span>
+          </span> */}
         </div>
       </div>
     </div>

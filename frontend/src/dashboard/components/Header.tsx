@@ -784,7 +784,7 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
         </div>
       </header>
 
-      ── Add Website Modal ──
+      
       {showAddWebsite && (
         <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowAddWebsite(false); }}>
           <div className="modal-panel">

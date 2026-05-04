@@ -61,4 +61,8 @@ live(@Param('id') id: string) {
   deleteSession(@Param('userId') userId: string) {
     return this.service.deleteSession(userId);
   }
+  @Post('session/:userId/clear')
+async clearSessionBeacon(@Param('userId') userId: string) {
+  return this.service.deleteSession(userId);
+}
 }
