@@ -1,17 +1,16 @@
 import { Module } from '@nestjs/common';
+import { CampaignController } from './campaigns.controller';
+import { CampaignService } from './campaigns.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CampaignsService } from './campaigns.service';
-import { CampaignsController } from './campaigns.controller';
-import { Campaign, CampaignSchema } from './schemas/campaign.schema';
-import { AiModule } from '../ai/ai.module'; // Import Orchestrator
+import { Session, SessionSchema } from './schemas/session.schema';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: Campaign.name, schema: CampaignSchema }]),
-    AiModule,
+  controllers: [CampaignController],
+  providers: [CampaignService],
+    imports: [
+    MongooseModule.forFeature([
+      { name: Session.name, schema: SessionSchema },
+    ]),
   ],
-  providers: [CampaignsService],
-  controllers: [CampaignsController],
-  exports: [CampaignsService],
 })
-export class CampaignsModule {}
+export class CampaignModule {}

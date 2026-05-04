@@ -8,7 +8,7 @@ import { Campaigns } from './dashboard/pages/Campaigns';
 import { Content } from './dashboard/pages/Content';
 import { ChatbotBuilder } from './dashboard/pages/Chatbot';
 import { Analytics } from './dashboard/pages/Analytics';
-import { Billing } from './dashboard/pages/Billing';
+import Billing from './dashboard/pages/Billing';
 // @ts-ignore
 import Home from './landing/pages/Home';
 // @ts-ignore

@@ -1,26 +1,64 @@
-import { Controller, Post, Body, Get, Param, Patch } from '@nestjs/common';
-import { CampaignsService } from './campaigns.service';
+import { Controller, Post, Body, Get, Param, Delete } from '@nestjs/common';
+import { CampaignService } from './campaigns.service';
 
-@Controller('campaigns')
-export class CampaignsController {
-  constructor(private readonly campaignsService: CampaignsService) {}
+@Controller('campaign')
+export class CampaignController {
 
-  @Get()
-  async getCampaigns() {
-    return this.campaignsService.getAllCampaigns();
+  constructor(private readonly service: CampaignService) {}
+  
+
+ @Post('discover')
+discover(@Body() body: { brandName: string; website: string }) {
+  return this.service.discoverBrand(body);
+}
+
+  @Post('budget-breakdown')
+budget(@Body() body : any) {
+  return this.service.budgetBreakdown(body);
+}
+
+@Post('draft')
+draft(@Body() body : any) {
+  return this.service.createDraft(body);
+}
+
+@Post('publish/:id')
+publish(@Param('id') id: string) {
+  return this.service.publish(id);
+}
+
+@Get(':id/status')
+status(@Param('id') id: string) {
+  return this.service.getStatus(id);
+}
+
+@Get(':id/live-dashboard')
+live(@Param('id') id: string) {
+  return this.service.getLiveDashboard(id);
+}
+
+// ============================================
+  // ✅ NEW SESSION APIs
+  // ============================================
+
+  // 🔹 RESTORE SESSION
+  @Get('session/:userId')
+  getSession(@Param('userId') userId: string) {
+    return this.service.getSession(userId);
   }
 
-  @Post('auto-generate')
-  async generateCampaign(@Body() body: { name: string; audienceId: string; platform: string; productUrl: string; baseBudget: number }) {
-    return this.campaignsService.autoGenerateCampaign(body);
+  // 🔹 SAVE SESSION
+  @Post('session/:userId')
+  saveSession(
+    @Param('userId') userId: string,
+    @Body() body: any,
+  ) {
+    return this.service.saveSession(userId, body);
   }
 
-  @Patch(':id/launch')
-  async launchCampaign(@Param('id') campaignId: string) {
-    return this.campaignsService.launchCampaign(campaignId);
-  }
-  @Post('deep-research')
-  async deepResearch(@Body() body: { url: string }) {
-    return this.campaignsService.deepResearch(body.url);
+  // 🔹 DELETE SESSION (RESET)
+  @Delete('session/:userId')
+  deleteSession(@Param('userId') userId: string) {
+    return this.service.deleteSession(userId);
   }
 }

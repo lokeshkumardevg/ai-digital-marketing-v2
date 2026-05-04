@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisModule } from '@nestjs-modules/ioredis';
-import { BullModule } from '@nestjs/bull';
-import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AiModule } from './ai/ai.module';
@@ -10,7 +8,7 @@ import { AppGateway } from './app.gateway';
 import { GatewayModule } from './gateway.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CrmModule } from './crm/crm.module';
-import { CampaignsModule } from './campaigns/campaigns.module';
+import { CampaignModule } from './campaigns/campaigns.module';
 import { ContentModule } from './content/content.module';
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { AnalyticsModule } from './analytics/analytics.module';
@@ -21,7 +19,7 @@ import { UsersModule } from './users/users.module';
 import { SocialModule } from './social/social.module';
 import { RolesModule } from './roles/roles.module';
 import { WorkflowsModule } from './workflows/workflows.module';
-import { MessagingModule } from './messaging/messaging.module';
+import { WalletModule } from './wallet/wallet.module';
 
 @Module({
   imports: [
@@ -29,7 +27,6 @@ import { MessagingModule } from './messaging/messaging.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    ScheduleModule.forRoot(),
     RedisModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -38,35 +35,6 @@ import { MessagingModule } from './messaging/messaging.module';
       }),
       inject: [ConfigService],
     }),
-BullModule.forRootAsync({
-  imports: [ConfigModule],
-  useFactory: (configService: ConfigService) => {
-    const redisUrl =
-      configService.get<string>('REDIS_URL') || 'redis://127.0.0.1:6379';
-
-    const url = new URL(redisUrl);
-
-    return {
-      redis: {
-        host: url.hostname,
-        port: Number(url.port) || 6379,
-
-        // ✅ include username if present
-        ...(url.username ? { username: url.username } : {}),
-
-        // ✅ include password
-        ...(url.password ? { password: url.password } : {}),
-
-        // ✅ handle TLS (VERY IMPORTANT for cloud Redis)
-        ...(url.protocol === 'rediss:' ? { tls: {} } : {}),
-
-        // ✅ prevent this exact error (optional but useful)
-        maxRetriesPerRequest: null,
-      },
-    };
-  },
-  inject: [ConfigService],
-}),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -77,7 +45,8 @@ BullModule.forRootAsync({
     GatewayModule,
     AiModule,
     CrmModule,
-    CampaignsModule,
+    CampaignModule,
+    WalletModule,
     ContentModule,
     ChatbotModule,
     AnalyticsModule,
@@ -87,10 +56,11 @@ BullModule.forRootAsync({
     SocialModule,
     RolesModule,
     WorkflowsModule,
-    ProductsModule,
-    MessagingModule
+    ProductsModule
+    
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
+

@@ -133,7 +133,7 @@ export const Sidebar: React.FC = () => {
         position: 'fixed',
         left: 0,
         top: 0,
-        background: '#0f0f10',
+        background: '#0a0f1e',
         borderRight: '1px solid rgba(255,255,255,0.06)',
         padding: '24px 12px',
         display: 'flex',
@@ -161,7 +161,7 @@ export const Sidebar: React.FC = () => {
   overflow: 'hidden',
   flexShrink: 0,
 }}>
-  <img
+  {/* <img
     src={logo}
     alt="logo"
     style={{
@@ -169,7 +169,7 @@ export const Sidebar: React.FC = () => {
       height: '100%',
       objectFit: 'contain',
     }}
-  />
+  /> */}
 </div>
         </div>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, letterSpacing: '-0.8px', color: '#f5f5f5', fontFamily: 'Outfit', whiteSpace: 'nowrap' }}>
@@ -298,7 +298,7 @@ export const Sidebar: React.FC = () => {
           Powered by
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-          <img
+          {/* <img
   src={logo}
   alt="logo"
   style={{
@@ -306,7 +306,7 @@ export const Sidebar: React.FC = () => {
     height: '16px',
     objectFit: 'contain',
   }}
-/>
+/> */}
           <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f5f5f5', fontFamily: 'Outfit' }}>
             Wheedle Technologies
           </span>
