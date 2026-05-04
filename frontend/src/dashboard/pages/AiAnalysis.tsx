@@ -103,7 +103,7 @@ const phases: Phase[] = [
 const Spinner: React.FC = () => (
   <span style={{
     display: 'inline-block', width: '14px', height: '14px',
-    border: '2px solid #e9d5ff', borderTopColor: '#7c3aed',
+    border: '2px solid #e9d5ff', borderTopColor: '#2631d6',
     borderRadius: '50%', animation: 'spin 0.7s linear infinite',
   }} />
 );
@@ -258,7 +258,7 @@ export const AiAnalysis: React.FC = () => {
         {/* ── Active Brand ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
           <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>{activeBrand?.name || 'Your Brand'}</span>
-          <span style={{ padding: '3px 10px', borderRadius: '6px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>Current brand</span>
+          <span style={{ padding: '3px 10px', borderRadius: '6px', background: 'linear-gradient(135deg, #2631d6, #1e27a8)', color: '#fff', fontSize: '0.72rem', fontWeight: 700 }}>Current brand</span>
         </div>
         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '28px' }}>Select the function to start quickly</div>
 
@@ -266,7 +266,7 @@ export const AiAnalysis: React.FC = () => {
         {phases.map((phase) => (
           <div key={phase.number} style={{ marginBottom: '28px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '8px', border: '2px solid #7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800, color: '#7c3aed', flexShrink: 0 }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '8px', border: '2px solid #2631d6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 800, color: '#2631d6', flexShrink: 0 }}>
                 {phase.number}
               </div>
               <div>
@@ -330,7 +330,7 @@ export const AiAnalysis: React.FC = () => {
               >✕</button>
 
               {/* Top purple accent strip */}
-              <div style={{ height: '4px', background: 'linear-gradient(90deg, #7c3aed, #a855f7)' }} />
+              <div style={{ height: '4px', background: 'linear-gradient(90deg, #2631d6, #a855f7)' }} />
 
               {/* Body */}
               <div style={{ padding: '28px 28px 24px' }}>
@@ -387,7 +387,7 @@ export const AiAnalysis: React.FC = () => {
                     <span key={tag} style={{
                       padding: '3px 10px', borderRadius: '20px',
                       background: '#f3f0ff', border: '1px solid #e9d5ff',
-                      fontSize: '0.72rem', color: '#7c3aed', fontWeight: 500,
+                      fontSize: '0.72rem', color: '#2631d6', fontWeight: 500,
                     }}>{tag}</span>
                   ))}
                 </div>
@@ -412,7 +412,7 @@ export const AiAnalysis: React.FC = () => {
                     style={{
                       flex: 2, padding: '11px', borderRadius: '10px',
                       border: 'none',
-                      background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                      background: 'linear-gradient(135deg, #2631d6 0%, #1e27a8 100%)',
                       color: '#fff', cursor: 'pointer', fontWeight: 700,
                       fontSize: '0.875rem', display: 'flex',
                       alignItems: 'center', justifyContent: 'center',
@@ -484,7 +484,7 @@ export const AiAnalysis: React.FC = () => {
               <div style={{ height: '3px', background: 'var(--bg-elevated)', flexShrink: 0, overflow: 'hidden' }}>
                 <div style={{
                   height: '100%',
-                  background: 'linear-gradient(90deg, #7c3aed, #a855f7, #7c3aed)',
+                  background: 'linear-gradient(90deg, #2631d6, #a855f7, #2631d6)',
                   backgroundSize: '200% 100%',
                   animation: 'progressShimmer 1.8s linear infinite',
                   width: `${Math.round((steps.filter(s => s.status === 'done').length / Math.max(steps.length, 1)) * 100)}%`,
@@ -748,7 +748,7 @@ const TYPE_ICON: Record<string, { icon: string; bg: string; color: string }> = {
   'Market Research':    { icon: '📊', bg: '#dbeafe', color: '#1d4ed8' },
   'Competitor Analysis':{ icon: '⚡', bg: '#fef9c3', color: '#a16207' },
   'Audience Insights':  { icon: '🎯', bg: '#dcfce7', color: '#15803d' },
-  'Campaign Strategy':  { icon: '📋', bg: '#f3e8ff', color: '#7c3aed' },
+  'Campaign Strategy':  { icon: '📋', bg: '#f3e8ff', color: '#2631d6' },
   'Copy Generation':    { icon: '✏️', bg: '#ffedd5', color: '#c2410c' },
   'Creative Testing':   { icon: '🖼️', bg: '#e0f2fe', color: '#0369a1' },
 };
@@ -946,7 +946,7 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                         padding: '4px 12px', borderRadius: '20px', border: 'none',
                         fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer',
                         whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.12s',
-                        background: filterType === type ? '#7c3aed' : '#f1f5f9',
+                        background: filterType === type ? '#2631d6' : '#f1f5f9',
                         color: filterType === type ? '#fff' : '#64748b',
                       }}
                     >{type}</button>
@@ -969,7 +969,7 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                 style={{
                   display: 'flex', alignItems: 'center', gap: '5px',
                   background: 'none', border: 'none', cursor: 'pointer',
-                  color: '#7c3aed', fontWeight: 600, fontSize: '0.82rem',
+                  color: '#2631d6', fontWeight: 600, fontSize: '0.82rem',
                   marginBottom: '16px', padding: 0,
                 }}
                 onMouseEnter={e => (e.currentTarget.style.opacity = '0.7')}
@@ -1067,7 +1067,7 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                       {/* Left accent bar on hover */}
                       <div style={{
                         position: 'absolute', left: 0, top: 0, bottom: 0,
-                        width: '3px', background: '#7c3aed',
+                        width: '3px', background: '#2631d6',
                         borderRadius: '12px 0 0 12px',
                         opacity: isHovered ? 1 : 0,
                         transition: 'opacity 0.12s',
@@ -1117,7 +1117,7 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                             width: '24px', height: '24px', borderRadius: '6px',
                             background: isHovered ? '#f3f0ff' : '#f8fafc',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '0.75rem', color: isHovered ? '#7c3aed' : '#94a3b8',
+                            fontSize: '0.75rem', color: isHovered ? '#2631d6' : '#94a3b8',
                             transition: 'all 0.12s',
                           }}>›</div>
                         </div>
@@ -1162,7 +1162,7 @@ const ResultRenderer: React.FC<{ result: any }> = ({ result }) => {
     if (Array.isArray(value)) {
       return (
         <div style={{ marginBottom: '12px' }} key={key}>
-          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>{formatKey(key)}</div>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#2631d6', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>{formatKey(key)}</div>
           {value.map((item, i) => (
             <div key={i} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', marginBottom: '6px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               {typeof item === 'object' ? Object.entries(item).map(([k, v]) => (
@@ -1180,7 +1180,7 @@ const ResultRenderer: React.FC<{ result: any }> = ({ result }) => {
     if (typeof value === 'object') {
       return (
         <div style={{ marginBottom: '14px', background: 'var(--bg-elevated)', borderRadius: '10px', padding: '12px', border: '1px solid #f1f5f9' }} key={key}>
-          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>{formatKey(key)}</div>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#2631d6', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>{formatKey(key)}</div>
           {Object.entries(value).map(([k, v]) => renderValue(k, v, depth + 1))}
         </div>
       );

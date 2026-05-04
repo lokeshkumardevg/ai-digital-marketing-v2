@@ -162,13 +162,13 @@ export const Settings: React.FC = () => {
                     style={{
                       display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px',
                       borderRadius: '8px', cursor: 'pointer',
-                      background: activeTab === tab.id ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
+                      background: activeTab === tab.id ? 'rgba(38, 49, 214, 0.1)' : 'transparent',
                       color: activeTab === tab.id ? 'var(--text-secondary)' : 'var(--text-secondary)',
-                      border: activeTab === tab.id ? '1px solid rgba(139, 92, 246, 0.2)' : '1px solid transparent',
+                      border: activeTab === tab.id ? '1px solid rgba(38, 49, 214, 0.2)' : '1px solid transparent',
                       transition: 'all 0.2s', width: '100%', textAlign: 'left', fontWeight: activeTab === tab.id ? 500 : 400
                     }}
                   >
-                    <tab.icon size={18} color={activeTab === tab.id ? 'var(--accent-primary)' : 'currentColor'} />
+                    <tab.icon size={18} color={activeTab === tab.id ? '#2631d6' : 'currentColor'} />
                     {tab.label}
                   </button>
                 ))}

@@ -101,7 +101,7 @@ export const Analytics: React.FC = () => {
 
       <GlassCard style={{ padding: '32px' }}>
         <h3 style={{ fontSize: '1.2rem', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <TrendingUp size={18} color="var(--accent-primary)" /> Traffic & Revenue Trajectory <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: 'var(--text-secondary)', marginLeft: '8px' }}>(Historical + 7d AI Projection)</span>
+          <TrendingUp size={18} color="#2631d6" /> Traffic & Revenue Trajectory <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: 'var(--text-secondary)', marginLeft: '8px' }}>(Historical + 7d AI Projection)</span>
         </h3>
         
         <div style={{ width: '100%', height: '450px' }}>

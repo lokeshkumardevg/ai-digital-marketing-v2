@@ -8,9 +8,9 @@ const D = {
   surfaceAlt:  '#141d35',
   surfaceHover:'rgba(255,255,255,0.04)',
   border:      'rgba(99,102,241,0.18)',
-  borderFocus: '#7c3aed',
+  borderFocus: '#2631d6',
   borderGlow:  'rgba(124,58,237,0.35)',
-  purple:      '#7c3aed',
+  purple:      '#2631d6',
   purpleSoft:  'rgba(124,58,237,0.15)',
   purpleText:  '#a78bfa',
   green:       '#10b981',
@@ -877,7 +877,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
               <button
                 onClick={saveManual}
                 disabled={!manualId.trim() || !manualToken.trim() || connectStatus === 'waiting'}
-                style={{ width: '100%', padding: 11, borderRadius: 10, border: 'none', background: (!manualId.trim() || !manualToken.trim()) ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg,#7c3aed,#6d28d9)', color: (!manualId.trim() || !manualToken.trim()) ? '#475569' : '#fff', cursor: (!manualId.trim() || !manualToken.trim()) ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.88rem' }}
+                style={{ width: '100%', padding: 11, borderRadius: 10, border: 'none', background: (!manualId.trim() || !manualToken.trim()) ? 'rgba(255,255,255,0.06)' : 'linear-gradient(135deg,#2631d6,#1e27a8)', color: (!manualId.trim() || !manualToken.trim()) ? '#475569' : '#fff', cursor: (!manualId.trim() || !manualToken.trim()) ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.88rem' }}
               >
                 {connectStatus === 'waiting' ? 'Saving...' : 'Save Connection'}
               </button>
@@ -892,7 +892,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
                   <div style={{ width: 48, height: 48, border: `4px solid rgba(255,255,255,0.08)`, borderTopColor: platInfo.color, borderRadius: '50%', animation: 'spin .8s linear infinite', margin: '0 auto 16px' }}/>
                   <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#f1f5f9', marginBottom: 6 }}>Waiting for authorization...</div>
                   <div style={{ fontSize: '0.78rem', color: '#475569', marginBottom: 16 }}>Complete the sign-in in the popup window.</div>
-                  <button onClick={() => setStep('manual')} style={{ fontSize: '0.75rem', color: '#7c3aed', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>No popup? Enter token manually</button>
+                  <button onClick={() => setStep('manual')} style={{ fontSize: '0.75rem', color: '#2631d6', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>No popup? Enter token manually</button>
                 </>
               )}
               {connectStatus === 'success' && (
@@ -900,7 +900,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
                   <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', fontSize: '1.4rem' }}>✓</div>
                   <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#10b981', marginBottom: 6 }}>Connected successfully!</div>
                   <div style={{ fontSize: '0.78rem', color: '#475569', marginBottom: 20 }}>{platInfo.label} is now connected.</div>
-                  <button onClick={onClose} style={{ padding: '10px 28px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>Done</button>
+                  <button onClick={onClose} style={{ padding: '10px 28px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#2631d6,#1e27a8)', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem' }}>Done</button>
                 </>
               )}
               {connectStatus === 'error' && (
@@ -910,7 +910,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
                   <div style={{ fontSize: '0.78rem', color: '#475569', marginBottom: 16 }}>{errorMsg}</div>
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                     <button onClick={() => { setStep('detail'); setConnectStatus('idle'); }} style={{ padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(99,102,241,0.18)', background: 'rgba(255,255,255,0.04)', color: '#94a3b8', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}>Try Again</button>
-                    <button onClick={() => { setStep('manual'); setConnectStatus('idle'); }} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: '#7c3aed', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}>Manual Setup</button>
+                    <button onClick={() => { setStep('manual'); setConnectStatus('idle'); }} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: '#2631d6', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}>Manual Setup</button>
                   </div>
                 </>
               )}

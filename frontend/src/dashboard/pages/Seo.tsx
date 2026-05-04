@@ -498,14 +498,14 @@ export const Seo: React.FC = () => {
                    </div>
 
                    {/* Relocated AI Strategy (Internal Dashboard View Only) */}
-                   <GlassCard style={{ padding: '32px', background: '#fff', border: 'none', borderLeft: '6px solid #7c3aed', boxShadow: '0 10px 15px -3px rgba(124, 58, 237, 0.1)' }}>
+                   <GlassCard style={{ padding: '32px', background: '#fff', border: 'none', borderLeft: '6px solid #2631d6', boxShadow: '0 10px 15px -3px rgba(124, 58, 237, 0.1)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
                          <div style={{ width: '40px', height: '40px', background: 'rgba(124, 58, 237, 0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Zap size={24} color="#7c3aed" fill="#7c3aed" />
+                            <Zap size={24} color="#2631d6" fill="#2631d6" />
                          </div>
                          <div>
                             <h3 style={{ fontSize: '1.2rem', fontWeight: 950, margin: 0, color: '#1e293b' }}>Executive AI Strategy</h3>
-                            <p style={{ fontSize: '0.75rem', color: '#7c3aed', fontWeight: 900, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>QUANTUM MARKET INTELLIGENCE OVERVIEW</p>
+                            <p style={{ fontSize: '0.75rem', color: '#2631d6', fontWeight: 900, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>QUANTUM MARKET INTELLIGENCE OVERVIEW</p>
                          </div>
                       </div>
                       <p style={{ fontSize: '1rem', color: '#1e293b', lineHeight: 1.8, margin: 0, fontWeight: 500, whiteSpace: 'pre-wrap' }}>

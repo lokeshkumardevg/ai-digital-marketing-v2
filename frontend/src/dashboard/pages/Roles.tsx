@@ -155,24 +155,24 @@ export const Roles: React.FC = () => {
       </div>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-        <button className={`btn ${activeTab === 'roles' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('roles')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <button className={`btn ${activeTab === 'roles' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('roles')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: activeTab === 'roles' ? '#2631d6' : 'transparent', color: activeTab === 'roles' ? '#fff' : '#999', border: activeTab === 'roles' ? 'none' : '1px solid #2631d6' }}>
           <ShieldAlert size={16} /> Manage Roles
         </button>
-        <button className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('users')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <button className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('users')} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: activeTab === 'users' ? '#2631d6' : 'transparent', color: activeTab === 'users' ? '#fff' : '#999', border: activeTab === 'users' ? 'none' : '1px solid #2631d6' }}>
           <Users size={16} /> Team Members
         </button>
       </div>
 
       {activeTab === 'roles' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 1fr) 2fr', gap: '24px' }}>
-          <GlassCard style={{ padding: '0', overflow: 'hidden', height: 'fit-content' }}>
-            <div style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <GlassCard style={{ padding: '0', overflow: 'hidden', height: 'fit-content', color: '#000' }}>
+            <div style={{ padding: '16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center',color: '#111111' }}>
                <h3 style={{ fontSize: '1rem' }}>Access Roles</h3>
-               <button className="btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setShowAddRoleModal(true)}><Plus size={16} /></button>
+               <button className="btn-secondary" style={{ padding: '4px 8px', background: '#2631d6', color: '#fff', border: 'none', cursor: 'pointer' }} onClick={() => setShowAddRoleModal(true)}><Plus size={16} /></button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {roles.map((role: any) => (
-                <div key={role._id || role.id} onClick={() => setSelectedRole(role)} style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', background: selectedRole?.id === (role.id || role._id) || selectedRole?._id === (role._id || role.id) ? 'rgba(139, 92, 246, 0.1)' : 'transparent', borderLeft: (selectedRole?.id === (role.id || role._id) || selectedRole?._id === (role._id || role.id)) ? '3px solid var(--accent-primary)' : '3px solid transparent', transition: 'all 0.2s' }}>
+                <div key={role._id || role.id} onClick={() => setSelectedRole(role)} style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', background: selectedRole?.id === (role.id || role._id) || selectedRole?._id === (role._id || role.id) ? 'rgba(38, 49, 214, 0.1)' : 'transparent', borderLeft: (selectedRole?.id === (role.id || role._id) || selectedRole?._id === (role._id || role.id)) ? '3px solid #2631d6' : '3px solid transparent', transition: 'all 0.2s' }}>
                   <span style={{ fontWeight: (selectedRole?.id === (role.id || role._id) || selectedRole?._id === (role._id || role.id)) ? 600 : 400 }}>{role.name}</span>
                   {!role.isSystem && (
                     <Trash2 size={16} color="var(--error)" style={{ opacity: 0.6 }} onClick={(e) => { e.stopPropagation(); handleDeleteRole(role._id || role.id, role.isSystem); }} />
@@ -182,7 +182,7 @@ export const Roles: React.FC = () => {
             </div>
           </GlassCard>
 
-          <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '20px',color: '#000' }}>
              {!selectedRole ? (
                 <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
                    Select a role to manage permissions.
@@ -203,7 +203,7 @@ export const Roles: React.FC = () => {
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Allows viewing and modifying `{module.id}` module data.</div>
                           </div>
                           <div onClick={() => handleTogglePermission(module.id)} style={{ cursor: selectedRole.isSystem ? 'not-allowed' : 'pointer', opacity: selectedRole.isSystem ? 0.5 : 1 }}>
-                             {hasAccess ? <CheckSquare size={24} color="var(--success)" /> : <Square size={24} color="var(--text-secondary)" />}
+                             {hasAccess ? <CheckSquare size={24} color="#2631d6" /> : <Square size={24} color="var(--text-secondary)" />}
                           </div>
                         </div>
                       );
@@ -240,8 +240,8 @@ export const Roles: React.FC = () => {
                   const role = roles.find((r: any) => (r._id || r.id) === row.roleId);
                   return (
                     <span style={{ 
-                      background: 'rgba(139, 92, 246, 0.1)', 
-                      color: 'var(--accent-primary)', 
+                      background: 'rgba(38, 49, 214, 0.15)', 
+                      color: '#2631d6', 
                       padding: '4px 10px', 
                       borderRadius: '12px', 
                       fontSize: '0.8rem',
@@ -257,7 +257,7 @@ export const Roles: React.FC = () => {
             actions={(row) => (
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                 <button 
-                  style={{ color: 'var(--info)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                  style={{ color: '#2631d6', background: 'transparent', border: 'none', cursor: 'pointer' }}
                   onClick={() => { setSelectedRoleId(row.roleId); setShowChangeRoleModal(row.id); }}
                 >
                   <Edit2 size={16} />
@@ -278,13 +278,13 @@ export const Roles: React.FC = () => {
       <ModalOverlay isOpen={showAddRoleModal} onClose={() => setShowAddRoleModal(false)} title="Create New Role">
         <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Role Name</label>
         <input className="input-field" autoFocus value={newRoleName} onChange={e => setNewRoleName(e.target.value)} placeholder="e.g. SEO Specialist" style={{ marginTop: '8px', marginBottom: '20px' }} />
-        <button className="btn btn-primary" style={{ width: '100%' }} onClick={submitAddRole}>Create Role</button>
+        <button className="btn btn-primary" style={{ width: '100%', background: '#2631d6', color: '#fff', border: 'none' }} onClick={submitAddRole}>Create Role</button>
       </ModalOverlay>
 
       <ModalOverlay isOpen={showInviteModal} onClose={() => setShowInviteModal(false)} title="Invite Team Member">
         <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Email Address</label>
         <input className="input-field" type="email" autoFocus value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} placeholder="colleague@example.com" style={{ marginTop: '8px', marginBottom: '20px' }} />
-        <button className="btn btn-primary" style={{ width: '100%' }} onClick={submitInviteUser}>Send Invite</button>
+        <button className="btn btn-primary" style={{ width: '100%', background: '#2631d6', color: '#fff', border: 'none' }} onClick={submitInviteUser}>Send Invite</button>
       </ModalOverlay>
 
       <ModalOverlay isOpen={!!showChangeRoleModal} onClose={() => setShowChangeRoleModal(null)} title="Change User Role">
@@ -292,7 +292,7 @@ export const Roles: React.FC = () => {
         <select className="input-field" value={selectedRoleId} onChange={e => setSelectedRoleId(e.target.value)} style={{ marginTop: '8px', marginBottom: '20px' }}>
             {roles.map((r: any) => <option key={r._id || r.id} value={r._id || r.id}>{r.name} {r.isSystem ? '(System Admin)' : ''}</option>)}
         </select>
-        <button className="btn btn-primary" style={{ width: '100%' }} onClick={submitChangeRole}>Update Role</button>
+        <button className="btn btn-primary" style={{ width: '100%', background: '#2631d6', color: '#fff', border: 'none' }} onClick={submitChangeRole}>Update Role</button>
       </ModalOverlay>
 
     </div>

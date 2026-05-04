@@ -552,8 +552,8 @@ const getPageNumbers = () => {
 }
 
 .creatives-pagination-page.active {
-  background: #7c3aed;
-  border-color: #7c3aed;
+  background: #2631d6;
+  border-color: #2631d6;
   color: #ffffff;
   box-shadow: 0 10px 24px rgba(124, 58, 237, 0.22);
 }

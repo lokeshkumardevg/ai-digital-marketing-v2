@@ -134,7 +134,7 @@ export class AnalyticsService {
 
   private getMockData(platform: string): any {
     return {
-      audiences: [{ label: `${platform} Default`, value: 100, color: '#7c3aed' }],
+      audiences: [{ label: `${platform} Default`, value: 100, color: '#2631d6' }],
       pages: [{ label: 'default', value: 100, color: '#3b82f6' }],
       creatives: [
         {

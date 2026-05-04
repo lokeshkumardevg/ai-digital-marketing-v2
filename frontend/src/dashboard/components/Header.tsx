@@ -25,7 +25,7 @@ export const Header: React.FC = () => {
   const { items, unreadCount, total } = useSelector((state: any) => state.notifications);
 
   const CATEGORY_COLORS: Record<string, string> = {
-    campaign: '#7c3aed',
+    campaign: '#2631d6',
     social: '#1da1f2',
     ai: '#10b981',
     billing: '#f59e0b',
@@ -39,7 +39,7 @@ export const Header: React.FC = () => {
     success: '#10b981',
     error: '#ef4444',
     warning: '#f59e0b',
-    info: '#7c3aed',
+    info: '#2631d6',
   };
 
   // ── Existing state ──
@@ -784,7 +784,7 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
         </div>
       </header>
 
-      ── Add Website Modal ──
+      {/* ── Add Website Modal ── */}
       {showAddWebsite && (
         <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowAddWebsite(false); }}>
           <div className="modal-panel">

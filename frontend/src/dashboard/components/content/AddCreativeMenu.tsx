@@ -66,7 +66,7 @@ const AddCreativeMenu: React.FC<AddCreativeMenuProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#7c3aed',
+            color: '#2631d6',
           }}
         >
           <LayoutGrid size={20} />
@@ -126,7 +126,7 @@ const AddCreativeMenu: React.FC<AddCreativeMenuProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#7c3aed',
+            color: '#2631d6',
           }}
         >
           <Upload size={20} />

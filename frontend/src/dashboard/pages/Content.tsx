@@ -984,7 +984,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             padding: '0 24px',
             borderRadius: '999px',
             border: 'none',
-            background: 'linear-gradient(90deg, #8b5cf6 0%, #6d28d9 100%)',
+            background: 'linear-gradient(90deg, #8b5cf6 0%, #1e27a8 100%)',
             color: '#fff',
             fontWeight: 700,
             cursor: isUpdatingCreative ? 'not-allowed' : 'pointer',

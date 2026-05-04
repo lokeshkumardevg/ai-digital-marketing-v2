@@ -115,7 +115,7 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
               background: '#fff',
               borderTopLeftRadius: '12px',
               borderTopRightRadius: '12px',
-              color: '#7c3aed',
+              color: '#2631d6',
               fontWeight: 600,
               fontSize: '0.95rem',
               cursor: 'pointer',
@@ -132,7 +132,7 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
             padding: '8px 14px',
             borderRadius: '999px',
             background: '#f3e8ff',
-            color: '#7c3aed',
+            color: '#2631d6',
             fontWeight: 600,
             width: 'fit-content',
             marginBottom: '24px',
@@ -152,7 +152,7 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
           }}
         >
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#111827', fontWeight: 600 }}>
-            <Clock3 size={18} color="#7c3aed" />
+            <Clock3 size={18} color="#2631d6" />
             <span>Set limited lifetime</span>
           </div>
 
@@ -164,7 +164,7 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
               borderRadius: '999px',
               border: '1px solid #8b5cf6',
               background: '#fff',
-              color: '#7c3aed',
+              color: '#2631d6',
               fontSize: '0.95rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -318,7 +318,7 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
               height: '48px',
               borderRadius: '999px',
               border: 'none',
-              background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+              background: 'linear-gradient(135deg, #2631d6, #1e27a8)',
               color: '#fff',
               fontWeight: 600,
               fontSize: '0.98rem',

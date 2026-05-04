@@ -543,7 +543,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
     borderRadius: '999px',
     border: '1.5px solid #d8b4fe',
     background: '#fff',
-    color: '#7c3aed',
+    color: '#2631d6',
     fontWeight: 700,
     fontSize: '0.96rem',
     cursor: 'pointer',
@@ -609,7 +609,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#7c3aed',
+                      color: '#2631d6',
                       flexShrink: 0,
                     }}
                   >
@@ -644,7 +644,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                     style={{
                       fontSize: '0.82rem',
                       fontWeight: 700,
-                      color: '#7c3aed',
+                      color: '#2631d6',
                       background: '#f5f3ff',
                       border: '1px solid #ddd6fe',
                       padding: '8px 12px',
@@ -721,7 +721,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       justifyContent: 'center',
                       flexDirection: 'column',
                       gap: '12px',
-                      color: '#7c3aed',
+                      color: '#2631d6',
                     }}
                   >
                     <Loader2 size={28} style={{ animation: 'spin 1s linear infinite' }} />
@@ -753,7 +753,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                             borderRadius: '16px',
                             overflow: 'hidden',
                             background: '#f8fafc',
-                            border: isSelected ? '2px solid #7c3aed' : '1px solid #ede9fe',
+                            border: isSelected ? '2px solid #2631d6' : '1px solid #ede9fe',
                             height: '120px',
                             padding: 0,
                             cursor: 'pointer',
@@ -784,7 +784,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                               width: '24px',
                               height: '24px',
                               borderRadius: '999px',
-                              background: isSelected ? '#7c3aed' : 'rgba(255,255,255,0.9)',
+                              background: isSelected ? '#2631d6' : 'rgba(255,255,255,0.9)',
                               color: isSelected ? '#fff' : '#a1a1aa',
                               display: 'flex',
                               alignItems: 'center',

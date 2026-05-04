@@ -15,7 +15,7 @@ const D = {
   surfaceAlt:  '#141d35',
   border:      'rgba(99,102,241,0.18)',
   borderGlow:  'rgba(124,58,237,0.35)',
-  purple:      '#7c3aed',
+  purple:      '#2631d6',
   purpleSoft:  'rgba(124,58,237,0.12)',
   purpleText:  '#a78bfa',
   green:       '#10b981',
@@ -487,7 +487,7 @@ export const Messaging: React.FC = () => {
             <button
               onClick={handleSend}
               disabled={sending}
-              style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px 16px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${D.purple}, #6d28d9)`, color: '#fff', fontSize: '0.82rem', fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', opacity: sending ? 0.7 : 1, transition: 'opacity 0.2s' }}
+              style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px 16px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${D.purple}, #1e27a8)`, color: '#fff', fontSize: '0.82rem', fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', opacity: sending ? 0.7 : 1, transition: 'opacity 0.2s' }}
             >
               {sending ? <RefreshCw size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <Send size={15} />}
               {sending ? 'Queueing...' : `Send to ${totalUsers > 0 ? totalUsers.toLocaleString() + ' users' : 'Recipients'}`}

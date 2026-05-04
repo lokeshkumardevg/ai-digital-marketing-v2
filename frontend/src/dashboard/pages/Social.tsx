@@ -191,7 +191,7 @@ export const Social: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <GlassCard>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1f2c8b'}}>
-              <Share2 size={20} color="var(--accent-primary)" /> Platform Connections
+              <Share2 size={20} color="#2631d6" /> Platform Connections
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
               Connect OAuth accounts and choose destinations for each post.
@@ -281,7 +281,7 @@ export const Social: React.FC = () => {
           <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'fit-content' }}>
             <div>
               <h3 style={{ fontSize: '1.2rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Share2 size={20} color="var(--accent-primary)" />
+                <Share2 size={20} color="#2631d6" />
                  Post Composer
               </h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -431,7 +431,7 @@ export const Social: React.FC = () => {
                   label: 'Platforms',
                   sortable: false,
                   render: (row) => (
-                    <span style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>
+                    <span style={{ fontWeight: 600, color: '#2631d6' }}>
                       {(row.platforms || []).join(', ') || 'none'}
                     </span>
                   ),

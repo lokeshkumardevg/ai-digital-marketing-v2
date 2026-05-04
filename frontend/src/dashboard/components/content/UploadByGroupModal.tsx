@@ -134,7 +134,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
               background: '#fff',
               borderTopLeftRadius: '12px',
               borderTopRightRadius: '12px',
-              color: '#7c3aed',
+              color: '#2631d6',
               fontWeight: 600,
               fontSize: '0.95rem',
               cursor: 'pointer',
@@ -289,7 +289,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  background: '#7c3aed',
+                  background: '#2631d6',
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
@@ -342,7 +342,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
     >
       <div>
         <CloudUpload size={44} color="#d1d5db" style={{ margin: '0 auto 14px' }} />
-        <div style={{ fontSize: '1.05rem', fontWeight: 600, color: '#7c3aed' }}>
+        <div style={{ fontSize: '1.05rem', fontWeight: 600, color: '#2631d6' }}>
           Click or drag file to this area to upload
         </div>
         <div style={{ fontSize: '0.95rem', color: '#8b8b8b' }}>
@@ -509,7 +509,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
               background: '#fafafa',
             }}
           >
-            Select <span style={{ color: '#7c3aed', margin: '0 6px' }}>Any </span> to
+            Select <span style={{ color: '#2631d6', margin: '0 6px' }}>Any </span> to
             start upload flow.
           </div>
         )}
@@ -553,7 +553,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
     border: 'none',
     background:
       groupCreativeType === 'image' && groupFiles.length > 0 && !groupUploading
-        ? 'linear-gradient(135deg, #7c3aed, #6d28d9)'
+        ? 'linear-gradient(135deg, #2631d6, #1e27a8)'
         : '#d8c4fb',
     color: '#fff',
     fontWeight: 600,
