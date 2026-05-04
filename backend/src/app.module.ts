@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { AppController } from './app.controller';
@@ -20,6 +21,7 @@ import { SocialModule } from './social/social.module';
 import { RolesModule } from './roles/roles.module';
 import { WorkflowsModule } from './workflows/workflows.module';
 import { WalletModule } from './wallet/wallet.module';
+import { MessagingModule } from './messaging/messaging.module';
 
 @Module({
   imports: [
@@ -32,6 +34,13 @@ import { WalletModule } from './wallet/wallet.module';
       useFactory: (configService: ConfigService) => ({
         type: 'single',
         url: configService.get('REDIS_URL') || 'redis://localhost:6379',
+      }),
+      inject: [ConfigService],
+    }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        redis: configService.get<string>('REDIS_URL') || 'redis://localhost:6379',
       }),
       inject: [ConfigService],
     }),
@@ -56,8 +65,8 @@ import { WalletModule } from './wallet/wallet.module';
     SocialModule,
     RolesModule,
     WorkflowsModule,
-    ProductsModule
-    
+    ProductsModule,
+    MessagingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

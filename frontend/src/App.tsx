@@ -56,7 +56,7 @@ const ProtectedRoute = ({ children, requiredPermission }: { children: React.Reac
   if (requiredPermission && user) {
      const perms = user.permissions || [];
      if (!perms.includes('*') && !perms.includes(requiredPermission)) {
-        return <Navigate to="/" replace />; // Bounce unauthorized access to User Dashboard natively
+        return <Navigate to="/crm" replace />;
      }
   }
 

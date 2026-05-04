@@ -25,7 +25,7 @@ api.interceptors.response.use(
       localStorage.removeItem('access_token');
       // Redirect handled by React Router in App.tsx typically
       if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
-        window.location.href = '/login';
+        window.location.href = 'http://localhost:5173/';
       }
     }
     return Promise.reject(error);

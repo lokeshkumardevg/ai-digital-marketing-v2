@@ -2944,9 +2944,9 @@ body {
   --bg-card: #ffffff;
   --text-primary: #141414;
   --text-secondary: #64748b;
-  --accent-primary: #7033f5;
-  --accent-secondary: #6366f1;
-  --accent-gradient: linear-gradient(90deg, #a78bfa 0%, #6366f1 100%);
+  --accent-primary: #080648;
+  --accent-secondary: #060754;
+  --accent-gradient: linear-gradient(90deg, #190b43 0%, #6366f1 100%);
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;

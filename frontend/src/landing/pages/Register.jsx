@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginUser, registerUser } from "../../store/slices/authSlice";
 import { FaFacebookF, FaGoogle } from "react-icons/fa";
@@ -7,17 +7,20 @@ import { auth, googleProvider, facebookProvider } from "../lib/firebase";
 import { signInWithPopup } from "firebase/auth";
 import worldMap from "../assets/images/worldmap.png";
 
-function Register() {
-  const navigate = useNavigate();
-  const dispatch = useDispatch();
+function modeFromPath(pathname) {
+  return pathname === "/login" ? "signin" : "signup";
+}
 
-  const [mode, setMode] = useState("signup");
+function Register() {
+  const dispatch = useDispatch();
+  const location = useLocation();
+
+  const [mode, setMode] = useState(() => modeFromPath(location.pathname));
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [user, setUser] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -26,12 +29,18 @@ function Register() {
   });
 
   useEffect(() => {
-    // If the token is already locally present, navigate straight to Dashboard
     if (localStorage.getItem("access_token")) {
-      navigate("/crm");
+      window.location.href = "http://localhost:5173/crm";
     }
     setAuthLoading(false);
-  }, [navigate]);
+  }, []);
+
+  useEffect(() => {
+    setMode(modeFromPath(location.pathname));
+    setError("");
+    setSuccess("");
+    setForm({ name: "", email: "", password: "" });
+  }, [location.pathname]);
 
   const handleChange = (e) => {
     setError("");
@@ -88,11 +97,11 @@ function Register() {
       if (mode === "signup") {
         await dispatch(registerUser({ email, password, name })).unwrap();
         setSuccess("Account created successfully. Redirecting to dashboard...");
-        setTimeout(() => navigate("/crm"), 1000);
+        setTimeout(() => { window.location.href = "http://localhost:5173/crm"; }, 1000);
       } else {
         await dispatch(loginUser({ email, password })).unwrap();
         setSuccess("Signed in successfully. Redirecting to dashboard...");
-        setTimeout(() => navigate("/crm"), 1000);
+        setTimeout(() => { window.location.href = "http://localhost:5173/crm"; }, 1000);
       }
     } catch (err) {
       setError(err?.message || "Invalid credentials. Please try again.");
@@ -127,30 +136,6 @@ function Register() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      setLoading(true);
-      await signOut(auth);
-      setSuccess("Logged out successfully.");
-      setMode("signin");
-    } catch {
-      setError("Failed to log out.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const switchMode = (nextMode) => {
-    setMode(nextMode);
-    setError("");
-    setSuccess("");
-    setForm({
-      name: "",
-      email: "",
-      password: "",
-    });
-  };
-
   if (authLoading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -182,12 +167,12 @@ function Register() {
         <section className="relative z-10 flex w-full justify-center">
           <div className="w-full max-w-[430px] text-center">
             <h1 className="text-[30px] font-semibold leading-tight sm:text-[34px]">
-              Get Started Today
+              {mode === "signin" ? "Welcome back" : "Get Started Today"}
             </h1>
 
             {mode === "signin" ? (
               <p className="mt-2 text-[12px] text-white/70">
-                Have an account, login here:
+                Sign in to continue to your dashboard.
               </p>
             ) : (
               <p className="mt-2 text-[12px] leading-5 text-white/70">
@@ -354,16 +339,21 @@ function Register() {
                 )}
 
                 <p className="mt-6 text-center text-[10px] text-white/65">
-                  {mode === "signup" ? "Already have an account? " : "Don't have an account? "}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      switchMode(mode === "signup" ? "signin" : "signup")
-                    }
-                    className="font-semibold text-white"
-                  >
-                    {mode === "signup" ? "Sign in" : "Sign up"}
-                  </button>
+                  {mode === "signup" ? (
+                    <>
+                      Already have an account?{" "}
+                      <Link to="/login" className="font-semibold text-white underline underline-offset-2">
+                        Sign in
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      Don&apos;t have an account?{" "}
+                      <Link to="/register" className="font-semibold text-white underline underline-offset-2">
+                        Sign up
+                      </Link>
+                    </>
+                  )}
                 </p>
               </div>
             </div>

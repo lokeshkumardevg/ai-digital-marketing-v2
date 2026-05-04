@@ -4,8 +4,8 @@
 
 :root {
   --header-height: 68px;
-  --accent-primary: #7033f5;
-  --accent-gradient: linear-gradient(135deg, #7033f5, #9b59f7);
+  --accent-primary: #2020eb;
+  --accent-gradient: linear-gradient(135deg, #141b81, #27159c);
   --glass-border: #0a0f1e;
   --radius-pill: 999px;
   --error: #ef4444;
@@ -43,7 +43,7 @@
   left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: #b0b8c8;
+  color: #d8dbe1;
   pointer-events: none;
   display: flex;
 }
