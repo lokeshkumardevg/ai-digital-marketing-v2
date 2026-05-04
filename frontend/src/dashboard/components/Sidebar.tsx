@@ -15,7 +15,8 @@ import {
   CreditCard,
   ShieldAlert,
   LayoutTemplate,
-  Search
+  Search,
+  Bell,
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 
@@ -30,9 +31,10 @@ interface MenuItem {
   icon: React.ElementType;
   permission: string;
   subItems?: SubItem[];
+  badge?: number | null;
 }
 
-const MENU_ITEMS: MenuItem[] = [
+const BASE_MENU_ITEMS: MenuItem[] = [
   { path: '/crm', label: 'Home', icon: LayoutDashboard, permission: 'dashboard' },
   { path: '/campaigns', label: 'New Campaign', icon: Megaphone, permission: 'ads' },
   // { path: '/templates', label: 'AI Templates', icon: LayoutTemplate, permission: 'ads' },
@@ -97,7 +99,21 @@ const MENU_ITEMS: MenuItem[] = [
 
 export const Sidebar: React.FC = () => {
   const { user } = useSelector((state: any) => state.auth);
+  const { unreadCount } = useSelector((state: any) => state.notifications);
   const location = useLocation();
+const settingsIndex = BASE_MENU_ITEMS.findIndex(i => i.path === '/settings');
+
+const MENU_ITEMS: MenuItem[] = [
+  ...BASE_MENU_ITEMS.slice(0, settingsIndex),
+  {
+    icon: Bell,
+    label: 'Notifications',
+    path: '/notifications',
+    permission: 'dashboard',
+    badge: unreadCount > 0 ? unreadCount : null,
+  },
+  ...BASE_MENU_ITEMS.slice(settingsIndex),
+];
 
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
@@ -206,7 +222,20 @@ export const Sidebar: React.FC = () => {
                 })}
               >
                 <Icon size={17} />
-                <span>{item.label}</span>
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {item.badge && (
+                  <span style={{
+                    background: 'var(--error)',
+                    color: '#fff',
+                    borderRadius: 999,
+                    padding: '1px 7px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    lineHeight: 1.3,
+                  }}>
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
               </NavLink>
             );
           }

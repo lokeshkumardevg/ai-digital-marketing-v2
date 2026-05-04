@@ -22,6 +22,7 @@ import { RolesModule } from './roles/roles.module';
 import { WorkflowsModule } from './workflows/workflows.module';
 import { WalletModule } from './wallet/wallet.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { MessagingModule } from './messaging/messaging.module';
     WorkflowsModule,
     ProductsModule,
     MessagingModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

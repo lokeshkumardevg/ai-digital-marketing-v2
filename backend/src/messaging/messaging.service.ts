@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { CreateCampaignDto, UserDto } from './dto/create-campaign.dto';
 import { MessageJob } from './queue/messaging.processor';
 import { MessageLogService } from './message-log.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class MessagingService {
@@ -13,6 +14,7 @@ export class MessagingService {
   constructor(
     @InjectQueue('messages') private readonly messageQueue: Queue<MessageJob>,
     private readonly messageLogService: MessageLogService,
+    private readonly notifService: NotificationsService,
   ) {}
 
   processFile(file: Express.Multer.File): UserDto[] {
@@ -68,6 +70,7 @@ throw new BadRequestException(`Failed to parse file: ${(error as any)?.message |
       queued++;
     }
 
+    await this.notifService.notifyMessaging('default', queued, skipped, type);
     this.logger.log(`Campaign dispatched: ${queued} queued, ${skipped} skipped (logId: ${logId})`);
     return { queued, skipped, jobIds };
   }

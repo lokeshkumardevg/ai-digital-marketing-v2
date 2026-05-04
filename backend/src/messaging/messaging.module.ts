@@ -12,12 +12,14 @@ import { MessageLog, MessageLogSchema } from './schemas/message-log.schema';
 import { MessageLogService } from './message-log.service';
 import { MessageLogController } from './message-log.controller';
 import { MessageLogCleanupService } from './message-log-cleanup.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     BullModule.registerQueue({ name: 'messages' }),
     MulterModule.register({ storage: memoryStorage() }),
     MongooseModule.forFeature([{ name: MessageLog.name, schema: MessageLogSchema }]),
+    NotificationsModule,
   ],
   controllers: [MessagingController, MessageLogController],
   providers: [MessagingService, WhatsAppService, EmailService, MessagingProcessor, MessageLogService, MessageLogCleanupService],

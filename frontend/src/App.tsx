@@ -30,8 +30,9 @@ import { Products } from './dashboard/pages/Products';
 
 import { Templates } from './dashboard/pages/Templates';
 import { hydrateSession } from './store/slices/authSlice';
-import { addNotification } from './store/slices/notificationSlice';
+import { addNotification, fetchNotifications } from './store/slices/notificationSlice';
 import AiCreativeWorkspacePage from './dashboard/pages/AiCreativeWorkspacePage';
+import { Notifications } from './dashboard/pages/Notifications';
 
 import io from 'socket.io-client';
 import type { AppDispatch } from './store';
@@ -136,7 +137,7 @@ const App: React.FC = () => {
   // Connect Real-Time Matrix Socket.IO
   useEffect(() => {
     if (isAuthenticated) {
-      const socket = io('http://localhost:3000', {
+      const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000', {
         auth: { token: localStorage.getItem('access_token') }
       });
 
@@ -147,18 +148,27 @@ const App: React.FC = () => {
       // Listen for Global App Notifications emitted by Backend logic
       socket.on('notification', (data) => {
         dispatch(addNotification({
-          id: Date.now().toString(),
+          id: data.id || Date.now().toString(),
           title: data.title,
           message: data.message,
           type: data.type || 'info',
-          time: new Date().toISOString(),
-          read: false
+          category: data.category || 'general',
+          time: data.time || new Date().toISOString(),
+          read: false,
+          actionUrl: data.actionUrl || null,
+          actionLabel: data.actionLabel || null,
         }));
       });
 
       return () => {
         socket.disconnect();
       };
+    }
+  }, [isAuthenticated, dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      dispatch(fetchNotifications({ limit: 50 }));
     }
   }, [isAuthenticated, dispatch]);
 
@@ -188,6 +198,7 @@ const App: React.FC = () => {
         <Route path="/roles" element={<ProtectedRoute requiredPermission="settings"><DashboardLayout><Roles /></DashboardLayout></ProtectedRoute>} />
         <Route path="/workflows" element={<ProtectedRoute><DashboardLayout><Workflows /></DashboardLayout></ProtectedRoute>} />
         <Route path="/messaging" element={<ProtectedRoute><DashboardLayout><Messaging /></DashboardLayout></ProtectedRoute>} />
+        <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><Notifications /></DashboardLayout></ProtectedRoute>} />
 
         {/* AI Optimize Sub-routes */}
         <Route path="/ai/ads-manager" element={<ProtectedRoute requiredPermission="ads"><DashboardLayoutFull><AdsManager /></DashboardLayoutFull></ProtectedRoute>} />

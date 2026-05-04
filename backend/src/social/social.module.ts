@@ -7,12 +7,14 @@ import { SocialAuthService } from './social-auth.service';
 import { SocialAuthController } from './social-auth.controller';
 import { UsersModule } from '../users/users.module';
 import { AuthModule } from '../auth/auth.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: SocialPost.name, schema: SocialPostSchema }]),
     UsersModule,
     AuthModule,
+    NotificationsModule,
   ],
   controllers: [SocialController, SocialAuthController],
   providers: [SocialService, SocialAuthService],
