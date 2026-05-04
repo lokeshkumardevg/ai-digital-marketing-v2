@@ -6,6 +6,7 @@ import * as crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { Subscription, SubscriptionDocument } from './schemas/subscription.schema';
 import { Transaction, TransactionDocument } from './schemas/transaction.schema';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class BillingService {
@@ -22,6 +23,7 @@ export class BillingService {
     @InjectModel(Subscription.name) private subModel: Model<SubscriptionDocument>,
     @InjectModel(Transaction.name) private txnModel: Model<TransactionDocument>,
     private readonly configService: ConfigService,
+    private readonly notifService: NotificationsService,
   ) {}
 
   private getRazorpayInstance(): Razorpay {
@@ -79,7 +81,9 @@ export class BillingService {
       description: `Recharge via Gateway (ID: ${paymentId})`,
       status: 'COMPLETED'
     });
-    return await txn.save();
+    await txn.save();
+    await this.notifService.notifyBilling(tenantId, 'recharged', amount);
+    return txn;
   }
 
   async deductWallet(tenantId: string, amount: number, reason: string): Promise<boolean> {

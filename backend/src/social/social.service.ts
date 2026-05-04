@@ -9,6 +9,7 @@ import axios from 'axios';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PublishSocialDto } from './dto/publish-social.dto';
 import { ScheduleSocialDto } from './dto/schedule-social.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SocialService {
@@ -19,6 +20,7 @@ export class SocialService {
     private readonly gateway: AppGateway,
     private readonly usersService: UsersService,
     private readonly socialAuthService: SocialAuthService,
+    private readonly notifService: NotificationsService,
   ) {}
 
   async findAll(userId: string, workspaceId?: string): Promise<SocialPost[]> {
@@ -48,8 +50,16 @@ export class SocialService {
 
     const results = await this.publishToPlatforms(userId, dto.content, dto.media || [], dto.platforms);
     const hasFailures = Object.values(results).some((result) => !result.success);
+    const platforms = dto.platforms.map((platform) => platform.toLowerCase());
+    const successCount = Object.values(results).filter((result) => result.success).length;
     post.status = hasFailures ? 'partial_failed' : 'published';
     post.results = results;
+    await this.notifService.notifySocial(
+      dto.workspaceId || 'default',
+      platforms.join(', '),
+      successCount > 0 ? 'published' : 'failed',
+      { postId: post._id },
+    );
     await post.save();
     return post;
   }

@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Bell, Search as SearchIcon, LogOut, CheckCircle2, AlertCircle,
+  Bell, Search as SearchIcon, LogOut, CheckCircle2,
   X, Sparkles, Wallet, RefreshCw, Globe, PlusCircle, ChevronDown
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../store/slices/authSlice';
 import { setActiveWebsite, addWebsite } from '../../store/slices/workspaceSlice';
-import { markAllAsRead } from '../../store/slices/notificationSlice';
+import { markAllReadAsync, markOneReadAsync, deleteOneAsync, fetchNotifications } from '../../store/slices/notificationSlice';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import './Header.css';
@@ -22,7 +22,25 @@ export const Header: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state: any) => state.auth);
   const { websites, activeWebsiteId } = useSelector((state: any) => state.workspace);
-  const { items, unreadCount } = useSelector((state: any) => state.notifications);
+  const { items, unreadCount, total } = useSelector((state: any) => state.notifications);
+
+  const CATEGORY_COLORS: Record<string, string> = {
+    campaign: '#7c3aed',
+    social: '#1da1f2',
+    ai: '#10b981',
+    billing: '#f59e0b',
+    system: '#6366f1',
+    messaging: '#059669',
+    analytics: '#e1306c',
+    general: '#94a3b8',
+  };
+
+  const CATEGORY_DOT: Record<string, string> = {
+    success: '#10b981',
+    error: '#ef4444',
+    warning: '#f59e0b',
+    info: '#7c3aed',
+  };
 
   // ── Existing state ──
   const [showNotifications, setShowNotifications] = useState(false);
@@ -172,8 +190,11 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
   };
 
   const handleBellClick = () => {
-    setShowNotifications(prev => !prev);
-    if (unreadCount > 0) dispatch(markAllAsRead());
+    setShowNotifications((prev) => {
+      const next = !prev;
+      if (next) dispatch(fetchNotifications({ limit: 20 }) as any);
+      return next;
+    });
   };
 
   // ── Shared inline styles ──
@@ -607,44 +628,142 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
 
           {/* ── Bell + User ── */}
           <div className="header-right-group">
-            <div className="notif-bell-wrapper" ref={dropdownRef}>
-              <button className="notif-bell" onClick={handleBellClick}>
-                <Bell size={19} color="var(--accent-primary)" />
-                {unreadCount > 0 && <span className="notif-bell__badge">{unreadCount}</span>}
-              </button>
+            <div ref={dropdownRef} style={{ position: 'relative' }}>
+              <div
+                onClick={handleBellClick}
+                style={{ cursor: 'pointer', padding: '8px', borderRadius: '50%', background: 'rgba(124,58,237,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(124,58,237,0.15)', transition: '0.2s' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,0.15)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,0.08)')}
+              >
+                <Bell size={20} color="var(--accent-primary)" />
+                {unreadCount > 0 && (
+                  <div style={{
+                    position: 'absolute', top: '2px', right: '2px',
+                    minWidth: '18px', height: '18px', background: 'var(--error)',
+                    borderRadius: '10px', border: '2px solid var(--bg-secondary)',
+                    color: 'white', fontSize: '9px', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', fontWeight: 800, padding: '0 3px',
+                  }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </div>
+                )}
+              </div>
 
               {showNotifications && (
-                <div className="notif-dropdown">
-                  <div className="notif-dropdown__header">
-                    <span className="notif-dropdown__title">Notifications</span>
-                    <div className="notif-dropdown__header-actions">
-                      <button className="notif-dropdown__mark-read" onClick={() => dispatch(markAllAsRead())}>
-                        Mark all read
-                      </button>
-                      <button className="notif-dropdown__close" onClick={() => setShowNotifications(false)}>
-                        <X size={16} />
-                      </button>
+                <div style={{
+                  position: 'absolute', top: '52px', right: '-10px', width: '400px',
+                  background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
+                  borderRadius: '20px', boxShadow: '0 24px 60px rgba(0,0,0,0.5)',
+                  zIndex: 200, display: 'flex', flexDirection: 'column', overflow: 'hidden',
+                  animation: 'fadeUp 0.2s ease-out',
+                }}>
+                  <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)', fontFamily: 'Outfit' }}>Notifications</span>
+                      {unreadCount > 0 && (
+                        <span style={{ marginLeft: 8, background: 'rgba(124,58,237,0.15)', color: '#a78bfa', borderRadius: 99, padding: '2px 8px', fontSize: '0.7rem', fontWeight: 700 }}>
+                          {unreadCount} new
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      {unreadCount > 0 && (
+                        <span
+                          onClick={() => dispatch(markAllReadAsync() as any)}
+                          style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', cursor: 'pointer', fontWeight: 600 }}
+                        >
+                          Mark all read
+                        </span>
+                      )}
+                      <span
+                        onClick={() => { setShowNotifications(false); navigate('/notifications'); }}
+                        style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        View all →
+                      </span>
+                      <X size={16} style={{ cursor: 'pointer', color: 'var(--text-secondary)' }} onClick={() => setShowNotifications(false)} />
                     </div>
                   </div>
-                  <div className="notif-dropdown__list">
+
+                  <div style={{ maxHeight: '420px', overflowY: 'auto' }}>
                     {items.length === 0 ? (
-                      <div className="notif-dropdown__empty">No new updates</div>
-                    ) : (
-                      items.map((notif: any) => (
-                        <div key={notif.id} className={`notif-item${notif.read ? ' notif-item--read' : ''}`}>
-                          <div className="notif-item__icon">
-                            {notif.type === 'success'
-                              ? <CheckCircle2 size={15} color="var(--success)" />
-                              : <AlertCircle size={15} color="var(--info)" />}
-                          </div>
-                          <div className="notif-item__body">
-                            <span className="notif-item__title">{notif.title}</span>
-                            <span className="notif-item__message">{notif.message}</span>
-                            <span className="notif-item__time">{new Date(notif.time).toLocaleTimeString()}</span>
+                      <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '40px 20px', fontSize: '0.88rem' }}>
+                        <Bell size={28} style={{ opacity: 0.3, marginBottom: 10 }} />
+                        <div style={{ fontWeight: 600 }}>All caught up!</div>
+                        <div style={{ fontSize: '0.78rem', marginTop: 4 }}>No notifications yet</div>
+                      </div>
+                    ) : items.slice(0, 8).map((notif: any) => (
+                      <div
+                        key={notif.id}
+                        style={{
+                          display: 'flex', gap: 12, padding: '14px 20px',
+                          borderBottom: '1px solid rgba(99,102,241,0.08)',
+                          background: notif.read ? 'transparent' : 'rgba(124,58,237,0.04)',
+                          transition: '0.15s', cursor: 'pointer',
+                          opacity: notif.read ? 0.7 : 1,
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,0.07)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = notif.read ? 'transparent' : 'rgba(124,58,237,0.04)')}
+                      >
+                        <div style={{ flexShrink: 0, marginTop: 3 }}>
+                          <div style={{
+                            width: 8, height: 8, borderRadius: '50%',
+                            background: CATEGORY_DOT[notif.type] || '#94a3b8',
+                            marginTop: 5,
+                            boxShadow: notif.read ? 'none' : `0 0 6px ${CATEGORY_DOT[notif.type] || '#94a3b8'}`,
+                          }} />
+                        </div>
+
+                        <div style={{ flex: 1, minWidth: 0 }}
+                          onClick={() => {
+                            if (!notif.read) dispatch(markOneReadAsync(notif.id) as any);
+                            if (notif.actionUrl) { setShowNotifications(false); navigate(notif.actionUrl); }
+                          }}
+                        >
+                          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{notif.title}</div>
+                          <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', lineHeight: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notif.message}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                            <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>
+                              {new Date(notif.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {notif.category && (
+                              <span style={{
+                                fontSize: '0.65rem', fontWeight: 700, textTransform: 'capitalize',
+                                background: `${CATEGORY_COLORS[notif.category] || '#94a3b8'}18`,
+                                color: CATEGORY_COLORS[notif.category] || '#94a3b8',
+                                padding: '1px 6px', borderRadius: 4,
+                              }}>
+                                {notif.category}
+                              </span>
+                            )}
+                            {notif.actionLabel && (
+                              <span style={{ fontSize: '0.65rem', color: '#a78bfa', fontWeight: 600 }}>
+                                {notif.actionLabel} →
+                              </span>
+                            )}
                           </div>
                         </div>
-                      ))
-                    )}
+
+                        <button
+                          onClick={(e) => { e.stopPropagation(); dispatch(deleteOneAsync(notif.id) as any); }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', padding: '2px', flexShrink: 0, opacity: 0.5 }}
+                          onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.color = '#ef4444'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ padding: '12px 20px', borderTop: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{items.length} of {total} notifications</span>
+                    <button
+                      onClick={() => { setShowNotifications(false); navigate('/notifications'); }}
+                      style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)', color: '#a78bfa', borderRadius: 8, padding: '6px 14px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}
+                    >
+                      View Full History
+                    </button>
                   </div>
                 </div>
               )}

@@ -4,13 +4,15 @@ import { BillingService } from './billing.service';
 import { BillingController } from './billing.controller';
 import { Subscription, SubscriptionSchema } from './schemas/subscription.schema';
 import { Transaction, TransactionSchema } from './schemas/transaction.schema';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Subscription.name, schema: SubscriptionSchema },
       { name: Transaction.name, schema: TransactionSchema }
-    ])
+    ]),
+    NotificationsModule,
   ],
   providers: [BillingService],
   controllers: [BillingController],
