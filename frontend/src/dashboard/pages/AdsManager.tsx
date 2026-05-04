@@ -74,7 +74,7 @@ export const AdsManager: React.FC = () => {
           <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '3px' }}>AI Optimize</div>
           <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>Ads Manager</h1>
         </div>
-        <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
+        <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #2631d6, #1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
           <Zap size={14} /> Optimize All
         </button>
       </div>
@@ -83,10 +83,10 @@ export const AdsManager: React.FC = () => {
         {/* Insight Briefing */}
         <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--glass-border)', padding: '20px 24px', marginBottom: '20px', display: 'flex', gap: '32px' }}>
           {[
-            { label: 'Total Spend', value: '$4,790', sub: 'This month', icon: BarChart2, color: '#7c3aed' },
+            { label: 'Total Spend', value: '$4,790', sub: 'This month', icon: BarChart2, color: '#2631d6' },
             { label: 'Avg ROAS', value: '3.4x', sub: '+0.6x vs last week', icon: TrendingUp, color: '#16a34a' },
             { label: 'Active Ads', value: '3', sub: '2 paused, 1 draft', icon: Zap, color: '#d97706' },
-            { label: 'AI Score', value: '74/100', sub: 'Good performance', icon: BrainCircuit, color: '#7c3aed' },
+            { label: 'AI Score', value: '74/100', sub: 'Good performance', icon: BrainCircuit, color: '#2631d6' },
           ].map((stat, i) => (
             <div key={i} style={{ flex: 1, borderRight: i < 3 ? '1px solid #f1f5f9' : 'none', paddingRight: i < 3 ? '32px' : '0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
@@ -100,15 +100,15 @@ export const AdsManager: React.FC = () => {
         </div>
 
         {/* Optimization Hub */}
-        <div style={{ background: 'linear-gradient(135deg, #7c3aed08, #6d28d908)', border: '1px solid #ede9fe', borderRadius: '12px', padding: '16px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: 'linear-gradient(135deg, #2631d608, #1e27a808)', border: '1px solid #ede9fe', borderRadius: '12px', padding: '16px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <BrainCircuit size={18} color="#7c3aed" />
+            <BrainCircuit size={18} color="#2631d6" />
             <div>
               <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Optimization Hub</div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>AI detected 3 opportunities to improve your campaign performance</div>
             </div>
           </div>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px', borderRadius: '8px', background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px', borderRadius: '8px', background: '#2631d6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}>
             View Recommendations <ArrowUpRight size={13} />
           </button>
         </div>

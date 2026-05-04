@@ -26,9 +26,9 @@ const ContentTabs: React.FC<ContentTabsProps> = ({ activeTab, onTabChange }) => 
               cursor: 'pointer',
               fontSize: '0.88rem',
               fontWeight: 600,
-              color: activeTab === tab ? '#7c3aed' : '#64748b',
+              color: activeTab === tab ? '#2631d6' : '#64748b',
               borderBottom:
-                activeTab === tab ? '2px solid #7c3aed' : '2px solid transparent',
+                activeTab === tab ? '2px solid #2631d6' : '2px solid transparent',
             }}
           >
             {tab}

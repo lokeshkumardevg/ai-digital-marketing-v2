@@ -56,7 +56,7 @@ export const DraftAiRecs: React.FC = () => {
           <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '3px' }}>AI Optimize</div>
           <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>Draft & AI Recs</h1>
         </div>
-        <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
+        <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #2631d6, #1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
           <Plus size={14} /> New Draft
         </button>
       </div>
@@ -77,7 +77,7 @@ export const DraftAiRecs: React.FC = () => {
 
         {/* Recommended Ads */}
         <div style={{ marginBottom: '10px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-          Recommended Ads <span style={{ background: '#7c3aed', color: '#fff', borderRadius: '99px', padding: '1px 8px', fontSize: '0.72rem', fontWeight: 700, marginLeft: '6px' }}>{filtered.length}</span>
+          Recommended Ads <span style={{ background: '#2631d6', color: '#fff', borderRadius: '99px', padding: '1px 8px', fontSize: '0.72rem', fontWeight: 700, marginLeft: '6px' }}>{filtered.length}</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -87,7 +87,7 @@ export const DraftAiRecs: React.FC = () => {
               <div onClick={() => setExpanded(expanded === draft.id ? null : draft.id)}
                 style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#f8f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Image size={18} color="#7c3aed" />
+                  <Image size={18} color="#2631d6" />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '3px' }}>{draft.name}</div>
@@ -100,7 +100,7 @@ export const DraftAiRecs: React.FC = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={e => e.stopPropagation()}>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Auto-publish</span>
                   <button onClick={() => setAutoPublish(prev => ({ ...prev, [draft.id]: !prev[draft.id] }))}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: autoPublish[draft.id] ? '#7c3aed' : '#cbd5e1', padding: 0 }}>
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: autoPublish[draft.id] ? '#2631d6' : '#cbd5e1', padding: 0 }}>
                     {autoPublish[draft.id] ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
                   </button>
                 </div>
@@ -122,7 +122,7 @@ export const DraftAiRecs: React.FC = () => {
                       {draft.components.map((comp: string) => {
                         const Icon = componentIcons[comp] || FileEdit;
                         return (
-                          <div key={comp} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '8px', background: '#f8f4ff', border: '1px solid #ede9fe', color: '#6d28d9', fontSize: '0.78rem', fontWeight: 600 }}>
+                          <div key={comp} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 12px', borderRadius: '8px', background: '#f8f4ff', border: '1px solid #ede9fe', color: '#1e27a8', fontSize: '0.78rem', fontWeight: 600 }}>
                             <Icon size={12} /> {comp}
                           </div>
                         );
@@ -132,16 +132,16 @@ export const DraftAiRecs: React.FC = () => {
 
                   {/* AI Recommendation */}
                   <div style={{ background: 'linear-gradient(135deg, #faf5ff, #f3e8ff)', border: '1px solid #e9d5ff', borderRadius: '10px', padding: '12px 16px', marginBottom: '14px', display: 'flex', gap: '10px' }}>
-                    <Sparkles size={16} color="#7c3aed" style={{ flexShrink: 0, marginTop: '1px' }} />
+                    <Sparkles size={16} color="#2631d6" style={{ flexShrink: 0, marginTop: '1px' }} />
                     <div>
-                      <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#7c3aed', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Recommendation</div>
+                      <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#2631d6', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Recommendation</div>
                       <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, lineHeight: 1.5 }}>{draft.rec}</div>
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <button style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '9px', borderRadius: '8px', background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', boxShadow: '0 4px 12px rgba(124,58,237,0.25)' }}>
+                    <button style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '9px', borderRadius: '8px', background: 'linear-gradient(135deg, #2631d6, #1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', boxShadow: '0 4px 12px rgba(124,58,237,0.25)' }}>
                       <Wand2 size={13} /> Apply AI Fix
                     </button>
                     <button style={{ padding: '9px 16px', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem', fontWeight: 600 }}>

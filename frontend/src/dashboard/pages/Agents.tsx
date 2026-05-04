@@ -70,8 +70,8 @@ export const Agents: React.FC = () => {
           <p style={{ color: 'var(--text-secondary)' }}>Deploy specialized marketing agents to actively manage {activeWebsite?.name || 'your websites'}.</p>
         </div>
         
-        <GlassCard style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(139, 92, 246, 0.08)' }}>
-           <Bot size={24} color="var(--accent-primary)" />
+        <GlassCard style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(38, 49, 214, 0.08)' }}>
+           <Bot size={24} color="#2631d6" />
            <div>
              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Active Agents Running</div>
              <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{agents.filter(a => a.status === 'running').length} / 4</div>
@@ -85,8 +85,8 @@ export const Agents: React.FC = () => {
           return (
           <GlassCard key={agent.id} style={{ 
             display: 'flex', flexDirection: 'column', 
-            border: agent.status === 'running' ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid var(--glass-border)',
-            boxShadow: agent.status === 'running' ? '0 0 20px rgba(139, 92, 246, 0.15)' : 'none',
+            border: agent.status === 'running' ? '1px solid rgba(38, 49, 214, 0.5)' : '1px solid var(--glass-border)',
+            boxShadow: agent.status === 'running' ? '0 0 20px rgba(38, 49, 214, 0.15)' : 'none',
             transition: 'all 0.3s ease'
           }}>
             
@@ -101,7 +101,7 @@ export const Agents: React.FC = () => {
               </div>
 
               {agent.status === 'running' ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--success)', background: 'rgba(16, 185, 129, 0.1)', padding: '4px 8px', borderRadius: '12px', fontWeight: 600 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#2631d6', background: 'rgba(38, 49, 214, 0.15)', padding: '4px 8px', borderRadius: '12px', fontWeight: 600 }}>
                   <Activity size={12} className="animate-fade-in" style={{ animationIterationCount: 'infinite' }} /> ACTIVE
                 </div>
               ) : (
@@ -123,7 +123,7 @@ export const Agents: React.FC = () => {
                   <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{agent.metrics.optimized} / {agent.metrics.analyzed}</span>
                 </div>
                 <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
-                  <div style={{ width: `${(agent.metrics.optimized / agent.metrics.analyzed) * 100}%`, height: '100%', background: 'var(--accent-primary)', minWidth: '5%' }}></div>
+                  <div style={{ width: `${(agent.metrics.optimized / agent.metrics.analyzed) * 100}%`, height: '100%', background: '#2631d6', minWidth: '5%' }}></div>
                 </div>
               </div>
             )}

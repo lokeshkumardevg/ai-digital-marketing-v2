@@ -348,7 +348,7 @@ const response = await api.post(
               borderRadius: '999px',
               border: '1px solid #d8b4fe',
               background: '#fff',
-              color: '#7c3aed',
+              color: '#2631d6',
               fontWeight: 700,
               cursor: 'pointer',
             }}
@@ -461,9 +461,9 @@ const response = await api.post(
                   height: '48px',
                   padding: '0 24px',
                   borderRadius: '999px',
-                  border: '1.5px solid #7c3aed',
+                  border: '1.5px solid #2631d6',
                   background: '#fff',
-                  color: '#7c3aed',
+                  color: '#2631d6',
                   fontWeight: 700,
                   fontSize: '0.96rem',
                   cursor: 'pointer',
@@ -535,7 +535,7 @@ const response = await api.post(
                     borderRadius: '14px',
                     border: '1.5px dashed #c4b5fd',
                     background: '#fff',
-                    color: '#7c3aed',
+                    color: '#2631d6',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -614,7 +614,7 @@ const response = await api.post(
                     borderRadius: '999px',
                     border:
                       creativeSource === 'generator'
-                        ? '1.5px solid #7c3aed'
+                        ? '1.5px solid #2631d6'
                         : '1.5px solid #e5e7eb',
                     background: creativeSource === 'generator' ? '#faf5ff' : '#fff',
                     color: '#18181b',
@@ -632,7 +632,7 @@ const response = await api.post(
                       width: '18px',
                       height: '18px',
                       borderRadius: '999px',
-                      border: '2px solid #7c3aed',
+                      border: '2px solid #2631d6',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -644,7 +644,7 @@ const response = await api.post(
                           width: '8px',
                           height: '8px',
                           borderRadius: '999px',
-                          background: '#7c3aed',
+                          background: '#2631d6',
                           display: 'block',
                         }}
                       />
@@ -663,7 +663,7 @@ const response = await api.post(
                     borderRadius: '999px',
                     border:
                       creativeSource === 'reference'
-                        ? '1.5px solid #7c3aed'
+                        ? '1.5px solid #2631d6'
                         : '1.5px solid #e5e7eb',
                     background: creativeSource === 'reference' ? '#faf5ff' : '#fff',
                     color: '#18181b',
@@ -683,7 +683,7 @@ const response = await api.post(
                       borderRadius: '999px',
                       border:
                         creativeSource === 'reference'
-                          ? '2px solid #7c3aed'
+                          ? '2px solid #2631d6'
                           : '2px solid #d4d4d8',
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -696,7 +696,7 @@ const response = await api.post(
                           width: '8px',
                           height: '8px',
                           borderRadius: '999px',
-                          background: '#7c3aed',
+                          background: '#2631d6',
                           display: 'block',
                         }}
                       />
@@ -1386,7 +1386,7 @@ const response = await api.post(
             padding: '0 28px',
             borderRadius: '999px',
             border: 'none',
-            background: 'linear-gradient(90deg, #8b5cf6 0%, #6d28d9 100%)',
+            background: 'linear-gradient(90deg, #8b5cf6 0%, #1e27a8 100%)',
             color: '#fff',
             fontWeight: 700,
             fontSize: '0.98rem',

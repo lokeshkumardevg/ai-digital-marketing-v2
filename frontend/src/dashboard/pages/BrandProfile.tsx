@@ -228,11 +228,11 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
       {phase === 'idle' && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)' }}>
           <div style={{ background: 'var(--bg-card)', borderRadius: '20px', padding: '40px 44px', width: '420px', boxShadow: '0 8px 40px rgba(0,0,0,0.5)', textAlign: 'center' }}>
-            <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: 'linear-gradient(135deg,#7c3aed,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', margin: '0 auto 18px' }}>✦</div>
+            <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: 'linear-gradient(135deg,#2631d6,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', margin: '0 auto 18px' }}>✦</div>
             <h2 style={{ margin: '0 0 8px', fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Create Brand Profile</h2>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 20px' }}>
               AI will analyse <strong style={{ color: 'var(--text-primary)' }}>{activeBrand?.name || 'your brand'}</strong> at{' '}
-              <span style={{ color: '#7c3aed', wordBreak: 'break-all' }}>{activeBrand?.url}</span> and generate a complete brand profile.
+              <span style={{ color: '#2631d6', wordBreak: 'break-all' }}>{activeBrand?.url}</span> and generate a complete brand profile.
             </p>
             <div style={{ background: 'var(--bg-elevated)', borderRadius: '10px', padding: '10px 14px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '0.85rem' }}>⏱</span>
@@ -240,7 +240,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
             </div>
             <button
               onClick={startAnalysis}
-              style={{ width: '100%', padding: '13px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              style={{ width: '100%', padding: '13px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg,#2631d6,#1e27a8)', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
             >
               <span>✦</span> Start Analysis
             </button>
@@ -263,12 +263,12 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
               <div style={{ height: '6px', background: 'var(--bg-elevated)', borderRadius: '99px', marginBottom: '4px', overflow: 'hidden' }}>
                 <div style={{
                   height: '100%', borderRadius: '99px',
-                  background: 'linear-gradient(90deg,#7c3aed,#a855f7)',
+                  background: 'linear-gradient(90deg,#2631d6,#a855f7)',
                   width: `${Math.round((steps.filter(s => s.status === 'done').length / Math.max(steps.length, 1)) * 100)}%`,
                   transition: 'width .6s ease',
                 }} />
               </div>
-              <div style={{ textAlign: 'right', fontSize: '0.72rem', color: '#7c3aed', fontWeight: 700, marginBottom: '20px' }}>
+              <div style={{ textAlign: 'right', fontSize: '0.72rem', color: '#2631d6', fontWeight: 700, marginBottom: '20px' }}>
                 {Math.round((steps.filter(s => s.status === 'done').length / Math.max(steps.length, 1)) * 100)}%
               </div>
 
@@ -294,7 +294,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                           </svg>
                         )}
                         {isActive && (
-                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', border: '1.5px solid transparent', borderTopColor: '#7c3aed', borderRightColor: '#7c3aed', animation: 'spin .7s linear infinite' }} />
+                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', border: '1.5px solid transparent', borderTopColor: '#2631d6', borderRightColor: '#2631d6', animation: 'spin .7s linear infinite' }} />
                         )}
                         {step.status === 'pending' && (
                           <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#cbd5e1' }} />
@@ -337,7 +337,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
               Live Browser Preview
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px', color: 'var(--text-dim)', fontSize: '0.82rem', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ width: '32px', height: '32px', border: '3px solid #e9d5ff', borderTopColor: '#7c3aed', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
+              <div style={{ width: '32px', height: '32px', border: '3px solid #e9d5ff', borderTopColor: '#2631d6', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />
               <div>Waiting for browser to start...</div>
             </div>
           </div>
@@ -357,12 +357,12 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '18px' }}>
               {/* Logo + name */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'linear-gradient(135deg,#7c3aed20,#a855f720)', border: '1.5px solid #e9d5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 800, color: '#7c3aed', flexShrink: 0 }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: 'linear-gradient(135deg,#2631d620,#a855f720)', border: '1.5px solid #e9d5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 800, color: '#2631d6', flexShrink: 0 }}>
                   {initials(brandData.name)}
                 </div>
                 <div>
                   <h2 style={{ margin: '0 0 4px', fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)' }}>{brandData.name}</h2>
-                  <a href={brandData.url} target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: '#7c3aed', textDecoration: 'none' }}>🌐 {brandData.url}</a>
+                  <a href={brandData.url} target="_blank" rel="noreferrer" style={{ fontSize: '0.75rem', color: '#2631d6', textDecoration: 'none' }}>🌐 {brandData.url}</a>
                   {brandData.tags?.length ? (
                     <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '8px' }}>
                       {brandData.tags.map(t => <Pill key={t} label={t} />)}
@@ -397,7 +397,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
 
             {/* Brand DNA */}
             <div style={{ background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '20px' }}>
-              <SectionTitle color="#7c3aed" label="Brand DNA" />
+              <SectionTitle color="#2631d6" label="Brand DNA" />
               {brandData.brandDna?.brandTone && (
                 <>
                   <FieldLabel label="Brand Tone" />
@@ -429,7 +429,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {brandData.coreAdvantages.differentiators.map((d, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                        <span style={{ color: '#7c3aed', fontWeight: 700, flexShrink: 0 }}>{i + 1}</span> {d}
+                        <span style={{ color: '#2631d6', fontWeight: 700, flexShrink: 0 }}>{i + 1}</span> {d}
                       </div>
                     ))}
                   </div>
@@ -472,7 +472,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                       )}
                     </div>
                     {/* Avatar placeholder */}
-                    <div style={{ width: '110px', height: '110px', borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed20,#a855f730)', border: '2px solid #e9d5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', flexShrink: 0 }}>👤</div>
+                    <div style={{ width: '110px', height: '110px', borderRadius: '50%', background: 'linear-gradient(135deg,#2631d620,#a855f730)', border: '2px solid #e9d5ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', flexShrink: 0 }}>👤</div>
                   </div>
                 ))}
 
@@ -480,7 +480,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                 {brandData.targetAudience.length > 1 && (
                   <div style={{ display: 'flex', gap: '6px', marginTop: '16px' }}>
                     {brandData.targetAudience.map((_, i) => (
-                      <div key={i} onClick={() => setActiveAudienceIdx(i)} style={{ width: i === activeAudienceIdx ? '20px' : '7px', height: '7px', borderRadius: '99px', background: i === activeAudienceIdx ? '#7c3aed' : '#e2e8f0', cursor: 'pointer', transition: 'all .2s' }} />
+                      <div key={i} onClick={() => setActiveAudienceIdx(i)} style={{ width: i === activeAudienceIdx ? '20px' : '7px', height: '7px', borderRadius: '99px', background: i === activeAudienceIdx ? '#2631d6' : '#e2e8f0', cursor: 'pointer', transition: 'all .2s' }} />
                     ))}
                   </div>
                 )}
@@ -499,7 +499,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                   {brandData.competitors.map((c, i) => (
                     <div key={i} className="comp-card" style={{ borderRadius: '10px', border: '1px solid #f1f5f9', padding: '12px 14px', transition: 'all .12s', cursor: 'default' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <div style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#f3f0ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#7c3aed', flexShrink: 0 }}>
+                        <div style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#f3f0ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#2631d6', flexShrink: 0 }}>
                           {initials(c.name)}
                         </div>
                         <div style={{ fontWeight: 600, fontSize: '0.83rem', color: 'var(--text-primary)' }}>{c.name}</div>
@@ -522,7 +522,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '14px' }}>
                       {brandData.reachAndEcosystem.marketingChannels.map((ch, i) => (
                         <div key={i} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                          <span style={{ color: '#7c3aed', marginTop: '1px' }}>›</span>{ch}
+                          <span style={{ color: '#2631d6', marginTop: '1px' }}>›</span>{ch}
                         </div>
                       ))}
                     </div>
@@ -550,7 +550,7 @@ localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transform
               <SectionTitle color="#ef4444" label="Impact Analysis" />
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', marginTop: '14px' }}>
                 {[
-                  { key: 'revenue', label: 'Revenue', color: '#7c3aed', items: brandData.impactAnalysis.revenue },
+                  { key: 'revenue', label: 'Revenue', color: '#2631d6', items: brandData.impactAnalysis.revenue },
                   { key: 'cost', label: 'Cost', color: '#f59e0b', items: brandData.impactAnalysis.cost },
                   { key: 'policy', label: 'Policy', color: '#3b82f6', items: brandData.impactAnalysis.policy },
                   { key: 'technology', label: 'Technology', color: '#10b981', items: brandData.impactAnalysis.technology },
@@ -606,7 +606,7 @@ const Pill: React.FC<{ label: string; outline?: boolean }> = ({ label, outline }
     padding: '3px 10px', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 500,
     background: outline ? 'transparent' : '#f3f0ff',
     border: `1px solid ${outline ? '#c4b5fd' : '#e9d5ff'}`,
-    color: '#7c3aed',
+    color: '#2631d6',
   }}>{label}</span>
 );
 

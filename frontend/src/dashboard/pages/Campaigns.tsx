@@ -1536,7 +1536,7 @@ const CSS = `
   .audit-pills { display: flex; flex-wrap: wrap; gap: 8px; }
   .audit-pill { display: inline-block; padding: 5px 12px; border-radius: 99px; font-size: 0.78rem; font-weight: 500; }
   .audit-pill.blue { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-  .audit-pill.purple { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+  .audit-pill.purple { background: rgba(38,49,214,0.15); color: #2631d6; border: 1px solid rgba(38,49,214,0.3); }
   .audit-competition { display: flex; flex-direction: column; gap: 16px; }
   .audit-comp-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px; }
   .audit-comp-card h4 { margin: 0 0 10px; color: #fff; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
@@ -1554,8 +1554,8 @@ const CSS = `
   .plat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .plat-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 18px 16px; background: rgba(15,20,35,0.9); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; cursor: pointer; text-align: left; transition: all 0.25s; color: inherit; }
   .plat-card:hover { border-color: var(--plat-color); background: color-mix(in srgb, var(--plat-color) 8%, rgba(15,20,35,0.9)); transform: translateY(-2px); }
-  .plat-card.recommended { border-color: rgba(139,92,246,0.4); background: rgba(139,92,246,0.06); }
-  .plat-badge { position: absolute; top: -1px; right: 12px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 3px 8px; border-radius: 0 0 8px 8px; }
+  .plat-card.recommended { border-color: rgba(38,49,214,0.4); background: rgba(38,49,214,0.06); }}
+  .plat-badge { position: absolute; top: -1px; right: 12px; background: linear-gradient(135deg, #8b5cf6, #1e27a8); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 3px 8px; border-radius: 0 0 8px 8px; }
   .plat-card-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
   .plat-card-label { font-size: 0.95rem; font-weight: 700; color: #fff; }
   .plat-card-sub { font-size: 0.72rem; color: #64748b; margin-top: -4px; }
