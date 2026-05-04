@@ -33,7 +33,7 @@ interface MenuItem {
 }
 
 const MENU_ITEMS: MenuItem[] = [
-  { path: '/', label: 'Home', icon: LayoutDashboard, permission: 'dashboard' },
+  { path: '/crm', label: 'Home', icon: LayoutDashboard, permission: 'dashboard' },
   { path: '/campaigns', label: 'New Campaign', icon: Megaphone, permission: 'ads' },
   // { path: '/templates', label: 'AI Templates', icon: LayoutTemplate, permission: 'ads' },
   {
@@ -85,7 +85,7 @@ const MENU_ITEMS: MenuItem[] = [
     subItems: [
       { path: '/social', label: 'Social Hub' },
       { path: '/chatbot', label: 'AI Chatbot' },
-      { path: '/crm', label: 'CRM & Audiences' },
+      // { path: '/crm', label: 'CRM & Audiences' },
       { path: '/messaging', label: 'Messaging' },
       { path: '/ai-agents', label: 'AI Agents' },
     ],
@@ -188,7 +188,7 @@ export const Sidebar: React.FC = () => {
               <NavLink
                 key={item.path}
                 to={item.path!}
-                end={item.path === '/'}
+                end={item.path === '/crm'}
                 style={({ isActive }) => ({
                   display: 'flex',
                   alignItems: 'center',

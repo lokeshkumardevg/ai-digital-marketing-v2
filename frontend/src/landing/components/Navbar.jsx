@@ -71,7 +71,7 @@ function Navbar() {
         {/* Right Buttons (Desktop) */}
         <div className="hidden lg:flex items-center gap-6 ml-4">
 <Link
-  to="/register"
+  to="/login"
   className="flex h-[42px] w-[100px] items-center justify-center rounded-[14px] border bg-[#1630b7] text-[16px] font-medium text-white shadow-[0_0_0_3px_rgba(7,10,24,0.9)] transition hover:bg-[#1c39d3]"
 >
   Login
@@ -81,7 +81,7 @@ function Navbar() {
   to="/register"
   className="flex h-[42px] w-[120px] items-center justify-center rounded-[14px] border border-[#1d2747] bg-[#1630b7] text-[16px] font-medium text-white shadow-[0_0_0_3px_rgba(7,10,24,0.9)] transition hover:bg-[#1c39d3]">
   <Button variant="primary" size="md" className="!h-full !w-full !rounded-[14px] !bg-[#1630b7] !hover:bg-[#1c39d3] !border-none !shadow-none text-[12px]">
-    Book Demo
+    Sign up
   </Button>
 </Link>
         </div>
@@ -109,13 +109,17 @@ function Navbar() {
               </a>
             ))}
 
-            <Button variant="secondary" size="sm" className="h-[44px] !rounded-lg !bg-[#0f1a3a]">
-              Login
-            </Button>
+            <Link to="/login" onClick={() => setIsOpen(false)} className="block">
+              <Button variant="secondary" size="sm" className="h-[44px] w-full !rounded-lg !bg-[#0f1a3a]">
+                Login
+              </Button>
+            </Link>
 
-            <Button variant="primary" size="sm" className="h-[44px] !rounded-lg !bg-blue-600 font-medium">
-              Book Demo
-            </Button>
+            <Link to="/register" onClick={() => setIsOpen(false)} className="block">
+              <Button variant="primary" size="sm" className="h-[44px] w-full !rounded-lg !bg-blue-600 font-medium">
+                Sign up
+              </Button>
+            </Link>
           </div>
         )}
       </div>

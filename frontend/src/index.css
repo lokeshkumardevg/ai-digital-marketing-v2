@@ -61,10 +61,10 @@
   --text-secondary:#111111;
   --text-dim:      #475569;
 
-  --accent-primary:   #7c3aed;
-  --accent-secondary: #6366f1;
-  --accent-gradient:  linear-gradient(90deg, #a78bfa 0%, #6366f1 100%);
-  --accent-glow:      0 0 24px rgba(124, 58, 237, 0.4);
+  --accent-primary:   #09114a;
+  --accent-secondary: #060631;
+  --accent-gradient:  linear-gradient(90deg, #141370 0%, #111249 100%);
+  --accent-glow:      0 0 24px rgba(22, 13, 109, 0.4);
 
   --success: #10b981;
   --warning: #f59e0b;

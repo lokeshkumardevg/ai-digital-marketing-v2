@@ -166,7 +166,10 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
     setNewSiteUrl('');
   };
 
-  const handleLogout = () => { dispatch(logout()); navigate('/login'); };
+  const handleLogout = () => {
+    dispatch(logout());
+    window.location.href = 'http://localhost:5173/';
+  };
 
   const handleBellClick = () => {
     setShowNotifications(prev => !prev);
@@ -576,7 +579,7 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
           </div>
 
           {/* ── Site Switcher ── */}
-          {/* <div className="site-switcher">
+          <div className="site-switcher">
             <span className="site-switcher__globe"><Globe size={15} /></span>
             <div className="site-switcher__select-wrapper">
               <select
@@ -594,7 +597,7 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
             <button className="site-switcher__add-btn" onClick={() => setShowAddWebsite(true)} title="Add New Domain">
               <PlusCircle size={15} />
             </button>
-          </div> */}
+          </div>
 
           {/* ── Ask AI ── */}
           <button className="btn-ask-ai" onClick={() => navigate('/chatbot')}>
@@ -662,8 +665,8 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
         </div>
       </header>
 
-      {/* ── Add Website Modal ── */}
-      {/* {showAddWebsite && (
+      ── Add Website Modal ──
+      {showAddWebsite && (
         <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowAddWebsite(false); }}>
           <div className="modal-panel">
             <div className="modal-panel__header">
@@ -700,7 +703,7 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
             </button>
           </div>
         </div>
-      )} */}
+      )}
     </>
   );
 };
