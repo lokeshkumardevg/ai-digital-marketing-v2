@@ -14,6 +14,7 @@
     "@tailwindcss/vite": "^4.2.2",
     "axios": "^1.13.6",
     "chart.js": "^4.5.1",
+    "chat.js": "^1.0.2",
     "firebase": "^12.12.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.1.0",

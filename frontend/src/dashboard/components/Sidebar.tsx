@@ -160,7 +160,7 @@ const MENU_ITEMS: MenuItem[] = [
       }}
     >
       {/* Logo */}
-      <div style={{ padding: '0 8px', marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{ padding: '0 8px', marginBottom: '40px', display: 'flex', alignItems: 'center', gap: '3px' }}>
         <div style={{
           width: '36px', height: '36px', borderRadius: '10px',
           // background: 'var(--accent-gradient)', display: 'flex',
@@ -177,19 +177,19 @@ const MENU_ITEMS: MenuItem[] = [
   overflow: 'hidden',
   flexShrink: 0,
 }}>
-  {/* <img
+  {<img
     src={logo}
     alt="logo"
     style={{
       width: '100%',
-      height: '100%',
+      height: '120%',
       objectFit: 'contain',
     }}
-  /> */}
+  /> }
 </div>
         </div>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, letterSpacing: '-0.8px', color: '#f5f5f5', fontFamily: 'Outfit', whiteSpace: 'nowrap' }}>
-          Wheedle.ai
+          heedle.Ai
         </h2>
       </div>
 
@@ -326,18 +326,18 @@ const MENU_ITEMS: MenuItem[] = [
         <div style={{ fontSize: '0.65rem', color: '#a1a1aa', marginBottom: '8px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
           Powered by
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-          {/* <img
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+          <img
   src={logo}
   alt="logo"
   style={{
-    width: '16px',
-    height: '16px',
+    width: '20%',
+    height: '20%',
     objectFit: 'contain',
   }}
-/> */}
+/>
           <span style={{ fontSize: '1rem', fontWeight: 800, color: '#f5f5f5', fontFamily: 'Outfit' }}>
-            Wheedle Technologies
+            heedle Technologies
           </span>
         </div>
       </div>

@@ -4,7 +4,7 @@
 
 :root {
   --header-height: 68px;
-  --accent-primary: #2020eb;
+  --accent-primary: #2631d6;
   --accent-gradient: linear-gradient(135deg, #141b81, #27159c);
   --glass-border: #0a0f1e;
   --radius-pill: 999px;
@@ -12,6 +12,7 @@
   --success: #10b981;
   --info: #3b82f6;
   --text-secondary: #64748b;
+    --accent-gradient: linear-gradient(135deg, #2836ff, #2631d6);
 }
 
 /* ── Base Header ── */
