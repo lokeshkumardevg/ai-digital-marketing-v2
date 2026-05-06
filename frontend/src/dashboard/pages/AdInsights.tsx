@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../api/axios';
 import { useSelector } from 'react-redux';
+import { PLATFORM_CONFIG } from '../../config/platforms';
 
-const platforms = ['Meta', 'Google'];
+const platforms = ['Meta', 'Google', 'X', 'LinkedIn'];
 
 // Donut chart SVG helper
 const DonutChart: React.FC<{
@@ -53,6 +54,8 @@ export const AdInsights: React.FC = () => {
   const platformMap: { [key: string]: string } = {
     'Meta': 'meta',
     'Google': 'google',
+    'X': 'twitter',
+    'LinkedIn': 'linkedin',
   };
 
   useEffect(() => {
@@ -125,7 +128,9 @@ export const AdInsights: React.FC = () => {
               color: activePlatform === p ? '#eaecf3' : '#94a3b8',
               borderBottom: activePlatform === p ? '2px solid #2631d6' : '2px solid transparent',
             }}>
-              <span style={{ fontSize: '1rem' }}>{p === 'Meta' ? '𝕄' : p === 'Google' ? 'G' : p === 'TikTok' ? '♪' : 'Ꞵ'}</span>
+              <span style={{ fontSize: '1rem' }}>
+                {p === 'Meta' ? '𝕄' : p === 'Google' ? 'G' : p === 'X' ? '𝕏' : p === 'LinkedIn' ? '💼' : 'Ꞵ'}
+              </span>
               {p}
             </button>
           ))}

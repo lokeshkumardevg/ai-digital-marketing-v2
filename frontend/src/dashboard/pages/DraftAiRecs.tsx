@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileEdit, Sparkles, Plus, Wand2, Copy, Trash2, ChevronDown, ToggleLeft, ToggleRight, Image, Type, Video } from 'lucide-react';
 
-const platforms = ['All', 'Meta', 'Google', 'TikTok'];
+const platforms = ['All', 'Meta', 'Google', 'X', 'LinkedIn'];
 
 const componentIcons: Record<string, React.ElementType> = {
   Image, Headline: Type, Copy: FileEdit, Video, CTA: Sparkles,

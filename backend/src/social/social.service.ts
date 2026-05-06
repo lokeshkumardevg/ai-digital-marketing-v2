@@ -84,12 +84,12 @@ export class SocialService {
 
   async postToLinkedIn(userId: string, content: string, media: string[] = []) {
     const user = await this.usersService.findById(userId);
-    if (!user?.linkedinAccessToken || !user.linkedinPersonId) {
+    if (!user?.linkedinAccessToken || !user.linkedinPersonUrn) {
       throw new NotFoundException('LinkedIn is not connected.');
     }
 
     const body = {
-      author: `urn:li:person:${user.linkedinPersonId}`,
+      author: `urn:li:person:${user.linkedinPersonUrn}`,
       lifecycleState: 'PUBLISHED',
       specificContent: {
         'com.linkedin.ugc.ShareContent': {

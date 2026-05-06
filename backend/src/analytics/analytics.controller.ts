@@ -38,6 +38,20 @@ export class AnalyticsController {
     return this.analyticsService.syncGoogleInsights(userId);
   }
 
+  @Post('sync/x')
+  @UseGuards(AuthGuard('jwt'))
+  async syncX(@Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.analyticsService.syncTwitterInsights(userId);
+  }
+
+  @Post('sync/linkedin')
+  @UseGuards(AuthGuard('jwt'))
+  async syncLinkedIn(@Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.analyticsService.syncLinkedInInsights(userId);
+  }
+
   @Get('insights')
   @UseGuards(AuthGuard('jwt'))
   async getInsights(
@@ -47,14 +61,5 @@ export class AnalyticsController {
   ) {
     const userId = req.user?.id ?? req.user?.sub;
     return this.analyticsService.getAdInsights(platform, userId, customerId);
-  }
-
-  @Post('seed-demo')
-  async seedDemo() {
-    if (process.env.NODE_ENV === 'production') {
-      throw new HttpException('Not allowed in production', HttpStatus.FORBIDDEN);
-    }
-    const count = await this.analyticsSeeder.seedDemoData(30);
-    return { status: 'success', seeded: count };
   }
 }

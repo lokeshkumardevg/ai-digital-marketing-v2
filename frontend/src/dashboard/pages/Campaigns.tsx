@@ -249,7 +249,7 @@ const resolveIndustry = (b: BrandDetails): string =>
 const fmt = (n: number) =>
   n?.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }) || '$0';
 const fmtINR = (n: number) =>
-  n?.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }) || '₹0';
+  n?.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }) || '$0';
 
 const generateBudgetTiers = (userBudget: number, platforms: string[]): BudgetBreakdown => {
   const buildTier = (label: string, mult: number, desc: string, recommended = false): BudgetTier => {
@@ -1633,7 +1633,7 @@ const BudgetInputForm: React.FC<{ platform: string; onSubmit: (amount: number) =
   return (
     <div className="budget-input-form">
       <div className="bif-header"><DollarSign size={18} color="#10b981" /><div><div className="bif-title">Monthly Ad Budget</div><div className="bif-sub">For {({'meta':'Meta Ads','google':'Google Ads','twitter':'Twitter (X)','linkedin':'LinkedIn Ads','both':'Meta + Google','all':'All Platforms'} as any)[platform] || platform} · Min $100</div></div></div>
-      <div className="bif-presets">{presets.map(p => <button key={p} className={`bif-preset ${value === String(p) ? 'active' : ''}`} onClick={() => { setValue(String(p)); setError(''); }}>₹{p.toLocaleString()}</button>)}</div>
+      <div className="bif-presets">{presets.map(p => <button key={p} className={`bif-preset ${value === String(p) ? 'active' : ''}`} onClick={() => { setValue(String(p)); setError(''); }}>${p.toLocaleString()}</button>)}</div>
       <div className="bif-input-row">
         <div className="bif-input-wrap"><span className="bif-currency">$</span><input type="number" className="bif-input" placeholder="Enter amount" value={value} onChange={e => { setValue(e.target.value); setError(''); }} onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); }} /><span className="bif-period">/mo</span></div>
         <button className="bif-submit" onClick={handleSubmit} disabled={!value}>Generate Plans <ArrowRight size={16} /></button>

@@ -8,7 +8,7 @@ const statusStyles: Record<string, { bg: string; color: string; dot: string }> =
   draft: { bg: '#f8fafc', color: 'var(--text-secondary)', dot: '#94a3b8' },
 };
 
-const platforms = ['All', 'Meta', 'Google', 'TikTok'];
+const platforms = ['All', 'Meta', 'Google', 'X', 'LinkedIn'];
 
 export const AdsManager: React.FC = () => {
   const [activePlatform, setActivePlatform] = useState('All');
@@ -145,7 +145,24 @@ export const AdsManager: React.FC = () => {
             searchPlaceholder="Search campaigns by name..."
             columns={[
               { key: 'name', label: 'Campaign', sortable: true, render: (row) => <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{row.name}</span> },
-              { key: 'platform', label: 'Platform', sortable: true, render: (row) => <span style={{ padding: '3px 9px', borderRadius: '6px', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 600 }}>{row.platform}</span> },
+              { key: 'platform', label: 'Platform', sortable: true, render: (row) => {
+                const platformColors: Record<string, string> = {
+                  'Meta': '#1877f2',
+                  'Google': '#ea4335',
+                  'X': '#000000',
+                  'LinkedIn': '#0a66c2'
+                };
+                const color = platformColors[row.platform] || '#64748b';
+                return <span style={{
+                  padding: '3px 9px',
+                  borderRadius: '6px',
+                  background: `${color}20`,
+                  color: color,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  border: `1px solid ${color}30`
+                }}>{row.platform}</span>;
+              } },
               { key: 'status', label: 'Status', sortable: true, render: (row) => {
                   const st = statusStyles[row.status] || statusStyles.draft;
                   return (

@@ -8,7 +8,7 @@ const tiers = [
       "1 Platform (Meta or Google)",
       "AI Ad Copy Generation",
       "Daily Performance Report",
-      "Up to ₹50K Ad Spend",
+      "Up to $50K Ad Spend",
       "DigiMarketer Access",
     ],
     button: "Start Free Trial",
@@ -21,7 +21,7 @@ const tiers = [
       "AI Image & Creative Lab",
       "Real-time Dashboards",
       "AI Sale Bot Integration",
-      "Up to ₹2L Ad Spend",
+      "Up to $2L Ad Spend",
       "DigiMarketer + AI Website",
     ],
     button: "Get Started Now",
@@ -92,7 +92,7 @@ function PricingCard({ tier }) {
               isCenter ? "text-[38px]" : "text-[30px]"
             } text-white font-semibold`}
           >
-            ₹{tier.price}
+            ${tier.price}
           </span>
           <span className="text-white/60 text-sm ml-1">/mo</span>
         </div>

@@ -73,7 +73,7 @@ export class BillingService {
   }
 
   async rechargeWallet(tenantId: string, amount: number, paymentId: string): Promise<Transaction> {
-    this.logger.log(`Recharging Tenant ${tenantId} Wallet by ₹${amount}`);
+    this.logger.log(`Recharging Tenant ${tenantId} Wallet by $${amount}`);
     const txn = new this.txnModel({
       tenantId,
       type: 'CREDIT',

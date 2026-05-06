@@ -66,6 +66,8 @@ interface ConnectedAccount {
 const AD_PLATFORMS = [
   { id: 'meta',   label: 'Meta',   icon: '𝕄', color: '#1877f2' },
   { id: 'google', label: 'Google', icon: 'G',  color: '#ea4335' },
+  { id: 'twitter', label: 'X', icon: '𝕏', color: '#000000' },
+  { id: 'linkedin', label: 'LinkedIn', icon: '💼', color: '#0a66c2' },
 ];
 const PROMOTE_OBJECTIVES = [
   { value: 'Lead',       label: 'Lead' },
