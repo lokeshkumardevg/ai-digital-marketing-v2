@@ -48,13 +48,16 @@ live(@Param('id') id: string) {
   }
 
   // 🔹 SAVE SESSION
-  @Post('session/:userId')
-  saveSession(
-    @Param('userId') userId: string,
-    @Body() body: any,
-  ) {
-    return this.service.saveSession(userId, body);
+@Post('session/save')
+saveSession(@Body() body: any) {
+  const userId = body.userId;
+
+  if (!userId) {
+    throw new Error('userId is required');
   }
+
+  return this.service.saveSession(userId, body);
+}
 
   // 🔹 DELETE SESSION (RESET)
   @Delete('session/:userId')

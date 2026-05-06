@@ -1,16 +1,17 @@
 import { Module } from '@nestjs/common';
-import { CampaignController } from './campaigns.controller';
 import { CampaignService } from './campaigns.service';
+import { CampaignController } from './campaigns.controller';
+
 import { MongooseModule } from '@nestjs/mongoose';
-import { Session, SessionSchema } from './schemas/session.schema';
+import { SessionSchema } from './schemas/session.schema'; // 👈 FIX PATH
 
 @Module({
-  controllers: [CampaignController],
-  providers: [CampaignService],
-    imports: [
+  imports: [
     MongooseModule.forFeature([
-      { name: Session.name, schema: SessionSchema },
-    ]),
+      { name: 'Session', schema: SessionSchema }
+    ])
   ],
+  providers: [CampaignService],
+  controllers: [CampaignController],
 })
 export class CampaignModule {}

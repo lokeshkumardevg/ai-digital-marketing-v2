@@ -1,21 +1,25 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Schema } from 'mongoose';
 
-export type SessionDocument = Session & Document;
+export const SessionSchema = new Schema({
+  userId: { type: String, required: true, unique: true },
 
-@Schema({ timestamps: true })
-export class Session {
-  @Prop({ required: true, index: true })
-  userId: string;
+  version: String,
+  url: String,
+  urlStatus: String,
+  isChatMode: Boolean,
+  viewMode: String,
 
-  @Prop({ default: 'v2' })
-  version: string;
+  // ✅ MUST be Mixed for large JSON
+  brandDetails: { type: Schema.Types.Mixed },
+  budgetBreakdown: { type: Schema.Types.Mixed },
+  liveCampaign: { type: Schema.Types.Mixed },
 
-  @Prop({ type: Array, default: [] })
-  messages: any[];
+  selectedPlatform: String,
+  selectedTier: String,
+  campaignId: String,
 
-  @Prop({ default: 0 })
-  msgCounter: number;
-}
+  // ✅ allow large array
+  messages: { type: Array },
 
-export const SessionSchema = SchemaFactory.createForClass(Session);
+  updatedAt: String,
+});

@@ -3,8 +3,13 @@ import OpenAI from 'openai';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 @Injectable()
 export class CampaignService {
+  constructor(
+    @InjectModel('Session') private sessionModel: Model<any>,
+  ) {}
   private openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
@@ -555,46 +560,76 @@ OUTPUT:
 // SESSION: GET (RESTORE)
 // ============================================
 async getSession(userId: string) {
-  const session = this.sessions.get(userId);
+  const session = await this.sessionModel.findOne({ userId });
 
-  if (!session) return null;
+  if (!session) return { found: false };
 
-  // ✅ version check
   if (session.version !== this.SESSION_VERSION) {
-    return null;
+    await this.sessionModel.deleteOne({ userId });
+    return { found: false, reason: 'expired' };
   }
 
-  return session;
+  const maxAge = session.liveCampaign
+    ? 30 * 24 * 60 * 60 * 1000
+    : 7 * 24 * 60 * 60 * 1000;
+
+  const age = Date.now() - new Date(session.updatedAt).getTime();
+
+  if (age > maxAge) {
+    await this.sessionModel.deleteOne({ userId });
+    return { found: false, reason: 'expired' };
+  }
+
+  return { found: true, session };
 }
 
 // ============================================
 // SESSION: SAVE (DEBOUNCED CALL FROM FRONTEND)
 // ============================================
-async saveSession(userId: string, data: any) {
-  const session = {
-    userId,
-    version: data.version || this.SESSION_VERSION,
-    messages: data.messages || [],
-    msgCounter: data.msgCounter || 0,
-    updatedAt: new Date().toISOString(),
-  };
+async saveSession(userId: string, body: any) {
+  try {
+    console.log("🔥 Incoming:", body);
 
-  this.sessions.set(userId, session);
+    const incoming = body.session || body;
 
-  return {
-    success: true,
-    session,
-  };
+    const session = {
+      userId, // ✅ always from param
+      version: incoming.version || this.SESSION_VERSION,
+      url: incoming.url || '',
+      urlStatus: incoming.urlStatus || 'idle',
+      isChatMode: incoming.isChatMode ?? false,
+      viewMode: incoming.viewMode || 'landing',
+      brandDetails: incoming.brandDetails ?? null,
+      selectedPlatform: incoming.selectedPlatform || '',
+      budgetBreakdown: incoming.budgetBreakdown ?? null,
+      selectedTier: incoming.selectedTier ?? null,
+      liveCampaign: incoming.liveCampaign ?? null,
+      campaignId: incoming.campaignId ?? null,
+      messages: incoming.messages || [],
+      updatedAt: new Date().toISOString(),
+    };
+
+    const result = await this.sessionModel.findOneAndUpdate(
+      { userId },
+      session,
+      { upsert: true, new: true }
+    );
+
+    console.log("✅ SAVED:", result);
+
+    return { success: true };
+
+  } catch (error) {
+    console.error("❌ SAVE ERROR:", error);
+    throw error;
+  }
 }
 
 // ============================================
 // SESSION: DELETE (RESET)
 // ============================================
 async deleteSession(userId: string) {
-  this.sessions.delete(userId);
-
-  return {
-    success: true,
-  };
+  await this.sessionModel.deleteOne({ userId });
+  return { success: true };
 }
 }
