@@ -22,11 +22,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('Tenant identity corrupted.');
     }
-    return { 
-      id: payload.sub, 
-      name: user.name, 
-      email: payload.email, 
-      subscriptionTier: user.subscriptionTier 
+    const { passwordHash, ...userData } = user.toObject ? user.toObject() : user;
+    return {
+      ...userData,
+      id: payload.sub,
+      email: payload.email,
     };
   }
 }

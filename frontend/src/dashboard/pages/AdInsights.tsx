@@ -47,6 +47,7 @@ export const AdInsights: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const { user } = useSelector((state: any) => state.auth);
 
   const platformMap: { [key: string]: string } = {
@@ -57,19 +58,24 @@ export const AdInsights: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     const fetchData = async () => {
+      const platform = platformMap[activePlatform] || 'meta';
+      const customerId = user?.googleCustomerId || '';
+
+      setError(null);
       try {
-        const platform = platformMap[activePlatform] || 'meta';
-        const url = `/analytics/insights?platform=${platform}${refreshKey ? '&bypassCache=true' : ''}`;
+        const customerIdParam = customerId ? `&customerId=${encodeURIComponent(customerId)}` : '';
+        const url = `/analytics/insights?platform=${platform}${customerIdParam}${refreshKey ? '&bypassCache=true' : ''}`;
         const res = await api.get(url);
         setData(res.data);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch ad insights', err);
-        // Fallback mock data structure
-        setData({
-          audiences: [],
-          pages: [],
-          creatives: [],
-        });
+        const status = err?.response?.status;
+        if (status === 428) {
+          setError('Google Ads customer ID or credentials are missing. Check your backend .env values or connect your Google account.');
+        } else {
+          setError('Unable to fetch ad insights. Please refresh or check your integration settings.');
+        }
+        setData({ audiences: [], pages: [], creatives: [] });
       } finally {
         setLoading(false);
       }
@@ -103,6 +109,11 @@ export const AdInsights: React.FC = () => {
         </div>
         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Data cached 30min • Redis powered</div>
       </div>
+      {error && (
+        <div style={{ margin: '16px 32px 0', padding: '14px 18px', borderRadius: '12px', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c' }}>
+          {error}
+        </div>
+      )}
 
       <div style={{ padding: '0' }}>
         {/* Platform Tabs */}

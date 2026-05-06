@@ -6,7 +6,6 @@ import { updateUser } from '../../store/slices/authSlice';
 import { addNotification } from '../../store/slices/notificationSlice';
 import type { AppDispatch } from '../../store';
 import toast from 'react-hot-toast';
-import { rgba } from 'framer-motion';
 
 export const Settings: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -20,6 +19,7 @@ export const Settings: React.FC = () => {
   const [googleClientId, setGoogleClientId] = useState(user?.googleClientId || '');
   const [googleClientSecret, setGoogleClientSecret] = useState(user?.googleClientSecret || '');
   const [googleDeveloperToken, setGoogleDeveloperToken] = useState(user?.googleDeveloperToken || '');
+  const [googleCustomerId, setGoogleCustomerId] = useState(user?.googleCustomerId || '');
   const [metaAppId, setMetaAppId] = useState(user?.metaAppId || '');
   const [metaAppSecret, setMetaAppSecret] = useState(user?.metaAppSecret || '');
 
@@ -31,6 +31,7 @@ export const Settings: React.FC = () => {
       setGoogleClientId(user.googleClientId || '');
       setGoogleClientSecret(user.googleClientSecret || '');
       setGoogleDeveloperToken(user.googleDeveloperToken || '');
+      setGoogleCustomerId(user.googleCustomerId || '');
       setMetaAppId(user.metaAppId || '');
       setMetaAppSecret(user.metaAppSecret || '');
     }
@@ -81,6 +82,7 @@ export const Settings: React.FC = () => {
           clientId: googleClientId,
           clientSecret: googleClientSecret,
           developerToken: googleDeveloperToken,
+          customerId: googleCustomerId,
         });
 
         if (response.data.success) {
@@ -261,6 +263,20 @@ export const Settings: React.FC = () => {
                           value={googleDeveloperToken}
                           onChange={e => setGoogleDeveloperToken(e.target.value)}
                         />
+                      </div>
+
+                      <div className="input-group">
+                        <label>Customer ID</label>
+                        <input
+                          type="text"
+                          placeholder="123-456-7890"
+                          className="input-field"
+                          value={googleCustomerId}
+                          onChange={e => setGoogleCustomerId(e.target.value)}
+                        />
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '6px' }}>
+                          Required for live Google Ads insights. This is the Ads customer ID for your account.
+                        </p>
                       </div>
 
                       <button

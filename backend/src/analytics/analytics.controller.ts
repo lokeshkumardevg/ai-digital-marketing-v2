@@ -42,10 +42,11 @@ export class AnalyticsController {
   @UseGuards(AuthGuard('jwt'))
   async getInsights(
     @Query('platform') platform: 'google' | 'meta',
+    @Query('customerId') customerId: string,
     @Req() req: any,
   ) {
     const userId = req.user?.id ?? req.user?.sub;
-    return this.analyticsService.getAdInsights(platform, userId);
+    return this.analyticsService.getAdInsights(platform, userId, customerId);
   }
 
   @Post('seed-demo')

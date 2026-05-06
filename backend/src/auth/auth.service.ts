@@ -24,13 +24,12 @@ export class AuthService {
 
   async login(user: any) {
     const payload = { email: user.email, sub: user._id };
+    const { passwordHash, ...userData } = user.toObject ? user.toObject() : user;
     return {
       access_token: this.jwtService.sign(payload),
       user: {
+        ...userData,
         id: user._id,
-        name: user.name,
-        email: user.email,
-        subscriptionTier: user.subscriptionTier,
         permissions: user.permissions || []
       }
     };
@@ -65,6 +64,26 @@ export class AuthService {
 
   // ================= GOOGLE =================
 
+getGoogleAuthUrl(userId: string) {
+  const clientId = this.configService.get('GOOGLE_CLIENT_ID');
+
+  const redirectUri = `http://localhost:3000/auth/google/callback?userId=${userId}`;
+
+  const scope = [
+    'https://www.googleapis.com/auth/adwords',
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+  ].join(' ');
+
+  return `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${clientId}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&response_type=code` +
+    `&scope=${encodeURIComponent(scope)}` +
+    `&access_type=offline` +
+    `&prompt=consent`;
+}
+
   async handleGoogleCallback(userId: string, code: string) {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException('User not found');
@@ -80,7 +99,7 @@ export class AuthService {
       code,
       client_id: clientId,
       client_secret: clientSecret,
-      redirect_uri: 'http://localhost:3001/auth/google/callback',
+      redirect_uri: 'http://localhost:3000/auth/google/callback',
       grant_type: 'authorization_code',
     });
 
@@ -99,7 +118,7 @@ export class AuthService {
       googleTokenExpiry: Date.now() + tokens.expires_in * 1000,
     });
 
-    return { success: true };
+    return { message: 'Google Ads connected successfully' };
   }
 
   async getGoogleAccessToken(userId: string, refreshToken: string) {
@@ -132,41 +151,68 @@ export class AuthService {
   }
 
   async getGoogleAdsInsights(userId: string, customerId: string) {
-    const user = await this.usersService.findById(userId);
-    if (!user?.googleRefreshToken) {
-      throw new UnauthorizedException('Google not connected');
-    }
+  const user = await this.usersService.findById(userId);
 
-    const accessToken = await this.getGoogleAccessToken(userId, user.googleRefreshToken);
-
-    const query = `
-      SELECT campaign.name, metrics.impressions, metrics.clicks, metrics.cost_micros
-      FROM campaign
-      ORDER BY metrics.impressions DESC
-      LIMIT 10
-    `;
-
-    const developerToken = user.googleDeveloperToken || this.configService.get('GOOGLE_DEVELOPER_TOKEN');
-
-    if (!developerToken) {
-      throw new UnauthorizedException('Google developer token not configured');
-    }
-
-    const res = await fetch(
-      `https://googleads.googleapis.com/v16/customers/${customerId}/googleAds:search`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'developer-token': developerToken,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query }),
-      },
-    );
-
-    return res.json();
+  if (!user?.googleRefreshToken) {
+    throw new UnauthorizedException('Google not connected');
   }
+
+  const accessToken = await this.getGoogleAccessToken(
+    userId,
+    user.googleRefreshToken
+  );
+
+  const developerToken =
+    user.googleDeveloperToken ||
+    this.configService.get('GOOGLE_DEVELOPER_TOKEN');
+
+  if (!developerToken) {
+    throw new UnauthorizedException('Google developer token not configured');
+  }
+
+  // ✅ CLEAN customer ID (remove dashes)
+  const cleanCustomerId = customerId.replace(/-/g, '');
+
+  const query = `
+    SELECT
+      campaign.id,
+      campaign.name,
+      metrics.impressions,
+      metrics.clicks,
+      metrics.cost_micros,
+      metrics.ctr
+    FROM campaign
+    ORDER BY metrics.impressions DESC
+    LIMIT 10
+  `;
+
+  const res = await fetch(
+    `https://googleads.googleapis.com/v16/customers/${cleanCustomerId}/googleAds:search`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'developer-token': developerToken,
+        'Content-Type': 'application/json',
+
+        // ✅ VERY IMPORTANT (fix for many accounts)
+        'login-customer-id': cleanCustomerId,
+      },
+      body: JSON.stringify({ query }),
+    },
+  );
+
+  const data = await res.json();
+
+  if (data.error) {
+    console.error('Google Ads Error:', data);
+    throw new UnauthorizedException(
+      data.error.message || 'Google Ads API failed',
+    );
+  }
+
+  return data;
+}
 
   // ================= META =================
 
@@ -218,11 +264,12 @@ export class AuthService {
     return res.json();
   }
 
-  async updateGoogleCredentials(userId: string, clientId: string, clientSecret: string, developerToken?: string) {
+  async updateGoogleCredentials(userId: string, clientId: string, clientSecret: string, developerToken?: string, customerId?: string) {
     await this.usersService.update(userId, {
       googleClientId: clientId,
       googleClientSecret: clientSecret,
       ...(developerToken && { googleDeveloperToken: developerToken }),
+      ...(customerId && { googleCustomerId: customerId }),
     });
     return { success: true };
   }

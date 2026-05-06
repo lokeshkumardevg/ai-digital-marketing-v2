@@ -12,9 +12,9 @@ export class RolesService {
     if (roles.length === 0) {
       // Mock bootstrap
       return [
-        { _id: 'r1', name: 'Super Admin', permissions: ['*'], isSystem: true, workspaceId },
-        { _id: 'r2', name: 'Marketing Manager', permissions: ['dashboard', 'crm', 'campaigns', 'content', 'analytics'], isSystem: false, workspaceId },
-        { _id: 'r3', name: 'Content Creator', permissions: ['dashboard', 'content'], isSystem: false, workspaceId },
+        { _id: 'r1', name: 'Super Admin', color: '#ff0000', permissions: ['*'], isSystem: true, workspaceId },
+        { _id: 'r2', name: 'Marketing Manager', color: '#ff0000', permissions: ['dashboard', 'crm', 'campaigns', 'content', 'analytics'], isSystem: false, workspaceId },
+        { _id: 'r3', name: 'Content Creator', color: '#ff0000', permissions: ['dashboard', 'content'], isSystem: false, workspaceId },
       ] as any[];
     }
     return roles;

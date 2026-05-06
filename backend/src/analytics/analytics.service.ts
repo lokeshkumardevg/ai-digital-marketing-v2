@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { InjectRedis } from '@nestjs-modules/ioredis';
@@ -25,7 +25,7 @@ export class AnalyticsService {
 
   private getEmptyResponse() {
     return {
-      audiences: [],
+      audiences: [],  
       pages: [],
       creatives: [],
     };
@@ -34,9 +34,10 @@ export class AnalyticsService {
   async getAdInsights(
     platform: 'google' | 'meta',
     userId: string,
+    customerId?: string,
     bypassCache = false,
   ): Promise<any> {
-    const cacheKey = `ad_insights:${userId}:${platform}:${bypassCache ? Date.now() : ''}`;
+    const cacheKey = `ad_insights:${userId}:${platform}:${customerId || 'default'}:${bypassCache ? Date.now() : ''}`;
 
     if (!bypassCache) {
       try {
@@ -58,7 +59,7 @@ export class AnalyticsService {
     let data: any;
 
     if (platform === 'google') {
-      data = await this.fetchGoogleInsights(user);
+      data = await this.fetchGoogleInsights(user, customerId);
     } else if (platform === 'meta') {
       data = await this.fetchMetaInsights(user);
     } else {
@@ -83,21 +84,146 @@ export class AnalyticsService {
     return safeData;
   }
 
-  private async fetchGoogleInsights(user: any): Promise<any> {
+  private async fetchGoogleInsights(user: any, customerId?: string): Promise<any> {
     try {
-      this.logger.log('Fetching Google Ads insights (mocked)');
+      this.logger.log('Fetching Google Ads insights');
 
-      const data = this.getMockData('google');
-
-      if (!data) {
-        return this.getEmptyResponse();
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
       }
 
-      return data;
-    } catch (error) {
-      this.logger.error('Google API error', error);
-      return this.getEmptyResponse();
+      if (!user.googleRefreshToken && !user.googleAccessToken) {
+        throw new HttpException(
+          'Google Ads access is not configured. Please connect your Google Ads account and provide a customerId if required.',
+          HttpStatus.PRECONDITION_REQUIRED,
+        );
+      }
+
+      const resolvedCustomerId = customerId || (user as any).googleCustomerId || this.configService.get<string>('GOOGLE_ADS_CUSTOMER_ID');
+      if (!resolvedCustomerId) {
+        throw new HttpException(
+          'Google Ads customer ID is required. Pass ?customerId=YOUR_CUSTOMER_ID or set GOOGLE_ADS_CUSTOMER_ID.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const accessToken = await this.resolveGoogleAccessToken(user);
+      const developerToken = user.googleDeveloperToken || this.configService.get<string>('GOOGLE_DEVELOPER_TOKEN');
+      if (!developerToken) {
+        throw new HttpException(
+          'Google developer token is required. Set GOOGLE_DEVELOPER_TOKEN or add googleDeveloperToken to your user profile.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const query = `
+        SELECT campaign.id, campaign.name, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.ctr, metrics.conversions
+        FROM campaign
+        WHERE segments.date DURING LAST_7_DAYS
+        ORDER BY metrics.impressions DESC
+        LIMIT 10
+      `;
+
+      const response = await fetch(
+        `https://googleads.googleapis.com/v16/customers/${resolvedCustomerId}/googleAds:search`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'developer-token': developerToken,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query }),
+        },
+      );
+
+      const json = await response.json();
+      if (!response.ok || json.error) {
+        const message = json.error?.message || JSON.stringify(json);
+        this.logger.warn(`Google Ads API error: ${message}`);
+        throw new HttpException(`Google Ads API error: ${message}`, HttpStatus.BAD_REQUEST);
+      }
+
+      const rows = json.results || [];
+      const creatives = rows.map((row: any) => {
+        const campaign = row.campaign || {};
+        const metrics = row.metrics || {};
+        const impressions = Number(metrics.impressions ?? 0);
+        const spend = Number(metrics.costMicros ?? 0) / 1_000_000;
+        const conversions = Number(metrics.conversions ?? 0);
+        const ctr = Number(metrics.ctr ?? 0);
+        return {
+          name: campaign.name || 'Unknown campaign',
+          impressions,
+          cpa: conversions > 0 ? parseFloat((spend / conversions).toFixed(2)) : 0,
+          ctr,
+          spend,
+          color: '#2631d6',
+        };
+      });
+
+      return {
+        audiences: creatives.map((item: any) => ({ label: item.name, value: item.impressions, color: '#2631d6' })),
+        pages: [{ label: 'Google Ads', value: creatives.reduce((sum: number, item: any) => sum + item.impressions, 0), color: '#2631d6' }],
+        creatives,
+      };
+    } catch (error: any) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error('Google API error', error?.message || error);
+      throw new HttpException('Failed to fetch Google Ads insights. Verify your account details and tokens.', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  private async resolveGoogleAccessToken(user: any): Promise<string> {
+    const isTokenValid = user.googleAccessToken && user.googleTokenExpiry && Date.now() + 60000 < user.googleTokenExpiry;
+    if (isTokenValid) {
+      return user.googleAccessToken;
+    }
+
+    if (!user.googleRefreshToken) {
+      throw new HttpException(
+        'Google refresh token is missing. Please reconnect Google to continue.',
+        HttpStatus.PRECONDITION_REQUIRED,
+      );
+    }
+
+    const clientId = user.googleClientId || this.configService.get<string>('GOOGLE_CLIENT_ID');
+    const clientSecret = user.googleClientSecret || this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+    if (!clientId || !clientSecret) {
+      throw new HttpException(
+        'Google OAuth client ID and secret are not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: user.googleRefreshToken,
+      grant_type: 'refresh_token',
+    });
+
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    const tokenJson = await tokenResponse.json();
+    if (!tokenResponse.ok || tokenJson.error) {
+      const message = tokenJson.error_description || tokenJson.error || 'Unable to refresh Google access token';
+      this.logger.warn(`Google token refresh failed: ${message}`);
+      throw new HttpException(`Google token refresh failed: ${message}`, HttpStatus.UNAUTHORIZED);
+    }
+
+    await this.usersService.update(user._id || user.id, {
+      googleAccessToken: tokenJson.access_token,
+      googleTokenExpiry: Date.now() + (tokenJson.expires_in || 3600) * 1000,
+    });
+
+    return tokenJson.access_token;
   }
 
   private async fetchMetaInsights(user: any): Promise<any> {
@@ -321,15 +447,30 @@ export class AnalyticsService {
   }
 
   async syncGoogleInsights(userId: string): Promise<any> {
-    const customerIdRaw = this.configService.get<string>('GOOGLE_ADS_CUSTOMER_ID');
-    const customerId = customerIdRaw?.replace(/-/g, '') || '';
-    const devToken = this.configService.get<string>('GOOGLE_DEVELOPER_TOKEN');
     const user = await this.usersService.findById(userId);
-
-    const accessToken = (user as any)?.googleAccessToken;
-    if (!accessToken) {
-      throw new Error('Google access token not found. Connect Google Ads first.');
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
     }
+
+    const customerIdRaw = (user as any).googleCustomerId || this.configService.get<string>('GOOGLE_ADS_CUSTOMER_ID');
+    const customerId = customerIdRaw?.replace(/-/g, '') || '';
+    const developerToken = user.googleDeveloperToken || this.configService.get<string>('GOOGLE_DEVELOPER_TOKEN');
+
+    if (!customerId) {
+      throw new HttpException(
+        'Google Ads customer ID is required to sync data. Set GOOGLE_ADS_CUSTOMER_ID or add googleCustomerId to your profile.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!developerToken) {
+      throw new HttpException(
+        'Google developer token is required to sync Google Ads data. Set GOOGLE_DEVELOPER_TOKEN or add googleDeveloperToken to your profile.',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const accessToken = await this.resolveGoogleAccessToken(user);
 
     const query = `
     SELECT
@@ -353,7 +494,7 @@ export class AnalyticsService {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'developer-token': devToken || '',
+          'developer-token': developerToken,
           'Content-Type': 'application/json',
           'login-customer-id': customerId,
         },

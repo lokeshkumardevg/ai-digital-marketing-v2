@@ -32,22 +32,66 @@ export class AuthController {
     return this.authService.updateProfile(req.user.id, updateDto);
   }
 
+  // ================= GOOGLE =================
+
+  // ✅ Keep JWT here (user must be logged in to connect Google)
   @UseGuards(AuthGuard('jwt'))
-  @Post('google/callback')
-  async googleCallback(@Request() req: any, @Body() body: { code: string }) {
-    return this.authService.handleGoogleCallback(req.user.id, body.code);
+  @Get('google')
+  getGoogleAuthUrl(@Request() req: any) {
+    return { url: this.authService.getGoogleAuthUrl(req.user.id) };
   }
+@UseGuards(AuthGuard('jwt'))
+@Get('google/ads')
+async getGoogleAds(
+  @Request() req: any,
+  @Query('customerId') customerId: string
+) {
+  return this.authService.getGoogleAdsInsights(req.user.id, customerId);
+}
+  // ❌ REMOVE JWT GUARD HERE (IMPORTANT FIX)
+  // Google will call this route WITHOUT JWT
+  @Get('google/callback')
+  async googleCallback(
+    @Query('code') code: string,
+    @Query('userId') userId: string
+  ) {
+    return this.authService.handleGoogleCallback(userId, code);
+  }
+
+  // ================= GOOGLE CREDENTIALS =================
 
   @UseGuards(AuthGuard('jwt'))
   @Post('google/credentials')
-  async updateGoogleCredentials(@Request() req: any, @Body() body: { clientId: string; clientSecret: string; developerToken?: string }) {
-    return this.authService.updateGoogleCredentials(req.user.id, body.clientId, body.clientSecret, body.developerToken);
+  async updateGoogleCredentials(
+    @Request() req: any,
+    @Body() body: {
+      clientId: string;
+      clientSecret: string;
+      developerToken?: string;
+      customerId?: string;
+    }
+  ) {
+    return this.authService.updateGoogleCredentials(
+      req.user.id,
+      body.clientId,
+      body.clientSecret,
+      body.developerToken,
+      body.customerId
+    );
   }
+
+  // ================= META =================
 
   @UseGuards(AuthGuard('jwt'))
   @Post('meta/credentials')
-  async updateMetaCredentials(@Request() req: any, @Body() body: { appId: string; appSecret: string }) {
-    return this.authService.updateMetaCredentials(req.user.id, body.appId, body.appSecret);
+  async updateMetaCredentials(
+    @Request() req: any,
+    @Body() body: { appId: string; appSecret: string }
+  ) {
+    return this.authService.updateMetaCredentials(
+      req.user.id,
+      body.appId,
+      body.appSecret
+    );
   }
 }
-
