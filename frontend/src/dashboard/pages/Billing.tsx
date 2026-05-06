@@ -439,7 +439,7 @@ table.bl-table { width: 100%; border-collapse: collapse; }
 // ─────────────────────────────────────────────────────────────
 // Utils
 // ─────────────────────────────────────────────────────────────
-const fmtINR  = (n: number) => '₹' + (n ?? 0).toLocaleString('en-IN');
+const fmtINR  = (n: number) => '$' + (n ?? 0).toLocaleString('en-IN');
 const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' });
 const fmtTime = (d: string) => new Date(d).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 const fmtK    = (n: number) => n >= 1_000_000 ? (n / 1_000_000).toFixed(1) + 'M' : n >= 1000 ? (n / 1000).toFixed(0) + 'K' : String(n);
@@ -573,7 +573,7 @@ const SpendChart: React.FC<{ derived: DerivedAnalytics | null }> = ({ derived })
           },
           ySpend: {
             position: 'left',
-            ticks: { color: '#4b5a72', font: { size: 10 }, callback: v => '₹' + fmtK(Number(v)) },
+            ticks: { color: '#4b5a72', font: { size: 10 }, callback: v => '$' + fmtK(Number(v)) },
             grid:  { color: 'rgba(59,130,246,.06)' },
             border:{ color: 'transparent' },
           },
@@ -1020,7 +1020,7 @@ const Billing: React.FC = () => {
             <div>
               <div className="bl-wallet-label"><Wallet size={11} /> Prepaid wallet</div>
               <div className="bl-wallet-amount">
-                <span>₹</span>{(balance ?? 0).toLocaleString('en-IN')}
+                <span>$</span>{(balance ?? 0).toLocaleString('en-IN')}
               </div>
               <div className="bl-wallet-sub">Available for campaigns</div>
             </div>
@@ -1036,7 +1036,7 @@ const Billing: React.FC = () => {
                     className={`bl-pill ${rechargeAmt === amt ? 'sel' : ''}`}
                     onClick={() => setRechargeAmt(amt)}
                   >
-                    {amt >= 1000 ? `₹${amt / 1000}K` : `₹${amt}`}
+                    {amt >= 1000 ? `$${amt / 1000}K` : `$${amt}`}
                   </div>
                 ))}
               </div>

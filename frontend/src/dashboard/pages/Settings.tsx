@@ -128,16 +128,44 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const connectGoogle = () => {
-    const clientId = user?.googleClientId || 'YOUR_GOOGLE_CLIENT_ID';
-    const state = btoa(JSON.stringify({ userId: user?.id }));
-    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=http://localhost:3001/callback&response_type=code&scope=https://www.googleapis.com/auth/adwords&state=${state}&access_type=offline&prompt=consent`;
+  const connectGoogle = async () => {
+    try {
+      const { api } = await import('../../api/axios');
+      const response = await api.get('/auth/google');
+      window.location.href = response.data.url;
+    } catch (error) {
+      toast.error('Failed to initiate Google connection');
+    }
   };
 
-  const connectMeta = () => {
-    const appId = user?.metaAppId || 'YOUR_META_APP_ID';
-    const state = btoa(JSON.stringify({ userId: user?.id }));
-    window.location.href = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}&redirect_uri=http://localhost:3001/callback&scope=ads_read,ads_management&response_type=code&state=${state}`;
+  const connectMeta = async () => {
+    try {
+      const { api } = await import('../../api/axios');
+      const response = await api.get('/auth/meta');
+      window.location.href = response.data.url;
+    } catch (error) {
+      toast.error('Failed to initiate Meta connection');
+    }
+  };
+
+  const connectX = async () => {
+    try {
+      const { api } = await import('../../api/axios');
+      const response = await api.get('/auth/x');
+      window.location.href = response.data.url;
+    } catch (error) {
+      toast.error('Failed to initiate X connection');
+    }
+  };
+
+  const connectLinkedIn = async () => {
+    try {
+      const { api } = await import('../../api/axios');
+      const response = await api.get('/auth/linkedin');
+      window.location.href = response.data.url;
+    } catch (error) {
+      toast.error('Failed to initiate LinkedIn connection');
+    }
   };
 
   return (
@@ -352,31 +380,53 @@ export const Settings: React.FC = () => {
                     <div style={{ paddingTop: '20px', borderTop: '1px solid var(--glass-border)' }}>
                       <h4 style={{ fontSize: '1rem', marginBottom: '16px', color: 'var(--text-secondary)' }}>OAuth Connections</h4>
 
-                      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                         <button
                           onClick={connectGoogle}
                           disabled={!user?.id}
                           style={{
-                            flex: 1, padding: '12px',
+                            padding: '12px',
                             background: user?.googleRefreshToken ? '#d1d5db' : 'linear-gradient(135deg, #4285f4, #34a853)',
                             color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.googleRefreshToken ? 'default' : 'pointer'
                           }}
                         >
                           🔗 {user?.googleRefreshToken ? 'Google Ads Connected ✓' : 'Connect Google Ads'}
                         </button>
-                      </div>
 
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <button
                           onClick={connectMeta}
                           disabled={!user?.id}
                           style={{
-                            flex: 1, padding: '12px',
+                            padding: '12px',
                             background: user?.metaAccessToken ? '#d1d5db' : 'linear-gradient(135deg, #1877f2, #0e5a8a)',
                             color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.metaAccessToken ? 'default' : 'pointer'
                           }}
                         >
                           𝕄 {user?.metaAccessToken ? 'Meta Ads Connected ✓' : 'Connect Meta Ads'}
+                        </button>
+
+                        <button
+                          onClick={connectX}
+                          disabled={!user?.id}
+                          style={{
+                            padding: '12px',
+                            background: user?.twitterAccessToken ? '#d1d5db' : 'linear-gradient(135deg, #000000, #333333)',
+                            color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.twitterAccessToken ? 'default' : 'pointer'
+                          }}
+                        >
+                          𝕏 {user?.twitterAccessToken ? 'X Ads Connected ✓' : 'Connect X Ads'}
+                        </button>
+
+                        <button
+                          onClick={connectLinkedIn}
+                          disabled={!user?.id}
+                          style={{
+                            padding: '12px',
+                            background: user?.linkedinAccessToken ? '#d1d5db' : 'linear-gradient(135deg, #0a66c2, #004182)',
+                            color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.linkedinAccessToken ? 'default' : 'pointer'
+                          }}
+                        >
+                          💼 {user?.linkedinAccessToken ? 'LinkedIn Ads Connected ✓' : 'Connect LinkedIn'}
                         </button>
                       </div>
                     </div>

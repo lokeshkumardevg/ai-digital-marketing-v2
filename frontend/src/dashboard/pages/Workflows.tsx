@@ -319,7 +319,7 @@ export const Workflows: React.FC = () => {
 
                     <div style={{ background: 'rgba(255,255,255,0.03)', padding: '16px', borderRadius: '12px', border: '1px solid var(--glass-border)', marginBottom: '24px' }}>
                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>Logic Summary:</div>
-                       <p style={{ fontSize: '0.85rem', lineHeight: '1.5' }}>If user engagement from <b>Meta Ads</b> exceeds benchmark, trigger <b>Budget Scaling agent</b>.</p>
+                       <p style={{ fontSize: '0.85rem', lineHeight: '1.5' }}>If user engagement from <b>connected ad platforms</b> exceeds benchmark, trigger <b>Budget Scaling agent</b>.</p>
                     </div>
 
                     <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => toast.success('Node logic updated.')}>

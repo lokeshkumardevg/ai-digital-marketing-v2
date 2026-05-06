@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { SmartTable } from '../components/SmartTable';
 import { Users, RefreshCw, Database, CreditCard, Wallet } from 'lucide-react';
@@ -57,6 +58,7 @@ export const Crm: React.FC = () => {
   const [loading, setLoading]           = useState(true);
   const [rechargeAmount, setRechargeAmount] = useState(500);
   const [walletBalance, setWalletBalance] = useState(0);
+  const { user } = useSelector((state: any) => state.auth);
   const [kpis, setKpis] = useState([
     { label: 'Spend',          value: '$0.00', color: D.purple,  checked: true,  key: 'spend' },
     { label: 'CPM',            value: '$0.00', color: D.textDim,  checked: false, key: 'cpm' },
@@ -129,7 +131,7 @@ export const Crm: React.FC = () => {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
             });
-            toast.success(`₹${rechargeAmount} added to wallet!`);
+            toast.success(`$${rechargeAmount} added to wallet!`);
             setWalletBalance(prev => prev + rechargeAmount);
           } catch {
             toast.error('Payment verification failed');
@@ -196,28 +198,6 @@ export const Crm: React.FC = () => {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {import.meta.env.DEV && (
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  const { api } = await import('../../api/axios');
-                  await api.post('/analytics/seed-demo');
-                  toast.success('30 days of demo data seeded!');
-                  void fetchData();
-                } catch {
-                  toast.error('Seed failed');
-                }
-              }}
-              style={{
-                fontSize: '0.75rem', fontWeight: 600, color: D.textMuted,
-                background: 'none', border: `1px dashed ${D.border}`,
-                borderRadius: 8, padding: '5px 12px', cursor: 'pointer',
-              }}
-            >
-              🌱 Seed Demo Data
-            </button>
-          )}
           <button
             type="button"
             onClick={async () => {
@@ -234,14 +214,97 @@ export const Crm: React.FC = () => {
                 toast.error(ax?.response?.data?.message || 'Sync failed — check Meta token');
               }
             }}
+            disabled={!user?.metaAccessToken}
             style={{
-              fontSize: '0.8rem', fontWeight: 600, color: D.purpleText,
+              fontSize: '0.8rem', fontWeight: 600, color: user?.metaAccessToken ? D.purpleText : D.textDim,
               display: 'flex', alignItems: 'center', gap: 6,
-              background: D.purpleSoft, border: `1px solid ${D.borderGlow}`,
-              borderRadius: 8, padding: '6px 14px', cursor: 'pointer',
+              background: user?.metaAccessToken ? D.purpleSoft : D.white005,
+              border: `1px solid ${D.borderGlow}`,
+              borderRadius: 8, padding: '6px 14px', cursor: user?.metaAccessToken ? 'pointer' : 'not-allowed',
             }}
           >
             <Database size={14} /> Sync Meta Ads
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              const t = toast.loading('Syncing Google Ads data...');
+              try {
+                const { api } = await import('../../api/axios');
+                await api.post('/analytics/sync/google');
+                toast.dismiss(t);
+                toast.success('Google Ads data synced!');
+                void fetchData();
+              } catch (e: unknown) {
+                toast.dismiss(t);
+                const ax = e as { response?: { data?: { message?: string } } };
+                toast.error(ax?.response?.data?.message || 'Sync failed — check Google connection');
+              }
+            }}
+            disabled={!user?.googleRefreshToken}
+            style={{
+              fontSize: '0.8rem', fontWeight: 600, color: user?.googleRefreshToken ? D.purpleText : D.textDim,
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: user?.googleRefreshToken ? D.purpleSoft : D.white005,
+              border: `1px solid ${D.borderGlow}`,
+              borderRadius: 8, padding: '6px 14px', cursor: user?.googleRefreshToken ? 'pointer' : 'not-allowed',
+            }}
+          >
+            <Database size={14} /> Sync Google Ads
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              const t = toast.loading('Syncing X Ads data...');
+              try {
+                const { api } = await import('../../api/axios');
+                await api.post('/analytics/sync/x');
+                toast.dismiss(t);
+                toast.success('X Ads data synced!');
+                void fetchData();
+              } catch (e: unknown) {
+                toast.dismiss(t);
+                const ax = e as { response?: { data?: { message?: string } } };
+                toast.error(ax?.response?.data?.message || 'Sync failed — check X connection');
+              }
+            }}
+            disabled={!user?.twitterAccessToken}
+            style={{
+              fontSize: '0.8rem', fontWeight: 600, color: user?.twitterAccessToken ? D.purpleText : D.textDim,
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: user?.twitterAccessToken ? D.purpleSoft : D.white005,
+              border: `1px solid ${D.borderGlow}`,
+              borderRadius: 8, padding: '6px 14px', cursor: user?.twitterAccessToken ? 'pointer' : 'not-allowed',
+            }}
+          >
+            <Database size={14} /> Sync X Ads
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              const t = toast.loading('Syncing LinkedIn Ads data...');
+              try {
+                const { api } = await import('../../api/axios');
+                await api.post('/analytics/sync/linkedin');
+                toast.dismiss(t);
+                toast.success('LinkedIn Ads data synced!');
+                void fetchData();
+              } catch (e: unknown) {
+                toast.dismiss(t);
+                const ax = e as { response?: { data?: { message?: string } } };
+                toast.error(ax?.response?.data?.message || 'Sync failed — check LinkedIn connection');
+              }
+            }}
+            disabled={!user?.linkedinAccessToken}
+            style={{
+              fontSize: '0.8rem', fontWeight: 600, color: user?.linkedinAccessToken ? D.purpleText : D.textDim,
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: user?.linkedinAccessToken ? D.purpleSoft : D.white005,
+              border: `1px solid ${D.borderGlow}`,
+              borderRadius: 8, padding: '6px 14px', cursor: user?.linkedinAccessToken ? 'pointer' : 'not-allowed',
+            }}
+          >
+            <Database size={14} /> Sync LinkedIn Ads
           </button>
           <button
             type="button"
@@ -257,6 +320,24 @@ export const Crm: React.FC = () => {
       </div>
 
       <div style={{ padding: '24px 32px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+          {[
+            { label: 'Meta', connected: !!user?.metaAccessToken },
+            { label: 'Google', connected: !!(user?.googleRefreshToken || user?.googleAccessToken) },
+            { label: 'X', connected: !!user?.twitterAccessToken },
+            { label: 'LinkedIn', connected: !!user?.linkedinAccessToken },
+          ].map((item) => (
+            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 999, border: `1px solid ${D.border}`, background: item.connected ? D.surfaceAlt : D.white005, color: item.connected ? D.textPrimary : D.textDim, fontSize: '0.78rem', fontWeight: 700 }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: item.connected ? D.greenText : D.textDim }} />
+              {item.label} {item.connected ? 'Connected' : 'Not connected'}
+            </div>
+          ))}
+        </div>
+        {audiences.length === 0 && (
+          <div style={{ marginBottom: 18, padding: 16, borderRadius: 16, background: D.surfaceAlt, border: `1px solid ${D.border}`, color: D.textMuted }}>
+            No audience segments are available yet. Sync your connected ad accounts to populate CRM audiences and performance segments.
+          </div>
+        )}
 
         {/* ── Date Range Filters ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
@@ -277,7 +358,7 @@ export const Crm: React.FC = () => {
         </div>
 
         {/* ── Wallet Balance ── */}
-        <div style={{
+        {/* <div style={{
           background: D.surface, border: `1px solid ${D.border}`, borderRadius: 16,
           padding: '16px 24px', marginBottom: 20,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16,
@@ -288,7 +369,7 @@ export const Crm: React.FC = () => {
             </div>
             <div>
               <div style={{ fontSize: '0.72rem', color: D.textDim, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ad Wallet Balance</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: D.textPrimary }}>₹{walletBalance.toLocaleString()}</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: D.textPrimary }}>${walletBalance.toLocaleString()}</div>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -296,7 +377,7 @@ export const Crm: React.FC = () => {
               type="number"
               value={rechargeAmount}
               onChange={e => setRechargeAmount(Number(e.target.value))}
-              placeholder="Amount (₹)"
+              placeholder="Amount ($)"
               style={{ width: 120, padding: '8px 12px', borderRadius: 8, border: `1px solid ${D.border}`, background: D.inputBg, color: D.textPrimary, fontSize: '0.85rem', outline: 'none' }}
             />
             <button
@@ -312,7 +393,7 @@ export const Crm: React.FC = () => {
               <CreditCard size={15} /> Recharge via Razorpay
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* ── KPI Grid ── */}
         <div style={{ background: D.surface, border: `1px solid ${D.border}`, borderRadius: 20, padding: 24, marginBottom: 24, boxShadow: '0 4px 30px rgba(0,0,0,0.3)' }}>

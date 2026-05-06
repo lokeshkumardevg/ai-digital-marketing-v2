@@ -32,15 +32,10 @@ export class CrmService {
   async getAudiences(): Promise<Audience[]> {
     try {
       const results = await this.audienceModel.find().lean().exec();
-      if (!results || results.length === 0) {
-        return [
-           { _id: 'mock-1', name: 'Software Engineers', description: 'Tech professionals segment.', targetingCriteria: { minAge: 22, maxAge: 50, locations: ['Global'], interests: ['React', 'NodeJS'] }, estimatedSize: 40000 },
-           { _id: 'mock-2', name: 'Digital Marketers', description: 'Growth hackers.', targetingCriteria: { minAge: 20, maxAge: 40, locations: ['US', 'UK'], interests: ['SEO', 'Ads'] }, estimatedSize: 15000 }
-        ] as any[];
-      }
-      return results;
-    } catch(e) {
-      return [] as any[]; // Fallback
+      return results || [];
+    } catch (e) {
+      this.logger.error('Failed to load audiences', e);
+      return [] as any[];
     }
   }
 

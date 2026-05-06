@@ -161,13 +161,13 @@ export const MOCK_AUDIT_DATA = {
     ]
   },
   "budget": {
-    "estimatedAdSpend": "₹0–₹50K/month (likely minimal currently)",
+    "estimatedAdSpend": "$0–$50K/month (likely minimal currently)",
     "recommendedChannels": [
       "Google Search Ads (solar EPC, geo-targeted)",
       "LinkedIn Ads (B2B C&I decision makers)",
       "Content/SEO (long-term organic)"
     ],
-    "estimatedCPCRange": "₹40–₹120 for solar EPC keywords",
-    "roiPotential": "High — average project value likely ₹20L–₹5Cr"
+    "estimatedCPCRange": "$40–$120 for solar EPC keywords",
+    "roiPotential": "High — average project value likely $20L–$5Cr"
   }
 }

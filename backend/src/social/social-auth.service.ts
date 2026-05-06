@@ -173,7 +173,7 @@ export class SocialAuthService {
     }
 
     return {
-      linkedin: Boolean(user.linkedinAccessToken && user.linkedinPersonId),
+      linkedin: Boolean(user.linkedinAccessToken && user.linkedinPersonUrn),
       twitter: Boolean(user.twitterAccessToken && user.twitterUserId),
       facebook: Boolean(user.metaAccessToken),
       instagram: Boolean(user.instagramAccessToken && user.instagramUserId),

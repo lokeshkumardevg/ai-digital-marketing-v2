@@ -32,7 +32,7 @@ export class AnalyticsService {
   }
 
   async getAdInsights(
-    platform: 'google' | 'meta',
+    platform: 'google' | 'meta' | 'twitter' | 'linkedin',
     userId: string,
     customerId?: string,
     bypassCache = false,
@@ -62,6 +62,10 @@ export class AnalyticsService {
       data = await this.fetchGoogleInsights(user, customerId);
     } else if (platform === 'meta') {
       data = await this.fetchMetaInsights(user);
+    } else if (platform === 'twitter') {
+      data = await this.fetchTwitterInsights(user);
+    } else if (platform === 'linkedin') {
+      data = await this.fetchLinkedInInsights(user);
     } else {
       this.logger.warn(`Unsupported platform: ${platform}`);
       return this.getEmptyResponse();
@@ -258,20 +262,79 @@ export class AnalyticsService {
     }
   }
 
-  private getMockData(platform: string): any {
-    return {
-      audiences: [{ label: `${platform} Default`, value: 100, color: '#2631d6' }],
-      pages: [{ label: 'default', value: 100, color: '#3b82f6' }],
-      creatives: [
+  private async fetchTwitterInsights(user: any): Promise<any> {
+    try {
+      if (!user.twitterAccessToken) {
+        this.logger.warn('Missing Twitter access token');
+        return this.getMockData('Twitter');
+      }
+
+      // Twitter Ads API v11 - Note: Twitter Ads API requires OAuth 2.0 or OAuth 1.0a
+      // This is a placeholder implementation
+      const response = await fetch(
+        `https://ads-api.twitter.com/11/accounts/${user.twitterUserId}/campaigns`,
         {
-          name: `${platform} Mock`,
-          cpa: 2.5,
-          ctr: 7.0,
-          spend: 300,
-          color: '#f97316',
+          headers: {
+            Authorization: `Bearer ${user.twitterAccessToken}`,
+            'Content-Type': 'application/json',
+          },
         },
-      ],
-    };
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data) {
+        this.logger.warn('Twitter Ads API error', data);
+        return this.getMockData('Twitter');
+      }
+
+      // Process Twitter data into unified format
+      return {
+        audiences: [],
+        pages: [],
+        creatives: [],
+      };
+    } catch (error) {
+      this.logger.error('Twitter API error', error);
+      return this.getMockData('Twitter');
+    }
+  }
+
+  private async fetchLinkedInInsights(user: any): Promise<any> {
+    try {
+      if (!user.linkedinAccessToken) {
+        this.logger.warn('Missing LinkedIn access token');
+        return this.getMockData('LinkedIn');
+      }
+
+      // LinkedIn Marketing API
+      const response = await fetch(
+        `https://api.linkedin.com/v2/adAccounts?q=search&search=(status:(values:List(ACTIVE)))`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.linkedinAccessToken}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data) {
+        this.logger.warn('LinkedIn API error', data);
+        return this.getMockData('LinkedIn');
+      }
+
+      // Process LinkedIn data into unified format
+      return {
+        audiences: [],
+        pages: [],
+        creatives: [],
+      };
+    } catch (error) {
+      this.logger.error('LinkedIn API error', error);
+      return this.getMockData('LinkedIn');
+    }
   }
 
   async getDashboardMetrics(dateRange?: string): Promise<any> {
@@ -562,5 +625,173 @@ export class AnalyticsService {
 
     this.logger.log(`Synced ${Object.keys(byDate).length} days of Google insights`);
     return { synced: Object.keys(byDate).length };
+  }
+
+  async syncTwitterInsights(userId: string): Promise<any> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
+    }
+    if (!user.twitterAccessToken) {
+      throw new HttpException('X Ads access token not found. Connect X Ads first.', HttpStatus.PRECONDITION_FAILED);
+    }
+
+    const response = await fetch('https://ads-api.twitter.com/11/accounts', {
+      headers: {
+        Authorization: `Bearer ${user.twitterAccessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    const data: any = await response.json();
+    if (!response.ok || !data.data || !data.data.length) {
+      throw new HttpException('Unable to fetch X Ads accounts. Check connection and permissions.', HttpStatus.BAD_REQUEST);
+    }
+
+    const accountId = data.data[0].id;
+    const statsRes = await fetch(`https://ads-api.twitter.com/11/accounts/${accountId}/campaigns`, {
+      headers: {
+        Authorization: `Bearer ${user.twitterAccessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    const statsJson: any = await statsRes.json();
+    if (!statsRes.ok || !statsJson.data) {
+      throw new HttpException('Unable to fetch X Ads campaign data.', HttpStatus.BAD_REQUEST);
+    }
+
+    let synced = 0;
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    const aggregate = {
+      spend: 0,
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0,
+    };
+
+    for (const item of statsJson.data) {
+      aggregate.spend += Number(item.daily_spend || item.spend || 0);
+      aggregate.impressions += Number(item.impressions || 0);
+      aggregate.clicks += Number(item.clicks || 0);
+      aggregate.conversions += Number(item.conversions || 0);
+      aggregate.revenue += Number(item.conversion_value || 0);
+    }
+
+    await this.analyticsModel.findOneAndUpdate(
+      { date: new Date(dateStr), platform: 'twitter' },
+      {
+        $set: {
+          date: new Date(dateStr),
+          platform: 'twitter',
+          spend: parseFloat(aggregate.spend.toFixed(2)),
+          impressions: aggregate.impressions,
+          clicks: aggregate.clicks,
+          conversions: aggregate.conversions,
+          revenue: parseFloat(aggregate.revenue.toFixed(2)),
+          cpm: aggregate.impressions > 0 ? (aggregate.spend / aggregate.impressions) * 1000 : 0,
+          cpc: aggregate.clicks > 0 ? aggregate.spend / aggregate.clicks : 0,
+          ctr: aggregate.impressions > 0 ? (aggregate.clicks / aggregate.impressions) * 100 : 0,
+        },
+      },
+      { upsert: true, new: true },
+    );
+
+    synced += 1;
+    this.logger.log(`Synced X Ads insights for ${accountId}`);
+    return { synced };
+  }
+
+  async syncLinkedInInsights(userId: string): Promise<any> {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.BAD_REQUEST);
+    }
+    if (!user.linkedinAccessToken) {
+      throw new HttpException('LinkedIn access token not found. Connect LinkedIn first.', HttpStatus.PRECONDITION_FAILED);
+    }
+
+    const accountsRes = await fetch('https://api.linkedin.com/v2/adAccounts?q=search', {
+      headers: {
+        Authorization: `Bearer ${user.linkedinAccessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    const accountsData: any = await accountsRes.json();
+    if (!accountsRes.ok || !accountsData.elements || !accountsData.elements.length) {
+      throw new HttpException('Unable to fetch LinkedIn Ad accounts. Check connection and permissions.', HttpStatus.BAD_REQUEST);
+    }
+
+    const accountUrn = accountsData.elements[0].id || accountsData.elements[0].account || accountsData.elements[0].organisations?.[0];
+    const today = new Date();
+    const since = new Date();
+    since.setDate(since.getDate() - 7);
+    const dateFrom = since.toISOString().split('T')[0];
+    const dateTo = today.toISOString().split('T')[0];
+    const analyticsUrl = `https://api.linkedin.com/v2/adAnalyticsV2?q=analytics&dateRange.start.year=${since.getFullYear()}&dateRange.start.month=${since.getMonth() + 1}&dateRange.start.day=${since.getDate()}&dateRange.end.year=${today.getFullYear()}&dateRange.end.month=${today.getMonth() + 1}&dateRange.end.day=${today.getDate()}&pivot=ACCOUNT&accounts=urn%3Ali%3AadAccount%3A${encodeURIComponent(accountUrn)}&fields=costInLocalCurrency,impressions,clicks,conversions`;
+
+    const statsRes = await fetch(analyticsUrl, {
+      headers: {
+        Authorization: `Bearer ${user.linkedinAccessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    const statsJson: any = await statsRes.json();
+    if (!statsRes.ok || !statsJson.elements) {
+      throw new HttpException('Unable to fetch LinkedIn analytics.', HttpStatus.BAD_REQUEST);
+    }
+
+    const aggregate = {
+      spend: 0,
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0,
+    };
+    for (const element of statsJson.elements) {
+      aggregate.spend += Number(element.costInLocalCurrency || 0);
+      aggregate.impressions += Number(element.impressions || 0);
+      aggregate.clicks += Number(element.clicks || 0);
+      aggregate.conversions += Number(element.conversions || 0);
+    }
+
+    const dateStr = today.toISOString().split('T')[0];
+    await this.analyticsModel.findOneAndUpdate(
+      { date: new Date(dateStr), platform: 'linkedin' },
+      {
+        $set: {
+          date: new Date(dateStr),
+          platform: 'linkedin',
+          spend: parseFloat(aggregate.spend.toFixed(2)),
+          impressions: aggregate.impressions,
+          clicks: aggregate.clicks,
+          conversions: aggregate.conversions,
+          revenue: parseFloat(aggregate.revenue.toFixed(2)),
+          cpm: aggregate.impressions > 0 ? (aggregate.spend / aggregate.impressions) * 1000 : 0,
+          cpc: aggregate.clicks > 0 ? aggregate.spend / aggregate.clicks : 0,
+          ctr: aggregate.impressions > 0 ? (aggregate.clicks / aggregate.impressions) * 100 : 0,
+        },
+      },
+      { upsert: true, new: true },
+    );
+
+    this.logger.log(`Synced LinkedIn insights for ${accountUrn}`);
+    return { synced: 1 };
+  }
+
+  private getMockData(platform: string): any {
+    return {
+      audiences: [{ label: `${platform} Default`, value: 100, color: '#2631d6' }],
+      pages: [{ label: 'default', value: 100, color: '#3b82f6' }],
+      creatives: [
+        {
+          name: `${platform} Mock`,
+          cpa: 2.5,
+          ctr: 7.0,
+          spend: 300,
+          color: '#f97316',
+        },
+      ],
+    };
   }
 }

@@ -61,7 +61,7 @@ export class User {
   linkedinRefreshToken?: string;
 
   @Prop()
-  linkedinPersonId?: string;
+  linkedinPersonUrn?: string;
 
   @Prop()
   twitterAccessToken?: string;

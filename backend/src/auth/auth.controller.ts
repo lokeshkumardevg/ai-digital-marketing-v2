@@ -48,15 +48,19 @@ async getGoogleAds(
 ) {
   return this.authService.getGoogleAdsInsights(req.user.id, customerId);
 }
-  // ❌ REMOVE JWT GUARD HERE (IMPORTANT FIX)
-  // Google will call this route WITHOUT JWT
-  @Get('google/callback')
-  async googleCallback(
-    @Query('code') code: string,
-    @Query('userId') userId: string
-  ) {
-    return this.authService.handleGoogleCallback(userId, code);
+@Get('google/callback')
+async googleCallback(
+  @Query('code') code: string,
+  @Query('state') state: string
+) {
+  if (!code || !state) {
+    throw new UnauthorizedException('Missing code or state');
   }
+
+  const userId = state;
+
+  return this.authService.handleGoogleCallback(userId, code);
+}
 
   // ================= GOOGLE CREDENTIALS =================
 
@@ -94,4 +98,50 @@ async getGoogleAds(
       body.appSecret
     );
   }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('meta')
+  getMetaAuthUrl(@Request() req: any) {
+    return { url: this.authService.getMetaAuthUrl(req.user.id) };
+  }
+
+@Get('meta/callback')
+async metaCallback(
+  @Query('code') code: string,
+  @Query('state') state: string
+) {
+  return this.authService.handleMetaCallback(state, code);
+}
+
+  // ================= X (TWITTER) =================
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('x')
+  getXAuthUrl(@Request() req: any) {
+    return { url: this.authService.getXAuthUrl(req.user.id) };
+  }
+
+@Get('x/callback')
+async xCallback(
+  @Query('code') code: string,
+  @Query('state') state: string
+) {
+  return this.authService.handleXCallback(state, code);
+}
+
+  // ================= LINKEDIN =================
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('linkedin')
+  getLinkedInAuthUrl(@Request() req: any) {
+    return { url: this.authService.getLinkedInAuthUrl(req.user.id) };
+  }
+
+@Get('linkedin/callback')
+async linkedinCallback(
+  @Query('code') code: string,
+  @Query('state') state: string
+) {
+  return this.authService.handleLinkedInCallback(state, code);
+}
 }

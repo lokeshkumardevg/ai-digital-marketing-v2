@@ -67,7 +67,7 @@ export class AuthService {
 getGoogleAuthUrl(userId: string) {
   const clientId = this.configService.get('GOOGLE_CLIENT_ID');
 
-  const redirectUri = `http://localhost:3000/auth/google/callback?userId=${userId}`;
+  const redirectUri = `http://localhost:3000/auth/google/callback`;
 
   const scope = [
     'https://www.googleapis.com/auth/adwords',
@@ -75,14 +75,40 @@ getGoogleAuthUrl(userId: string) {
     'https://www.googleapis.com/auth/userinfo.profile',
   ].join(' ');
 
-  return `https://accounts.google.com/o/oauth2/v2/auth?` +
-    `client_id=${clientId}` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&response_type=code` +
-    `&scope=${encodeURIComponent(scope)}` +
-    `&access_type=offline` +
-    `&prompt=consent`;
+return `https://accounts.google.com/o/oauth2/v2/auth?` +
+  `client_id=${clientId}` +
+  `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+  `&response_type=code` +
+  `&scope=${encodeURIComponent(scope)}` +
+  `&access_type=offline` +
+  `&prompt=consent` +
+  `&state=${userId}`;
 }
+
+  getMetaAuthUrl(userId: string) {
+    const appId = this.configService.get('META_APP_ID');
+    const redirectUri = `http://localhost:3000/auth/meta/callback?userId=${userId}`;
+    const scope = 'ads_read,ads_management';
+
+    return `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=${userId}`;
+  }
+
+  getXAuthUrl(userId: string) {
+    const clientId = this.configService.get('X_CLIENT_ID');
+    const redirectUri = `http://localhost:3000/auth/x/callback?userId=${userId}`;
+    const scope = 'tweet.read%20users.read%20ads.read';
+    const codeChallenge = 'challenge'; // In production, generate proper PKCE challenge
+
+    return `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${userId}&code_challenge=${codeChallenge}&code_challenge_method=plain`;
+  }
+
+  getLinkedInAuthUrl(userId: string) {
+    const clientId = this.configService.get('LINKEDIN_CLIENT_ID');
+    const redirectUri = `http://localhost:3000/auth/linkedin/callback?userId=${userId}`;
+    const scope = 'r_ads%20r_organization_social';
+
+    return `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${userId}`;
+  }
 
   async handleGoogleCallback(userId: string, code: string) {
     const user = await this.usersService.findById(userId);
@@ -225,7 +251,7 @@ getGoogleAuthUrl(userId: string) {
 
     // Short-lived token
     const shortRes = await fetch(
-      `https://graph.facebook.com/v20.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&redirect_uri=http://localhost:3001/auth/meta/callback&code=${code}`
+      `https://graph.facebook.com/v20.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&redirect_uri=http://localhost:3000/auth/meta/callback&code=${code}`
     );
 
     const shortToken = await shortRes.json();
@@ -264,20 +290,116 @@ getGoogleAuthUrl(userId: string) {
     return res.json();
   }
 
-  async updateGoogleCredentials(userId: string, clientId: string, clientSecret: string, developerToken?: string, customerId?: string) {
-    await this.usersService.update(userId, {
-      googleClientId: clientId,
-      googleClientSecret: clientSecret,
-      ...(developerToken && { googleDeveloperToken: developerToken }),
-      ...(customerId && { googleCustomerId: customerId }),
+  async handleXCallback(userId: string, code: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    // X (Twitter) OAuth 2.0 PKCE flow
+    const clientId = this.configService.get('X_CLIENT_ID');
+    const clientSecret = this.configService.get('X_CLIENT_SECRET');
+
+    if (!clientId || !clientSecret) {
+      throw new UnauthorizedException('X credentials not configured');
+    }
+
+    const params = new URLSearchParams({
+      code,
+      grant_type: 'authorization_code',
+      client_id: clientId,
+      redirect_uri: 'http://localhost:3000/auth/x/callback',
+      code_verifier: 'challenge', // In production, this should be stored and retrieved
     });
-    return { success: true };
+
+    const res = await fetch('https://api.twitter.com/2/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+      },
+      body: params.toString(),
+    });
+
+    const tokens = await res.json();
+    if (tokens.error) throw new UnauthorizedException(tokens.error_description);
+
+    // Get user info
+    const userRes = await fetch('https://api.twitter.com/2/users/me', {
+      headers: {
+        Authorization: `Bearer ${tokens.access_token}`,
+      },
+    });
+
+    const userData = await userRes.json();
+
+    await this.usersService.update(userId, {
+      twitterAccessToken: tokens.access_token,
+      twitterRefreshToken: tokens.refresh_token,
+      twitterUserId: userData.data.id,
+    });
+
+    return { message: 'X Ads connected successfully' };
+  }
+
+  async handleLinkedInCallback(userId: string, code: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const clientId = this.configService.get('LINKEDIN_CLIENT_ID');
+    const clientSecret = this.configService.get('LINKEDIN_CLIENT_SECRET');
+
+    if (!clientId || !clientSecret) {
+      throw new UnauthorizedException('LinkedIn credentials not configured');
+    }
+
+    const params = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: 'http://localhost:3000/auth/linkedin/callback',
+      client_id: clientId,
+      client_secret: clientSecret,
+    });
+
+    const res = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    const tokens = await res.json();
+    if (tokens.error) throw new UnauthorizedException(tokens.error_description);
+
+    // Get user info
+    const userRes = await fetch('https://api.linkedin.com/v2/people/~', {
+      headers: {
+        Authorization: `Bearer ${tokens.access_token}`,
+      },
+    });
+
+    const userData = await userRes.json();
+
+    await this.usersService.update(userId, {
+      linkedinAccessToken: tokens.access_token,
+      linkedinRefreshToken: tokens.refresh_token,
+      linkedinPersonUrn: userData.id,
+    });
+
+    return { message: 'LinkedIn Ads connected successfully' };
   }
 
   async updateMetaCredentials(userId: string, appId: string, appSecret: string) {
     await this.usersService.update(userId, {
       metaAppId: appId,
       metaAppSecret: appSecret,
+    });
+    return { success: true };
+  }
+
+  async updateGoogleCredentials(userId: string, clientId: string, clientSecret: string, developerToken?: string, customerId?: string) {
+    await this.usersService.update(userId, {
+      googleClientId: clientId,
+      googleClientSecret: clientSecret,
+      ...(developerToken && { googleDeveloperToken: developerToken }),
+      ...(customerId && { googleCustomerId: customerId }),
     });
     return { success: true };
   }
