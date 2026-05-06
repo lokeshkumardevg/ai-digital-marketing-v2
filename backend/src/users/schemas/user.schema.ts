@@ -33,11 +33,17 @@ export class User {
   googleClientSecret?: string;
 
   @Prop()
+  googleCustomerId?: string;
+
+  @Prop()
   googleRefreshToken?: string;
 
   /** OAuth access token for Google Ads API (short-lived; refresh when integrating full OAuth) */
   @Prop()
   googleAccessToken?: string;
+
+  @Prop()
+  googleTokenExpiry?: number;
 
   @Prop()
   metaAppId?: string;
