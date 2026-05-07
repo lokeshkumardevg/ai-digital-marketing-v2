@@ -17,6 +17,7 @@ import {
 import axios from 'axios';
 import { getAuthUser } from '../../landing/lib/auth';  // adjust path to match your project
 import { Header } from '../components/Header';
+import LiveDashboard from '../components/CampaignLivedashboard';
 
 // ============================================
 // TYPES
@@ -715,179 +716,6 @@ const PaymentModal: React.FC<{
         )}
       </motion.div>
     </motion.div>
-  );
-};
-
-// ============================================
-// LIVE DASHBOARD
-// ============================================
-const LiveDashboard: React.FC<{
-  campaign: LiveCampaignData;
-  brandName: string;
-  onBackToChat: () => void;
-  onRefresh: () => void;
-  isRefreshing: boolean;
-}> = ({ campaign, brandName, onBackToChat, onRefresh, isRefreshing }) => {
-  const [selectedPlatform, setSelectedPlatform] = useState<string>(campaign.platforms[0]?.name || 'meta');
-  const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d'>('7d');
-  const [showFullscreen, setShowFullscreen] = useState(false);
-
-  const platform = campaign.platforms.find((p: any) => p.name === selectedPlatform) || campaign.platforms[0];
-  const getPlatformMeta = (name: string) => {
-    const map: Record<string, { color: string; icon: JSX.Element; label: string; sub: string }> = {
-      meta:     { color: '#3b82f6', icon: <FacebookIcon />,  label: 'Meta Ads',      sub: 'Facebook & Instagram' },
-      google:   { color: '#ea4335', icon: <GoogleIcon />,    label: 'Google Ads',    sub: 'Search, Display & YouTube' },
-      twitter:  { color: '#e7e9ea', icon: <TwitterXIcon />,  label: 'Twitter (X)',   sub: 'X Ads & Promoted Posts' },
-      linkedin: { color: '#0a66c2', icon: <LinkedInIcon />,  label: 'LinkedIn Ads',  sub: 'Sponsored Content & InMail' },
-    };
-    return map[name] || map['meta'];
-  };
-  const pm = getPlatformMeta(platform?.name);
-  const platformColor = pm.color;
-  const platformIcon  = pm.icon;
-  const platformName  = pm.label;
-
-  const statusColors: Record<string, string> = {
-    CREATING: '#f59e0b', PROCESSING: '#3b82f6', ACTIVE: '#10b981', PAUSED: '#64748b', FAILED: '#ef4444',
-  };
-  const statusLabels: Record<string, string> = {
-    CREATING: 'Creating', PROCESSING: 'Processing', ACTIVE: 'Live', PAUSED: 'Paused', FAILED: 'Failed',
-  };
-
-  return (
-    <div className={`dashboard-page ${showFullscreen ? 'fullscreen' : ''}`}>
-      <div className="dash-header">
-        <div className="dash-header-left">
-          <button className="dash-back-btn" onClick={onBackToChat}><ArrowLeft size={18} /> Chat</button>
-          <div className="dash-title-section">
-            <h2>{campaign.campaignName || brandName} Campaign</h2>
-            <span className="dash-campaign-id">ID: {campaign.campaignId?.slice(0, 16)}...</span>
-          </div>
-        </div>
-        <div className="dash-header-right">
-          <div className="dash-time-filter">
-            {(['7d', '14d', '30d'] as const).map(range => (
-              <button key={range} className={`dash-time-btn ${timeRange === range ? 'active' : ''}`} onClick={() => setTimeRange(range)}>
-                {range === '7d' ? '7 Days' : range === '14d' ? '14 Days' : '30 Days'}
-              </button>
-            ))}
-          </div>
-          <button className="dash-refresh-btn" onClick={onRefresh} disabled={isRefreshing}>
-            <RefreshCcw size={16} className={isRefreshing ? 'spin' : ''} />
-          </button>
-          <button className="dash-fullscreen-btn" onClick={() => setShowFullscreen(!showFullscreen)}>
-            <Maximize2 size={16} />
-          </button>
-        </div>
-      </div>
-
-      <div className="dash-status-bar">
-        <div className="dash-status-item">
-          <span className="dash-status-dot" style={{ background: statusColors[campaign.status] }} />
-          <span>{statusLabels[campaign.status] || campaign.status}</span>
-        </div>
-        <div className="dash-status-item"><Clock size={14} /><span>{new Date(campaign.createdAt).toLocaleDateString()}</span></div>
-        <div className="dash-status-item">
-          <Wifi size={14} color={campaign.status === 'ACTIVE' ? '#10b981' : '#64748b'} />
-          <span>{campaign.status === 'ACTIVE' ? 'Auto-updating every 5s' : 'Updates paused'}</span>
-        </div>
-      </div>
-
-      <div className="dash-overall-metrics">
-        {[
-          { icon: <Eye size={20} />, value: (campaign.overallMetrics?.totalImpressions || 0).toLocaleString(), label: 'Total Impressions' },
-          { icon: <MousePointerClick size={20} />, value: (campaign.overallMetrics?.totalClicks || 0).toLocaleString(), label: 'Total Clicks' },
-          { icon: <DollarSign size={20} />, value: fmt(campaign.overallMetrics?.totalSpend || 0), label: 'Total Spend' },
-          { icon: <Target size={20} />, value: (campaign.overallMetrics?.totalConversions || 0).toLocaleString(), label: 'Conversions' },
-          { icon: <TrendingUp size={20} />, value: `${campaign.overallMetrics?.overallRoi || 0}%`, label: 'Overall ROI', highlight: true, color: '#10b981' },
-        ].map(m => (
-          <div key={m.label} className={`dash-metric-card ${m.highlight ? 'highlight' : ''}`}>
-            <div className="dash-metric-icon">{m.icon}</div>
-            <div className="dash-metric-value" style={m.color ? { color: m.color } : {}}>{m.value}</div>
-            <div className="dash-metric-label">{m.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="dash-platform-tabs">
-        {campaign.platforms.map((p: any) => (
-          <button key={p.name} className={`dash-platform-tab ${selectedPlatform === p.name ? 'active' : ''}`} onClick={() => setSelectedPlatform(p.name)}>
-            {p.name === 'meta' ? <FacebookIcon /> : p.name === 'google' ? <GoogleIcon /> : p.name === 'twitter' ? <TwitterXIcon /> : <LinkedInIcon />}
-            <span>{({'meta':'Meta Ads','google':'Google Ads','twitter':'Twitter (X)','linkedin':'LinkedIn Ads'} as any)[p.name] || p.name}</span>
-            <span className={`dash-tab-status ${p.status.toLowerCase()}`}>{p.status}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="dash-platform-detail">
-        <div className="dash-platform-header">
-          <div className="dash-platform-info">
-            <div className="dash-platform-icon" style={{ background: `${platformColor}18` }}>{platformIcon}</div>
-            <div>
-              <h3>{platformName}</h3>
-              <p>{pm.sub}</p>
-            </div>
-          </div>
-          <div className="dash-platform-status">
-            <span className="dash-status-dot" style={{ background: statusColors[platform?.status] }} />
-            {statusLabels[platform?.status]}
-          </div>
-        </div>
-
-        <div className="dash-metrics-grid">
-          {[
-            { value: (platform?.metrics?.impressions || 0).toLocaleString(), label: 'Impressions', width: '75%' },
-            { value: (platform?.metrics?.clicks || 0).toLocaleString(), label: 'Clicks', width: '60%' },
-            { value: fmt(platform?.metrics?.spend || 0), label: 'Spend', width: '45%' },
-            { value: `${((platform?.metrics?.ctr || 0) * 100).toFixed(2)}%`, label: 'CTR', width: '35%' },
-            { value: fmt(platform?.metrics?.costPerClick || 0), label: 'CPC', width: '40%' },
-            { value: String(platform?.metrics?.conversions || 0), label: 'Conversions', width: '55%' },
-            { value: `${platform?.metrics?.roi || 0}%`, label: 'ROI', width: '80%', highlight: true, color: '#10b981', barColor: '#10b981' },
-            { value: fmt(platform?.metrics?.cpa || (platform?.metrics?.spend / (platform?.metrics?.conversions || 1))), label: 'CPA', width: '50%' },
-          ].map(m => (
-            <div key={m.label} className={`dash-metric-box ${m.highlight ? 'highlight' : ''}`}>
-              <div className="dash-mb-value" style={m.color ? { color: m.color } : {}}>{m.value}</div>
-              <div className="dash-mb-label">{m.label}</div>
-              <div className="dash-mb-bar">
-                <div className="dash-mb-bar-fill" style={{ width: m.width, background: m.barColor || platformColor }} />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {platform?.adSets?.length > 0 && (
-          <div className="dash-adsets">
-            <div className="dash-adsets-header">
-              <h4><Layers size={16} /> Ad Sets</h4>
-              <span>{platform.adSets.length} active</span>
-            </div>
-            <div className="dash-adsets-table">
-              <div className="dash-adset-row header">
-                <span>Name</span><span>Status</span><span>Budget</span><span>Impressions</span><span>Clicks</span><span>Spend</span><span>CTR</span><span>ROI</span>
-              </div>
-              {platform.adSets.map((ad: any, i: number) => (
-                <div key={i} className="dash-adset-row">
-                  <span>{ad.name}</span>
-                  <span className={`adset-status ${ad.status.toLowerCase()}`}>{ad.status}</span>
-                  <span>{fmt(ad.budget)}</span>
-                  <span>{ad.impressions?.toLocaleString()}</span>
-                  <span>{ad.clicks?.toLocaleString()}</span>
-                  <span>{fmt(ad.spend)}</span>
-                  <span>{((ad.ctr || 0) * 100).toFixed(2)}%</span>
-                  <span style={{ color: ad.roi > 100 ? '#10b981' : '#ef4444' }}>{ad.roi}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {platform?.liveUrl && (
-          <a href={platform.liveUrl} target="_blank" rel="noopener noreferrer" className="dash-view-btn" style={{ background: platformColor }}>
-            View Live Campaign <ArrowUpRight size={14} />
-          </a>
-        )}
-      </div>
-    </div>
   );
 };
 
@@ -2096,7 +1924,7 @@ const PlatformAdSelector: React.FC<{ onSelect: (p: string) => void; brand?: Bran
       {selectedIds.length > 0 && (
         <button className="plat-custom-btn" onClick={handleCustomSelect}>
           <Zap size={15} />
-          Launch with {selectedIds.map(id => platforms.find(p => p.id === id)?.label).join(' + ')}
+          Start with {selectedIds.map(id => platforms.find(p => p.id === id)?.label).join(' + ')}
           <ArrowRight size={15} />
         </button>
       )}
