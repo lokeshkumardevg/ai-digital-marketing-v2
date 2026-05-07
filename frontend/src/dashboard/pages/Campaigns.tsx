@@ -17,7 +17,6 @@ import {
 import axios from 'axios';
 import { getAuthUser } from '../../landing/lib/auth';  // adjust path to match your project
 import { Header } from '../components/Header';
-import LiveDashboard from '../components/CampaignLivedashboard';
 
 // ============================================
 // TYPES
@@ -250,7 +249,7 @@ const resolveIndustry = (b: BrandDetails): string =>
 const fmt = (n: number) =>
   n?.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }) || '$0';
 const fmtINR = (n: number) =>
-  n?.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }) || '$0';
+  n?.toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }) || '₹0';
 
 const generateBudgetTiers = (userBudget: number, platforms: string[]): BudgetBreakdown => {
   const buildTier = (label: string, mult: number, desc: string, recommended = false): BudgetTier => {
@@ -716,6 +715,179 @@ const PaymentModal: React.FC<{
         )}
       </motion.div>
     </motion.div>
+  );
+};
+
+// ============================================
+// LIVE DASHBOARD
+// ============================================
+const LiveDashboard: React.FC<{
+  campaign: LiveCampaignData;
+  brandName: string;
+  onBackToChat: () => void;
+  onRefresh: () => void;
+  isRefreshing: boolean;
+}> = ({ campaign, brandName, onBackToChat, onRefresh, isRefreshing }) => {
+  const [selectedPlatform, setSelectedPlatform] = useState<string>(campaign.platforms[0]?.name || 'meta');
+  const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d'>('7d');
+  const [showFullscreen, setShowFullscreen] = useState(false);
+
+  const platform = campaign.platforms.find((p: any) => p.name === selectedPlatform) || campaign.platforms[0];
+  const getPlatformMeta = (name: string) => {
+    const map: Record<string, { color: string; icon: JSX.Element; label: string; sub: string }> = {
+      meta:     { color: '#3b82f6', icon: <FacebookIcon />,  label: 'Meta Ads',      sub: 'Facebook & Instagram' },
+      google:   { color: '#ea4335', icon: <GoogleIcon />,    label: 'Google Ads',    sub: 'Search, Display & YouTube' },
+      twitter:  { color: '#e7e9ea', icon: <TwitterXIcon />,  label: 'Twitter (X)',   sub: 'X Ads & Promoted Posts' },
+      linkedin: { color: '#0a66c2', icon: <LinkedInIcon />,  label: 'LinkedIn Ads',  sub: 'Sponsored Content & InMail' },
+    };
+    return map[name] || map['meta'];
+  };
+  const pm = getPlatformMeta(platform?.name);
+  const platformColor = pm.color;
+  const platformIcon  = pm.icon;
+  const platformName  = pm.label;
+
+  const statusColors: Record<string, string> = {
+    CREATING: '#f59e0b', PROCESSING: '#3b82f6', ACTIVE: '#10b981', PAUSED: '#64748b', FAILED: '#ef4444',
+  };
+  const statusLabels: Record<string, string> = {
+    CREATING: 'Creating', PROCESSING: 'Processing', ACTIVE: 'Live', PAUSED: 'Paused', FAILED: 'Failed',
+  };
+
+  return (
+    <div className={`dashboard-page ${showFullscreen ? 'fullscreen' : ''}`}>
+      <div className="dash-header">
+        <div className="dash-header-left">
+          <button className="dash-back-btn" onClick={onBackToChat}><ArrowLeft size={18} /> Chat</button>
+          <div className="dash-title-section">
+            <h2>{campaign.campaignName || brandName} Campaign</h2>
+            <span className="dash-campaign-id">ID: {campaign.campaignId?.slice(0, 16)}...</span>
+          </div>
+        </div>
+        <div className="dash-header-right">
+          <div className="dash-time-filter">
+            {(['7d', '14d', '30d'] as const).map(range => (
+              <button key={range} className={`dash-time-btn ${timeRange === range ? 'active' : ''}`} onClick={() => setTimeRange(range)}>
+                {range === '7d' ? '7 Days' : range === '14d' ? '14 Days' : '30 Days'}
+              </button>
+            ))}
+          </div>
+          <button className="dash-refresh-btn" onClick={onRefresh} disabled={isRefreshing}>
+            <RefreshCcw size={16} className={isRefreshing ? 'spin' : ''} />
+          </button>
+          <button className="dash-fullscreen-btn" onClick={() => setShowFullscreen(!showFullscreen)}>
+            <Maximize2 size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className="dash-status-bar">
+        <div className="dash-status-item">
+          <span className="dash-status-dot" style={{ background: statusColors[campaign.status] }} />
+          <span>{statusLabels[campaign.status] || campaign.status}</span>
+        </div>
+        <div className="dash-status-item"><Clock size={14} /><span>{new Date(campaign.createdAt).toLocaleDateString()}</span></div>
+        <div className="dash-status-item">
+          <Wifi size={14} color={campaign.status === 'ACTIVE' ? '#10b981' : '#64748b'} />
+          <span>{campaign.status === 'ACTIVE' ? 'Auto-updating every 5s' : 'Updates paused'}</span>
+        </div>
+      </div>
+
+      <div className="dash-overall-metrics">
+        {[
+          { icon: <Eye size={20} />, value: (campaign.overallMetrics?.totalImpressions || 0).toLocaleString(), label: 'Total Impressions' },
+          { icon: <MousePointerClick size={20} />, value: (campaign.overallMetrics?.totalClicks || 0).toLocaleString(), label: 'Total Clicks' },
+          { icon: <DollarSign size={20} />, value: fmt(campaign.overallMetrics?.totalSpend || 0), label: 'Total Spend' },
+          { icon: <Target size={20} />, value: (campaign.overallMetrics?.totalConversions || 0).toLocaleString(), label: 'Conversions' },
+          { icon: <TrendingUp size={20} />, value: `${campaign.overallMetrics?.overallRoi || 0}%`, label: 'Overall ROI', highlight: true, color: '#10b981' },
+        ].map(m => (
+          <div key={m.label} className={`dash-metric-card ${m.highlight ? 'highlight' : ''}`}>
+            <div className="dash-metric-icon">{m.icon}</div>
+            <div className="dash-metric-value" style={m.color ? { color: m.color } : {}}>{m.value}</div>
+            <div className="dash-metric-label">{m.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="dash-platform-tabs">
+        {campaign.platforms.map((p: any) => (
+          <button key={p.name} className={`dash-platform-tab ${selectedPlatform === p.name ? 'active' : ''}`} onClick={() => setSelectedPlatform(p.name)}>
+            {p.name === 'meta' ? <FacebookIcon /> : p.name === 'google' ? <GoogleIcon /> : p.name === 'twitter' ? <TwitterXIcon /> : <LinkedInIcon />}
+            <span>{({'meta':'Meta Ads','google':'Google Ads','twitter':'Twitter (X)','linkedin':'LinkedIn Ads'} as any)[p.name] || p.name}</span>
+            <span className={`dash-tab-status ${p.status.toLowerCase()}`}>{p.status}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="dash-platform-detail">
+        <div className="dash-platform-header">
+          <div className="dash-platform-info">
+            <div className="dash-platform-icon" style={{ background: `${platformColor}18` }}>{platformIcon}</div>
+            <div>
+              <h3>{platformName}</h3>
+              <p>{pm.sub}</p>
+            </div>
+          </div>
+          <div className="dash-platform-status">
+            <span className="dash-status-dot" style={{ background: statusColors[platform?.status] }} />
+            {statusLabels[platform?.status]}
+          </div>
+        </div>
+
+        <div className="dash-metrics-grid">
+          {[
+            { value: (platform?.metrics?.impressions || 0).toLocaleString(), label: 'Impressions', width: '75%' },
+            { value: (platform?.metrics?.clicks || 0).toLocaleString(), label: 'Clicks', width: '60%' },
+            { value: fmt(platform?.metrics?.spend || 0), label: 'Spend', width: '45%' },
+            { value: `${((platform?.metrics?.ctr || 0) * 100).toFixed(2)}%`, label: 'CTR', width: '35%' },
+            { value: fmt(platform?.metrics?.costPerClick || 0), label: 'CPC', width: '40%' },
+            { value: String(platform?.metrics?.conversions || 0), label: 'Conversions', width: '55%' },
+            { value: `${platform?.metrics?.roi || 0}%`, label: 'ROI', width: '80%', highlight: true, color: '#10b981', barColor: '#10b981' },
+            { value: fmt(platform?.metrics?.cpa || (platform?.metrics?.spend / (platform?.metrics?.conversions || 1))), label: 'CPA', width: '50%' },
+          ].map(m => (
+            <div key={m.label} className={`dash-metric-box ${m.highlight ? 'highlight' : ''}`}>
+              <div className="dash-mb-value" style={m.color ? { color: m.color } : {}}>{m.value}</div>
+              <div className="dash-mb-label">{m.label}</div>
+              <div className="dash-mb-bar">
+                <div className="dash-mb-bar-fill" style={{ width: m.width, background: m.barColor || platformColor }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {platform?.adSets?.length > 0 && (
+          <div className="dash-adsets">
+            <div className="dash-adsets-header">
+              <h4><Layers size={16} /> Ad Sets</h4>
+              <span>{platform.adSets.length} active</span>
+            </div>
+            <div className="dash-adsets-table">
+              <div className="dash-adset-row header">
+                <span>Name</span><span>Status</span><span>Budget</span><span>Impressions</span><span>Clicks</span><span>Spend</span><span>CTR</span><span>ROI</span>
+              </div>
+              {platform.adSets.map((ad: any, i: number) => (
+                <div key={i} className="dash-adset-row">
+                  <span>{ad.name}</span>
+                  <span className={`adset-status ${ad.status.toLowerCase()}`}>{ad.status}</span>
+                  <span>{fmt(ad.budget)}</span>
+                  <span>{ad.impressions?.toLocaleString()}</span>
+                  <span>{ad.clicks?.toLocaleString()}</span>
+                  <span>{fmt(ad.spend)}</span>
+                  <span>{((ad.ctr || 0) * 100).toFixed(2)}%</span>
+                  <span style={{ color: ad.roi > 100 ? '#10b981' : '#ef4444' }}>{ad.roi}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {platform?.liveUrl && (
+          <a href={platform.liveUrl} target="_blank" rel="noopener noreferrer" className="dash-view-btn" style={{ background: platformColor }}>
+            View Live Campaign <ArrowUpRight size={14} />
+          </a>
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -1242,64 +1414,168 @@ export const Campaigns: React.FC = () => {
   }
 
   // ============================================
-  // LANDING PAGE
+  // LANDING PAGE — Enhanced Tech Dark
   // ============================================
   if (!isChatMode) {
     return (
       <>
         <style>{CSS}</style>
         <Header />
-        <div className="camp-landing-page">
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="camp-landing-inner">
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="camp-badge">
-              <Brain size={13} /> AI-Powered Campaign Automation
+        <div className="land-root">
+          {/* ── Animated grid background ── */}
+          <div className="land-grid" aria-hidden="true" />
+          {/* ── Orb glows ── */}
+          <div className="land-orb land-orb-1" aria-hidden="true" />
+          <div className="land-orb land-orb-2" aria-hidden="true" />
+          <div className="land-orb land-orb-3" aria-hidden="true" />
+
+          {/* ── Floating tech particles ── */}
+          <div className="land-particles" aria-hidden="true">
+            {Array.from({ length: 18 }).map((_, i) => (
+              <span key={i} className="land-particle" style={{ '--i': i } as any} />
+            ))}
+          </div>
+
+          <div className="land-content">
+
+            {/* ── Top badge ── */}
+            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="land-badge">
+              <span className="land-badge-dot" />
+              <Zap size={11} /> AI-Powered · Real-time · Multi-Platform
             </motion.div>
-            <h1 className="camp-headline">Launch Smarter <span className="camp-gradient-text">Campaigns</span></h1>
-            <p className="camp-sub">Our AI analyzes your brand, creates optimized campaigns,<br />and manages your ad spend for maximum ROI.</p>
-            <div className="camp-input-wrap">
-              <div className={`camp-input-glow ${urlStatus === 'error' ? 'error' : urlStatus === 'valid' ? 'valid' : ''}`} />
-              <div className={`camp-input-inner ${urlStatus === 'error' ? 'has-error' : urlStatus === 'valid' ? 'is-valid' : ''}`}>
-                {urlStatus === 'valid'
-                  ? <CheckCircle2 size={18} className="camp-input-icon valid" />
-                  : urlStatus === 'error'
-                    ? <XCircle size={18} className="camp-input-icon error" />
-                    : urlStatus === 'checking'
-                      ? <Loader2 size={18} className="camp-input-icon checking camp-spin" />
-                      : <Globe size={18} className="camp-input-icon" />}
+
+            {/* ── Headline ── */}
+            <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="land-headline">
+              Turn Your Brand Into a
+              <span className="land-headline-line2">
+                <span className="land-hl-static">Revenue</span>
+                <span className="land-hl-machine"> Machine</span>
+              </span>
+            </motion.h1>
+
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="land-sub">
+              Drop your URL. Our AI deep-scans your brand, builds optimized campaigns across<br />
+              Meta, Google, Twitter & LinkedIn — then manages spend for maximum ROI.
+            </motion.p>
+
+            {/* ── URL Input ── */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="land-input-section">
+              <div className={`land-input-shell ${urlStatus === 'error' ? 'is-error' : urlStatus === 'valid' ? 'is-valid' : urlStatus === 'checking' ? 'is-checking' : ''}`}>
+                <div className="land-input-prefix">
+                  {urlStatus === 'valid'    ? <CheckCircle2 size={17} color="#10b981" /> :
+                   urlStatus === 'error'    ? <XCircle size={17} color="#ef4444" /> :
+                   urlStatus === 'checking' ? <Loader2 size={17} color="#38bdf8" className="camp-spin" /> :
+                                             <Globe size={17} color="#475569" />}
+                </div>
                 <input
                   value={url}
-                  onChange={e => { setUrl(e.target.value); if (urlStatus === 'error') { setUrlStatus('idle'); setUrlError(''); } }}
+                  onChange={e => { setUrl(e.target.value); if (urlStatus === 'error') { setUrlStatus('idle'); setUrlError(''); }}}
                   onKeyDown={e => { if (e.key === 'Enter' && !loading && url) handleDeepResearch(); }}
                   placeholder="https://your-company.com"
-                  className="camp-url-input"
+                  className="land-url-input"
                   disabled={loading}
+                  spellCheck={false}
                 />
-                <button className="camp-launch-btn" onClick={handleDeepResearch} disabled={loading || !url || urlStatus === 'checking'}>
-                  {loading ? <><Loader2 className="camp-spin" size={16} /> Analyzing...</> : <><Target size={16} /> Analyze Brand</>}
+                <button className="land-cta-btn" onClick={handleDeepResearch} disabled={loading || !url || urlStatus === 'checking'}>
+                  {loading
+                    ? <><Loader2 size={15} className="camp-spin" /> Analyzing</>
+                    : <><Rocket size={15} /> Launch AI Scan</>}
                 </button>
               </div>
               <AnimatePresence>
                 {urlError && (
-                  <motion.div className="camp-url-error" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                    <AlertTriangle size={13} /><span>{urlError}</span>
+                  <motion.div className="land-url-error" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+                    <AlertTriangle size={12} /> {urlError}
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
-            <div className="camp-trust-row">
-              {['Deep Website Scan', 'AI-Powered Analysis', 'Smart Campaign Creation', 'Real-time Optimization'].map(t => (
-                <div key={t} className="camp-trust-item"><ShieldCheck size={14} /> {t}</div>
-              ))}
-            </div>
-            <div className="camp-stats-row">
-              {[['150+', 'Brands Analyzed'], ['98%', 'Accuracy Rate'], ['3x', 'Avg ROI Increase']].map(([v, l]) => (
-                <div key={l} className="camp-stat-item">
-                  <span className="camp-stat-value">{v}</span>
-                  <span className="camp-stat-label">{l}</span>
+              <div className="land-input-hint">
+                <ShieldCheck size={12} color="#334155" /> No credit card needed to scan &nbsp;·&nbsp; Results in under 30 seconds
+              </div>
+            </motion.div>
+
+            {/* ── Platform logos ── */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="land-platforms">
+              <span className="land-platforms-label">Runs campaigns on</span>
+              <div className="land-platform-icons">
+                {[
+                  { name: 'Meta', color: '#3b82f6', icon: <FacebookIcon /> },
+                  { name: 'Google', color: '#ea4335', icon: <GoogleIcon /> },
+                  { name: 'Twitter', color: '#e7e9ea', icon: <TwitterXIcon /> },
+                  { name: 'LinkedIn', color: '#0a66c2', icon: <LinkedInIcon /> },
+                ].map(p => (
+                  <div key={p.name} className="land-platform-pill" style={{ '--pc': p.color } as any}>
+                    {p.icon}
+                    <span>{p.name}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* ── Stats row ── */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }} className="land-stats">
+              {[
+                { value: '2,400+', label: 'Campaigns Launched', icon: <Rocket size={16} /> },
+                { value: '98.4%', label: 'Analysis Accuracy', icon: <Brain size={16} /> },
+                { value: '3.8×', label: 'Avg ROI Uplift', icon: <TrendingUp size={16} /> },
+                { value: '$12M+', label: 'Ad Spend Managed', icon: <DollarSign size={16} /> },
+              ].map(s => (
+                <div key={s.label} className="land-stat-card">
+                  <div className="land-stat-icon">{s.icon}</div>
+                  <div className="land-stat-value">{s.value}</div>
+                  <div className="land-stat-label">{s.label}</div>
                 </div>
               ))}
-            </div>
-          </motion.div>
+            </motion.div>
+
+            {/* ── How it works ── */}
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="land-steps-section">
+              <div className="land-steps-label"><Activity size={12} /> How It Works</div>
+              <div className="land-steps">
+                {[
+                  { n: '01', title: 'Drop Your URL', desc: 'AI scans your entire website — SEO, UX, performance, competitors — in seconds.', icon: <Globe size={20} /> },
+                  { n: '02', title: 'Choose Platforms', desc: 'Select Meta, Google, Twitter, LinkedIn or any combo. AI recommends the best mix.', icon: <Layers size={20} /> },
+                  { n: '03', title: 'Set Your Budget', desc: 'Pick a tier. AI allocates spend optimally across platforms for maximum reach.', icon: <DollarSign size={20} /> },
+                  { n: '04', title: 'Go Live & Track', desc: 'Campaign launches instantly. Live dashboard tracks ROI, clicks & conversions.', icon: <Activity size={20} /> },
+                ].map((step, i) => (
+                  <div key={step.n} className="land-step">
+                    <div className="land-step-num">{step.n}</div>
+                    <div className="land-step-icon">{step.icon}</div>
+                    <div className="land-step-title">{step.title}</div>
+                    <div className="land-step-desc">{step.desc}</div>
+                    {i < 3 && <div className="land-step-arrow" aria-hidden="true" />}
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* ── Feature grid ── */}
+            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 }} className="land-features">
+              {[
+                { icon: <Brain size={18} />, color: '#8b5cf6', title: 'AI Brand Intelligence', desc: 'Deep-scans 50+ brand signals including SEO, tone, competitors, and market positioning.' },
+                { icon: <Target size={18} />, color: '#10b981', title: 'Smart Budget Allocation', desc: "AI distributes spend across platforms based on your industry's CPC and conversion patterns." },
+                { icon: <Activity size={18} />, color: '#3b82f6', title: 'Real-time Dashboard', desc: 'Live metrics — impressions, CTR, CPC, ROI — updated every 5 seconds across all platforms.' },
+                { icon: <ShieldCheck size={18} />, color: '#f59e0b', title: 'Competitor Analysis', desc: 'Identifies top competitors, their strategies, and gaps your brand can exploit immediately.' },
+                { icon: <TrendingUp size={18} />, color: '#ec4899', title: 'ROI Optimization', desc: 'Automatic bid adjustments and creative testing to continuously improve your return.' },
+                { icon: <Zap size={18} />, color: '#38bdf8', title: 'Instant Launch', desc: 'From URL to live campaign in minutes. No agency, no delays, no manual setup needed.' },
+              ].map(f => (
+                <div key={f.title} className="land-feature-card">
+                  <div className="land-feature-icon" style={{ '--fc': f.color } as any}>{f.icon}</div>
+                  <div className="land-feature-title">{f.title}</div>
+                  <div className="land-feature-desc">{f.desc}</div>
+                </div>
+              ))}
+            </motion.div>
+
+            {/* ── Bottom CTA ── */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }} className="land-bottom-cta">
+              <p className="land-bottom-cta-text">Ready to scale your brand with AI?</p>
+              <button className="land-bottom-cta-btn" onClick={() => { const el = document.querySelector('.land-url-input') as HTMLInputElement; el?.focus(); }}>
+                <Rocket size={16} /> Start Free Analysis
+              </button>
+            </motion.div>
+
+          </div>
         </div>
       </>
     );
@@ -1461,7 +1737,7 @@ const BudgetInputForm: React.FC<{ platform: string; onSubmit: (amount: number) =
   return (
     <div className="budget-input-form">
       <div className="bif-header"><DollarSign size={18} color="#10b981" /><div><div className="bif-title">Monthly Ad Budget</div><div className="bif-sub">For {({'meta':'Meta Ads','google':'Google Ads','twitter':'Twitter (X)','linkedin':'LinkedIn Ads','both':'Meta + Google','all':'All Platforms'} as any)[platform] || platform} · Min $100</div></div></div>
-      <div className="bif-presets">{presets.map(p => <button key={p} className={`bif-preset ${value === String(p) ? 'active' : ''}`} onClick={() => { setValue(String(p)); setError(''); }}>${p.toLocaleString()}</button>)}</div>
+      <div className="bif-presets">{presets.map(p => <button key={p} className={`bif-preset ${value === String(p) ? 'active' : ''}`} onClick={() => { setValue(String(p)); setError(''); }}>₹{p.toLocaleString()}</button>)}</div>
       <div className="bif-input-row">
         <div className="bif-input-wrap"><span className="bif-currency">$</span><input type="number" className="bif-input" placeholder="Enter amount" value={value} onChange={e => { setValue(e.target.value); setError(''); }} onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); }} /><span className="bif-period">/mo</span></div>
         <button className="bif-submit" onClick={handleSubmit} disabled={!value}>Generate Plans <ArrowRight size={16} /></button>
@@ -1924,7 +2200,7 @@ const PlatformAdSelector: React.FC<{ onSelect: (p: string) => void; brand?: Bran
       {selectedIds.length > 0 && (
         <button className="plat-custom-btn" onClick={handleCustomSelect}>
           <Zap size={15} />
-          Start with {selectedIds.map(id => platforms.find(p => p.id === id)?.label).join(' + ')}
+          Launch with {selectedIds.map(id => platforms.find(p => p.id === id)?.label).join(' + ')}
           <ArrowRight size={15} />
         </button>
       )}
@@ -1967,43 +2243,325 @@ const CSS = `
   .camp-dashboard-btn:hover { background: rgba(59,130,246,0.22); }
   .camp-restart-top-right { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.2s; }
   .camp-restart-top-right:hover { background: rgba(239,68,68,0.22); }
-  .camp-landing-page { width: 100%; min-height: calc(100vh - 68px); display: flex; align-items: center; justify-content: center; padding: 60px 32px; background: #f4f4fb; position: relative; overflow: hidden; }
-  .camp-landing-page::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 70% 50% at 30% 20%, rgba(112,51,245,0.07) 0%, transparent 60%), radial-gradient(ellipse 55% 45% at 75% 70%, rgba(59,130,246,0.06) 0%, transparent 60%); pointer-events: none; }
-  .camp-landing-inner { position: relative; z-index: 1; width: 100%; max-width: 780px; text-align: center; }
-  .camp-badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 18px; border-radius: 99px; background: rgba(112,51,245,0.08); border: 1px solid rgba(112,51,245,0.18); color: #7033f5; font-size: 0.78rem; font-weight: 600; margin-bottom: 28px; }
-  .camp-headline { font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 800; color: #0f172a; margin-bottom: 18px; line-height: 1.15; letter-spacing: -0.02em; }
-  .camp-gradient-text { background: linear-gradient(135deg, #7033f5, #3b82f6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .camp-sub { font-size: 1.05rem; color: #64748b; margin-bottom: 44px; line-height: 1.65; }
-  .camp-input-wrap { position: relative; max-width: 680px; margin: 0 auto; }
-  .camp-input-glow { position: absolute; inset: -2px; background: linear-gradient(90deg, #7033f5, #3b82f6, #ec4899); border-radius: 99px; filter: blur(14px); opacity: 0.35; z-index: 0; }
-  .camp-input-glow.error { background: linear-gradient(90deg, #ef4444, #f97316); }
-  .camp-input-glow.valid { background: linear-gradient(90deg, #10b981, #3b82f6); opacity: 0.25; }
-  .camp-input-inner { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; background: #fff; padding: 6px; border-radius: 99px; border: 1px solid #e2e8f0; box-shadow: 0 4px 24px rgba(112,51,245,0.08); }
-  .camp-input-inner.has-error { border-color: rgba(239,68,68,0.5) !important; }
-  .camp-input-inner.is-valid { border-color: rgba(16,185,129,0.4) !important; }
-  .camp-input-icon { color: #94a3b8; flex-shrink: 0; margin-left: 14px; }
-  .camp-input-icon.valid { color: #10b981; }
-  .camp-input-icon.error { color: #ef4444; }
-  .camp-input-icon.checking { color: #38bdf8; }
-  .camp-url-input { flex: 1; padding: 13px 16px; border: none; font-size: 0.95rem; color: #1e293b; outline: none; background: transparent; min-width: 0; }
-  .camp-url-input::placeholder { color: #94a3b8; }
-  .camp-url-error { display: flex; align-items: center; gap: 7px; margin-top: 10px; padding: 9px 16px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.22); border-radius: 10px; color: #fca5a5; font-size: 0.82rem; overflow: hidden; }
-  .camp-launch-btn { display: flex; align-items: center; gap: 8px; padding: 13px 28px; border-radius: 99px; background: linear-gradient(135deg, #7033f5, #4f46e5); color: #fff; border: none; cursor: pointer; font-weight: 700; font-size: 0.9rem; white-space: nowrap; transition: opacity 0.2s, transform 0.2s; flex-shrink: 0; }
-  .camp-launch-btn:hover:not(:disabled) { opacity: 0.9; transform: scale(1.02); }
-  .camp-launch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .camp-trust-row { display: flex; justify-content: center; gap: 24px; margin-top: 44px; flex-wrap: wrap; }
-  .camp-trust-item { display: flex; align-items: center; gap: 6px; color: #94a3b8; font-size: 0.8rem; font-weight: 500; }
-  .camp-stats-row { display: flex; justify-content: center; gap: 56px; margin-top: 52px; padding-top: 28px; border-top: 1px solid #e8e8f0; }
-  .camp-stat-item { text-align: center; }
-  .camp-stat-value { display: block; font-size: 1.9rem; font-weight: 800; color: #7033f5; margin-bottom: 6px; }
-  .camp-stat-label { display: block; font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+/* ═══════════════════════════════════════════════
+     ENHANCED LANDING PAGE — Tech Dark
+  ═══════════════════════════════════════════════ */
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  .land-root {
+    position: relative; min-height: calc(100vh - 68px);
+    background: #020408;
+    overflow: hidden; display: flex; align-items: center; justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+
+  /* ── Grid background ── */
+  .land-grid {
+    position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.055) 1px, transparent 1px);
+    background-size: 52px 52px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 40%, black 30%, transparent 100%);
+  }
+
+  /* ── Orb glows ── */
+  .land-orb { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(80px); }
+  .land-orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%); top: -180px; left: -120px; animation: orbDrift1 14s ease-in-out infinite alternate; }
+  .land-orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%); bottom: -100px; right: -80px; animation: orbDrift2 18s ease-in-out infinite alternate; }
+  .land-orb-3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(56,189,248,0.10) 0%, transparent 70%); top: 40%; left: 60%; animation: orbDrift1 22s ease-in-out infinite alternate-reverse; }
+  @keyframes orbDrift1 { from { transform: translate(0,0) scale(1); } to { transform: translate(40px,30px) scale(1.08); } }
+  @keyframes orbDrift2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-30px,20px) scale(1.05); } }
+
+  /* ── Particles ── */
+  .land-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .land-particle {
+    position: absolute;
+    width: 2px; height: 2px; border-radius: 50%;
+    background: rgba(56,189,248,0.6);
+    left: calc(var(--i) * 5.8% + 2%);
+    top: calc(100% + 10px);
+    animation: particleRise calc(8s + var(--i) * 0.5s) linear infinite;
+    animation-delay: calc(var(--i) * -0.6s);
+  }
+  .land-particle:nth-child(odd)  { background: rgba(99,102,241,0.5); width: 3px; height: 3px; }
+  .land-particle:nth-child(3n)   { background: rgba(16,185,129,0.5); }
+  @keyframes particleRise {
+    0%   { transform: translateY(0) scale(1); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.4; }
+    100% { transform: translateY(-110vh) scale(0.3); opacity: 0; }
+  }
+
+  /* ── Content wrapper ── */
+  .land-content {
+    position: relative; z-index: 10;
+    width: 100%; max-width: 900px;
+    padding: 80px 24px 100px;
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 0;
+  }
+
+  /* ── Badge ── */
+  .land-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 16px 6px 10px;
+    border-radius: 99px;
+    border: 1px solid rgba(99,102,241,0.35);
+    background: rgba(99,102,241,0.08);
+    color: #a5b4fc;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
+    margin-bottom: 28px;
+  }
+  .land-badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 6px #10b981;
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+  @keyframes pulseDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.7); } }
+
+  /* ── Headline ── */
+  .land-headline {
+    font-size: clamp(2.6rem, 6vw, 4.2rem);
+    font-weight: 700; line-height: 1.08; letter-spacing: -0.03em;
+    color: #f1f5f9;
+    margin: 0 0 6px;
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .land-headline-line2 {
+    display: block; margin-top: 4px;
+  }
+  .land-hl-static {
+    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .land-hl-machine {
+    background: linear-gradient(135deg, #2835fa, #50a7f8, #2835fa);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    position: relative;
+  }
+  .land-hl-machine::after {
+    content: '';
+    position: absolute; bottom: -4px; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #2835fa, #50a7f8, #2835fa);
+    border-radius: 2px;
+    animation: underlineShimmer 3s linear infinite;
+    background-size: 200% 100%;
+  }
+  @keyframes underlineShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* ── Sub text ── */
+  .land-sub {
+    font-size: 1.05rem; line-height: 1.7; color: #64748b;
+    margin: 20px 0 36px; max-width: 600px;
+  }
+
+  /* ── Input section ── */
+  .land-input-section { width: 100%; max-width: 680px; margin-bottom: 24px; }
+  .land-input-shell {
+    display: flex; align-items: center; gap: 0;
+    background: rgba(15,23,42,0.95);
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 14px;
+    padding: 6px 6px 6px 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 0 0 0 transparent, inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .land-input-shell:focus-within {
+    border-color: rgba(99,102,241,0.7);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .land-input-shell.is-valid   { border-color: rgba(16,185,129,0.6); box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+  .land-input-shell.is-error   { border-color: rgba(239,68,68,0.6);  box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
+  .land-input-shell.is-checking{ border-color: rgba(56,189,248,0.5); }
+  .land-input-prefix { display: flex; align-items: center; flex-shrink: 0; margin-right: 10px; }
+  .land-url-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    font-size: 0.95rem; color: #e2e8f0; font-family: 'JetBrains Mono', monospace;
+    padding: 12px 0; min-width: 0;
+  }
+  .land-url-input::placeholder { color: #334155; font-family: 'Space Grotesk', sans-serif; }
+  .land-cta-btn {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    padding: 13px 24px; border-radius: 10px;
+    background: linear-gradient(135deg, #2836ff 0%, #000a9d 100%);
+    border: none; color: #fff; font-size: 0.88rem; font-weight: 700;
+    cursor: pointer; white-space: nowrap; font-family: 'Space Grotesk', sans-serif;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+  }
+  .land-cta-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,102,241,0.5); }
+  .land-cta-btn:active:not(:disabled) { transform: translateY(0); }
+  .land-cta-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .land-url-error {
+    display: flex; align-items: center; gap: 7px;
+    margin-top: 10px; padding: 9px 14px;
+    background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.22);
+    border-radius: 8px; color: #fca5a5; font-size: 0.8rem; text-align: left;
+  }
+  .land-input-hint {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    margin-top: 12px; color: #334155; font-size: 0.75rem;
+  }
+
+  /* ── Platform pills ── */
+  .land-platforms { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 40px; }
+  .land-platforms-label { font-size: 0.72rem; color: #334155; letter-spacing: 0.08em; text-transform: uppercase; }
+  .land-platform-icons { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .land-platform-pill {
+    display: flex; align-items: center; gap: 7px;
+    padding: 7px 14px; border-radius: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    font-size: 0.8rem; font-weight: 600; color: #64748b;
+    transition: all 0.2s;
+  }
+  .land-platform-pill:hover {
+    border-color: var(--pc);
+    background: color-mix(in srgb, var(--pc) 10%, transparent);
+    color: #94a3b8;
+    transform: translateY(-2px);
+  }
+
+  /* ── Stats ── */
+  .land-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+    width: 100%; margin-bottom: 56px;
+  }
+  .land-stat-card {
+    background: rgba(15,23,42,0.7);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px; padding: 20px 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    transition: all 0.25s;
+    position: relative; overflow: hidden;
+  }
+  .land-stat-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(99,102,241,0.04), transparent);
+    pointer-events: none;
+  }
+  .land-stat-card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-3px); }
+  .land-stat-icon { color: #6366f1; margin-bottom: 2px; }
+  .land-stat-value { font-size: 1.7rem; font-weight: 700; color: #f1f5f9; line-height: 1; font-family: 'Space Grotesk', sans-serif; }
+  .land-stat-label { font-size: 0.7rem; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ── How it works ── */
+  .land-steps-section { width: 100%; margin-bottom: 48px; }
+  .land-steps-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.68rem; color: #334155; text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+  .land-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
+  .land-step {
+    position: relative; display: flex; flex-direction: column; align-items: center;
+    padding: 24px 16px; gap: 10px;
+    background: rgba(15,23,42,0.5);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 0; transition: all 0.25s;
+  }
+  .land-step:first-child { border-radius: 14px 0 0 14px; }
+  .land-step:last-child  { border-radius: 0 14px 14px 0; }
+  .land-step:not(:first-child) { border-left: none; }
+  .land-step:hover { background: rgba(99,102,241,0.06); z-index: 1; }
+  .land-step-num {
+    font-size: 0.6rem; font-weight: 700; color: #1e293b;
+    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em;
+    background: rgba(99,102,241,0.15); padding: 3px 8px; border-radius: 4px;
+  }
+  .land-step-icon { color: #6366f1; }
+  .land-step-title { font-size: 0.88rem; font-weight: 700; color: #cbd5e1; }
+  .land-step-desc  { font-size: 0.72rem; color: #475569; line-height: 1.55; text-align: center; }
+  .land-step-arrow {
+    position: absolute; right: -1px; top: 50%; transform: translateY(-50%);
+    width: 0; height: 0;
+    border-top: 8px solid transparent; border-bottom: 8px solid transparent;
+    border-left: 8px solid rgba(99,102,241,0.25);
+    z-index: 2;
+  }
+
+  /* ── Feature grid ── */
+  .land-features {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    width: 100%; margin-bottom: 56px;
+  }
+  .land-feature-card {
+    background: rgba(15,23,42,0.6);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px; padding: 22px 20px;
+    text-align: left; transition: all 0.25s;
+    position: relative; overflow: hidden;
+  }
+  .land-feature-card::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--fc) 5%, transparent), transparent);
+    pointer-events: none; opacity: 0; transition: opacity 0.25s;
+  }
+  .land-feature-card:hover { border-color: rgba(255,255,255,0.12); transform: translateY(-3px); }
+  .land-feature-card:hover::after { opacity: 1; }
+  .land-feature-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: color-mix(in srgb, var(--fc) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--fc) 30%, transparent);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--fc); margin-bottom: 14px;
+  }
+  .land-feature-title { font-size: 0.9rem; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; }
+  .land-feature-desc  { font-size: 0.76rem; color: #475569; line-height: 1.6; }
+
+  /* ── Bottom CTA ── */
+  .land-bottom-cta {
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    padding: 40px; border-radius: 20px;
+    background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.05));
+    border: 1px solid rgba(99,102,241,0.2);
+    width: 100%;
+  }
+  .land-bottom-cta-text { font-size: 1.2rem; font-weight: 700; color: #e2e8f0; margin: 0; }
+  .land-bottom-cta-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 15px 36px; border-radius: 12px;
+    background: linear-gradient(135deg, #2836ff 0%, #000a9d 100%);
+    border: none; color: #fff; font-size: 0.95rem; font-weight: 700;
+    cursor: pointer; font-family: 'Space Grotesk', sans-serif;
+    transition: all 0.2s;
+    box-shadow: 0 6px 24px rgba(99,102,241,0.4);
+  }
+  .land-bottom-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(99,102,241,0.55); }
+
+  /* ── Responsive ── */
+  @media (max-width: 860px) {
+    .land-stats    { grid-template-columns: repeat(2, 1fr); }
+    .land-steps    { grid-template-columns: repeat(2, 1fr); }
+    .land-step:first-child { border-radius: 14px 0 0 0; }
+    .land-step:last-child  { border-radius: 0 0 14px 0; }
+    .land-step:nth-child(2){ border-radius: 0 14px 0 0; border-left: none; }
+    .land-step:nth-child(3){ border-radius: 0 0 0 14px; border-top: none; }
+    .land-step:nth-child(2):not(:last-child) .land-step-arrow { display: none; }
+    .land-features { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .land-headline { font-size: 2.2rem; }
+    .land-stats    { grid-template-columns: repeat(2, 1fr); }
+    .land-features { grid-template-columns: 1fr; }
+    .land-steps    { grid-template-columns: 1fr; }
+    .land-step:first-child, .land-step:nth-child(2), .land-step:nth-child(3), .land-step:last-child { border-radius: 0; }
+    .land-step:first-child { border-radius: 14px 14px 0 0; }
+    .land-step:last-child  { border-radius: 0 0 14px 14px; }
+    .land-step:not(:first-child) { border-left: 1px solid rgba(255,255,255,0.05); border-top: none; }
+    .land-step-arrow { display: none; }
+    .land-content { padding: 48px 16px 72px; }
+    .land-cta-btn  { padding: 13px 16px; font-size: 0.82rem; }
+  }
   .camp-chat-page { width: 100%; min-height: calc(100vh - 68px); background: #0a0a0f; display: flex; flex-direction: column; }
   .camp-chat-scroll { flex: 1; overflow-y: auto; padding: 32px 20px 48px; }
   .camp-chat-inner { max-width: 1020px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; width: 100%; }
   .camp-msg-row { display: flex; gap: 14px; align-items: flex-start; }
   .camp-msg-row.user { flex-direction: row-reverse; }
   .camp-avatar { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; }
-  .camp-avatar.bot { background: linear-gradient(135deg, #3b82f6, #8b5cf6); }
+  .camp-avatar.bot { background: linear-gradient(135deg, #002f7a, #4f91fc); }
   .camp-avatar.user { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); }
   .camp-user-dot { width: 9px; height: 9px; background: #38bdf8; border-radius: 50%; }
   .camp-msg-body { max-width: calc(100% - 54px); }
@@ -2016,7 +2574,7 @@ const CSS = `
   .camp-ai-thinking { display: flex; align-items: center; gap: 5px; padding: 14px 18px; background: rgba(20,20,30,0.85); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px 16px 16px 16px; }
   .camp-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #38bdf8; animation: bounce 1.1s ease-in-out infinite; }
   @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-6px); opacity: 1; } }
-  .camp-ai-badge { padding: 3px 10px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 20px; font-size: 0.62rem; font-weight: 700; color: #fff; white-space: nowrap; }
+  .camp-ai-badge { padding: 3px 10px; background: linear-gradient(135deg, #0062ff, #5c97f6); border-radius: 20px; font-size: 0.62rem; font-weight: 700; color: #fff; white-space: nowrap; }
   .confirmation-card { background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(59,130,246,0.05)); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 24px; margin-top: 6px; max-width: 520px; }
   .confirmation-header { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
   .confirmation-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -2114,7 +2672,7 @@ const CSS = `
   .comp-intensity-label { font-size: 0.75rem; font-weight: 700; }
   .competitor-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
   .competitor-name { font-size: 0.9rem; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-  .competitor-name::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: #8b5cf6; }
+  .competitor-name::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: #0062ff; }
   .comp-sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
   .comp-sw-box { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; }
   .comp-sw-title { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
@@ -2217,7 +2775,7 @@ const CSS = `
   .plat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .plat-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 18px 16px; background: rgba(15,20,35,0.9); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; cursor: pointer; text-align: left; transition: all 0.25s; color: inherit; }
   .plat-card:hover { border-color: var(--plat-color); background: color-mix(in srgb, var(--plat-color) 8%, rgba(15,20,35,0.9)); transform: translateY(-2px); }
-  .plat-badge { position: absolute; top: -1px; right: 12px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 3px 8px; border-radius: 0 0 8px 8px; }
+  .plat-badge { position: absolute; top: -1px; right: 12px; background: linear-gradient(135deg, #0062ff, #5c97f6); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 3px 8px; border-radius: 0 0 8px 8px; }
   .plat-card-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
   .plat-card-label { font-size: 0.95rem; font-weight: 700; color: #fff; }
   .plat-card-sub { font-size: 0.72rem; color: #64748b; margin-top: -4px; }

@@ -204,7 +204,7 @@ private readonly SESSION_VERSION = 'v2';
       const prompt = await this.buildPrompt(body); // ✅ FIXED (await)
 
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini', 
+        model: 'gpt-4.1-mini',
         temperature: 0.3,
         response_format: { type: 'json_object' },
         messages: [
@@ -382,23 +382,106 @@ private readonly SESSION_VERSION = 'v2';
     // ============================================
   // PROMPT BUILDER
   // ============================================
-  private async buildPrompt(data: {
-    brandName: string;
-    website: string;
-  }): Promise<string> {
-    const industry = await this.detectIndustry(data.website);
+private async buildPrompt(data: {
+  brandName: string;
+  website: string;
+}): Promise<string> {
 
-    return `
-You are a senior digital marketing strategist.
+  const industry = await this.detectIndustry(data.website);
 
-Return ONLY JSON.
+  return `
+You are a senior digital marketing strategist, SEO auditor, competitive intelligence analyst, and web research expert.
+
+Your task is to perform a COMPLETE brand intelligence analysis using REAL VERIFIED DATA.
+
+IMPORTANT RULES:
+
+1. ALWAYS research deeply before generating output.
+2. Extract data from:
+   - Official website
+   - Meta tags
+   - Footer/company pages
+   - About page
+   - Contact page
+   - Google search results
+   - Google Business Profile
+   - LinkedIn
+   - MCA records (India companies)
+   - Public directories
+   - News mentions
+   - Social profiles
+3. NEVER hallucinate or invent data.
+4. If data is missing, return:
+   - "Not Available"
+   - []
+   - 0
+5. NEVER leave fields undefined.
+6. Return ONLY VALID JSON.
+7. DO NOT include markdown.
+8. DO NOT explain anything.
+9. Try multiple pages of the website before concluding data is unavailable.
+10. Infer industry ONLY if strongly supported by evidence.
+11. For old or poorly optimized websites, analyze visible text content manually.
+12. Extract business intelligence from:
+   - navigation menus
+   - hero sections
+   - footer
+   - product/service pages
+   - legal pages
+13. Estimate SEO/performance metrics realistically using SEO-tool-like logic.
+14. Use business context and market positioning analysis.
+15. Competitors must be REAL companies in same niche.
 
 INPUT:
 Brand Name: ${data.brandName}
 Website: ${data.website}
-Industry: ${industry}
+Industry Hint: ${industry}
 
-OUTPUT:
+ANALYSIS REQUIREMENTS:
+
+WEBSITE AUDIT:
+- Analyze:
+  - SEO
+  - Mobile responsiveness
+  - content quality
+  - CTA clarity
+  - UX
+  - trust signals
+  - indexing readiness
+  - technical optimization
+  - metadata quality
+  - speed indicators
+  - accessibility
+  - HTTPS/security
+- Mention actual visible issues if found.
+
+KEYWORD ANALYSIS:
+- Generate:
+  - primary keywords
+  - secondary keywords
+  - long-tail opportunities
+  - keyword gaps
+  - SEO recommendations
+
+COMPETITOR ANALYSIS:
+- Find real competitors.
+- Compare positioning.
+- Identify differentiators.
+
+ANALYTICS ESTIMATION:
+Estimate:
+- monthly traffic
+- backlinks
+- authority
+- bounce rate
+- engagement
+using realistic SEO estimation logic.
+
+SCORING RULES:
+Scores must be between 0-100.
+
+OUTPUT FORMAT:
+
 {
   "coreObjective": "",
   "brand": {
@@ -463,8 +546,10 @@ OUTPUT:
     "roiPotential": ""
   }
 }
+
+Return ONLY JSON.
 `;
-  }
+}
 
     // ============================================
   // VALIDATION
