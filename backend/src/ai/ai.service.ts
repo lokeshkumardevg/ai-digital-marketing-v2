@@ -226,16 +226,18 @@ Return ONLY raw valid JSON with these keys:
     userPrompt: string,
     systemPrompt: string,
     schema?: any,
+    model = 'gpt-4o-mini',
+    maxTokens = 4000,
   ): Promise<any> {
     try {
       const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.3,
-        max_tokens: 4000,
+        max_tokens: maxTokens,
         response_format: schema
           ? { type: 'json_schema', json_schema: schema }
           : undefined,
