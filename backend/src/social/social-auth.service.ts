@@ -32,6 +32,7 @@ export class SocialAuthService {
 
     if (normalized === 'twitter') {
       const clientId = this.getEnv('TWITTER_CLIENT_ID');
+      console.log('Generating Twitter auth URL with clientId:', clientId);
       const scope =
         this.configService.get<string>('TWITTER_SCOPES') ||
         'tweet.read tweet.write users.read offline.access';

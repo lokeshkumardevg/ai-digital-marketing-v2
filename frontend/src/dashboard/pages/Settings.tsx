@@ -151,8 +151,9 @@ export const Settings: React.FC = () => {
   const connectX = async () => {
     try {
       const { api } = await import('../../api/axios');
-      const response = await api.get('/auth/x');
-      window.location.href = response.data.url;
+      const response = await api.get('social/auth/twitter');
+      console.log('X connection response:', response);
+      window.location.href = response.data.data.url;
     } catch (error) {
       toast.error('Failed to initiate X connection');
     }

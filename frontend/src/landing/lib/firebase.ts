@@ -6,10 +6,12 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  appId: "YOUR_APP_ID",
+    apiKey: "AIzaSyAFxE6pp5QbmCvdEo4owpkqAbSF6xfk1V0",
+    authDomain: "ai-wheedle-digital-marketing.firebaseapp.com",
+    projectId: "ai-wheedle-digital-marketing",
+    storageBucket: "ai-wheedle-digital-marketing.firebasestorage.app",
+    messagingSenderId: "432839779283",
+    appId: "1:432839779283:web:a8caa5cc0e95ce2e240526",
 };
 
 const app = initializeApp(firebaseConfig);
