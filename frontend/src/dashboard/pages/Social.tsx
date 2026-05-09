@@ -190,14 +190,14 @@ export const Social: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(400px, 1fr) 1fr', gap: '24px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <GlassCard>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1f2c8b'}}>
-              <Share2 size={20} color="#2631d6" /> Platform Connections
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc'}}>
+              <Share2 size={20} color="#6366f1" /> Platform Connections
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
               Connect OAuth accounts and choose destinations for each post.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px',color: '#1f2c8b' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: '#f8fafc' }}>
               {platformCards.map((platform) => (
                 <div
                   key={platform.id}
@@ -206,7 +206,7 @@ export const Social: React.FC = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '12px',
-                    background: selectedPlatforms.includes(platform.id) ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255,255,255,0.02)',
+                    background: selectedPlatforms.includes(platform.id) ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255, 255, 255, 0.02)',
                     border: selectedPlatforms.includes(platform.id)
                       ? '1px solid rgba(99, 102, 241, 0.5)'
                       : '1px solid var(--glass-border)',

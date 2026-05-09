@@ -15,6 +15,11 @@ export class ChatbotController {
     return this.chatbotService.createChatbot(body);
   }
 
+  @Get(':id')
+  async getChatbot(@Param('id') id: string) {
+    return this.chatbotService.getChatbotById(id);
+  }
+
   @Post(':id/chat')
   async chat(@Param('id') id: string, @Body() body: { message: string, history?: any[] }) {
     return this.chatbotService.handleChatMessage(id, body.message, body.history);

@@ -85,9 +85,11 @@ const agentConfigs: Record<string, any> = {
     url: `http://localhost:3000/webhook/website-builder`,
     fields: [
       { id: "topic", label: "Business Name / Website Topic", type: "text", placeholder: "e.g., LuxeCuts - A Premium Barber Shop in New York" },
-      { id: "pages", label: "Pages to Generate (comma separated)", type: "text", placeholder: "e.g., Home, About, Services, Gallery, Contact" },
-      { id: "primaryColor", label: "Primary Brand Color", type: "color", placeholder: "#036cd8" },
-      { id: "logo", label: "Upload Your Logo (optional)", type: "file", placeholder: "" }
+      { id: "pages", label: "Pages (Count or Names)", type: "text", placeholder: "e.g., 5 OR Home, About, Services, Contact" },
+      { id: "theme", label: "Select Theme", type: "select", options: ["Corporate", "Startup", "SaaS", "Agency", "Portfolio", "Education", "Healthcare", "Restaurant", "E-commerce", "Real Estate"] },
+      { id: "primaryColor", label: "Primary Color", type: "color", placeholder: "#036cd8" },
+      { id: "secondaryColor", label: "Secondary Color", type: "color", placeholder: "#6366f1" },
+      { id: "logo", label: "Upload Logo (optional)", type: "file", placeholder: "" }
     ]
   }
 };
@@ -97,6 +99,8 @@ export const Agents: React.FC = () => {
   const [formData, setFormData] = useState<any>({});
   const [responseText, setResponseText] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [loadingStage, setLoadingStage] = useState('');
   const [agentStatuses, setAgentStatuses] = useState<Record<string, 'active' | 'sleeping'>>({
     "review_generation": "active",
     "review_response": "active",
@@ -114,10 +118,10 @@ export const Agents: React.FC = () => {
   useEffect(() => {
     // Inject html2pdf script if not present
     if (!document.getElementById('html2pdf-script')) {
-        const script = document.createElement('script');
-        script.id = 'html2pdf-script';
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-        document.body.appendChild(script);
+      const script = document.createElement('script');
+      script.id = 'html2pdf-script';
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      document.body.appendChild(script);
     }
   }, []);
 
@@ -127,7 +131,12 @@ export const Agents: React.FC = () => {
     if (config) {
       const defaults: any = {};
       config.fields.forEach((f: any) => {
-        if (f.type === 'color') defaults[f.id] = '#036cd8';
+        if (f.type === 'color') {
+          defaults[f.id] = f.id === 'secondaryColor' ? '#6366f1' : '#036cd8';
+        }
+        if (f.type === 'select') {
+          defaults[f.id] = f.options[0]; // Default to first option (Corporate)
+        }
       });
       setFormData(defaults);
     } else {
@@ -157,6 +166,27 @@ export const Agents: React.FC = () => {
 
     setIsLoading(true);
     setResponseText('');
+    setProgress(0);
+    setLoadingStage('Initializing Agent...');
+
+    // Simulate progressive loading
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev < 30) {
+          setLoadingStage('Analyzing Inputs...');
+          return prev + Math.random() * 5;
+        }
+        if (prev < 60) {
+          setLoadingStage('Synthesizing Content...');
+          return prev + Math.random() * 3;
+        }
+        if (prev < 90) {
+          setLoadingStage('Finalizing Results...');
+          return prev + Math.random() * 2;
+        }
+        return prev;
+      });
+    }, 400);
 
     try {
       const response = await fetch(config.url, {
@@ -166,15 +196,23 @@ export const Agents: React.FC = () => {
       });
 
       if (response.ok) {
+        clearInterval(progressInterval);
+        setProgress(100);
+        setLoadingStage('Generation Complete!');
+
         const data = await response.json();
         let output = typeof data === 'object' ? data.aiOutput || JSON.stringify(data, null, 2) : data;
         const cleanHtml = output.replace(/```html/gi, '').replace(/```/g, '').trim();
-        setResponseText(cleanHtml);
-        toast.success(`${agentConfigs[selectedAgentKey].title} completed successfully!`);
+
+        setTimeout(() => {
+          setResponseText(cleanHtml);
+          toast.success(`${agentConfigs[selectedAgentKey].title} completed successfully!`);
+        }, 500);
       } else {
         throw new Error(`HTTP Error: ${response.status}`);
       }
     } catch (error: any) {
+      clearInterval(progressInterval);
       setResponseText(`Error: Cannot reach local backend. Is 'npm run start:dev' running in backend?\nDetails: ${error.message}`);
       toast.error("Workflow failed. Check backend connection.");
     } finally {
@@ -185,12 +223,12 @@ export const Agents: React.FC = () => {
   const downloadAsPdf = () => {
     const element = document.getElementById('pdf-content-area');
     if (!element || !responseText) return;
-    
+
     // @ts-ignore
     const html2pdf = window.html2pdf;
     if (!html2pdf) {
-        toast.error("PDF library not loaded yet. Please try again in a moment.");
-        return;
+      toast.error("PDF library not loaded yet. Please try again in a moment.");
+      return;
     }
 
     const opt = {
@@ -350,10 +388,13 @@ export const Agents: React.FC = () => {
         }
 
         .modal-content {
-            background-color: #1e293b; padding: 32px; border-radius: 24px;
+            background-color: #0a0f1e; 
+            padding: 32px; border-radius: 24px;
             width: 90%; max-width: 580px; max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5); position: relative;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7); position: relative;
             color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
         }
         .modal-content.wide { max-width: 850px; }
 
@@ -398,7 +439,7 @@ export const Agents: React.FC = () => {
         .action-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
 
         /* PDF hidden area */
-        #pdf-content-area { background: white; color: black; padding: 40px; font-family: 'Inter', sans-serif; }
+        #pdf-content-area { background: #050a18; color: white; padding: 40px; font-family: 'Inter', sans-serif; }
       `}</style>
 
       <div className="background-effects">
@@ -483,6 +524,15 @@ export const Agents: React.FC = () => {
                       onChange={(e) => setFormData({ ...formData, [field.id]: e.target.value })}
                       value={formData[field.id] || ''}
                     />
+                  ) : field.type === 'select' ? (
+                    <select
+                      onChange={(e) => setFormData({ ...formData, [field.id]: e.target.value })}
+                      value={formData[field.id] || ''}
+                      style={{ width: '100%', padding: '14px', border: '1px solid #334155', borderRadius: '12px', outline: 'none', color: '#fff', background: '#0f172a', fontSize: '15px' }}
+                    >
+                      <option value="">-- Choose Theme --</option>
+                      {field.options.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
                   ) : field.type === 'file' ? (
                     <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, field.id)} />
                   ) : (
@@ -498,50 +548,70 @@ export const Agents: React.FC = () => {
             </div>
 
             <button id="triggerAgentBtn" onClick={runAgentWorkflow} disabled={isLoading}>
-              {isLoading ? (isWebsiteBuilder ? '⚡ Generating Site...' : 'Running...') : (isWebsiteBuilder ? '✦ Generate Website' : 'Run Agent Workflow')}
+              {isLoading ? (isWebsiteBuilder ? '⚡ Architecting Site...' : 'Processing...') : (isWebsiteBuilder ? '✦ Generate Website' : 'Run Agent Workflow')}
             </button>
+
+            {isLoading && (
+              <div style={{ marginTop: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                  <span style={{ color: '#8b5cf6', fontWeight: '600' }}>{loadingStage}</span>
+                  <span style={{ color: '#94a3b8' }}>{Math.round(progress)}%</span>
+                </div>
+                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      width: `${progress}%`,
+                      height: '100%',
+                      background: 'linear-gradient(90deg, #8b5cf6, #3b82f6)',
+                      transition: 'width 0.4s ease-out',
+                      boxShadow: '0 0 10px rgba(139, 92, 246, 0.5)'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
 
             {responseText && (
               <div id="responseContainer" style={{ marginTop: '30px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h3 style={{ fontSize: '1.1rem', color: '#fff', margin: 0 }}>Agent Output:</h3>
-                    <button className="action-btn" style={{ padding: '8px 16px', fontSize: '12px' }} onClick={downloadAsPdf}>
-                        <i className="fa-solid fa-file-pdf"></i> Save as PDF
-                    </button>
+                  <h3 style={{ fontSize: '1.1rem', color: '#fff', margin: 0 }}>Agent Output:</h3>
+                  <button className="action-btn" style={{ padding: '8px 16px', fontSize: '12px' }} onClick={downloadAsPdf}>
+                    <i className="fa-solid fa-file-pdf"></i> Save as PDF
+                  </button>
                 </div>
 
                 {isWebsiteBuilder ? (
                   <>
                     <div id="pdf-content-area" style={{ display: 'none' }}>
-                        <h1>Wheedle AI Website Project</h1>
-                        <p>Topic: {formData.topic}</p>
-                        <div dangerouslySetInnerHTML={{ __html: responseText }} />
+                      <h1>Wheedle AI Website Project</h1>
+                      <p>Topic: {formData.topic}</p>
+                      <div dangerouslySetInnerHTML={{ __html: responseText }} />
                     </div>
                     <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a' }}>
-                        <div style={{ background: '#1e293b', padding: '12px 20px', display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#94a3b8', fontSize: '12px' }}>localhost — Preview</span>
-                            <span style={{ color: '#3b82f6', fontSize: '12px' }}>AI Architect v1.0</span>
-                        </div>
-                        <div style={{ height: '500px', background: '#fff' }}>
-                            <iframe srcDoc={responseText} style={{ width: '100%', height: '100%', border: 'none' }} />
-                        </div>
+                      <div style={{ background: '#1e293b', padding: '12px 20px', display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>localhost — Preview</span>
+                        <span style={{ color: '#3b82f6', fontSize: '12px' }}>AI Architect v1.0</span>
+                      </div>
+                      <div style={{ height: '500px', background: '#050a18', borderRadius: '0 0 16px 16px' }}>
+                        <iframe srcDoc={responseText} style={{ width: '100%', height: '100%', border: 'none' }} />
+                      </div>
                     </div>
                     <div style={{ display: 'flex', marginTop: '15px', gap: '10px' }}>
-                        <button className="action-btn" onClick={() => window.open(URL.createObjectURL(new Blob([responseText], { type: 'text/html' })), '_blank')}>
-                            <i className="fa-solid fa-eye"></i> Full Preview
-                        </button>
-                        <button className="action-btn" onClick={() => {
-                            const a = document.createElement('a');
-                            a.href = URL.createObjectURL(new Blob([responseText], { type: 'text/html' }));
-                            a.download = `Wheedle_Site_${Date.now()}.html`;
-                            a.click();
-                        }}>
-                            <i className="fa-solid fa-download"></i> Download HTML
-                        </button>
+                      <button className="action-btn" onClick={() => window.open(URL.createObjectURL(new Blob([responseText], { type: 'text/html' })), '_blank')}>
+                        <i className="fa-solid fa-eye"></i> Full Preview
+                      </button>
+                      <button className="action-btn" onClick={() => {
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(new Blob([responseText], { type: 'text/html' }));
+                        a.download = `Wheedle_Site_${Date.now()}.html`;
+                        a.click();
+                      }}>
+                        <i className="fa-solid fa-download"></i> Download HTML
+                      </button>
                     </div>
                   </>
                 ) : (
-                  <div id="pdf-content-area" className="result-preview" style={{ background: '#fff', color: '#333', padding: '24px', borderRadius: '12px', maxHeight: '500px', overflowY: 'auto' }}>
+                  <div id="pdf-content-area" className="result-preview" style={{ background: 'rgba(255,255,255,0.02)', color: '#fff', padding: '24px', borderRadius: '12px', maxHeight: '500px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.08)' }}>
                     {responseText.trim().startsWith('<') ? (
                       <div dangerouslySetInnerHTML={{ __html: responseText }} />
                     ) : (

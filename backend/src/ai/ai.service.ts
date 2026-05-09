@@ -228,14 +228,29 @@ Return ONLY raw valid JSON with these keys:
     schema?: any,
     model = 'gpt-4o-mini',
     maxTokens = 4000,
+    imageBase64?: string,
   ): Promise<any> {
     try {
+      const messages: any[] = [{ role: 'system', content: systemPrompt }];
+
+      if (imageBase64) {
+        messages.push({
+          role: 'user',
+          content: [
+            { type: 'text', text: userPrompt },
+            {
+              type: 'image_url',
+              image_url: { url: imageBase64 },
+            },
+          ],
+        });
+      } else {
+        messages.push({ role: 'user', content: userPrompt });
+      }
+
       const completion = await this.openai.chat.completions.create({
         model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
+        messages,
         temperature: 0.3,
         max_tokens: maxTokens,
         response_format: schema

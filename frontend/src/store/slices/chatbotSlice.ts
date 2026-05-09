@@ -11,6 +11,11 @@ export const createBot = createAsyncThunk('chatbot/createBot', async (dto: any) 
   return response.data;
 });
 
+export const fetchBotById = createAsyncThunk('chatbot/fetchBotById', async (id: string) => {
+  const response = await api.get(`/chatbot/${id}`);
+  return response.data;
+});
+
 const chatbotSlice = createSlice({
   name: 'chatbot',
   initialState: {
@@ -43,6 +48,14 @@ const chatbotSlice = createSlice({
       .addCase(createBot.rejected, (state, action) => {
         state.saving = false;
         state.error = action.error.message || null;
+      })
+      .addCase(fetchBotById.fulfilled, (state, action) => {
+        const index = state.bots.findIndex((b: any) => b._id === action.payload._id);
+        if (index !== -1) {
+          state.bots[index] = action.payload as never;
+        } else {
+          state.bots.push(action.payload as never);
+        }
       });
   },
 });

@@ -30,6 +30,14 @@ export class ChatbotService {
     return await chatbot.save();
   }
 
+  async getChatbotById(id: string): Promise<Chatbot> {
+    const chatbot = await this.chatbotModel.findById(id).lean().exec();
+    if (!chatbot) {
+      throw new NotFoundException('Chatbot not found');
+    }
+    return chatbot as any;
+  }
+
   /**
    * Processes an incoming message for a specific chatbot instance using its custom System Prompt.
    */

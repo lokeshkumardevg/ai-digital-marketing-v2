@@ -87,8 +87,8 @@ const getPageNumbers = () => {
       <div
         style={{
           borderRadius: '24px',
-          border: '1px solid #e2e8f0',
-          background: '#ffffff',
+          background: 'rgba(15, 22, 41, 0.4)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
           padding: '64px 24px',
           textAlign: 'center',
         }}
@@ -98,7 +98,7 @@ const getPageNumbers = () => {
             width: '64px',
             height: '64px',
             borderRadius: '999px',
-            background: '#f1f5f9',
+            background: 'rgba(255, 255, 255, 0.03)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -113,7 +113,7 @@ const getPageNumbers = () => {
             margin: 0,
             fontSize: '1rem',
             fontWeight: 700,
-            color: '#334155',
+            color: '#f8fafc',
           }}
         >
           No creatives found
@@ -150,8 +150,8 @@ const getPageNumbers = () => {
               style={{
                 overflow: 'hidden',
                 borderRadius: '24px',
-                border: '1px solid #e2e8f0',
-                background: '#ffffff',
+                background: 'rgba(15, 22, 41, 0.6)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
                 boxShadow: isHovered
                   ? '0 18px 40px rgba(15, 23, 42, 0.12)'
                   : '0 4px 12px rgba(15, 23, 42, 0.05)',
@@ -167,7 +167,7 @@ const getPageNumbers = () => {
                   height: '190px',
                   width: '100%',
                   overflow: 'hidden',
-                  background: '#f1f5f9',
+                  background: 'rgba(255, 255, 255, 0.03)',
                 }}
               >
                 {imageSrc ? (
@@ -179,7 +179,7 @@ const getPageNumbers = () => {
                       height: '100%',
                       objectFit: 'cover',
                       display: 'block',
-                      background: '#f8fafc',
+                      background: '#050a18',
                     }}
                   />
                 ) : (
@@ -314,7 +314,7 @@ const getPageNumbers = () => {
 
               <div
                 style={{
-                  borderTop: '1px solid #f1f5f9',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
                   padding: '12px 14px 14px',
                 }}
               >
@@ -324,7 +324,7 @@ const getPageNumbers = () => {
                     margin: 0,
                     fontSize: '0.98rem',
                     fontWeight: 500,
-                    color: '#111827',
+                    color: '#f1f5f9',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -360,7 +360,7 @@ const getPageNumbers = () => {
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#111827',
+                        color: '#f1f5f9',
                         lineHeight: 1.2,
                       }}
                     >
@@ -385,7 +385,7 @@ const getPageNumbers = () => {
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#111827',
+                        color: '#f1f5f9',
                         lineHeight: 1.2,
                       }}
                     >
@@ -410,7 +410,7 @@ const getPageNumbers = () => {
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#111827',
+                        color: '#f1f5f9',
                         lineHeight: 1.2,
                       }}
                     >
@@ -435,7 +435,7 @@ const getPageNumbers = () => {
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#111827',
+                        color: '#f1f5f9',
                         lineHeight: 1.2,
                       }}
                     >
@@ -533,9 +533,9 @@ const getPageNumbers = () => {
   min-width: 38px;
   height: 38px;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
-  color: #334155;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #f1f5f9;
   display: inline-flex;
   align-items: center;
   justify-content: center;

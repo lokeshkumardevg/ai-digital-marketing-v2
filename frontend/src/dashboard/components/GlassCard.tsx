@@ -17,10 +17,10 @@ export const GlassCard: React.FC<GlassCardProps> = ({ children, className = '', 
         transition: 'all var(--transition-medium)',
         cursor: onClick ? 'pointer' : 'default',
         position: 'relative',
-        background: '#ffffff',
-        border: '1px solid var(--glass-border)',
+        background: 'rgba(255, 255, 255, 0.03)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: 'var(--glass-shadow)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
         ...style
       }}
       onMouseEnter={(e) => {

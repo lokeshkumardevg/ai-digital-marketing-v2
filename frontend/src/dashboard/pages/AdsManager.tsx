@@ -5,7 +5,7 @@ import { SmartTable } from '../components/SmartTable';
 const statusStyles: Record<string, { bg: string; color: string; dot: string }> = {
   active: { bg: 'rgba(16,185,129,0.12)', color: '#10b981', dot: '#10b981' },
   paused: { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b', dot: '#f59e0b' },
-  draft: { bg: '#f8fafc', color: 'var(--text-secondary)', dot: '#94a3b8' },
+  draft: { bg: 'rgba(255,255,255,0.05)', color: '#94a3b8', dot: '#94a3b8' },
 };
 
 const platforms = ['All', 'Meta', 'Google', 'X', 'LinkedIn'];
@@ -88,7 +88,7 @@ export const AdsManager: React.FC = () => {
             { label: 'Active Ads', value: '3', sub: '2 paused, 1 draft', icon: Zap, color: '#d97706' },
             { label: 'AI Score', value: '74/100', sub: 'Good performance', icon: BrainCircuit, color: '#2631d6' },
           ].map((stat, i) => (
-            <div key={i} style={{ flex: 1, borderRight: i < 3 ? '1px solid #f1f5f9' : 'none', paddingRight: i < 3 ? '32px' : '0' }}>
+            <div key={i} style={{ flex: 1, borderRight: i < 3 ? '1px solid rgba(255,255,255,0.08)' : 'none', paddingRight: i < 3 ? '32px' : '0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                 <stat.icon size={14} color={stat.color} />
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{stat.label}</span>
@@ -100,7 +100,7 @@ export const AdsManager: React.FC = () => {
         </div>
 
         {/* Optimization Hub */}
-        <div style={{ background: 'linear-gradient(135deg, #2631d608, #1e27a808)', border: '1px solid #ede9fe', borderRadius: '12px', padding: '16px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: 'rgba(38, 49, 214, 0.05)', border: '1px solid rgba(38, 49, 214, 0.2)', borderRadius: '12px', padding: '16px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <BrainCircuit size={18} color="#2631d6" />
             <div>
@@ -119,9 +119,9 @@ export const AdsManager: React.FC = () => {
             {platforms.map(p => (
               <button key={p} onClick={() => setActivePlatform(p)} style={{
                 padding: '6px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
-                background: activePlatform === p ? '#fff' : 'transparent',
-                color: activePlatform === p ? '#0f172a' : '#64748b',
-                boxShadow: activePlatform === p ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                background: activePlatform === p ? '#2631d6' : 'transparent',
+                color: activePlatform === p ? '#fff' : '#64748b',
+                boxShadow: activePlatform === p ? '0 4px 12px rgba(38, 49, 214, 0.3)' : 'none',
                 transition: 'all 0.15s'
               }}>{p}</button>
             ))}

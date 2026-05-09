@@ -17,6 +17,7 @@ import {
   LayoutTemplate,
   Search,
   Bell,
+  Presentation as PresentationIcon,
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 
@@ -37,6 +38,7 @@ interface MenuItem {
 const BASE_MENU_ITEMS: MenuItem[] = [
   { path: '/crm', label: 'Home', icon: LayoutDashboard, permission: 'dashboard' },
   { path: '/campaigns', label: 'New Campaign', icon: Megaphone, permission: 'ads' },
+  { path: '/presentation', label: 'Client Presentation', icon: PresentationIcon, permission: 'dashboard' },
   // { path: '/templates', label: 'AI Templates', icon: LayoutTemplate, permission: 'ads' },
   {
     label: 'AI Optimize',

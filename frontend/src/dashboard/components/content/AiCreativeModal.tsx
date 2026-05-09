@@ -255,8 +255,8 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0,0,0,0.45)',
-        backdropFilter: 'blur(6px)',
+        background: 'rgba(0,0,0,0.7)',
+        backdropFilter: 'blur(20px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -281,8 +281,9 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
             padding: '22px',
             position: 'relative',
             borderRadius: '28px',
-            background: '#ffffff',
-            boxShadow: '0 30px 80px rgba(15, 23, 42, 0.18)',
+            background: 'rgba(10, 15, 30, 0.95)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 30px 80px rgba(0, 0, 0, 0.6)',
             width: '100%',
             height: '100%',
             overflow: 'hidden',
@@ -324,10 +325,10 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
           >
             <div
               style={{
-                border: '1px solid #f1f5f9',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '24px',
                 padding: '20px 18px',
-                background: '#fff',
+                background: 'rgba(255, 255, 255, 0.02)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -343,7 +344,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       marginBottom: '10px',
                       fontSize: '1rem',
                       fontWeight: 600,
-                      color: '#18181b',
+                      color: '#f8fafc',
                     }}
                   >
                     Select Type
@@ -360,8 +361,8 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                         border: '1.5px solid #d4d4d8',
                         padding: '0 48px 0 18px',
                         fontSize: '0.96rem',
-                        color: '#18181b',
-                        background: '#fff',
+                        color: '#f8fafc',
+                        background: 'rgba(255, 255, 255, 0.05)',
                         outline: 'none',
                         appearance: 'none',
                         WebkitAppearance: 'none',
@@ -429,9 +430,9 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       border: '1.5px solid #d4d4d8',
                       padding: '0 18px',
                       fontSize: '0.96rem',
-                      color: '#18181b',
+                      color: '#f8fafc',
                       outline: 'none',
-                      background: '#fff',
+                      background: 'rgba(255, 255, 255, 0.05)',
                     }}
                   />
 
@@ -458,9 +459,9 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                     width: '100%',
                     height: '52px',
                     borderRadius: '999px',
-                    border: '1.5px solid #d8b4fe',
-                    background: '#fff',
-                    color: canFetchImages ? '#c084fc' : '#d4d4d8',
+                    border: '1.5px solid rgba(124, 58, 237, 0.3)',
+                    background: 'rgba(124, 58, 237, 0.1)',
+                    color: canFetchImages ? '#c084fc' : '#4b5563',
                     fontWeight: 700,
                     fontSize: '0.98rem',
                     cursor: canFetchImages ? 'pointer' : 'not-allowed',
@@ -541,9 +542,9 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
     width: '100%',
     height: '52px',
     borderRadius: '999px',
-    border: '1.5px solid #d8b4fe',
-    background: '#fff',
-    color: '#2631d6',
+    border: '1.5px solid rgba(124, 58, 237, 0.3)',
+    background: 'rgba(124, 58, 237, 0.1)',
+    color: '#a78bfa',
     fontWeight: 700,
     fontSize: '0.96rem',
     cursor: 'pointer',
@@ -579,9 +580,9 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
 
             <div
               style={{
-                border: '1px solid #f1f5f9',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '24px',
-                background: '#fafafa',
+                background: 'rgba(255, 255, 255, 0.03)',
                 padding: '18px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -622,7 +623,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                         margin: 0,
                         fontSize: '1rem',
                         fontWeight: 700,
-                        color: '#111827',
+                        color: '#f1f5f9',
                       }}
                     >
                       Scraped Images Preview
@@ -689,7 +690,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                   minHeight: 0,
                   borderRadius: '20px',
                   border: '1px dashed #d8b4fe',
-                  background: '#ffffff',
+                  background: 'rgba(255, 255, 255, 0.02)',
                   padding: '16px',
                   overflowY: 'auto',
                   overflowX: 'hidden',
@@ -771,7 +772,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                               height: '100%',
                               objectFit: 'cover',
                               display: 'block',
-                              background: '#fff',
+                              background: '#050a18',
                             }}
                             onError={() => handleImageError(img)}
                           />

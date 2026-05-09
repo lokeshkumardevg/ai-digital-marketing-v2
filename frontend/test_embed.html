@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Embed Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f4f4f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            color: #18181b;
+        }
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        p { color: #71717a; font-size: 1.1rem; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Chatbot Integration</h1>
+        <p>This is a test page to verify that the dynamic AI Chatbot widget loads correctly on external websites. Look for the chat bubble in the bottom right corner!</p>
+    </div>
+
+    <!-- AI Chatbot Embed Code -->
+    <!-- Replace BOT_ID with a real ID from your dashboard to test -->
+    <script src="http://localhost:5173/embed.js" data-agent-id="bot-1"></script>
+</body>
+</html>

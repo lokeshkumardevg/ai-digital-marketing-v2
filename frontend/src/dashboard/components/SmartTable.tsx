@@ -23,7 +23,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({
   title,
   searchPlaceholder = 'Search records...',
   actions,
-  dark = false,
+  dark = true,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
@@ -32,14 +32,14 @@ export const SmartTable: React.FC<SmartTableProps> = ({
 
   // ── Dark palette tokens (only used when dark=true) ─────────────
   const D = {
-    surface:     '#0f1629',
-    surfaceAlt:  '#141d35',
-    border:      'rgba(99,102,241,0.18)',
-    borderHover: 'rgba(112,51,245,0.35)',
+    surface:     '#050a18',
+    surfaceAlt:  '#0a1128',
+    border:      'rgba(255, 255, 255, 0.08)',
+    borderHover: 'rgba(255, 255, 255, 0.15)',
     purple:      '#2631d6',
-    purpleSoft:  'rgba(124,58,237,0.12)',
-    purpleText:  '#a78bfa',
-    textPrimary: '#f1f5f9',
+    purpleSoft:  'rgba(38, 49, 214, 0.12)',
+    purpleText:  '#3b82f6',
+    textPrimary: '#f8fafc',
     textMuted:   '#94a3b8',
     textDim:     '#64748b',
     rowHover:    'rgba(255,255,255,0.04)',
@@ -79,93 +79,6 @@ export const SmartTable: React.FC<SmartTableProps> = ({
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   // ── Light theme styles (original, unchanged) ──────────────────
-  if (!dark) {
-    return (
-      <div className="smart-table-container">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          {title && <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>{title}</h3>}
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div style={{ position: 'relative' }}>
-              <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} size={16} />
-              <input
-                type="text"
-                placeholder={searchPlaceholder}
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                style={{ padding: '10px 16px 10px 40px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', color: '#0f172a', width: '300px', outline: 'none', transition: '0.2s' }}
-              />
-            </div>
-          </div>
-        </div>
-        <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                {columns.map(col => (
-                  <th key={col.key} onClick={() => col.sortable && handleSort(col.key)}
-                    style={{ padding: '14px 20px', textAlign: 'left', fontSize: '0.8rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', cursor: col.sortable ? 'pointer' : 'default', whiteSpace: 'nowrap', userSelect: 'none' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {col.label}
-                      {col.sortable && (
-                        <div style={{ display: 'flex', flexDirection: 'column', opacity: 0.5 }}>
-                          <ChevronUp size={10} style={{ color: sortConfig?.key === col.key && sortConfig.direction === 'asc' ? 'var(--accent-primary)' : undefined }} />
-                          <ChevronDown size={10} style={{ color: sortConfig?.key === col.key && sortConfig.direction === 'desc' ? 'var(--accent-primary)' : undefined }} />
-                        </div>
-                      )}
-                    </div>
-                  </th>
-                ))}
-                <th style={{ padding: '14px 20px' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedData.length === 0 ? (
-                <tr><td colSpan={columns.length + 1} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>No matching records found.</td></tr>
-              ) : (
-                paginatedData.map((row, idx) => (
-                  <tr key={idx}
-                    style={{ borderBottom: idx < paginatedData.length - 1 ? '1px solid #f1f5f9' : 'none', transition: '0.2s', background: 'transparent' }}
-                    onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                  >
-                    {columns.map(col => (
-                      <td key={col.key} style={{ padding: '16px 20px', fontSize: '0.9rem', color: '#334155' }}>
-                        {col.render ? col.render(row) : row[col.key]}
-                      </td>
-                    ))}
-                    {actions ? (
-                      <td style={{ padding: '16px 20px', textAlign: 'right' }}>{actions(row)}</td>
-                    ) : (
-                      <td style={{ padding: '16px 20px', textAlign: 'right' }}>
-                        <button style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}><MoreVertical size={18} /></button>
-                      </td>
-                    )}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderTop: '1px solid #e2e8f0', background: '#fff' }}>
-            <div style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 500 }}>
-              Showing {filteredData.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} records
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1}
-                style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', border: '1px solid #e2e8f0', background: currentPage === 1 ? '#f8fafc' : '#fff', color: currentPage === 1 ? '#94a3b8' : '#0f172a', borderRadius: '6px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: 600, transition: '0.15s' }}
-                onMouseEnter={e => { if (currentPage !== 1) e.currentTarget.style.background = '#f1f5f9'; }}
-                onMouseLeave={e => { if (currentPage !== 1) e.currentTarget.style.background = '#fff'; }}
-              ><ChevronLeft size={16} /> Previous</button>
-              <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages || totalPages === 0}
-                style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', border: '1px solid #e2e8f0', background: currentPage === totalPages || totalPages === 0 ? '#f8fafc' : '#fff', color: currentPage === totalPages || totalPages === 0 ? '#94a3b8' : '#0f172a', borderRadius: '6px', cursor: currentPage === totalPages || totalPages === 0 ? 'not-allowed' : 'pointer', fontSize: '0.85rem', fontWeight: 600, transition: '0.15s' }}
-                onMouseEnter={e => { if (currentPage !== totalPages && totalPages !== 0) e.currentTarget.style.background = '#f1f5f9'; }}
-                onMouseLeave={e => { if (currentPage !== totalPages && totalPages !== 0) e.currentTarget.style.background = '#fff'; }}
-              >Next <ChevronRight size={16} /></button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ── Dark theme ─────────────────────────────────────────────────
   return (

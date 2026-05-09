@@ -111,66 +111,96 @@ CRITICAL REQUIREMENTS:
   @Post('website-builder')
   async websiteBuilder(@Body() body: {
     topic: string;
-    pages: string;
-    primaryColor: string;
+    pages?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+    theme?: string;
     logoBase64?: string;
   }) {
-    this.logger.log('[website-builder] Request received → using gpt-4o (16384 tokens)');
+    this.logger.log(`[website-builder] Request received for topic: ${body.topic} → using gpt-4o (16384 tokens)`);
 
-    const pages = body.pages
-      ? body.pages.split(',').map((p) => p.trim()).filter(Boolean)
-      : ['Home', 'About', 'Services', 'Contact'];
-    const pagesStr = pages.join(', ');
+    // Determine pages
+    let pageList: string[] = [];
+    if (body.pages) {
+      // If it looks like a number
+      if (!isNaN(Number(body.pages.trim()))) {
+        const count = Math.min(Math.max(parseInt(body.pages), 1), 10);
+        pageList = ['Home', 'About Us', 'Services', 'Portfolio', 'Contact Us'];
+        for (let i = 6; i <= count; i++) pageList.push(`Page ${i}`);
+      } else {
+        pageList = body.pages.split(',').map((p) => p.trim()).filter(Boolean);
+      }
+    }
+    
+    if (pageList.length === 0) {
+      pageList = ['Home', 'About Us', 'Services', 'Portfolio', 'Contact Us'];
+    }
+
+    const pagesStr = pageList.join(', ');
     const primaryColor = body.primaryColor || '#036cd8';
+    const secondaryColor = body.secondaryColor || '#6366f1';
+    const theme = body.theme || 'Corporate';
     const hasLogo = !!body.logoBase64;
 
     const realLogoTag = hasLogo
       ? `<img src="${body.logoBase64}" alt="Logo" style="height:48px; object-fit:contain;" />`
       : `<span class="brand-name" style="font-size:1.5rem;font-weight:800;color:${primaryColor};">${body.topic || 'Brand'}</span>`;
 
-    const systemPrompt = `You are the World's #1 Senior Frontend Architect and Premium UI/UX Designer. You write complete, production-grade Single Page Applications (SPAs) in one HTML file.
+    const systemPrompt = `You are a World-Class Lead Designer at a top-tier digital agency.
+Your mission: Generate an "Elite" Multi-Page SPA for: "${body.topic}".
 
-YOUR ABSOLUTE RULES:
-1. OUTPUT: Only raw HTML. Start with <!DOCTYPE html> and end with </html>. ZERO markdown, ZERO code fences.
-2. NEVER TRUNCATE. Write 100% of every page. If the output is long, continue until complete.
-3. ALL PAGES: Build every single page from the required list. No placeholders, no "coming soon".
-4. REAL CONTENT: Write expert, industry-specific long-form copy. Never use Lorem Ipsum.
-5. DESIGN: Use Tailwind CSS CDN + FontAwesome CDN + Google Fonts (Plus Jakarta Sans). Configure primary color via tailwind.config.
-6. SPA LOGIC: showPage(slug) function. Each <section> has id="section-{slug}" and class="page-section". Nav links call showPage('{slug}'). First page visible by default.
-7. FOOTER: Always include a 4-column footer: (1) Logo+socials, (2) Quick links for all pages, (3) Contact info, (4) Newsletter signup.`;
+THEME-SPECIFIC RULES (STRICT):
+- If THEME is 'Restaurant': Use elegant food menus, reservation forms, and gallery grids.
+- If THEME is 'SaaS' or 'Startup': Use modern dashboard previews, complex feature grids, and comparison tables.
+- If THEME is 'Healthcare' or 'Education': Use clean, trust-building layouts, appointment/enrollment forms, and resource grids.
+- If THEME is 'E-commerce' or 'Real Estate': Use product/property cards with large images, filter UI, and high-impact CTAs.
 
-    const userPrompt = `Build a complete multi-page premium website SPA.
+DESIGN SYSTEM:
+1. TYPOGRAPHY: Elite hierarchy using 'Plus Jakarta Sans'.
+2. COLORS: Primary (${primaryColor}) and Secondary (${secondaryColor}). Use deep semantic shading.
+3. ANIMATIONS: Include AOS library (data-aos="fade-up").
+4. COMPONENTS: Use rounded-3xl, shadow-2xl, and glassmorphism.
 
-Business: "${body.topic}"
-Brand Primary Color: "${primaryColor}"
-Pages (ALL must be fully built): ${pagesStr}
+TECHNICAL RULES:
+- LOGO: Use exactly [COMPANY_LOGO_IMAGE_TAG].
+- NO TRUNCATION. NO MARKDOWN. ONLY RAW HTML.
+- Start with <!DOCTYPE html> and end with </html>.`;
 
-For EACH page, create <section id="section-SLUG" class="page-section"> with 3-5 rich sub-sections:
-- HOME: Hero (headline + 2 CTAs) → Stats row (4 numbers) → Why Choose Us (3 cards) → Our Process (3 steps) → FAQ (4 Qs) → CTA banner
-- ABOUT: Story section → Mission & Vision → Team grid (6 people with names/titles) → Milestones timeline
-- SERVICES: Page title → 8 service cards (icon + title + 3-line description + button) → Comparison table → CTA
-- CONTACT: Split layout (form left, contact info+map right) → FAQ → Social links
-- ANY OTHER PAGE: 4 unique, content-rich sections relevant to the page title
+    const userPrompt = `Build an Elite Multi-Page ${theme} Website for "${body.topic}".
 
-Design requirements:
-- tailwind.config primary: "${primaryColor}"
-- Glassmorphism cards (bg-white/80 backdrop-blur-md)
-- Hover animations (hover:-translate-y-2 transition-all duration-300)
-- Sticky navbar with blur on scroll
-- Hamburger menu for mobile
-- Scroll-to-top button
-- Logo in NAV and FOOTER: [COMPANY_LOGO_IMAGE_TAG]
-- Footer: 4 columns, dark background, brand accent color
+REQUIRED PAGES: ${pagesStr}
+PRIMARY COLOR: ${primaryColor}
+SECONDARY COLOR: ${secondaryColor}
 
-Generate the COMPLETE HTML now. Do not stop until </html>.`;
+INSTRUCTIONS:
+- Look at the logo (if provided) and adapt the ENTIRE theme to its vibe.
+- Every page must have at least 4 unique, content-rich sections.
+- HOME: Hero → Theme-Specific Features → Theme-Specific Grid → Testimonials → FAQ → Footer.
+- ALL OTHER PAGES: Pages must follow the '${theme}' design language strictly.
+- Logo Placeholder: [COMPANY_LOGO_IMAGE_TAG]
 
-    const raw = await this.aiService.generateContent(userPrompt, systemPrompt, undefined, 'gpt-4o', 16384);
+IMPORTANT: This site must be professional enough to sell for $10,000.`;
+
+    const raw = await this.aiService.generateContent(
+      userPrompt,
+      systemPrompt,
+      undefined,
+      'gpt-4o',
+      16384,
+      body.logoBase64 || undefined,
+    );
 
     let html = raw
       .replace(/^```html\s*/i, '')
       .replace(/^```\s*/i, '')
       .replace(/```\s*$/i, '')
       .trim();
+    
+    // Safety check for malformed logo tags
+    const escapedTopic = body.topic.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const brokenImgRegex = new RegExp(`<img[^>]*src=["']${escapedTopic}["'][^>]*>`, 'gi');
+    html = html.replace(brokenImgRegex, '[COMPANY_LOGO_IMAGE_TAG]');
+    
     html = html.replace(/\[COMPANY_LOGO_IMAGE_TAG\]/g, realLogoTag);
 
     return { aiOutput: html };

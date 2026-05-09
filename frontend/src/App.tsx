@@ -27,6 +27,8 @@ import { AiAnalysis } from './dashboard/pages/AiAnalysis';
 import { OptimizeGoal } from './dashboard/pages/OptimizeGoal';
 import { BrandProfile } from './dashboard/pages/BrandProfile';
 import { Products } from './dashboard/pages/Products';
+import { ChatEmbed } from './dashboard/pages/ChatEmbed';
+import { Presentation } from './dashboard/pages/Presentation';
 
 import { Templates } from './dashboard/pages/Templates';
 import { hydrateSession } from './store/slices/authSlice';
@@ -180,6 +182,8 @@ const App: React.FC = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Register />} />
         <Route path="/signup" element={<Register />} />
+        <Route path="/chatbot-embed/:id" element={<ChatEmbed />} />
+        <Route path="/presentation" element={<Presentation />} />
 
         {/* Dashboard Routes — AdsGo full-bleed pages */}
         <Route path="/crm" element={<ProtectedRoute><DarkDashboardLayoutFull><Crm /></DarkDashboardLayoutFull></ProtectedRoute>} />

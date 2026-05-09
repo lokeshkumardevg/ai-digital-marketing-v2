@@ -171,13 +171,42 @@ export const ChatbotBuilder: React.FC = () => {
            </button>
 
            {activeBot && (
-             <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '20px', borderRadius: '12px', marginTop: '24px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                 <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}><Code size={18} color="var(--info)" /> Embed Code</div>
+             <div style={{ background: 'rgba(99, 102, 241, 0.05)', padding: '24px', borderRadius: '16px', marginTop: '32px', border: '1px solid rgba(99, 102, 241, 0.1)' }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                 <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                   <Code size={18} color="var(--accent-primary)" /> 
+                   Deployment Embed Code
+                 </div>
+                 <button 
+                  className="btn btn-secondary btn-sm" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(`<script src="${window.location.origin}/embed.js" data-agent-id="${activeBot._id}"></script>`);
+                    toast.success('Code copied to clipboard!');
+                  }}
+                 >
+                   Copy
+                 </button>
                </div>
-               <code style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>
-                 {`<script src="https://wheedletechnologies.ai/embed.js" data-agent-id="${activeBot._id}"></script>`}
-               </code>
+               <div style={{ position: 'relative' }}>
+                 <code style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', whiteSpace: 'pre-wrap', fontFamily: 'monospace', background: 'rgba(0,0,0,0.2)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                   {`<script src="${window.location.origin}/embed.js" data-agent-id="${activeBot._id}"></script>`}
+                 </code>
+               </div>
+               
+               <div style={{ marginTop: '16px', display: 'flex', gap: '12px' }}>
+                 <a 
+                  href={`/chatbot-embed/${activeBot._id}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  style={{ flex: 1, fontSize: '0.8rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                 >
+                   <Play size={14} /> Full Page Preview
+                 </a>
+                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', flex: 1.5, display: 'flex', alignItems: 'center' }}>
+                    <Activity size={12} style={{marginRight: '4px'}} /> Ready for production
+                 </div>
+               </div>
              </div>
            )}
         </GlassCard>
