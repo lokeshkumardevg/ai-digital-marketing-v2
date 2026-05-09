@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSelector } from 'react-redux';
 import {
   Zap, Globe, Target, DollarSign, Search, Brain,
   ShieldCheck, Wallet, RefreshCw, CheckCircle2, XCircle,
@@ -12,11 +13,14 @@ import {
   TrendingDown, MousePointerClick, EyeIcon, BarChart,
   RefreshCcw, Pause, PlayCircle, Edit3, MessageSquare,
   LayoutDashboard, ArrowLeft, Download, Share2, Maximize2,
-  AlertCircle, CheckCheck, X
+  AlertCircle, CheckCheck, X, Upload, Image,
+  Sparkles,
+
 } from 'lucide-react';
 import axios from 'axios';
-import { getAuthUser } from '../../landing/lib/auth';  // adjust path to match your project
 import { Header } from '../components/Header';
+import LiveDashboard from '../components/CampaignLivedashboard';
+import AdCampaignDashboard from '../components/adCampaignDashboard';
 
 // ============================================
 // TYPES
@@ -165,6 +169,13 @@ interface Message {
   content: any;
 }
 
+interface BrandFormData {
+  brandName: string;
+  brandUrl: string;
+  logoFile: File | null;
+  logoPreview: string | null;
+}
+
 interface AppState {
   url: string;
   urlStatus: string;
@@ -188,11 +199,8 @@ let msgCounter = 0;
 const newMsgId = () => `msg-${++msgCounter}`;
 const SESSION_VERSION = 'v2';
 
-// ─── KEY: strictly per-user ──────────────────────────────────
 const localKeyForUser = (userId: string) => `nexus_session_${userId}`;
-// Prefix used to find ALL nexus session keys for cleanup
 const SESSION_KEY_PREFIX = 'nexus_session_';
-
 type UrlValidationResult =
   | { ok: true; normalizedUrl: string }
   | { ok: false; code: string; message: string };
@@ -256,8 +264,8 @@ const generateBudgetTiers = (userBudget: number, platforms: string[]): BudgetBre
     const total = Math.round(userBudget * mult);
     const perPlatform = platforms.length > 1 ? Math.round(total / 2) : total;
     const platformData = platforms.map(p => {
-      const cpcMap: Record<string,number> = { meta: 1.2, google: 2.8, twitter: 0.9, linkedin: 5.2 };
-      const ctrMap: Record<string,number> = { meta: 0.018, google: 0.032, twitter: 0.012, linkedin: 0.009 };
+      const cpcMap: Record<string, number> = { meta: 1.2, google: 2.8, twitter: 0.9, linkedin: 5.2 };
+      const ctrMap: Record<string, number> = { meta: 0.018, google: 0.032, twitter: 0.012, linkedin: 0.009 };
       const cpc = cpcMap[p] ?? 2.0;
       const ctr = ctrMap[p] ?? 0.015;
       const campaignBudget = Math.round(perPlatform * 0.8);
@@ -297,11 +305,11 @@ const generateBudgetTiers = (userBudget: number, platforms: string[]): BudgetBre
 };
 
 // ============================================
-// SESSION PERSISTENCE — strictly per-user
+// SESSION PERSISTENCE
 // ============================================
 interface PersistedSession {
   version: string;
-  userId: string;   // ← always stored and checked
+  userId: string;
   timestamp: number;
   url: string;
   urlStatus: string;
@@ -341,11 +349,10 @@ const isSessionValid = (session: PersistedSession): boolean => {
   return Date.now() - session.timestamp < sessionTTL(session);
 };
 
-// ─── Local storage: strictly per-user key ───────────────────
 const saveLocal = (session: PersistedSession) => {
   try {
     localStorage.setItem(localKeyForUser(session.userId), JSON.stringify(session));
-  } catch {}
+  } catch { }
 };
 
 const loadLocal = (userId: string): PersistedSession | null => {
@@ -353,9 +360,7 @@ const loadLocal = (userId: string): PersistedSession | null => {
     const raw = localStorage.getItem(localKeyForUser(userId));
     if (!raw) return null;
     const s: PersistedSession = JSON.parse(raw);
-    // Hard guard: never load another user's data
     if (s.userId !== userId || !isSessionValid(s)) return null;
-    // Sanitize messages — ensure every entry has an id
     if (Array.isArray(s.messages)) {
       s.messages = s.messages.map((m, i) => ({ ...m, id: m.id || `msg-local-${i}` }));
     }
@@ -368,13 +373,9 @@ const loadLocal = (userId: string): PersistedSession | null => {
 const clearLocal = (userId: string) => {
   try {
     localStorage.removeItem(localKeyForUser(userId));
-  } catch {}
+  } catch { }
 };
 
-/**
- * FIX: When a new user logs in, wipe ALL other nexus session keys from
- * localStorage so their data never bleeds into the new user's view.
- */
 const clearAllOtherUsersLocal = (currentUserId: string) => {
   try {
     const keysToRemove: string[] = [];
@@ -385,28 +386,19 @@ const clearAllOtherUsersLocal = (currentUserId: string) => {
       }
     }
     keysToRemove.forEach(k => localStorage.removeItem(k));
-  } catch {}
+  } catch { }
 };
 
-// ─── Remote ──────────────────────────────────────────────────
 const saveRemote = async (userId: string, session: PersistedSession): Promise<void> => {
   try {
     await axios.post(`${API_BASE}/campaign/session/save`, { userId, session });
-  } catch {}
+  } catch { }
 };
 
 const normalizeRemoteSession = (raw: any, userId: string): PersistedSession | null => {
   if (!raw || typeof raw !== 'object') return null;
-
-  // The backend returns a MongoDB document. Fields we need may live directly
-  // on the doc (not nested under a "session" key inside itself).
-  // Reconstruct a clean PersistedSession from whatever shape arrives.
   const s = raw;
-
-  // Hard guard: never load another user's data
   if (s.userId !== userId) return null;
-
-  // Derive timestamp: prefer stored timestamp, fall back to updatedAt, createdAt
   const timestamp =
     typeof s.timestamp === 'number'
       ? s.timestamp
@@ -415,17 +407,14 @@ const normalizeRemoteSession = (raw: any, userId: string): PersistedSession | nu
         : s.createdAt
           ? new Date(s.createdAt).getTime()
           : 0;
-
-  // Sanitize messages: ensure every message has an id
   const messages: Message[] = Array.isArray(s.messages)
     ? s.messages.map((m: any, i: number) => ({
-        ...m,
-        id: m.id || `msg-restored-${i}`,
-      }))
+      ...m,
+      id: m.id || `msg-restored-${i}`,
+    }))
     : [];
-
   const session: PersistedSession = {
-    version: SESSION_VERSION,   // always stamp current version — don't rely on stored value
+    version: SESSION_VERSION,
     userId: s.userId,
     timestamp,
     url: s.url || '',
@@ -440,11 +429,8 @@ const normalizeRemoteSession = (raw: any, userId: string): PersistedSession | nu
     campaignId: s.campaignId || null,
     messages,
   };
-
-  // Validate TTL using the derived timestamp
   const ttl = session.liveCampaign ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
   if (Date.now() - timestamp > ttl) return null;
-
   return session;
 };
 
@@ -461,10 +447,9 @@ const loadRemote = async (userId: string): Promise<PersistedSession | null> => {
 const clearRemote = async (userId: string): Promise<void> => {
   try {
     await axios.delete(`${API_BASE}/campaign/session/${userId}`);
-  } catch {}
+  } catch { }
 };
 
-// ─── Beacon on page unload (refresh/close) ───────────────────
 const registerRefreshClear = (userId: string) => {
   const handler = () => {
     const blob = new Blob([JSON.stringify({ userId })], { type: 'application/json' });
@@ -509,18 +494,17 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const TwitterXIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="#e7e7e7">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
 
-// const TwitterXIcon = () => (
-//   <svg width="24" height="24" viewBox="0 0 24 24" fill="#e7e9ea">
-//     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-//   </svg>
-// );
-
-// const LinkedInIcon = () => (
-//   <svg width="24" height="24" viewBox="0 0 24 24" fill="#0a66c2">
-//     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-//   </svg>
-// );
+const LinkedInIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="#0a66c2">
+    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+  </svg>
+);
 
 // ============================================
 // AI TYPING BUBBLE
@@ -575,51 +559,447 @@ class ErrorBoundary extends React.Component<
 }
 
 // ============================================
+// WEBSITE PREVIEW CARD (NEW)
+// ============================================
+const WebsitePreviewCard: React.FC<{ url: string }> = ({ url }) => {
+  const cleanUrl = url.startsWith("http")
+    ? url
+    : `https://${url}`;
+
+  const hostname = getHostname(cleanUrl);
+
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  // Better homepage screenshot
+  const screenshotSrc =
+    `https://image.thum.io/get/width/1400/crop/800/png/noanimate/wait/2/${cleanUrl.replace(/\/?$/, "/")}`;
+
+  const fallbackSrc =
+    `https://www.google.com/s2/favicons?sz=128&domain=${hostname}`;
+
+  return (
+    <div className="site-preview-card">
+
+      {/* TOP BAR */}
+      <div className="site-preview-browser-bar">
+        <div className="site-preview-dots">
+          <span className="red" />
+          <span className="yellow" />
+          <span className="green" />
+        </div>
+
+        <div className="site-preview-url-bar">
+          <Globe size={12} />
+          <span>{hostname}</span>
+        </div>
+
+        <div className="site-preview-ai-badge">
+          <span className="dot" />
+          AI scanning
+        </div>
+      </div>
+
+      {/* IMAGE AREA */}
+      <div className="site-preview-img-wrap">
+
+        {!imgLoaded && !imgError && (
+          <div className="site-preview-loading">
+            <Loader2 className="spin" size={24} />
+          </div>
+        )}
+
+        {!imgError && (
+          <img
+            key={screenshotSrc}
+            src={screenshotSrc}
+            alt={`${hostname} homepage preview`}
+            className={`site-preview-img ${imgLoaded ? "loaded" : ""}`}
+            loading="eager"
+            referrerPolicy="no-referrer"
+            onLoad={() => {
+              setImgLoaded(true);
+              setImgError(false);
+            }}
+            onError={() => {
+              setImgError(true);
+              setImgLoaded(false);
+            }}
+          />
+        )}
+
+        {/* FALLBACK */}
+        {imgError && (
+          <div className="site-preview-fallback">
+            <img
+              src={fallbackSrc}
+              alt="favicon"
+              className="fallback-icon"
+            />
+
+            <h3>{hostname}</h3>
+          </div>
+        )}
+
+        {/* SUCCESS */}
+        {imgLoaded && !imgError && (
+          <div className="site-preview-loaded-badge">
+            <CheckCircle2 size={14} />
+            Homepage Captured
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+// ============================================
+// BRAND DETAILS FORM (NEW)
+// ============================================
+const BrandDetailsForm: React.FC<{
+  initialName?: string;
+  initialUrl?: string;
+  onSubmit: (data: BrandFormData) => void;
+}> = ({ initialName = '', initialUrl = '', onSubmit }) => {
+  const [brandName, setBrandName] = useState(initialName);
+  const [brandUrl, setBrandUrl] = useState(initialUrl);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-suggest favicon as logo
+  const hostname = getHostname(initialUrl);
+  const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${hostname}`;
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleUseFavicon = () => {
+    setLogoPreview(faviconUrl);
+    setLogoFile(null);
+  };
+
+  const handleSubmit = () => {
+    if (!brandName.trim()) { setError('Brand name is required'); return; }
+    if (!brandUrl.trim()) { setError('Brand URL is required'); return; }
+    setError('');
+    setSubmitted(true);
+    onSubmit({ brandName: brandName.trim(), brandUrl: brandUrl.trim(), logoFile, logoPreview });
+  };
+
+  if (submitted) {
+    return (
+      <div className="brand-form-done">
+        <CheckCircle2 size={16} color="#10b981" />
+        <span>Brand details confirmed — <strong>{brandName}</strong></span>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.35 }}
+      className="brand-form-card"
+    >
+      {/* Header */}
+      <div className="brand-form-header">
+        <div className="brand-form-icon">
+          <Building2 size={20} />
+        </div>
+        <div>
+          <div className="brand-form-title">Confirm your brand details</div>
+          <div className="brand-form-sub">AI pre-filled these — edit if anything looks off</div>
+        </div>
+        <div className="brand-form-ai-tag">
+          <Brain size={11} />
+          <span>AI detected</span>
+        </div>
+      </div>
+
+      {/* Name + URL row */}
+      <div className="brand-form-grid">
+        <div className="brand-form-group">
+          <label className="brand-form-label" htmlFor="bf-name">
+            <Building2 size={12} /> Brand name
+          </label>
+          <input
+            id="bf-name"
+            className="brand-form-input"
+            type="text"
+            placeholder="e.g. Acme Inc."
+            value={brandName}
+            onChange={e => { setBrandName(e.target.value); setError(''); }}
+          />
+        </div>
+        <div className="brand-form-group">
+          <label className="brand-form-label" htmlFor="bf-url">
+            <Globe size={12} /> Brand website
+          </label>
+          <input
+            id="bf-url"
+            className="brand-form-input"
+            type="url"
+            placeholder="https://acme.com"
+            value={brandUrl}
+            onChange={e => { setBrandUrl(e.target.value); setError(''); }}
+          />
+        </div>
+      </div>
+
+      {/* Logo upload */}
+      <div className="brand-form-group">
+        <label className="brand-form-label">
+          <Image size={12} /> Brand logo
+        </label>
+        <div className="brand-logo-row">
+          {/* Preview box */}
+          <div className="brand-logo-preview">
+            {logoPreview ? (
+              <img src={logoPreview} alt="Logo preview" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 8 }} />
+            ) : (
+              <div className="brand-logo-placeholder">
+                <Image size={20} color="#334155" />
+              </div>
+            )}
+          </div>
+
+          {/* Upload controls */}
+          <div className="brand-logo-controls">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,image/svg+xml"
+              style={{ display: 'none' }}
+              onChange={handleLogoChange}
+            />
+            <button className="brand-logo-upload-btn" onClick={() => fileInputRef.current?.click()}>
+              <Upload size={13} />
+              Upload logo
+            </button>
+            <button className="brand-logo-favicon-btn" onClick={handleUseFavicon}>
+              <div className="brand-favicon-mini">
+                <img src={faviconUrl} alt="favicon" width={14} height={14} style={{ borderRadius: 3 }} />
+              </div>
+              Use favicon from {hostname}
+            </button>
+            {logoPreview && (
+              <button className="brand-logo-clear-btn" onClick={() => { setLogoPreview(null); setLogoFile(null); }}>
+                <X size={11} /> Clear
+              </button>
+            )}
+            <div className="brand-logo-hint">PNG, SVG, JPG · recommended 256×256px</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="brand-form-error">
+          <AlertCircle size={13} /> {error}
+        </div>
+      )}
+
+      {/* Submit */}
+      <button className="brand-form-submit" onClick={handleSubmit}>
+        <CheckCircle2 size={16} />
+        Confirm brand & continue
+        <ArrowRight size={15} />
+      </button>
+    </motion.div>
+  );
+};
+
+// ============================================
 // CAMPAIGN CONFIRMATION
 // ============================================
+
 const CampaignConfirmation: React.FC<{
   brandName: string;
   onConfirm: () => void;
   onDecline: () => void;
 }> = ({ brandName, onConfirm, onDecline }) => {
-  const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'];
-  const color = colors[Math.floor(Math.random() * colors.length)];
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      initial={{ opacity: 0, y: 20, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.4 }}
-      className="confirmation-card"
+      transition={{ duration: 0.35 }}
+      className="w-full max-w-3xl rounded-[28px] border-[3px] border-[#2b0f57] bg-[#f6f1ff] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.08)]"
     >
-      <div className="confirmation-header">
-        <div className="confirmation-icon" style={{ background: `${color}18`, color }}>
-          <Rocket size={24} />
+      {/* Success Banner */}
+      <div className="mb-5 flex items-center gap-2 rounded-xl border border-[#c9f1d5] bg-[#e9fff0] px-4 py-3 text-[#17803d]">
+        <Sparkles size={18} />
+        <p className="text-sm font-medium">
+          🎉 All set! Your best ad strategy is ready. Review your
+          goals below and start your campaign with one click!
+        </p>
+      </div>
+
+      {/* Card Header */}
+      <div className="mb-5 flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#ede4ff] text-[#7c3aed]">
+          <Rocket size={22} />
         </div>
-        <div className="confirmation-text">
-          <h3>Ready to launch your campaign?</h3>
-          <p>We've analyzed <strong>{brandName}</strong> and identified the best advertising opportunities.</p>
+
+        <div>
+          <h3 className="text-xl font-bold text-[#2b0f57]">
+            Promotion Objective
+          </h3>
+
+          <p className="mt-1 text-sm text-[#6b7280]">
+            We’ve analyzed{" "}
+            <span className="font-semibold text-[#111827]">
+              {brandName}
+            </span>{" "}
+            and generated an AI-optimized campaign setup.
+          </p>
         </div>
       </div>
-      <div className="confirmation-benefits">
-        {['AI-optimized budget allocation', 'Multi-platform ad campaigns (Meta & Google)', 'Real-time performance tracking', 'Automatic ROI optimization'].map(item => (
-          <div key={item} className="confirmation-benefit">
-            <CheckCircle2 size={14} color="#10b981" /><span>{item}</span>
+
+      {/* Form Grid */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* Business Type */}
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-[#2b0f57]">
+            Business Type
+          </label>
+
+          <div className="rounded-2xl border border-[#e5d9ff] bg-white px-4 py-3 text-sm font-medium text-[#111827] shadow-sm">
+            Solution & Online Service
+          </div>
+        </div>
+
+        {/* Ad Goal */}
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-[#2b0f57]">
+            Your Ad Performance Goal
+          </label>
+
+          <div className="rounded-2xl border border-[#e5d9ff] bg-white px-4 py-3 text-sm font-medium text-[#111827] shadow-sm">
+            In-web actions
+          </div>
+        </div>
+
+        {/* Business Goal */}
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-[#2b0f57]">
+            Your Business Goal
+          </label>
+
+          <div className="rounded-2xl border border-[#e5d9ff] bg-white px-4 py-3 text-sm font-medium text-[#111827] shadow-sm">
+            Sales
+          </div>
+        </div>
+
+        {/* Locations */}
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-[#2b0f57]">
+            Target Locations
+          </label>
+
+          <div className="flex items-center gap-2 rounded-2xl border border-[#e5d9ff] bg-white px-4 py-3 shadow-sm">
+            <span className="rounded-full bg-[#f3f4f6] px-3 py-1 text-sm font-medium text-[#374151]">
+              India
+            </span>
+          </div>
+        </div>
+
+        {/* Platforms */}
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-[#2b0f57]">
+            Ad Platform
+          </label>
+
+          <div className="flex items-center justify-between rounded-2xl border border-[#e5d9ff] bg-white px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Target size={16} className="text-[#7c3aed]" />
+              <span className="text-sm font-medium text-[#111827]">
+                Meta
+              </span>
+            </div>
+
+            <span className="rounded-full bg-[#fff4d6] px-2 py-1 text-xs font-semibold text-[#d97706]">
+              Recommended
+            </span>
+          </div>
+        </div>
+
+        {/* Promotion Type */}
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-[#2b0f57]">
+            Promotion Type
+          </label>
+
+          <div className="rounded-2xl border border-[#e5d9ff] bg-white px-4 py-3 text-sm font-medium text-[#111827] shadow-sm">
+            Long-term
+          </div>
+        </div>
+
+        {/* Budget */}
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-semibold text-[#2b0f57]">
+            Suggested Daily Limit
+          </label>
+
+          <div className="flex items-center justify-between rounded-2xl border border-[#e5d9ff] bg-white px-4 py-3 shadow-sm">
+            <span className="text-lg font-bold text-[#111827]">
+              35
+            </span>
+
+            <span className="text-sm font-semibold text-[#6b7280]">
+              USD
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Benefits */}
+      <div className="mt-5 grid gap-2">
+        {[
+          "AI-optimized budget allocation",
+          "Multi-platform campaign setup",
+          "Real-time performance tracking",
+          "Automatic ROI optimization",
+        ].map((item) => (
+          <div
+            key={item}
+            className="flex items-center gap-2 text-sm text-[#374151]"
+          >
+            <CheckCircle2 size={16} className="text-[#10b981]" />
+            <span>{item}</span>
           </div>
         ))}
       </div>
-      <div className="confirmation-question">
-        <Zap size={16} color={color} />
-        <span>Would you like to create a campaign for {brandName}?</span>
-      </div>
-      <div className="confirmation-actions">
-        <button className="confirmation-yes-btn" onClick={onConfirm}>
-          <Rocket size={18} />Yes, Create My Campaign
+
+      {/* Actions */}
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <button
+          onClick={onConfirm}
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#b77cff] to-[#4b00ff] px-6 py-4 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.01]"
+        >
+          <Rocket size={18} />
+          Generate Campaign
         </button>
-        <button className="confirmation-no-btn" onClick={onDecline}>Maybe Later</button>
+
+        <button
+          onClick={onDecline}
+          className="rounded-2xl border border-[#ddd6fe] bg-white px-6 py-4 text-sm font-semibold text-[#6b7280] transition hover:bg-[#f8f5ff]"
+        >
+          Maybe Later
+        </button>
       </div>
     </motion.div>
   );
 };
+
 
 // ============================================
 // PAYMENT MODAL
@@ -719,179 +1099,6 @@ const PaymentModal: React.FC<{
 };
 
 // ============================================
-// LIVE DASHBOARD
-// ============================================
-const LiveDashboard: React.FC<{
-  campaign: LiveCampaignData;
-  brandName: string;
-  onBackToChat: () => void;
-  onRefresh: () => void;
-  isRefreshing: boolean;
-}> = ({ campaign, brandName, onBackToChat, onRefresh, isRefreshing }) => {
-  const [selectedPlatform, setSelectedPlatform] = useState<string>(campaign.platforms[0]?.name || 'meta');
-  const [timeRange, setTimeRange] = useState<'7d' | '14d' | '30d'>('7d');
-  const [showFullscreen, setShowFullscreen] = useState(false);
-
-  const platform = campaign.platforms.find((p: any) => p.name === selectedPlatform) || campaign.platforms[0];
-  const getPlatformMeta = (name: string) => {
-    const map: Record<string, { color: string; icon: JSX.Element; label: string; sub: string }> = {
-      meta:     { color: '#3b82f6', icon: <FacebookIcon />,  label: 'Meta Ads',      sub: 'Facebook & Instagram' },
-      google:   { color: '#ea4335', icon: <GoogleIcon />,    label: 'Google Ads',    sub: 'Search, Display & YouTube' },
-      twitter:  { color: '#e7e9ea', icon: <TwitterXIcon />,  label: 'Twitter (X)',   sub: 'X Ads & Promoted Posts' },
-      linkedin: { color: '#0a66c2', icon: <LinkedInIcon />,  label: 'LinkedIn Ads',  sub: 'Sponsored Content & InMail' },
-    };
-    return map[name] || map['meta'];
-  };
-  const pm = getPlatformMeta(platform?.name);
-  const platformColor = pm.color;
-  const platformIcon  = pm.icon;
-  const platformName  = pm.label;
-
-  const statusColors: Record<string, string> = {
-    CREATING: '#f59e0b', PROCESSING: '#3b82f6', ACTIVE: '#10b981', PAUSED: '#64748b', FAILED: '#ef4444',
-  };
-  const statusLabels: Record<string, string> = {
-    CREATING: 'Creating', PROCESSING: 'Processing', ACTIVE: 'Live', PAUSED: 'Paused', FAILED: 'Failed',
-  };
-
-  return (
-    <div className={`dashboard-page ${showFullscreen ? 'fullscreen' : ''}`}>
-      <div className="dash-header">
-        <div className="dash-header-left">
-          <button className="dash-back-btn" onClick={onBackToChat}><ArrowLeft size={18} /> Chat</button>
-          <div className="dash-title-section">
-            <h2>{campaign.campaignName || brandName} Campaign</h2>
-            <span className="dash-campaign-id">ID: {campaign.campaignId?.slice(0, 16)}...</span>
-          </div>
-        </div>
-        <div className="dash-header-right">
-          <div className="dash-time-filter">
-            {(['7d', '14d', '30d'] as const).map(range => (
-              <button key={range} className={`dash-time-btn ${timeRange === range ? 'active' : ''}`} onClick={() => setTimeRange(range)}>
-                {range === '7d' ? '7 Days' : range === '14d' ? '14 Days' : '30 Days'}
-              </button>
-            ))}
-          </div>
-          <button className="dash-refresh-btn" onClick={onRefresh} disabled={isRefreshing}>
-            <RefreshCcw size={16} className={isRefreshing ? 'spin' : ''} />
-          </button>
-          <button className="dash-fullscreen-btn" onClick={() => setShowFullscreen(!showFullscreen)}>
-            <Maximize2 size={16} />
-          </button>
-        </div>
-      </div>
-
-      <div className="dash-status-bar">
-        <div className="dash-status-item">
-          <span className="dash-status-dot" style={{ background: statusColors[campaign.status] }} />
-          <span>{statusLabels[campaign.status] || campaign.status}</span>
-        </div>
-        <div className="dash-status-item"><Clock size={14} /><span>{new Date(campaign.createdAt).toLocaleDateString()}</span></div>
-        <div className="dash-status-item">
-          <Wifi size={14} color={campaign.status === 'ACTIVE' ? '#10b981' : '#64748b'} />
-          <span>{campaign.status === 'ACTIVE' ? 'Auto-updating every 5s' : 'Updates paused'}</span>
-        </div>
-      </div>
-
-      <div className="dash-overall-metrics">
-        {[
-          { icon: <Eye size={20} />, value: (campaign.overallMetrics?.totalImpressions || 0).toLocaleString(), label: 'Total Impressions' },
-          { icon: <MousePointerClick size={20} />, value: (campaign.overallMetrics?.totalClicks || 0).toLocaleString(), label: 'Total Clicks' },
-          { icon: <DollarSign size={20} />, value: fmt(campaign.overallMetrics?.totalSpend || 0), label: 'Total Spend' },
-          { icon: <Target size={20} />, value: (campaign.overallMetrics?.totalConversions || 0).toLocaleString(), label: 'Conversions' },
-          { icon: <TrendingUp size={20} />, value: `${campaign.overallMetrics?.overallRoi || 0}%`, label: 'Overall ROI', highlight: true, color: '#10b981' },
-        ].map(m => (
-          <div key={m.label} className={`dash-metric-card ${m.highlight ? 'highlight' : ''}`}>
-            <div className="dash-metric-icon">{m.icon}</div>
-            <div className="dash-metric-value" style={m.color ? { color: m.color } : {}}>{m.value}</div>
-            <div className="dash-metric-label">{m.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="dash-platform-tabs">
-        {campaign.platforms.map((p: any) => (
-          <button key={p.name} className={`dash-platform-tab ${selectedPlatform === p.name ? 'active' : ''}`} onClick={() => setSelectedPlatform(p.name)}>
-            {p.name === 'meta' ? <FacebookIcon /> : p.name === 'google' ? <GoogleIcon /> : p.name === 'twitter' ? <TwitterXIcon /> : <LinkedInIcon />}
-            <span>{({'meta':'Meta Ads','google':'Google Ads','twitter':'Twitter (X)','linkedin':'LinkedIn Ads'} as any)[p.name] || p.name}</span>
-            <span className={`dash-tab-status ${p.status.toLowerCase()}`}>{p.status}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="dash-platform-detail">
-        <div className="dash-platform-header">
-          <div className="dash-platform-info">
-            <div className="dash-platform-icon" style={{ background: `${platformColor}18` }}>{platformIcon}</div>
-            <div>
-              <h3>{platformName}</h3>
-              <p>{pm.sub}</p>
-            </div>
-          </div>
-          <div className="dash-platform-status">
-            <span className="dash-status-dot" style={{ background: statusColors[platform?.status] }} />
-            {statusLabels[platform?.status]}
-          </div>
-        </div>
-
-        <div className="dash-metrics-grid">
-          {[
-            { value: (platform?.metrics?.impressions || 0).toLocaleString(), label: 'Impressions', width: '75%' },
-            { value: (platform?.metrics?.clicks || 0).toLocaleString(), label: 'Clicks', width: '60%' },
-            { value: fmt(platform?.metrics?.spend || 0), label: 'Spend', width: '45%' },
-            { value: `${((platform?.metrics?.ctr || 0) * 100).toFixed(2)}%`, label: 'CTR', width: '35%' },
-            { value: fmt(platform?.metrics?.costPerClick || 0), label: 'CPC', width: '40%' },
-            { value: String(platform?.metrics?.conversions || 0), label: 'Conversions', width: '55%' },
-            { value: `${platform?.metrics?.roi || 0}%`, label: 'ROI', width: '80%', highlight: true, color: '#10b981', barColor: '#10b981' },
-            { value: fmt(platform?.metrics?.cpa || (platform?.metrics?.spend / (platform?.metrics?.conversions || 1))), label: 'CPA', width: '50%' },
-          ].map(m => (
-            <div key={m.label} className={`dash-metric-box ${m.highlight ? 'highlight' : ''}`}>
-              <div className="dash-mb-value" style={m.color ? { color: m.color } : {}}>{m.value}</div>
-              <div className="dash-mb-label">{m.label}</div>
-              <div className="dash-mb-bar">
-                <div className="dash-mb-bar-fill" style={{ width: m.width, background: m.barColor || platformColor }} />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {platform?.adSets?.length > 0 && (
-          <div className="dash-adsets">
-            <div className="dash-adsets-header">
-              <h4><Layers size={16} /> Ad Sets</h4>
-              <span>{platform.adSets.length} active</span>
-            </div>
-            <div className="dash-adsets-table">
-              <div className="dash-adset-row header">
-                <span>Name</span><span>Status</span><span>Budget</span><span>Impressions</span><span>Clicks</span><span>Spend</span><span>CTR</span><span>ROI</span>
-              </div>
-              {platform.adSets.map((ad: any, i: number) => (
-                <div key={i} className="dash-adset-row">
-                  <span>{ad.name}</span>
-                  <span className={`adset-status ${ad.status.toLowerCase()}`}>{ad.status}</span>
-                  <span>{fmt(ad.budget)}</span>
-                  <span>{ad.impressions?.toLocaleString()}</span>
-                  <span>{ad.clicks?.toLocaleString()}</span>
-                  <span>{fmt(ad.spend)}</span>
-                  <span>{((ad.ctr || 0) * 100).toFixed(2)}%</span>
-                  <span style={{ color: ad.roi > 100 ? '#10b981' : '#ef4444' }}>{ad.roi}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {platform?.liveUrl && (
-          <a href={platform.liveUrl} target="_blank" rel="noopener noreferrer" className="dash-view-btn" style={{ background: platformColor }}>
-            View Live Campaign <ArrowUpRight size={14} />
-          </a>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// ============================================
 // MAIN COMPONENT
 // ============================================
 export const Campaigns: React.FC = () => {
@@ -901,10 +1108,9 @@ export const Campaigns: React.FC = () => {
   const [isChatMode, setIsChatMode] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  // FIX: sessionLoaded tracks whether we've finished restoring for the CURRENT user.
-  // We start as false and set to true only after restoration completes.
-  const [sessionLoaded, setSessionLoaded] = useState(false);
+  const { user } = useSelector((state: any) => state.auth);
 
+  const [sessionLoaded, setSessionLoaded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [brandDetails, setBrandDetails] = useState<BrandDetails | null>(null);
@@ -921,43 +1127,19 @@ export const Campaigns: React.FC = () => {
   const [viewMode, setViewMode] = useState<'landing' | 'chat' | 'dashboard'>('landing');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // ─────────────────────────────────────────────────────────────
-  // FIX: Get the real logged-in user from your auth system.
-  // Replace this with however your app exposes the current user.
-  // The user ID MUST change when a different user logs in.
-  // ─────────────────────────────────────────────────────────────
-  // ─── Read the logged-in user from localStorage ───────────────
-  // auth.ts saves the user object after every login/register/social-auth.
-  // getAuthUser() returns { _id, name, email } or null if not logged in.
-  const authUser = getAuthUser();
-
   const [userProfile, setUserProfile] = useState<UserProfile>(() => ({
-    id:       authUser?._id   || '',
-    name:     authUser?.name  || 'User',
-    email:    authUser?.email || '',
-    balance:  25000,
+    id: user?._id || '',
+    name: user?.name || 'User',
+    email: user?.email || '',
+    balance: 25000,
     currency: 'USD',
   }));
 
-  // ─────────────────────────────────────────────────────────────
-  // Register beforeunload beacon — re-registers when user changes
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     return registerRefreshClear(userProfile.id);
   }, [userProfile.id]);
 
-  // ─────────────────────────────────────────────────────────────
-  // FIX: FULL RESET + SESSION RESTORE when userId changes.
-  // This is the core fix. Every time the userId changes (i.e. a
-  // different user logs in), we:
-  //   1. Immediately wipe ALL UI state to blank
-  //   2. Remove ALL other users' localStorage keys
-  //   3. Load only the current user's session (local or remote)
-  //   4. Mark sessionLoaded = true so the UI renders
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    // ── Step 1: Hard reset all UI state immediately ──────────
-    // This prevents the previous user's chat flashing on screen
     setSessionLoaded(false);
     setIsChatMode(false);
     setUrl('');
@@ -978,31 +1160,19 @@ export const Campaigns: React.FC = () => {
     if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
 
     const userId = userProfile.id;
-
-    // Skip if userId is empty — Redux hasn't hydrated yet.
-    // The guard above redirects to /login in this case,
-    // but this also prevents the async restore from running with a blank id.
     if (!userId) {
       setSessionLoaded(true);
       return;
     }
 
-    // ── Step 2: Wipe all other users' local sessions ─────────
     clearAllOtherUsersLocal(userId);
 
-    // ── Step 3: Load THIS user's session ─────────────────────
     const restoreSession = async () => {
-      // Try remote first (source of truth)
       let session = await loadRemote(userId);
-      // Fallback to local
       if (!session) session = loadLocal(userId);
 
       if (session) {
-        // Final hard guard — never load another user's data
-        if (session.userId !== userId) {
-          setSessionLoaded(true);
-          return;
-        }
+        if (session.userId !== userId) { setSessionLoaded(true); return; }
 
         setUrl(session.url || '');
         setUrlStatus(session.urlStatus as any || 'idle');
@@ -1023,21 +1193,12 @@ export const Campaigns: React.FC = () => {
           setMessages(session.messages);
         }
 
-        if (session.campaignId) {
-          campaignIdRef.current = session.campaignId;
-        }
+        if (session.campaignId) campaignIdRef.current = session.campaignId;
 
-        if (session.liveCampaign && session.campaignId) {
-          startPollingDashboard(session.campaignId);
-        }
-
-        // If dashboard view but no live campaign, fall back to chat
-        if (session.viewMode === 'dashboard' && !session.liveCampaign) {
-          setViewMode('chat');
-        }
+        if (session.liveCampaign && session.campaignId) startPollingDashboard(session.campaignId);
+        if (session.viewMode === 'dashboard' && !session.liveCampaign) setViewMode('chat');
       }
 
-      // ── Step 4: Mark ready ────────────────────────────────
       setSessionLoaded(true);
     };
 
@@ -1045,16 +1206,10 @@ export const Campaigns: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userProfile.id]);
 
-  // ─────────────────────────────────────────────────────────────
-  // SESSION SAVE — debounced, fires on state changes
-  // Only saves after session has been fully loaded for this user
-  // ─────────────────────────────────────────────────────────────
   const persistSession = useCallback(
     async (state: Partial<AppState> & { campaignId?: string | null }) => {
       if (!sessionLoaded) return;
-      // Don't bother saving a blank landing page
       if (state.viewMode === 'landing' && !state.isChatMode && !state.messages?.length) return;
-
       const session = buildSession(userProfile.id, state);
       saveLocal(session);
       await saveRemote(userProfile.id, session);
@@ -1067,23 +1222,10 @@ export const Campaigns: React.FC = () => {
   useEffect(() => {
     if (!sessionLoaded) return;
     debouncedPersist({
-      url,
-      urlStatus,
-      isChatMode,
-      viewMode,
-      brandDetails,
-      selectedPlatform,
-      budgetBreakdown,
-      selectedTier,
-      liveCampaign,
-      campaignId: campaignIdRef.current,
-      messages,
+      url, urlStatus, isChatMode, viewMode, brandDetails, selectedPlatform,
+      budgetBreakdown, selectedTier, liveCampaign, campaignId: campaignIdRef.current, messages,
     });
-  }, [
-    sessionLoaded, url, urlStatus, isChatMode, viewMode,
-    brandDetails, selectedPlatform, budgetBreakdown,
-    selectedTier, liveCampaign, messages,
-  ]);
+  }, [sessionLoaded, url, urlStatus, isChatMode, viewMode, brandDetails, selectedPlatform, budgetBreakdown, selectedTier, liveCampaign, messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1126,8 +1268,9 @@ export const Campaigns: React.FC = () => {
       const industry = resolveIndustry(brand);
       addMsg([
         { role: 'bot', type: 'audit', content: brand },
-        { role: 'bot', type: 'text', content: `✅ Brand analysis complete for ${name} in the ${industry} industry.\n\nBased on our analysis, I can help you create a high-converting advertising campaign tailored to your brand.` },
-        { role: 'bot', type: 'campaign_confirmation', content: { brandName: name } },
+        // ── NEW: Brand details form shown right after audit ──
+        { role: 'bot', type: 'brand_form', content: { brandName: name, brandUrl: normalizedUrl } },
+        { role: 'bot', type: 'text', content: `✅ Brand analysis complete for ${name} in the ${industry} industry.\n\nPlease confirm your brand details above, then we'll build your campaign.` },
       ]);
     } catch (e) {
       console.error(e);
@@ -1136,7 +1279,24 @@ export const Campaigns: React.FC = () => {
     }
   };
 
-  // ── STEP 1.5: Campaign Confirmation ──
+  // ── STEP 1.5: Brand Form Submit (NEW) ──
+  const handleBrandFormSubmit = (data: BrandFormData) => {
+    // Merge confirmed brand data into brandDetails state
+    setBrandDetails(prev => prev ? {
+      ...prev,
+      brandName: data.brandName,
+      logo: data.logoPreview || prev.logo,
+      brand: prev.brand ? { ...prev.brand, name: data.brandName } : prev.brand,
+    } : prev);
+
+    addMsg([
+      { role: 'user', type: 'text', content: `Brand confirmed: ${data.brandName}${data.logoPreview ? ' (with logo)' : ''}` },
+      { role: 'bot', type: 'text', content: `Perfect! 🎯 I've locked in your brand details for ${data.brandName}. Ready to build your campaign?` },
+      { role: 'bot', type: 'campaign_confirmation', content: { brandName: data.brandName } },
+    ]);
+  };
+
+  // ── STEP 2: Campaign Confirmation ──
   const handleCampaignConfirm = () => {
     const name = brandDetails ? resolveBrandName(brandDetails) : 'your brand';
     addMsg([
@@ -1154,9 +1314,9 @@ export const Campaigns: React.FC = () => {
     ]);
   };
 
-  // ── STEP 2: Platform Selection ──
+  // ── STEP 3: Platform Selection ──
   const platformLabel = (p: string) => {
-    const map: Record<string,string> = { meta: 'Meta Ads', google: 'Google Ads', twitter: 'Twitter (X)', linkedin: 'LinkedIn Ads', both: 'Meta + Google', all: 'All Platforms' };
+    const map: Record<string, string> = { meta: 'Meta Ads', google: 'Google Ads', twitter: 'Twitter (X)', linkedin: 'LinkedIn Ads', both: 'Meta + Google', all: 'All Platforms' };
     return map[p] || p;
   };
 
@@ -1169,7 +1329,7 @@ export const Campaigns: React.FC = () => {
     ]);
   };
 
-  // ── STEP 3: Budget Input ──
+  // ── STEP 4: Budget Input ──
   const handleBudgetInput = async (budgetAmount: number) => {
     addMsg([{ role: 'user', type: 'text', content: `Monthly budget: ${fmt(budgetAmount)}` }]);
     setLoading(true);
@@ -1178,11 +1338,11 @@ export const Campaigns: React.FC = () => {
       const res = await axios.get(`${API_BASE}/wallet/balance/${userProfile.id}`);
       currentBalance = res.data.balance;
       setUserProfile(prev => ({ ...prev, balance: currentBalance }));
-    } catch {}
+    } catch { }
     const resolvePlatforms = (p: string): string[] => {
-      if (p === 'both')   return ['meta', 'google'];
+      if (p === 'both') return ['meta', 'google'];
       if (p === 'social') return ['meta', 'twitter', 'linkedin'];
-      if (p === 'all')    return ['meta', 'google', 'twitter', 'linkedin'];
+      if (p === 'all') return ['meta', 'google', 'twitter', 'linkedin'];
       if (p.includes('_')) return p.split('_');
       return [p];
     };
@@ -1208,7 +1368,7 @@ export const Campaigns: React.FC = () => {
     }
   };
 
-  // ── STEP 4: Tier Selection ──
+  // ── STEP 5: Tier Selection ──
   const handleTierSelect = async (tier: BudgetTier) => {
     setSelectedTier(tier);
     let currentBalance = userProfile.balance;
@@ -1216,7 +1376,7 @@ export const Campaigns: React.FC = () => {
       const res = await axios.get(`${API_BASE}/wallet/balance/${userProfile.id}`);
       currentBalance = res.data.balance;
       setUserProfile(prev => ({ ...prev, balance: currentBalance }));
-    } catch {}
+    } catch { }
     addMsg([{ role: 'user', type: 'text', content: `Selected: ${tier.label} tier — ${fmt(tier.total.ourBudget)}/mo` }]);
     if (currentBalance < tier.total.ourBudget) {
       const shortfall = tier.total.ourBudget - currentBalance;
@@ -1231,15 +1391,15 @@ export const Campaigns: React.FC = () => {
     }
   };
 
-  // ── STEP 5: Create Campaign Draft ──
+  // ── STEP 6: Create Campaign Draft ──
   const createCampaignDraft = async (tier: BudgetTier) => {
     setLoading(true);
     try {
       const brandId = brandDetails?.brandId || brandDetails?.campaignId;
       const resolvePlatforms2 = (p: string): string[] => {
-        if (p === 'both')   return ['meta', 'google'];
+        if (p === 'both') return ['meta', 'google'];
         if (p === 'social') return ['meta', 'twitter', 'linkedin'];
-        if (p === 'all')    return ['meta', 'google', 'twitter', 'linkedin'];
+        if (p === 'all') return ['meta', 'google', 'twitter', 'linkedin'];
         if (p.includes('_')) return p.split('_');
         return [p];
       };
@@ -1262,7 +1422,7 @@ export const Campaigns: React.FC = () => {
     }
   };
 
-  // ── STEP 6: Publish Campaign ──
+  // ── STEP 7: Publish Campaign ──
   const handlePublish = async () => {
     addMsg([{ role: 'user', type: 'text', content: '🚀 Yes, launch my campaign now!' }]);
     setLoading(true);
@@ -1286,13 +1446,13 @@ export const Campaigns: React.FC = () => {
       await fetchWalletBalance();
       setLoading(false);
       const resolvePlatforms = (p: string): string[] => {
-      if (p === 'both')   return ['meta', 'google'];
-      if (p === 'social') return ['meta', 'twitter', 'linkedin'];
-      if (p === 'all')    return ['meta', 'google', 'twitter', 'linkedin'];
-      if (p.includes('_')) return p.split('_');
-      return [p];
-    };
-    const platforms = resolvePlatforms(selectedPlatform);
+        if (p === 'both') return ['meta', 'google'];
+        if (p === 'social') return ['meta', 'twitter', 'linkedin'];
+        if (p === 'all') return ['meta', 'google', 'twitter', 'linkedin'];
+        if (p.includes('_')) return p.split('_');
+        return [p];
+      };
+      const platforms = resolvePlatforms(selectedPlatform);
       const initialLiveData: LiveCampaignData = {
         campaignId: localCampaignId,
         campaignName: resolveBrandName(brandDetails!),
@@ -1374,7 +1534,7 @@ export const Campaigns: React.FC = () => {
     handleAddFunds(pendingFundsAmount);
   };
 
-  // ── RESET — clears ONLY this user's data ──
+  // ── RESET ──
   const handleReset = async () => {
     if (pollRef.current) clearInterval(pollRef.current);
     clearLocal(userProfile.id);
@@ -1391,10 +1551,7 @@ export const Campaigns: React.FC = () => {
     return !messages.slice(idx + 1).some(m => m.type === type);
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // RENDER GUARD — show spinner until THIS user's session loads
-  // ─────────────────────────────────────────────────────────────
-  // If no user is found in localStorage, redirect to login.
+  // ── RENDER GUARD ──
   if (!userProfile.id) {
     window.location.href = '/login';
     return null;
@@ -1414,37 +1571,30 @@ export const Campaigns: React.FC = () => {
   }
 
   // ============================================
-  // LANDING PAGE — Enhanced Tech Dark
+  // LANDING PAGE
   // ============================================
   if (!isChatMode) {
     return (
       <>
         <style>{CSS}</style>
-        <Header />
+        <div style={{ background: '#0f172a', color: '#f1f5f9', position: 'fixed', zIndex: 9999, width: '80%' }}>
+          <Header />
+        </div>
         <div className="land-root">
-          {/* ── Animated grid background ── */}
           <div className="land-grid" aria-hidden="true" />
-          {/* ── Orb glows ── */}
           <div className="land-orb land-orb-1" aria-hidden="true" />
           <div className="land-orb land-orb-2" aria-hidden="true" />
           <div className="land-orb land-orb-3" aria-hidden="true" />
-
-          {/* ── Floating tech particles ── */}
           <div className="land-particles" aria-hidden="true">
             {Array.from({ length: 18 }).map((_, i) => (
               <span key={i} className="land-particle" style={{ '--i': i } as any} />
             ))}
           </div>
-
           <div className="land-content">
-
-            {/* ── Top badge ── */}
             <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="land-badge">
               <span className="land-badge-dot" />
               <Zap size={11} /> AI-Powered · Real-time · Multi-Platform
             </motion.div>
-
-            {/* ── Headline ── */}
             <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="land-headline">
               Turn Your Brand Into a
               <span className="land-headline-line2">
@@ -1452,24 +1602,21 @@ export const Campaigns: React.FC = () => {
                 <span className="land-hl-machine"> Machine</span>
               </span>
             </motion.h1>
-
             <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="land-sub">
               Drop your URL. Our AI deep-scans your brand, builds optimized campaigns across<br />
               Meta, Google, Twitter & LinkedIn — then manages spend for maximum ROI.
             </motion.p>
-
-            {/* ── URL Input ── */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="land-input-section">
               <div className={`land-input-shell ${urlStatus === 'error' ? 'is-error' : urlStatus === 'valid' ? 'is-valid' : urlStatus === 'checking' ? 'is-checking' : ''}`}>
                 <div className="land-input-prefix">
-                  {urlStatus === 'valid'    ? <CheckCircle2 size={17} color="#10b981" /> :
-                   urlStatus === 'error'    ? <XCircle size={17} color="#ef4444" /> :
-                   urlStatus === 'checking' ? <Loader2 size={17} color="#38bdf8" className="camp-spin" /> :
-                                             <Globe size={17} color="#475569" />}
+                  {urlStatus === 'valid' ? <CheckCircle2 size={17} color="#10b981" /> :
+                    urlStatus === 'error' ? <XCircle size={17} color="#ef4444" /> :
+                      urlStatus === 'checking' ? <Loader2 size={17} color="#38bdf8" className="camp-spin" /> :
+                        <Globe size={17} color="#475569" />}
                 </div>
                 <input
                   value={url}
-                  onChange={e => { setUrl(e.target.value); if (urlStatus === 'error') { setUrlStatus('idle'); setUrlError(''); }}}
+                  onChange={e => { setUrl(e.target.value); if (urlStatus === 'error') { setUrlStatus('idle'); setUrlError(''); } }}
                   onKeyDown={e => { if (e.key === 'Enter' && !loading && url) handleDeepResearch(); }}
                   placeholder="https://your-company.com"
                   className="land-url-input"
@@ -1493,8 +1640,6 @@ export const Campaigns: React.FC = () => {
                 <ShieldCheck size={12} color="#334155" /> No credit card needed to scan &nbsp;·&nbsp; Results in under 30 seconds
               </div>
             </motion.div>
-
-            {/* ── Platform logos ── */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="land-platforms">
               <span className="land-platforms-label">Runs campaigns on</span>
               <div className="land-platform-icons">
@@ -1511,8 +1656,6 @@ export const Campaigns: React.FC = () => {
                 ))}
               </div>
             </motion.div>
-
-            {/* ── Stats row ── */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }} className="land-stats">
               {[
                 { value: '2,400+', label: 'Campaigns Launched', icon: <Rocket size={16} /> },
@@ -1527,8 +1670,6 @@ export const Campaigns: React.FC = () => {
                 </div>
               ))}
             </motion.div>
-
-            {/* ── How it works ── */}
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="land-steps-section">
               <div className="land-steps-label"><Activity size={12} /> How It Works</div>
               <div className="land-steps">
@@ -1548,8 +1689,6 @@ export const Campaigns: React.FC = () => {
                 ))}
               </div>
             </motion.div>
-
-            {/* ── Feature grid ── */}
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 }} className="land-features">
               {[
                 { icon: <Brain size={18} />, color: '#8b5cf6', title: 'AI Brand Intelligence', desc: 'Deep-scans 50+ brand signals including SEO, tone, competitors, and market positioning.' },
@@ -1566,15 +1705,12 @@ export const Campaigns: React.FC = () => {
                 </div>
               ))}
             </motion.div>
-
-            {/* ── Bottom CTA ── */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }} className="land-bottom-cta">
               <p className="land-bottom-cta-text">Ready to scale your brand with AI?</p>
               <button className="land-bottom-cta-btn" onClick={() => { const el = document.querySelector('.land-url-input') as HTMLInputElement; el?.focus(); }}>
                 <Rocket size={16} /> Start Free Analysis
               </button>
             </motion.div>
-
           </div>
         </div>
       </>
@@ -1642,10 +1778,28 @@ export const Campaigns: React.FC = () => {
                     <div className="camp-msg-body">
                       {msg.type === 'text' && msg.role === 'bot' && <TypingBubble text={msg.content} />}
                       {msg.type === 'text' && msg.role === 'user' && <div className="camp-bubble-user">{msg.content}</div>}
-                      {msg.type === 'research' && <ErrorBoundary><ResearchTerminal url={msg.content?.url} /></ErrorBoundary>}
+                      {msg.type === 'research' && (
+                        <ErrorBoundary>
+                          <ResearchTerminal url={msg.content?.url} />
+                        </ErrorBoundary>
+                      )}
                       {msg.type === 'audit' && <BrandAuditCard brand={msg.content} />}
+
+                      {/* ── NEW: Brand details form ── */}
+                      {msg.type === 'brand_form' && (latest
+                        ? (
+                          <BrandDetailsForm
+                            initialName={msg.content?.brandName}
+                            initialUrl={msg.content?.brandUrl}
+                            onSubmit={handleBrandFormSubmit}
+                          />
+                        )
+                        : <div className="camp-bubble-bot camp-muted">Brand details confirmed ✓</div>
+                      )}
+
                       {msg.type === 'campaign_confirmation' && (latest
-                        ? <CampaignConfirmation brandName={msg.content?.brandName} onConfirm={handleCampaignConfirm} onDecline={handleCampaignDecline} />
+                        ? <div><BrandValueCard brand={brandDetails} />
+                        <CampaignConfirmation brandName={msg.content?.brandName} onConfirm={handleCampaignConfirm} onDecline={handleCampaignDecline} /></div>
                         : <div className="camp-bubble-bot camp-muted">Campaign preference recorded ✓</div>
                       )}
                       {msg.type === 'form' && msg.content?.step === 'platform_select' && (latest
@@ -1696,29 +1850,66 @@ export const Campaigns: React.FC = () => {
 // ============================================
 // SUB-COMPONENTS
 // ============================================
+
+// ── Research Terminal (UPDATED — now includes WebsitePreviewCard) ──
 const ResearchTerminal: React.FC<{ url?: string }> = ({ url }) => {
   const safeUrl = url?.trim() || '';
   const [logs, setLogs] = useState<string[]>([`> Connecting to ${getHostname(safeUrl)}...`]);
+  const [showPreview, setShowPreview] = useState(false);
+
   useEffect(() => {
     if (!safeUrl) return;
     const lines = [
-      '> Extracting DOM structure...', '> Analyzing SEO meta tags...', '> Checking performance...',
-      '[SUCCESS] Brand detected', '> Analyzing competitors...', '> Extracting keywords...',
-      '[SUCCESS] Analysis complete', '> Generating report...',
+      '> Fetching DOM structure...',
+      '> Capturing website screenshot...',
+      '> Analyzing SEO meta tags...',
+      '> Checking performance metrics...',
+      '[SUCCESS] Brand detected',
+      '> Analyzing competitors...',
+      '> Extracting keywords...',
+      '[SUCCESS] Analysis complete',
+      '> Generating AI report...',
     ];
     let i = 0;
     const interval = setInterval(() => {
-      if (i < lines.length) { setLogs(prev => [...prev, lines[i]]); i++; }
-      else { clearInterval(interval); }
+      if (i < lines.length) {
+        setLogs(prev => [...prev, lines[i]]);
+        // Show preview after "Capturing website screenshot..." log
+        if (i === 1) setShowPreview(true);
+        i++;
+      } else {
+        clearInterval(interval);
+      }
     }, 600);
     return () => clearInterval(interval);
   }, [safeUrl]);
+
   return (
     <div className="camp-terminal">
-      <div className="camp-terminal-header"><span><Brain size={11} /></span><span className="camp-terminal-url">{getHostname(safeUrl)}</span></div>
+      <div className="camp-terminal-header">
+        <span><Brain size={11} /></span>
+        <span className="camp-terminal-url">{getHostname(safeUrl)}</span>
+      </div>
+
+      {/* ── NEW: Website Preview Card inside terminal ── */}
+      {showPreview && safeUrl && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          transition={{ duration: 0.4 }}
+          style={{ marginBottom: 10 }}
+        >
+          <WebsitePreviewCard url={safeUrl} />
+        </motion.div>
+      )}
+
       {logs.map((log, idx) => {
         if (!log || typeof log !== 'string') return null;
-        return <div key={idx} className={`camp-log-line ${log.includes('SUCCESS') ? 'success' : ''}`}>{log}</div>;
+        return (
+          <div key={idx} className={`camp-log-line ${log.includes('SUCCESS') ? 'success' : ''}`}>
+            {log}
+          </div>
+        );
       })}
       <span className="camp-cursor" />
     </div>
@@ -1736,7 +1927,7 @@ const BudgetInputForm: React.FC<{ platform: string; onSubmit: (amount: number) =
   };
   return (
     <div className="budget-input-form">
-      <div className="bif-header"><DollarSign size={18} color="#10b981" /><div><div className="bif-title">Monthly Ad Budget</div><div className="bif-sub">For {({'meta':'Meta Ads','google':'Google Ads','twitter':'Twitter (X)','linkedin':'LinkedIn Ads','both':'Meta + Google','all':'All Platforms'} as any)[platform] || platform} · Min $100</div></div></div>
+      <div className="bif-header"><DollarSign size={18} color="#10b981" /><div><div className="bif-title">Monthly Ad Budget</div><div className="bif-sub">For {({ 'meta': 'Meta Ads', 'google': 'Google Ads', 'twitter': 'Twitter (X)', 'linkedin': 'LinkedIn Ads', 'both': 'Meta + Google', 'all': 'All Platforms' } as any)[platform] || platform} · Min $100</div></div></div>
       <div className="bif-presets">{presets.map(p => <button key={p} className={`bif-preset ${value === String(p) ? 'active' : ''}`} onClick={() => { setValue(String(p)); setError(''); }}>₹{p.toLocaleString()}</button>)}</div>
       <div className="bif-input-row">
         <div className="bif-input-wrap"><span className="bif-currency">$</span><input type="number" className="bif-input" placeholder="Enter amount" value={value} onChange={e => { setValue(e.target.value); setError(''); }} onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); }} /><span className="bif-period">/mo</span></div>
@@ -1765,7 +1956,7 @@ const BudgetTiersCard: React.FC<{ breakdown: BudgetBreakdown }> = ({ breakdown }
               <div className="tier-desc">{tier.description}</div>
               <div className="tier-metrics">{tier.platforms.map(p => (
                 <div key={p.name} className="tier-platform-row">
-                  <span className="tier-platform-name">{ {meta:'📘',google:'🔵',twitter:'🐦',linkedin:'💼'} [p.name as 'meta'|'google'|'twitter'|'linkedin'] || '📢'} {({'meta':'Meta','google':'Google','twitter':'Twitter(X)','linkedin':'LinkedIn'} as any)[p.name] || p.name}</span>
+                  <span className="tier-platform-name">{{ meta: '📘', google: '🔵', twitter: '🐦', linkedin: '💼' }[p.name as 'meta' | 'google' | 'twitter' | 'linkedin'] || '📢'} {({ 'meta': 'Meta', 'google': 'Google', 'twitter': 'Twitter(X)', 'linkedin': 'LinkedIn' } as any)[p.name] || p.name}</span>
                   <div className="tier-platform-stats"><span>{p.impressionsEstimate.toLocaleString()} impr.</span><span>{p.clicksEstimate.toLocaleString()} clicks</span></div>
                 </div>
               ))}</div>
@@ -1825,7 +2016,7 @@ const PublishReviewCard: React.FC<{
     <div className="publish-card">
       <div className="publish-card-header"><Rocket size={20} color="#10b981" /><div><div className="publish-card-title">🎉 Campaign Ready!</div><div className="publish-card-sub">ID: <code>{campaignId}</code></div></div></div>
       <div className="publish-summary">
-        <div className="publish-row"><span><Layers size={14} /> Platform</span><strong>{({'meta':'Meta Ads','google':'Google Ads','twitter':'Twitter (X)','linkedin':'LinkedIn Ads','both':'Meta + Google','all':'All Platforms'} as any)[platform] || platform}</strong></div>
+        <div className="publish-row"><span><Layers size={14} /> Platform</span><strong>{({ 'meta': 'Meta Ads', 'google': 'Google Ads', 'twitter': 'Twitter (X)', 'linkedin': 'LinkedIn Ads', 'both': 'Meta + Google', 'all': 'All Platforms' } as any)[platform] || platform}</strong></div>
         <div className="publish-row"><span><Award size={14} /> Tier</span><strong style={{ color: tierColors[tier?.label] }}>{tier?.label}</strong></div>
         <div className="publish-row"><span><DollarSign size={14} /> Investment</span><strong style={{ color: '#10b981' }}>{fmt(tier?.total?.ourBudget)}</strong></div>
         <div className="publish-row"><span><TrendingUp size={14} /> ROI</span><strong style={{ color: '#10b981' }}>{tier?.total?.roiEstimate}%</strong></div>
@@ -1976,27 +2167,11 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
   );
 };
 
-// ── Twitter / X Icon ──
-const TwitterXIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="#e7e7e7">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-  </svg>
-);
-
-// ── LinkedIn Icon ──
-const LinkedInIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="#0a66c2">
-    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-  </svg>
-);
-
-// ── Brand Value Comparison Card (shown inside platform selector) ──
+// ── Brand Value Comparison Card ──
 const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
   const myScore = brand?.brand?.overallScore ?? 65;
   const competitors = brand?.competition?.competitors ?? [];
   const brandName = brand?.brand?.name || 'Your Brand';
-
-  // Build comparison rows: our brand + up to 3 competitors
   const rows = [
     { name: brandName, score: myScore, isUs: true },
     ...competitors.slice(0, 3).map((c: any, i: number) => ({
@@ -2005,14 +2180,11 @@ const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
       isUs: false,
     })),
   ];
-
-  // Growth projection: with us vs without, over 12 months
   const months = ['Now', '3mo', '6mo', '9mo', '12mo'];
-  const withUs    = [myScore, myScore + 8,  myScore + 18, myScore + 30, myScore + 45].map(v => Math.min(v, 99));
-  const withoutUs = [myScore, myScore + 1,  myScore + 2,  myScore + 3,  myScore + 5].map(v => Math.min(v, 99));
+  const withUs = [myScore, myScore + 8, myScore + 18, myScore + 30, myScore + 45].map(v => Math.min(v, 99));
+  const withoutUs = [myScore, myScore + 1, myScore + 2, myScore + 3, myScore + 5].map(v => Math.min(v, 99));
   const industryAvg = rows.filter(r => !r.isUs).map(r => r.score);
   const avgScore = industryAvg.length ? Math.round(industryAvg.reduce((a, b) => a + b, 0) / industryAvg.length) : myScore - 8;
-
   const scoreColor = (s: number) => s >= 80 ? '#10b981' : s >= 60 ? '#f59e0b' : '#ef4444';
   const maxScore = Math.max(...rows.map(r => r.score), 100);
 
@@ -2025,8 +2197,6 @@ const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
           <div className="bvc-sub">How you compare & where campaigns take you</div>
         </div>
       </div>
-
-      {/* ── Score vs Competitors ── */}
       <div className="bvc-section-label">📊 Brand Score vs Competitors</div>
       <div className="bvc-score-rows">
         {rows.map((row, i) => (
@@ -2038,47 +2208,19 @@ const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
             </div>
             <div className="bvc-score-bar-wrap">
               <div className="bvc-score-bar-track">
-                <div
-                  className="bvc-score-bar-fill"
-                  style={{
-                    width: `${(row.score / maxScore) * 100}%`,
-                    background: row.isUs
-                      ? 'linear-gradient(90deg, #3b82f6, #8b5cf6)'
-                      : `${scoreColor(row.score)}88`,
-                  }}
-                />
+                <div className="bvc-score-bar-fill" style={{ width: `${(row.score / maxScore) * 100}%`, background: row.isUs ? 'linear-gradient(90deg, #3b82f6, #8b5cf6)' : `${scoreColor(row.score)}88` }} />
               </div>
-              <span className="bvc-score-num" style={{ color: row.isUs ? '#60a5fa' : scoreColor(row.score) }}>
-                {row.score}
-              </span>
+              <span className="bvc-score-num" style={{ color: row.isUs ? '#60a5fa' : scoreColor(row.score) }}>{row.score}</span>
             </div>
           </div>
         ))}
       </div>
-
-      {/* ── Gap Summary ── */}
       <div className="bvc-gap-row">
-        <div className="bvc-gap-item">
-          <span className="bvc-gap-label">Industry Avg</span>
-          <strong style={{ color: '#f59e0b' }}>{avgScore}</strong>
-        </div>
-        <div className="bvc-gap-item">
-          <span className="bvc-gap-label">Your Score</span>
-          <strong style={{ color: '#60a5fa' }}>{myScore}</strong>
-        </div>
-        <div className="bvc-gap-item">
-          <span className="bvc-gap-label">Gap</span>
-          <strong style={{ color: myScore >= avgScore ? '#10b981' : '#ef4444' }}>
-            {myScore >= avgScore ? '+' : ''}{myScore - avgScore}
-          </strong>
-        </div>
-        <div className="bvc-gap-item">
-          <span className="bvc-gap-label">Projected (12mo)</span>
-          <strong style={{ color: '#10b981' }}>{withUs[4]}</strong>
-        </div>
+        <div className="bvc-gap-item"><span className="bvc-gap-label">Industry Avg</span><strong style={{ color: '#f59e0b' }}>{avgScore}</strong></div>
+        <div className="bvc-gap-item"><span className="bvc-gap-label">Your Score</span><strong style={{ color: '#60a5fa' }}>{myScore}</strong></div>
+        <div className="bvc-gap-item"><span className="bvc-gap-label">Gap</span><strong style={{ color: myScore >= avgScore ? '#10b981' : '#ef4444' }}>{myScore >= avgScore ? '+' : ''}{myScore - avgScore}</strong></div>
+        <div className="bvc-gap-item"><span className="bvc-gap-label">Projected (12mo)</span><strong style={{ color: '#10b981' }}>{withUs[4]}</strong></div>
       </div>
-
-      {/* ── Growth Timeline Chart ── */}
       <div className="bvc-section-label" style={{ marginTop: 16 }}>📈 12-Month Growth Projection</div>
       <div className="bvc-chart">
         <div className="bvc-chart-lines">
@@ -2092,20 +2234,8 @@ const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
           {months.map((m, i) => (
             <div key={m} className="bvc-chart-col">
               <div className="bvc-chart-col-bars">
-                {/* With Us bar */}
-                <div className="bvc-bar-wrap" title={`With us: ${withUs[i]}`}>
-                  <div
-                    className="bvc-bar with-us"
-                    style={{ height: `${withUs[i]}%` }}
-                  />
-                </div>
-                {/* Without bar */}
-                <div className="bvc-bar-wrap" title={`Without campaigns: ${withoutUs[i]}`}>
-                  <div
-                    className="bvc-bar without-us"
-                    style={{ height: `${withoutUs[i]}%` }}
-                  />
-                </div>
+                <div className="bvc-bar-wrap" title={`With us: ${withUs[i]}`}><div className="bvc-bar with-us" style={{ height: `${withUs[i]}%` }} /></div>
+                <div className="bvc-bar-wrap" title={`Without campaigns: ${withoutUs[i]}`}><div className="bvc-bar without-us" style={{ height: `${withoutUs[i]}%` }} /></div>
               </div>
               <span className="bvc-chart-month">{m}</span>
             </div>
@@ -2116,15 +2246,9 @@ const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
         <span className="bvc-legend-item"><span className="bvc-legend-dot with-us" />With our campaigns</span>
         <span className="bvc-legend-item"><span className="bvc-legend-dot without-us" />Without campaigns</span>
       </div>
-
-      {/* ── Insight ── */}
       <div className="bvc-insight">
         <Zap size={13} color="#f59e0b" />
-        <span>
-          Our campaigns can grow your brand score from <strong style={{color:'#60a5fa'}}>{myScore}</strong> to{' '}
-          <strong style={{color:'#10b981'}}>{withUs[4]}</strong> in 12 months —{' '}
-          <strong style={{color:'#f59e0b'}}>{withUs[4] - myScore} points</strong> ahead of doing nothing.
-        </span>
+        <span>Our campaigns can grow your brand score from <strong style={{ color: '#60a5fa' }}>{myScore}</strong> to <strong style={{ color: '#10b981' }}>{withUs[4]}</strong> in 12 months — <strong style={{ color: '#f59e0b' }}>{withUs[4] - myScore} points</strong> ahead of doing nothing.</span>
       </div>
     </div>
   );
@@ -2132,71 +2256,44 @@ const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
 
 const PlatformAdSelector: React.FC<{ onSelect: (p: string) => void; brand?: BrandDetails | null }> = ({ onSelect, brand }) => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
   const platforms = [
-    { id: 'meta',     label: 'Meta Ads',    sub: 'Facebook & Instagram', icon: <FacebookIcon />,  color: '#3b82f6', features: ['2.9B+ users', 'Visual ads', 'Interest targeting'],      bestFor: 'B2C & Brand' },
-    { id: 'google',   label: 'Google Ads',  sub: 'Search, Display, YouTube', icon: <GoogleIcon />, color: '#ea4335', features: ['8.5B searches', 'Intent targeting', 'Display network'], bestFor: 'Lead Gen' },
-    { id: 'twitter',  label: 'X (Twitter)', sub: 'Trending & Viral Reach',   icon: <TwitterXIcon />, color: '#e7e7e7', features: ['600M+ users', 'Viral potential', 'Trend targeting'],  bestFor: 'Awareness' },
-    { id: 'linkedin', label: 'LinkedIn Ads', sub: 'Professional Network',    icon: <LinkedInIcon />, color: '#0a66c2', features: ['1B+ professionals', 'B2B targeting', 'Decision makers'], bestFor: 'B2B & SaaS' },
+    { id: 'meta', label: 'Meta Ads', sub: 'Facebook & Instagram', icon: <FacebookIcon />, color: '#3b82f6', features: ['2.9B+ users', 'Visual ads', 'Interest targeting'], bestFor: 'B2C & Brand' },
+    { id: 'google', label: 'Google Ads', sub: 'Search, Display, YouTube', icon: <GoogleIcon />, color: '#ea4335', features: ['8.5B searches', 'Intent targeting', 'Display network'], bestFor: 'Lead Gen' },
+    { id: 'twitter', label: 'X (Twitter)', sub: 'Trending & Viral Reach', icon: <TwitterXIcon />, color: '#e7e7e7', features: ['600M+ users', 'Viral potential', 'Trend targeting'], bestFor: 'Awareness' },
+    { id: 'linkedin', label: 'LinkedIn Ads', sub: 'Professional Network', icon: <LinkedInIcon />, color: '#0a66c2', features: ['1B+ professionals', 'B2B targeting', 'Decision makers'], bestFor: 'B2B & SaaS' },
   ];
-
   const combos = [
-    { id: 'both',     label: 'Meta + Google',    ids: ['meta','google'],                     color: '#8b5cf6', icon: '⚡', desc: 'Best for consumer brands with search intent' },
-    { id: 'social',   label: 'All Social',       ids: ['meta','twitter','linkedin'],          color: '#ec4899', icon: '🌐', desc: 'Maximum social presence across all networks' },
-    { id: 'all',      label: 'All Platforms',    ids: ['meta','google','twitter','linkedin'], color: '#f59e0b', icon: '🚀', desc: 'Full-funnel domination across every channel', recommended: true },
+    { id: 'both', label: 'Meta + Google', ids: ['meta', 'google'], color: '#8b5cf6', icon: '⚡', desc: 'Best for consumer brands with search intent' },
+    { id: 'social', label: 'All Social', ids: ['meta', 'twitter', 'linkedin'], color: '#ec4899', icon: '🌐', desc: 'Maximum social presence across all networks' },
+    { id: 'all', label: 'All Platforms', ids: ['meta', 'google', 'twitter', 'linkedin'], color: '#f59e0b', icon: '🚀', desc: 'Full-funnel domination across every channel', recommended: true },
   ];
-
-  const toggle = (id: string) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
-  };
-
-  const handleCombo = (combo: typeof combos[0]) => {
-    onSelect(combo.id);
-  };
-
+  const toggle = (id: string) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const handleCombo = (combo: typeof combos[0]) => onSelect(combo.id);
   const handleCustomSelect = () => {
     if (!selectedIds.length) return;
     if (selectedIds.length === 1) { onSelect(selectedIds[0]); return; }
-    // For custom multi-select, join as underscore key e.g. "meta_twitter"
     onSelect(selectedIds.join('_'));
   };
 
   return (
     <div className="plat-selector">
-      {/* ── Brand Value Card ── */}
       {brand && <BrandValueCard brand={brand} />}
-
-      <div className="plat-selector-title" style={{ marginTop: brand ? 20 : 0 }}>
-        Choose your advertising platform
-      </div>
-
-      {/* ── Individual platforms (multi-select) ── */}
+      {/* <div className="plat-selector-title" style={{ marginTop: brand ? 20 : 0 }}>Choose your advertising platform</div>
       <div className="plat-cards-grid">
         {platforms.map(opt => {
           const active = selectedIds.includes(opt.id);
           return (
-            <button
-              key={opt.id}
-              className={`plat-card-v2 ${active ? 'active' : ''}`}
-              onClick={() => toggle(opt.id)}
-              style={{ '--plat-color': opt.color } as React.CSSProperties}
-            >
+            <button key={opt.id} className={`plat-card-v2 ${active ? 'active' : ''}`} onClick={() => toggle(opt.id)} style={{ '--plat-color': opt.color } as React.CSSProperties}>
               <div className="plat-v2-check">{active && <CheckCircle2 size={14} color="#10b981" />}</div>
               <div className="plat-v2-icon">{opt.icon}</div>
               <div className="plat-v2-label">{opt.label}</div>
               <div className="plat-v2-sub">{opt.sub}</div>
               <div className="plat-v2-best">Best for: <strong>{opt.bestFor}</strong></div>
-              <ul className="plat-v2-features">
-                {opt.features.map(f => <li key={f}><CheckCircle2 size={10} />{f}</li>)}
-              </ul>
+              <ul className="plat-v2-features">{opt.features.map(f => <li key={f}><CheckCircle2 size={10} />{f}</li>)}</ul>
             </button>
           );
         })}
       </div>
-
-      {/* Custom selection CTA */}
       {selectedIds.length > 0 && (
         <button className="plat-custom-btn" onClick={handleCustomSelect}>
           <Zap size={15} />
@@ -2204,31 +2301,23 @@ const PlatformAdSelector: React.FC<{ onSelect: (p: string) => void; brand?: Bran
           <ArrowRight size={15} />
         </button>
       )}
-
-      {/* ── Or pick a bundle ── */}
       <div className="plat-divider"><span>or choose a bundle</span></div>
-
       <div className="plat-combo-row">
         {combos.map(c => (
-          <button
-            key={c.id}
-            className={`plat-combo-btn ${c.recommended ? 'recommended' : ''}`}
-            style={{ '--plat-color': c.color } as React.CSSProperties}
-            onClick={() => handleCombo(c)}
-          >
-            {c.recommended && <span className="plat-combo-badge">AI Pick</span>}
+          <button key={c.id} className={`plat-combo-btn ${(c as any).recommended ? 'recommended' : ''}`} style={{ '--plat-color': c.color } as React.CSSProperties} onClick={() => handleCombo(c)}>
+            {(c as any).recommended && <span className="plat-combo-badge">AI Pick</span>}
             <span className="plat-combo-icon">{c.icon}</span>
             <span className="plat-combo-label">{c.label}</span>
             <span className="plat-combo-desc">{c.desc}</span>
           </button>
         ))}
-      </div>
+      </div> */}
     </div>
   );
 };
 
 // ============================================
-// CSS (unchanged)
+// CSS
 // ============================================
 const CSS = `
   *, *::before, *::after { box-sizing: border-box; }
@@ -2236,325 +2325,94 @@ const CSS = `
   .spin { animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .session-loading { display: flex; align-items: center; justify-content: center; gap: 14px; min-height: calc(100vh - 68px); background: #0a0a0f; color: #64748b; font-size: 0.9rem; }
-  .camp-header-wrapper { position: fixed; width :80%}
+  .camp-header-wrapper { position: fixed; width: 80%; z-index: 100; }
   .camp-topbar-right { position: absolute; top: 130%; right: 10px; transform: translateY(-50%); z-index: 200; display: flex; align-items: center; gap: 10px; }
   .camp-balance-chip { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25); color: #6ee7b7; font-size: 0.82rem; font-weight: 700; }
   .camp-dashboard-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.2s; }
   .camp-dashboard-btn:hover { background: rgba(59,130,246,0.22); }
   .camp-restart-top-right { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.2s; }
   .camp-restart-top-right:hover { background: rgba(239,68,68,0.22); }
-/* ═══════════════════════════════════════════════
-     ENHANCED LANDING PAGE — Tech Dark
-  ═══════════════════════════════════════════════ */
+
+  /* ═══ LANDING PAGE ═══ */
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
-  .land-root {
-    position: relative; min-height: calc(100vh - 68px);
-    background: #020408;
-    overflow: hidden; display: flex; align-items: center; justify-content: center;
-    font-family: 'Space Grotesk', sans-serif;
-  }
-
-  /* ── Grid background ── */
-  .land-grid {
-    position: absolute; inset: 0; pointer-events: none;
-    background-image:
-      linear-gradient(rgba(59,130,246,0.055) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(59,130,246,0.055) 1px, transparent 1px);
-    background-size: 52px 52px;
-    mask-image: radial-gradient(ellipse 80% 80% at 50% 40%, black 30%, transparent 100%);
-  }
-
-  /* ── Orb glows ── */
+  .land-root { position: relative; min-height: calc(100vh - 68px); background: #020408; overflow: hidden; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; }
+  .land-grid { position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(59,130,246,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.055) 1px, transparent 1px); background-size: 52px 52px; mask-image: radial-gradient(ellipse 80% 80% at 50% 40%, black 30%, transparent 100%); }
   .land-orb { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(80px); }
   .land-orb-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%); top: -180px; left: -120px; animation: orbDrift1 14s ease-in-out infinite alternate; }
   .land-orb-2 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%); bottom: -100px; right: -80px; animation: orbDrift2 18s ease-in-out infinite alternate; }
   .land-orb-3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(56,189,248,0.10) 0%, transparent 70%); top: 40%; left: 60%; animation: orbDrift1 22s ease-in-out infinite alternate-reverse; }
   @keyframes orbDrift1 { from { transform: translate(0,0) scale(1); } to { transform: translate(40px,30px) scale(1.08); } }
   @keyframes orbDrift2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-30px,20px) scale(1.05); } }
-
-  /* ── Particles ── */
   .land-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-  .land-particle {
-    position: absolute;
-    width: 2px; height: 2px; border-radius: 50%;
-    background: rgba(56,189,248,0.6);
-    left: calc(var(--i) * 5.8% + 2%);
-    top: calc(100% + 10px);
-    animation: particleRise calc(8s + var(--i) * 0.5s) linear infinite;
-    animation-delay: calc(var(--i) * -0.6s);
-  }
-  .land-particle:nth-child(odd)  { background: rgba(99,102,241,0.5); width: 3px; height: 3px; }
-  .land-particle:nth-child(3n)   { background: rgba(16,185,129,0.5); }
-  @keyframes particleRise {
-    0%   { transform: translateY(0) scale(1); opacity: 0; }
-    10%  { opacity: 1; }
-    90%  { opacity: 0.4; }
-    100% { transform: translateY(-110vh) scale(0.3); opacity: 0; }
-  }
-
-  /* ── Content wrapper ── */
-  .land-content {
-    position: relative; z-index: 10;
-    width: 100%; max-width: 900px;
-    padding: 80px 24px 100px;
-    text-align: center;
-    display: flex; flex-direction: column; align-items: center; gap: 0;
-  }
-
-  /* ── Badge ── */
-  .land-badge {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 6px 16px 6px 10px;
-    border-radius: 99px;
-    border: 1px solid rgba(99,102,241,0.35);
-    background: rgba(99,102,241,0.08);
-    color: #a5b4fc;
-    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
-    margin-bottom: 28px;
-  }
-  .land-badge-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #10b981;
-    box-shadow: 0 0 6px #10b981;
-    animation: pulseDot 2s ease-in-out infinite;
-  }
+  .land-particle { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: rgba(56,189,248,0.6); left: calc(var(--i) * 5.8% + 2%); top: calc(100% + 10px); animation: particleRise calc(8s + var(--i) * 0.5s) linear infinite; animation-delay: calc(var(--i) * -0.6s); }
+  .land-particle:nth-child(odd) { background: rgba(99,102,241,0.5); width: 3px; height: 3px; }
+  .land-particle:nth-child(3n) { background: rgba(16,185,129,0.5); }
+  @keyframes particleRise { 0% { transform: translateY(0) scale(1); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 0.4; } 100% { transform: translateY(-110vh) scale(0.3); opacity: 0; } }
+  .land-content { position: relative; z-index: 10; width: 100%; max-width: 900px; padding: 230px 24px 100px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .land-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px 6px 10px; border-radius: 99px; border: 1px solid rgba(99,102,241,0.35); background: rgba(99,102,241,0.08); color: #a5b4fc; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; margin-bottom: 28px; }
+  .land-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; animation: pulseDot 2s ease-in-out infinite; }
   @keyframes pulseDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.7); } }
-
-  /* ── Headline ── */
-  .land-headline {
-    font-size: clamp(2.6rem, 6vw, 4.2rem);
-    font-weight: 700; line-height: 1.08; letter-spacing: -0.03em;
-    color: #f1f5f9;
-    margin: 0 0 6px;
-    font-family: 'Space Grotesk', sans-serif;
-  }
-  .land-headline-line2 {
-    display: block; margin-top: 4px;
-  }
-  .land-hl-static {
-    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  }
-  .land-hl-machine {
-    background: linear-gradient(135deg, #2835fa, #50a7f8, #2835fa);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    position: relative;
-  }
-  .land-hl-machine::after {
-    content: '';
-    position: absolute; bottom: -4px; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, #2835fa, #50a7f8, #2835fa);
-    border-radius: 2px;
-    animation: underlineShimmer 3s linear infinite;
-    background-size: 200% 100%;
-  }
+  .land-headline { font-size: clamp(2.6rem, 6vw, 4.2rem); font-weight: 700; line-height: 1.08; letter-spacing: -0.03em; color: #f1f5f9; margin: 0 0 6px; font-family: 'Space Grotesk', sans-serif; }
+  .land-headline-line2 { display: block; margin-top: 4px; }
+  .land-hl-static { background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .land-hl-machine { background: linear-gradient(135deg, #2835fa, #50a7f8, #2835fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; position: relative; }
+  .land-hl-machine::after { content: ''; position: absolute; bottom: -4px; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #2835fa, #50a7f8, #2835fa); border-radius: 2px; animation: underlineShimmer 3s linear infinite; background-size: 200% 100%; }
   @keyframes underlineShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-  /* ── Sub text ── */
-  .land-sub {
-    font-size: 1.05rem; line-height: 1.7; color: #64748b;
-    margin: 20px 0 36px; max-width: 600px;
-  }
-
-  /* ── Input section ── */
+  .land-sub { font-size: 1.05rem; line-height: 1.7; color: #64748b; margin: 20px 0 36px; max-width: 600px; }
   .land-input-section { width: 100%; max-width: 680px; margin-bottom: 24px; }
-  .land-input-shell {
-    display: flex; align-items: center; gap: 0;
-    background: rgba(15,23,42,0.95);
-    border: 1px solid rgba(99,102,241,0.3);
-    border-radius: 14px;
-    padding: 6px 6px 6px 16px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    box-shadow: 0 0 0 0 transparent, inset 0 1px 0 rgba(255,255,255,0.04);
-  }
-  .land-input-shell:focus-within {
-    border-color: rgba(99,102,241,0.7);
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.12), inset 0 1px 0 rgba(255,255,255,0.04);
-  }
-  .land-input-shell.is-valid   { border-color: rgba(16,185,129,0.6); box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
-  .land-input-shell.is-error   { border-color: rgba(239,68,68,0.6);  box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
-  .land-input-shell.is-checking{ border-color: rgba(56,189,248,0.5); }
+  .land-input-shell { display: flex; align-items: center; gap: 0; background: rgba(15,23,42,0.95); border: 1px solid rgba(99,102,241,0.3); border-radius: 14px; padding: 6px 6px 6px 16px; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 0 0 0 transparent, inset 0 1px 0 rgba(255,255,255,0.04); }
+  .land-input-shell:focus-within { border-color: rgba(99,102,241,0.7); box-shadow: 0 0 0 3px rgba(99,102,241,0.12), inset 0 1px 0 rgba(255,255,255,0.04); }
+  .land-input-shell.is-valid { border-color: rgba(16,185,129,0.6); box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+  .land-input-shell.is-error { border-color: rgba(239,68,68,0.6); box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
+  .land-input-shell.is-checking { border-color: rgba(56,189,248,0.5); }
   .land-input-prefix { display: flex; align-items: center; flex-shrink: 0; margin-right: 10px; }
-  .land-url-input {
-    flex: 1; background: transparent; border: none; outline: none;
-    font-size: 0.95rem; color: #e2e8f0; font-family: 'JetBrains Mono', monospace;
-    padding: 12px 0; min-width: 0;
-  }
+  .land-url-input { flex: 1; background: transparent; border: none; outline: none; font-size: 0.95rem; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; padding: 12px 0; min-width: 0; }
   .land-url-input::placeholder { color: #334155; font-family: 'Space Grotesk', sans-serif; }
-  .land-cta-btn {
-    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
-    padding: 13px 24px; border-radius: 10px;
-    background: linear-gradient(135deg, #2836ff 0%, #000a9d 100%);
-    border: none; color: #fff; font-size: 0.88rem; font-weight: 700;
-    cursor: pointer; white-space: nowrap; font-family: 'Space Grotesk', sans-serif;
-    transition: all 0.2s;
-    box-shadow: 0 4px 16px rgba(99,102,241,0.35);
-  }
+  .land-cta-btn { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 13px 24px; border-radius: 10px; background: linear-gradient(135deg, #2836ff 0%, #000a9d 100%); border: none; color: #fff; font-size: 0.88rem; font-weight: 700; cursor: pointer; white-space: nowrap; font-family: 'Space Grotesk', sans-serif; transition: all 0.2s; box-shadow: 0 4px 16px rgba(99,102,241,0.35); }
   .land-cta-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,102,241,0.5); }
   .land-cta-btn:active:not(:disabled) { transform: translateY(0); }
   .land-cta-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-  .land-url-error {
-    display: flex; align-items: center; gap: 7px;
-    margin-top: 10px; padding: 9px 14px;
-    background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.22);
-    border-radius: 8px; color: #fca5a5; font-size: 0.8rem; text-align: left;
-  }
-  .land-input-hint {
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    margin-top: 12px; color: #334155; font-size: 0.75rem;
-  }
-
-  /* ── Platform pills ── */
+  .land-url-error { display: flex; align-items: center; gap: 7px; margin-top: 10px; padding: 9px 14px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.22); border-radius: 8px; color: #fca5a5; font-size: 0.8rem; text-align: left; }
+  .land-input-hint { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; color: #334155; font-size: 0.75rem; }
   .land-platforms { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 40px; }
   .land-platforms-label { font-size: 0.72rem; color: #334155; letter-spacing: 0.08em; text-transform: uppercase; }
   .land-platform-icons { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
-  .land-platform-pill {
-    display: flex; align-items: center; gap: 7px;
-    padding: 7px 14px; border-radius: 8px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    font-size: 0.8rem; font-weight: 600; color: #64748b;
-    transition: all 0.2s;
-  }
-  .land-platform-pill:hover {
-    border-color: var(--pc);
-    background: color-mix(in srgb, var(--pc) 10%, transparent);
-    color: #94a3b8;
-    transform: translateY(-2px);
-  }
-
-  /* ── Stats ── */
-  .land-stats {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-    width: 100%; margin-bottom: 56px;
-  }
-  .land-stat-card {
-    background: rgba(15,23,42,0.7);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 14px; padding: 20px 16px;
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    transition: all 0.25s;
-    position: relative; overflow: hidden;
-  }
-  .land-stat-card::before {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(99,102,241,0.04), transparent);
-    pointer-events: none;
-  }
+  .land-platform-pill { display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); font-size: 0.8rem; font-weight: 600; color: #64748b; transition: all 0.2s; }
+  .land-platform-pill:hover { border-color: var(--pc); background: color-mix(in srgb, var(--pc) 10%, transparent); color: #94a3b8; transform: translateY(-2px); }
+  .land-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; margin-bottom: 56px; }
+  .land-stat-card { background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.25s; position: relative; overflow: hidden; }
+  .land-stat-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(99,102,241,0.04), transparent); pointer-events: none; }
   .land-stat-card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-3px); }
   .land-stat-icon { color: #6366f1; margin-bottom: 2px; }
   .land-stat-value { font-size: 1.7rem; font-weight: 700; color: #f1f5f9; line-height: 1; font-family: 'Space Grotesk', sans-serif; }
   .land-stat-label { font-size: 0.7rem; color: #475569; text-transform: uppercase; letter-spacing: 0.06em; }
-
-  /* ── How it works ── */
   .land-steps-section { width: 100%; margin-bottom: 48px; }
-  .land-steps-label {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-size: 0.68rem; color: #334155; text-transform: uppercase; letter-spacing: 0.1em;
-    margin-bottom: 20px;
-  }
+  .land-steps-label { display: inline-flex; align-items: center; gap: 6px; font-size: 0.68rem; color: #334155; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; }
   .land-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
-  .land-step {
-    position: relative; display: flex; flex-direction: column; align-items: center;
-    padding: 24px 16px; gap: 10px;
-    background: rgba(15,23,42,0.5);
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 0; transition: all 0.25s;
-  }
+  .land-step { position: relative; display: flex; flex-direction: column; align-items: center; padding: 24px 16px; gap: 10px; background: rgba(15,23,42,0.5); border: 1px solid rgba(255,255,255,0.05); border-radius: 0; transition: all 0.25s; }
   .land-step:first-child { border-radius: 14px 0 0 14px; }
-  .land-step:last-child  { border-radius: 0 14px 14px 0; }
+  .land-step:last-child { border-radius: 0 14px 14px 0; }
   .land-step:not(:first-child) { border-left: none; }
   .land-step:hover { background: rgba(99,102,241,0.06); z-index: 1; }
-  .land-step-num {
-    font-size: 0.6rem; font-weight: 700; color: #1e293b;
-    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em;
-    background: rgba(99,102,241,0.15); padding: 3px 8px; border-radius: 4px;
-  }
+  .land-step-num { font-size: 0.6rem; font-weight: 700; color: #1e293b; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; background: rgba(99,102,241,0.15); padding: 3px 8px; border-radius: 4px; }
   .land-step-icon { color: #6366f1; }
   .land-step-title { font-size: 0.88rem; font-weight: 700; color: #cbd5e1; }
-  .land-step-desc  { font-size: 0.72rem; color: #475569; line-height: 1.55; text-align: center; }
-  .land-step-arrow {
-    position: absolute; right: -1px; top: 50%; transform: translateY(-50%);
-    width: 0; height: 0;
-    border-top: 8px solid transparent; border-bottom: 8px solid transparent;
-    border-left: 8px solid rgba(99,102,241,0.25);
-    z-index: 2;
-  }
-
-  /* ── Feature grid ── */
-  .land-features {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-    width: 100%; margin-bottom: 56px;
-  }
-  .land-feature-card {
-    background: rgba(15,23,42,0.6);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 14px; padding: 22px 20px;
-    text-align: left; transition: all 0.25s;
-    position: relative; overflow: hidden;
-  }
-  .land-feature-card::after {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--fc) 5%, transparent), transparent);
-    pointer-events: none; opacity: 0; transition: opacity 0.25s;
-  }
+  .land-step-desc { font-size: 0.72rem; color: #475569; line-height: 1.55; text-align: center; }
+  .land-step-arrow { position: absolute; right: -1px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 8px solid rgba(99,102,241,0.25); z-index: 2; }
+  .land-features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; margin-bottom: 56px; }
+  .land-feature-card { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 22px 20px; text-align: left; transition: all 0.25s; position: relative; overflow: hidden; }
+  .land-feature-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, color-mix(in srgb, var(--fc) 5%, transparent), transparent); pointer-events: none; opacity: 0; transition: opacity 0.25s; }
   .land-feature-card:hover { border-color: rgba(255,255,255,0.12); transform: translateY(-3px); }
   .land-feature-card:hover::after { opacity: 1; }
-  .land-feature-icon {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: color-mix(in srgb, var(--fc) 15%, transparent);
-    border: 1px solid color-mix(in srgb, var(--fc) 30%, transparent);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--fc); margin-bottom: 14px;
-  }
+  .land-feature-icon { width: 38px; height: 38px; border-radius: 10px; background: color-mix(in srgb, var(--fc) 15%, transparent); border: 1px solid color-mix(in srgb, var(--fc) 30%, transparent); display: flex; align-items: center; justify-content: center; color: var(--fc); margin-bottom: 14px; }
   .land-feature-title { font-size: 0.9rem; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; }
-  .land-feature-desc  { font-size: 0.76rem; color: #475569; line-height: 1.6; }
-
-  /* ── Bottom CTA ── */
-  .land-bottom-cta {
-    display: flex; flex-direction: column; align-items: center; gap: 16px;
-    padding: 40px; border-radius: 20px;
-    background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.05));
-    border: 1px solid rgba(99,102,241,0.2);
-    width: 100%;
-  }
+  .land-feature-desc { font-size: 0.76rem; color: #475569; line-height: 1.6; }
+  .land-bottom-cta { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 40px; border-radius: 20px; background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(16,185,129,0.05)); border: 1px solid rgba(99,102,241,0.2); width: 100%; }
   .land-bottom-cta-text { font-size: 1.2rem; font-weight: 700; color: #e2e8f0; margin: 0; }
-  .land-bottom-cta-btn {
-    display: flex; align-items: center; gap: 10px;
-    padding: 15px 36px; border-radius: 12px;
-    background: linear-gradient(135deg, #2836ff 0%, #000a9d 100%);
-    border: none; color: #fff; font-size: 0.95rem; font-weight: 700;
-    cursor: pointer; font-family: 'Space Grotesk', sans-serif;
-    transition: all 0.2s;
-    box-shadow: 0 6px 24px rgba(99,102,241,0.4);
-  }
+  .land-bottom-cta-btn { display: flex; align-items: center; gap: 10px; padding: 15px 36px; border-radius: 12px; background: linear-gradient(135deg, #2836ff 0%, #000a9d 100%); border: none; color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: 'Space Grotesk', sans-serif; transition: all 0.2s; box-shadow: 0 6px 24px rgba(99,102,241,0.4); }
   .land-bottom-cta-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(99,102,241,0.55); }
 
-  /* ── Responsive ── */
-  @media (max-width: 860px) {
-    .land-stats    { grid-template-columns: repeat(2, 1fr); }
-    .land-steps    { grid-template-columns: repeat(2, 1fr); }
-    .land-step:first-child { border-radius: 14px 0 0 0; }
-    .land-step:last-child  { border-radius: 0 0 14px 0; }
-    .land-step:nth-child(2){ border-radius: 0 14px 0 0; border-left: none; }
-    .land-step:nth-child(3){ border-radius: 0 0 0 14px; border-top: none; }
-    .land-step:nth-child(2):not(:last-child) .land-step-arrow { display: none; }
-    .land-features { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (max-width: 560px) {
-    .land-headline { font-size: 2.2rem; }
-    .land-stats    { grid-template-columns: repeat(2, 1fr); }
-    .land-features { grid-template-columns: 1fr; }
-    .land-steps    { grid-template-columns: 1fr; }
-    .land-step:first-child, .land-step:nth-child(2), .land-step:nth-child(3), .land-step:last-child { border-radius: 0; }
-    .land-step:first-child { border-radius: 14px 14px 0 0; }
-    .land-step:last-child  { border-radius: 0 0 14px 14px; }
-    .land-step:not(:first-child) { border-left: 1px solid rgba(255,255,255,0.05); border-top: none; }
-    .land-step-arrow { display: none; }
-    .land-content { padding: 48px 16px 72px; }
-    .land-cta-btn  { padding: 13px 16px; font-size: 0.82rem; }
-  }
+  /* ═══ CHAT PAGE ═══ */
   .camp-chat-page { width: 100%; min-height: calc(100vh - 68px); background: #0a0a0f; display: flex; flex-direction: column; }
   .camp-chat-scroll { flex: 1; overflow-y: auto; padding: 32px 20px 48px; }
   .camp-chat-inner { max-width: 1020px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; width: 100%; }
@@ -2575,60 +2433,65 @@ const CSS = `
   .camp-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #38bdf8; animation: bounce 1.1s ease-in-out infinite; }
   @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); opacity: 0.4; } 40% { transform: translateY(-6px); opacity: 1; } }
   .camp-ai-badge { padding: 3px 10px; background: linear-gradient(135deg, #0062ff, #5c97f6); border-radius: 20px; font-size: 0.62rem; font-weight: 700; color: #fff; white-space: nowrap; }
-  .confirmation-card { background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(59,130,246,0.05)); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 24px; margin-top: 6px; max-width: 520px; }
-  .confirmation-header { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
-  .confirmation-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .confirmation-text h3 { margin: 0 0 6px; font-size: 1.1rem; font-weight: 700; color: #fff; }
-  .confirmation-text p { margin: 0; font-size: 0.85rem; color: #94a3b8; line-height: 1.55; }
-  .confirmation-text strong { color: #60a5fa; }
-  .confirmation-benefits { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 14px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 10px; }
-  .confirmation-benefit { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; color: #e2e8f0; }
-  .confirmation-question { display: flex; align-items: center; gap: 10px; padding: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; margin-bottom: 16px; font-size: 0.9rem; font-weight: 600; color: #fff; }
-  .confirmation-actions { display: flex; flex-direction: column; gap: 10px; }
-  .confirmation-yes-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 20px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-  .confirmation-yes-btn:hover { transform: scale(1.02); box-shadow: 0 0 24px rgba(16,185,129,0.4); }
-  .confirmation-no-btn { padding: 12px 20px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #64748b; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-  .confirmation-no-btn:hover { background: rgba(255,255,255,0.08); color: #94a3b8; }
-  .payment-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .payment-modal { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 28px; width: 100%; max-width: 460px; }
-  .payment-modal-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
-  .payment-modal-header > div:first-child { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-  .payment-modal-header h3 { margin: 0; color: #fff; font-size: 1.2rem; }
-  .payment-modal-header p { margin: 0; color: #94a3b8; font-size: 0.85rem; }
-  .payment-modal-header strong { color: #10b981; }
-  .pm-close { background: none; border: none; color: #64748b; cursor: pointer; padding: 4px; }
-  .pm-close:hover { color: #fff; }
-  .pm-options { display: flex; flex-direction: column; gap: 12px; }
-  .pm-title { font-size: 0.8rem; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .pm-option { display: flex; align-items: center; gap: 14px; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; cursor: pointer; text-align: left; transition: all 0.2s; color: inherit; }
-  .pm-option:hover { border-color: #3b82f6; background: rgba(59,130,246,0.08); }
-  .pm-option-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .pm-option-info { flex: 1; }
-  .pm-option-name { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 2px; }
-  .pm-option-desc { font-size: 0.75rem; color: #64748b; }
-  .pm-badge { font-size: 0.65rem; padding: 3px 8px; background: #10b981; color: #fff; border-radius: 4px; font-weight: 700; }
-  .pm-back { display: flex; align-items: center; gap: 6px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.82rem; margin-bottom: 16px; }
-  .pm-back:hover { color: #fff; }
-  .pm-upi-box, .pm-card-form { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-  .pm-upi-box label, .pm-form-group label { display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .pm-upi-input { display: flex; align-items: center; gap: 4px; }
-  .pm-upi-input input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; color: #fff; font-size: 1rem; outline: none; }
-  .pm-upi-input span { color: #64748b; font-size: 0.9rem; }
-  .pm-error { display: flex; align-items: center; gap: 6px; margin-top: 8px; color: #ef4444; font-size: 0.78rem; }
-  .pm-amount-box { text-align: center; padding: 12px; background: rgba(16,185,129,0.1); border-radius: 8px; margin-bottom: 16px; color: #94a3b8; }
-  .pm-amount-box strong { color: #10b981; font-size: 1.2rem; }
-  .pm-pay-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
-  .pm-pay-btn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 0 20px rgba(16,185,129,0.3); }
-  .pm-pay-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .pm-secure { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; color: #64748b; font-size: 0.72rem; }
-  .pm-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .pm-form-group input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; color: #fff; font-size: 1rem; outline: none; }
-  .camp-terminal { background: #080810; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; font-family: 'Courier New', monospace; margin-top: 6px; min-width: 360px; }
-  .camp-terminal-header { display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #4b5563; font-size: 0.72rem; }
-  .camp-terminal-url { color: #3b82f6; }
-  .camp-log-line { color: #38bdf8; font-size: 0.78rem; margin-bottom: 4px; line-height: 1.5; }
-  .camp-log-line.success { color: #10b981; }
-  .camp-cursor { display: inline-block; width: 7px; height: 12px; background: #38bdf8; margin-top: 8px; animation: blink 1s step-end infinite; }
+
+  /* ═══ WEBSITE PREVIEW CARD (NEW) ═══ */
+  .site-preview-card { border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); margin: 10px 0; background: #080d18; }
+  .site-preview-browser-bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #0d1420; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .site-preview-dots { display: flex; gap: 5px; flex-shrink: 0; }
+  .site-preview-dots span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .site-preview-url-bar { flex: 1; display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 5px; padding: 4px 9px; }
+  .site-preview-url-text { font-size: 11px; font-family: monospace; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .site-preview-ai-badge { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #38bdf8; flex-shrink: 0; font-weight: 600; }
+  .site-preview-ai-dot { width: 5px; height: 5px; border-radius: 50%; background: #38bdf8; animation: pulseDot 1.4s ease-in-out infinite; }
+  .site-preview-img-wrap { position: relative; height: 210px; overflow: hidden; background: #0a0f1a; }
+  .site-preview-shimmer { position: absolute; inset: 0; background: linear-gradient(90deg, #0d1117 25%, #1a2235 50%, #0d1117 75%); background-size: 400% 100%; animation: shimmer 1.6s ease-in-out infinite; }
+  @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+  .site-preview-img { width: 100%; height: auto; display: block; transition: opacity 0.5s; position: absolute; top: 0; left: 0; }
+  .site-preview-overlay { position: absolute; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(transparent, #080d18); pointer-events: none; }
+  .site-preview-loaded-badge { position: absolute; bottom: 10px; right: 10px; display: flex; align-items: center; gap: 5px;background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; font-size: 8px; color: #6ee7b7; font-weight: 600; }
+  .site-preview-fallback { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  .site-preview-fallback-content { display: flex; align-items: center; gap: 12px; }
+  .site-preview-favicon-wrap { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; }
+  .site-preview-fallback-title { display: block; font-size: 0.88rem; font-weight: 700; color: #94a3b8; }
+  .site-preview-fallback-sub { display: block; font-size: 0.72rem; color: #475569; margin-top: 2px; }
+  .site-preview-scan-overlay { display: flex; flex-direction: column; gap: 5px; padding: 10px 14px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px solid rgba(59,130,246,0.15); }
+  .site-preview-scan-item { display: flex; align-items: center; gap: 7px; font-size: 0.72rem; color: #64748b; opacity: 0; animation: fadeSlideIn 0.4s ease forwards; }
+  @keyframes fadeSlideIn { to { opacity: 1; transform: translateX(0); } from { opacity: 0; transform: translateX(-8px); } }
+  .site-preview-scan-line { height: 1px; background: linear-gradient(90deg, transparent, #3b82f6, transparent); margin-bottom: 6px; animation: scanPulse 2s ease-in-out infinite; }
+  @keyframes scanPulse { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+  /* ═══ BRAND DETAILS FORM (NEW) ═══ */
+  .brand-form-card { background: rgba(12,18,30,0.95); border: 1px solid rgba(59,130,246,0.22); border-radius: 16px; padding: 22px; margin-top: 6px; max-width: 580px; }
+  .brand-form-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+  .brand-form-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); display: flex; align-items: center; justify-content: center; color: #60a5fa; flex-shrink: 0; }
+  .brand-form-title { font-size: 0.95rem; font-weight: 700; color: #fff; }
+  .brand-form-sub { font-size: 0.72rem; color: #64748b; margin-top: 3px; }
+  .brand-form-ai-tag { display: flex; align-items: center; gap: 5px; padding: 4px 10px; background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25); border-radius: 6px; font-size: 0.65rem; color: #a5b4fc; font-weight: 600; white-space: nowrap; margin-left: auto; flex-shrink: 0; }
+  .brand-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .brand-form-group { margin-bottom: 14px; }
+  .brand-form-label { display: flex; align-items: center; gap: 5px; font-size: 0.72rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 7px; }
+  .brand-form-input { width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; font-size: 0.9rem; outline: none; transition: border-color 0.2s; font-family: inherit; }
+  .brand-form-input:focus { border-color: rgba(59,130,246,0.5); background: rgba(255,255,255,0.06); }
+  .brand-logo-row { display: flex; align-items: flex-start; gap: 12px; }
+  .brand-logo-preview { width: 64px; height: 64px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+  .brand-logo-placeholder { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+  .brand-logo-controls { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+  .brand-logo-upload-btn { display: flex; align-items: center; gap: 7px; padding: 9px 14px; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); border-radius: 9px; color: #60a5fa; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .brand-logo-upload-btn:hover { background: rgba(59,130,246,0.2); }
+  .brand-logo-favicon-btn { display: flex; align-items: center; gap: 7px; padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 9px; color: #94a3b8; font-size: 0.78rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .brand-logo-favicon-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .brand-favicon-mini { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+  .brand-logo-clear-btn { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: 7px; color: #f87171; font-size: 0.72rem; cursor: pointer; width: fit-content; transition: all 0.2s; }
+  .brand-logo-clear-btn:hover { background: rgba(239,68,68,0.15); }
+  .brand-logo-hint { font-size: 0.68rem; color: #4b5563; }
+  .brand-form-error { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; padding: 9px 12px; background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; color: #fca5a5; font-size: 0.8rem; }
+  .brand-form-submit { width: 100%; padding: 13px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; border-radius: 12px; color: #fff; font-size: 0.92rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 9px; cursor: pointer; transition: all 0.2s; }
+  .brand-form-submit:hover { transform: scale(1.02); box-shadow: 0 0 24px rgba(59,130,246,0.35); }
+  .brand-form-done { display: flex; align-items: center; gap: 9px; padding: 12px 16px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.22); border-radius: 10px; color: #6ee7b7; font-size: 0.85rem; margin-top: 4px; }
+  .brand-form-done strong { color: #10b981; }
+  @media(max-width:560px) { .brand-form-grid { grid-template-columns: 1fr; } }
+
+  /* ═══ AUDIT CARD ═══ */
   .audit-card { background: rgba(12,14,22,0.95); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; margin-top: 6px; overflow: hidden; }
   .audit-topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .audit-brand-identity { display: flex; align-items: center; gap: 12px; }
@@ -2697,10 +2560,18 @@ const CSS = `
   .audit-objective { padding: 12px 14px; background: linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.06)); border: 1px solid rgba(59,130,246,0.18); border-radius: 10px; color: #93c5fd; font-size: 0.82rem; line-height: 1.55; margin-bottom: 12px; }
   .audit-info-row p { color: #94a3b8; font-size: 0.8rem; font-style: italic; margin: 0; text-align: right; }
   .audit-mono { font-family: 'Courier New',monospace; font-size: 0.72rem !important; }
+
+  /* ═══ TERMINAL ═══ */
+  .camp-terminal { background: #080810; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 16px; font-family: 'Courier New', monospace; margin-top: 6px; min-width: 360px; }
+  .camp-terminal-header { display: flex; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #4b5563; font-size: 0.72rem; }
+  .camp-terminal-url { color: #3b82f6; }
+  .camp-log-line { color: #38bdf8; font-size: 0.78rem; margin-bottom: 4px; line-height: 1.5; }
+  .camp-log-line.success { color: #10b981; }
+  .camp-cursor { display: inline-block; width: 7px; height: 12px; background: #38bdf8; margin-top: 8px; animation: blink 1s step-end infinite; }
+
+  /* ═══ PLATFORM SELECTOR ═══ */
   .plat-selector { margin-top: 8px; }
   .plat-selector-title { font-size: 0.88rem; font-weight: 700; color: #e2e8f0; margin-bottom: 14px; }
-
-  /* ── Brand Value Card ── */
   .bvc-wrap { background: rgba(12,16,28,0.95); border: 1px solid rgba(59,130,246,0.2); border-radius: 16px; padding: 18px; margin-bottom: 18px; }
   .bvc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
   .bvc-header-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg,rgba(59,130,246,0.2),rgba(139,92,246,0.15)); display: flex; align-items: center; justify-content: center; color: #60a5fa; flex-shrink: 0; }
@@ -2721,7 +2592,6 @@ const CSS = `
   .bvc-gap-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .bvc-gap-label { font-size: 0.62rem; color: #4b5563; text-transform: uppercase; letter-spacing: 0.06em; }
   .bvc-gap-item strong { font-size: 1rem; font-weight: 800; }
-  /* Chart */
   .bvc-chart { position: relative; height: 110px; display: flex; gap: 0; margin: 10px 0 6px; padding-left: 28px; }
   .bvc-chart-lines { position: absolute; left: 0; top: 0; bottom: 20px; width: 26px; display: flex; flex-direction: column; justify-content: space-between; }
   .bvc-chart-line { display: flex; align-items: flex-end; }
@@ -2740,8 +2610,6 @@ const CSS = `
   .bvc-legend-dot.with-us { background: linear-gradient(135deg,#3b82f6,#6366f1); }
   .bvc-legend-dot.without-us { background: rgba(100,116,139,0.5); }
   .bvc-insight { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); border-radius: 9px; font-size: 0.76rem; color: #cbd5e1; line-height: 1.5; }
-
-  /* ── New platform grid (4 platforms) ── */
   .plat-cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
   .plat-card-v2 { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; padding: 14px 12px; background: rgba(15,20,35,0.9); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; cursor: pointer; text-align: left; transition: all 0.22s; color: inherit; }
   .plat-card-v2:hover { border-color: var(--plat-color); background: color-mix(in srgb, var(--plat-color) 8%, rgba(15,20,35,0.9)); transform: translateY(-2px); }
@@ -2755,14 +2623,11 @@ const CSS = `
   .plat-v2-features { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
   .plat-v2-features li { display: flex; align-items: center; gap: 5px; color: #4b5563; font-size: 0.65rem; }
   .plat-v2-features li svg { color: #10b981; flex-shrink: 0; }
-  /* Custom select button */
   .plat-custom-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; background: linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.12)); border: 1px solid rgba(59,130,246,0.35); border-radius: 10px; color: #60a5fa; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-bottom: 14px; }
   .plat-custom-btn:hover { background: linear-gradient(135deg,rgba(59,130,246,0.25),rgba(139,92,246,0.2)); box-shadow: 0 0 20px rgba(59,130,246,0.2); }
-  /* Divider */
   .plat-divider { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .plat-divider::before, .plat-divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.06); }
   .plat-divider span { font-size: 0.7rem; color: #4b5563; white-space: nowrap; }
-  /* Bundle/Combo row */
   .plat-combo-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
   .plat-combo-btn { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; padding: 12px 14px; background: rgba(15,20,35,0.9); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; cursor: pointer; text-align: left; transition: all 0.22s; color: inherit; }
   .plat-combo-btn:hover { border-color: var(--plat-color); transform: translateY(-2px); }
@@ -2771,22 +2636,8 @@ const CSS = `
   .plat-combo-icon { font-size: 1.4rem; line-height: 1; }
   .plat-combo-label { font-size: 0.82rem; font-weight: 700; color: #fff; }
   .plat-combo-desc { font-size: 0.65rem; color: #64748b; line-height: 1.4; }
-  /* keep old single-card classes for fallback */
-  .plat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .plat-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 18px 16px; background: rgba(15,20,35,0.9); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; cursor: pointer; text-align: left; transition: all 0.25s; color: inherit; }
-  .plat-card:hover { border-color: var(--plat-color); background: color-mix(in srgb, var(--plat-color) 8%, rgba(15,20,35,0.9)); transform: translateY(-2px); }
-  .plat-badge { position: absolute; top: -1px; right: 12px; background: linear-gradient(135deg, #0062ff, #5c97f6); color: #fff; font-size: 0.6rem; font-weight: 700; padding: 3px 8px; border-radius: 0 0 8px 8px; }
-  .plat-card-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
-  .plat-card-label { font-size: 0.95rem; font-weight: 700; color: #fff; }
-  .plat-card-sub { font-size: 0.72rem; color: #64748b; margin-top: -4px; }
-  .plat-card-best { font-size: 0.7rem; color: #94a3b8; padding: 4px 8px; background: rgba(255,255,255,0.04); border-radius: 6px; }
-  .plat-card-best strong { color: var(--plat-color); }
-  .plat-features { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-  .plat-features li { display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 0.72rem; }
-  .plat-features li svg { color: #10b981; flex-shrink: 0; }
-  .plat-cta { display: flex; align-items: center; gap: 5px; color: var(--plat-color); font-size: 0.78rem; font-weight: 600; margin-top: 4px; }
-  @media (max-width: 780px) { .plat-cards-grid { grid-template-columns: repeat(2,1fr); } .plat-combo-row { grid-template-columns: 1fr 1fr; } .bvc-gap-row { grid-template-columns: repeat(2,1fr); } }
-  @media (max-width: 480px) { .plat-cards-grid { grid-template-columns: 1fr 1fr; } .plat-combo-row { grid-template-columns: 1fr; } }
+
+  /* ═══ BUDGET / TIERS ═══ */
   .budget-input-form { background: rgba(12,18,30,0.95); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 20px; margin-top: 6px; }
   .bif-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
   .bif-title { font-size: 0.95rem; font-weight: 700; color: #fff; }
@@ -2832,6 +2683,8 @@ const CSS = `
   .tier-select-btn:hover, .tier-select-btn.recommended { background: color-mix(in srgb, var(--tc) 12%, transparent); border-color: var(--tc); color: var(--tc); }
   .tsb-label { font-weight: 700; }
   .tsb-amount { font-size: 0.78rem; color: #64748b; }
+
+  /* ═══ FUNDS / PAYMENT / PUBLISH ═══ */
   .camp-funds-card { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.25); border-radius: 14px; padding: 20px; margin-top: 6px; }
   .funds-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
   .funds-header h3 { margin: 0 0 4px; color: #fff; font-size: 0.95rem; }
@@ -2845,6 +2698,40 @@ const CSS = `
   .camp-add-funds-btn { padding: 10px 18px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 9px; color: #fff; font-weight: 600; display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
   .camp-add-funds-btn.primary { background: linear-gradient(135deg, #f59e0b, #d97706); border: none; }
   .camp-add-funds-btn:hover { opacity: 0.88; transform: scale(1.01); }
+  .payment-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .payment-modal { background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 28px; width: 100%; max-width: 460px; }
+  .payment-modal-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+  .payment-modal-header > div:first-child { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .payment-modal-header h3 { margin: 0; color: #fff; font-size: 1.2rem; }
+  .payment-modal-header p { margin: 0; color: #94a3b8; font-size: 0.85rem; }
+  .payment-modal-header strong { color: #10b981; }
+  .pm-close { background: none; border: none; color: #64748b; cursor: pointer; padding: 4px; }
+  .pm-close:hover { color: #fff; }
+  .pm-options { display: flex; flex-direction: column; gap: 12px; }
+  .pm-title { font-size: 0.8rem; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pm-option { display: flex; align-items: center; gap: 14px; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; cursor: pointer; text-align: left; transition: all 0.2s; color: inherit; }
+  .pm-option:hover { border-color: #3b82f6; background: rgba(59,130,246,0.08); }
+  .pm-option-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .pm-option-info { flex: 1; }
+  .pm-option-name { font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 2px; }
+  .pm-option-desc { font-size: 0.75rem; color: #64748b; }
+  .pm-badge { font-size: 0.65rem; padding: 3px 8px; background: #10b981; color: #fff; border-radius: 4px; font-weight: 700; }
+  .pm-back { display: flex; align-items: center; gap: 6px; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.82rem; margin-bottom: 16px; }
+  .pm-back:hover { color: #fff; }
+  .pm-upi-box, .pm-card-form { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .pm-upi-box label, .pm-form-group label { display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .pm-upi-input { display: flex; align-items: center; gap: 4px; }
+  .pm-upi-input input { flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; color: #fff; font-size: 1rem; outline: none; }
+  .pm-upi-input span { color: #64748b; font-size: 0.9rem; }
+  .pm-error { display: flex; align-items: center; gap: 6px; margin-top: 8px; color: #ef4444; font-size: 0.78rem; }
+  .pm-amount-box { text-align: center; padding: 12px; background: rgba(16,185,129,0.1); border-radius: 8px; margin-bottom: 16px; color: #94a3b8; }
+  .pm-amount-box strong { color: #10b981; font-size: 1.2rem; }
+  .pm-pay-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+  .pm-pay-btn:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 0 20px rgba(16,185,129,0.3); }
+  .pm-pay-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .pm-secure { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; color: #64748b; font-size: 0.72rem; }
+  .pm-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pm-form-group input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; color: #fff; font-size: 1rem; outline: none; }
   .publish-card { background: rgba(12,18,30,0.95); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 22px; margin-top: 6px; }
   .publish-card-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px; }
   .publish-card-title { font-size: 1.05rem; font-weight: 700; color: #fff; }
@@ -2869,69 +2756,203 @@ const CSS = `
   .gtds-info code { color: #38bdf8; font-family: monospace; }
   .gtds-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s; }
   .gtds-btn:hover { transform: scale(1.02); box-shadow: 0 0 24px rgba(16,185,129,0.4); }
+
+  /* ═══ DASHBOARD ═══ */
   .dashboard-wrapper { min-height: calc(100vh - 68px); background: #0a0a0f; }
   .dashboard-page { max-width: 1400px; margin: 0 auto; padding: 24px; }
   .dashboard-page.fullscreen { max-width: 100%; padding: 20px; }
-  .dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-  .dash-header-left { display: flex; align-items: center; gap: 16px; }
-  .dash-back-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #94a3b8; cursor: pointer; font-size: 0.82rem; transition: all 0.2s; }
-  .dash-back-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-  .dash-title-section h2 { margin: 0; color: #fff; font-size: 1.3rem; }
-  .dash-campaign-id { font-size: 0.72rem; color: #64748b; }
-  .dash-header-right { display: flex; align-items: center; gap: 10px; }
-  .dash-time-filter { display: flex; background: rgba(255,255,255,0.04); border-radius: 8px; overflow: hidden; }
-  .dash-time-btn { padding: 8px 14px; background: none; border: none; color: #64748b; cursor: pointer; font-size: 0.78rem; font-weight: 600; transition: all 0.2s; }
-  .dash-time-btn.active, .dash-time-btn:hover { background: rgba(59,130,246,0.2); color: #60a5fa; }
-  .dash-refresh-btn, .dash-fullscreen-btn { padding: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
-  .dash-refresh-btn:hover, .dash-fullscreen-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-  .dash-status-bar { display: flex; align-items: center; gap: 20px; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-  .dash-status-item { display: flex; align-items: center; gap: 7px; color: #64748b; font-size: 0.78rem; }
-  .dash-status-dot { width: 8px; height: 8px; border-radius: 50%; }
-  .dash-overall-metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
-  .dash-metric-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 20px; text-align: center; transition: all 0.2s; }
-  .dash-metric-card:hover { background: rgba(255,255,255,0.06); }
-  .dash-metric-card.highlight { border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.05); }
-  .dash-metric-icon { margin-bottom: 8px; color: #64748b; }
-  .dash-metric-value { font-size: 1.6rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
-  .dash-metric-label { font-size: 0.68rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
-  .dash-platform-tabs { display: flex; gap: 10px; margin-bottom: 16px; }
-  .dash-platform-tab { display: flex; align-items: center; gap: 10px; padding: 12px 20px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: #94a3b8; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
-  .dash-platform-tab.active { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.4); color: #60a5fa; }
-  .dash-tab-status { font-size: 0.62rem; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
-  .dash-tab-status.active { background: rgba(16,185,129,0.15); color: #10b981; }
-  .dash-tab-status.creating { background: rgba(245,158,11,0.15); color: #f59e0b; }
-  .dash-platform-detail { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 24px; }
-  .dash-platform-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .dash-platform-info { display: flex; align-items: center; gap: 14px; }
-  .dash-platform-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-  .dash-platform-info h3 { margin: 0 0 4px; color: #fff; font-size: 1.1rem; }
-  .dash-platform-info p { margin: 0; color: #64748b; font-size: 0.78rem; }
-  .dash-platform-status { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: rgba(255,255,255,0.05); border-radius: 8px; color: #94a3b8; font-size: 0.82rem; font-weight: 600; }
-  .dash-metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-  .dash-metric-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 14px; }
-  .dash-metric-box.highlight { border-color: rgba(16,185,129,0.2); background: rgba(16,185,129,0.05); }
-  .dash-mb-value { font-size: 1.2rem; font-weight: 800; color: #fff; margin-bottom: 2px; }
-  .dash-mb-label { font-size: 0.62rem; color: #64748b; text-transform: uppercase; margin-bottom: 8px; }
-  .dash-mb-bar { height: 3px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; }
-  .dash-mb-bar-fill { height: 100%; border-radius: 99px; }
-  .dash-adsets { background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
-  .dash-adsets-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .dash-adsets-header h4 { margin: 0; display: flex; align-items: center; gap: 8px; color: #fff; font-size: 0.85rem; }
-  .dash-adsets-header span { color: #64748b; font-size: 0.75rem; }
-  .dash-adsets-table { max-height: 200px; overflow-y: auto; }
-  .dash-adset-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr; gap: 10px; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.78rem; align-items: center; }
-  .dash-adset-row:last-child { border-bottom: none; }
-  .dash-adset-row.header { background: rgba(255,255,255,0.02); font-size: 0.65rem; color: #64748b; text-transform: uppercase; }
-  .dash-adset-row span { color: #94a3b8; }
-  .adset-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.62rem; font-weight: 700; text-transform: uppercase; }
-  .adset-status.active { background: rgba(16,185,129,0.15); color: #10b981; }
-  .adset-status.paused { background: rgba(245,158,11,0.15); color: #f59e0b; }
-  .dash-view-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border-radius: 10px; color: #fff; font-size: 0.85rem; font-weight: 600; text-decoration: none; transition: opacity 0.2s; }
-  .dash-view-btn:hover { opacity: 0.85; }
-  @media (max-width: 1100px) { .dash-overall-metrics { grid-template-columns: repeat(3, 1fr); } .dash-metrics-grid { grid-template-columns: repeat(3, 1fr); } }
-  @media (max-width: 900px) { .plat-cards { grid-template-columns: 1fr; } .tiers-grid { grid-template-columns: 1fr; } .dash-overall-metrics { grid-template-columns: repeat(2, 1fr); } .dash-adset-row { grid-template-columns: 2fr 1fr 1fr 1fr 1fr; overflow-x: auto; } }
-  @media (max-width: 680px) { .camp-landing-page { padding: 40px 20px; } .camp-headline { font-size: 2rem; } .camp-stats-row { gap: 28px; } .camp-topbar-right { gap: 6px; } .camp-restart-top-right span { display: none; } .bif-input-row { flex-direction: column; } .bif-submit { width: 100%; justify-content: center; } .dash-header { flex-direction: column; align-items: flex-start; } .dash-overall-metrics { grid-template-columns: 1fr 1fr; } .dash-metrics-grid { grid-template-columns: 1fr 1fr; } .dash-platform-tabs { flex-direction: column; } .dash-platform-header { flex-direction: column; align-items: flex-start; gap: 12px; } }
+  .confirmation-card { background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(59,130,246,0.05)); border: 1px solid rgba(16,185,129,0.25); border-radius: 16px; padding: 24px; margin-top: 6px; max-width: 520px; }
+  .confirmation-header { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
+  .confirmation-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .confirmation-text h3 { margin: 0 0 6px; font-size: 1.1rem; font-weight: 700; color: #fff; }
+  .confirmation-text p { margin: 0; font-size: 0.85rem; color: #94a3b8; line-height: 1.55; }
+  .confirmation-text strong { color: #60a5fa; }
+  .confirmation-benefits { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 14px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 10px; }
+  .confirmation-benefit { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; color: #e2e8f0; }
+  .confirmation-question { display: flex; align-items: center; gap: 10px; padding: 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; margin-bottom: 16px; font-size: 0.9rem; font-weight: 600; color: #fff; }
+  .confirmation-actions { display: flex; flex-direction: column; gap: 10px; }
+  .confirmation-yes-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 20px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .confirmation-yes-btn:hover { transform: scale(1.02); box-shadow: 0 0 24px rgba(16,185,129,0.4); }
+  .confirmation-no-btn { padding: 12px 20px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #64748b; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .confirmation-no-btn:hover { background: rgba(255,255,255,0.08); color: #94a3b8; }
 
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 860px) {
+    .land-stats { grid-template-columns: repeat(2, 1fr); }
+    .land-steps { grid-template-columns: repeat(2, 1fr); }
+    .land-step:first-child { border-radius: 14px 0 0 0; }
+    .land-step:last-child { border-radius: 0 0 14px 0; }
+    .land-features { grid-template-columns: repeat(2, 1fr); }
+    .plat-cards-grid { grid-template-columns: repeat(2,1fr); }
+    .plat-combo-row { grid-template-columns: 1fr 1fr; }
+    .bvc-gap-row { grid-template-columns: repeat(2,1fr); }
+    .tiers-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .land-headline { font-size: 2.2rem; }
+    .land-features { grid-template-columns: 1fr; }
+    .land-steps { grid-template-columns: 1fr; }
+    .land-content { padding: 48px 16px 72px; }
+    .land-cta-btn { padding: 13px 16px; font-size: 0.82rem; }
+    .brand-form-grid { grid-template-columns: 1fr; }
+    .plat-cards-grid { grid-template-columns: 1fr 1fr; }
+    .plat-combo-row { grid-template-columns: 1fr; }
+    .bif-input-row { flex-direction: column; }
+    .bif-submit { width: 100%; justify-content: center; }
+  }
+    .site-preview-card {
+  width: 100%;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #020817;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.site-preview-browser-bar {
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.site-preview-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.site-preview-dots span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.red {
+  background: #ef4444;
+}
+
+.yellow {
+  background: #f59e0b;
+}
+
+.green {
+  background: #10b981;
+}
+
+.site-preview-url-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+.site-preview-ai-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #38bdf8;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.site-preview-ai-badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #38bdf8;
+}
+
+.site-preview-img-wrap {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background: #000;
+  overflow: hidden;
+}
+
+.site-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.site-preview-img.loaded {
+  opacity: 1;
+}
+
+.site-preview-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+
+  color: #cbd5e1;
+  background: rgba(2, 6, 23, 0.9);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.site-preview-fallback {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  background: #020817;
+  color: white;
+  gap: 10px;
+}
+
+.fallback-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+}
+
+.site-preview-loaded-badge {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+
+  color: #10b981;
+  border-radius: 12px;
+
+  font-size: 8px;
+  font-weight: 600;
+
+  backdrop-filter: blur(10px);
+}
 `;
 
 export default Campaigns;

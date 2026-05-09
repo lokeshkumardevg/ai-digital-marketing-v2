@@ -64,7 +64,7 @@ const BASE_MENU_ITEMS: MenuItem[] = [
     subItems: [
       { path: '/brand/goal', label: 'Optimize Goal' },
       { path: '/brand/profile', label: 'Brand Profile' },
-      { path: '/brand/products', label: 'Products' },
+      // { path: '/brand/products', label: 'Products' },
     ],
   },
   {

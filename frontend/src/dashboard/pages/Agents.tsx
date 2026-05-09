@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
+import logo from '../../assets/fevicon.png';
 
 const agentConfigs: Record<string, any> = {
   "review_generation": {
@@ -370,7 +371,7 @@ export const Agents: React.FC = () => {
             width: 100%; padding: 14px; border: 1px solid #334155; border-radius: 12px;
             outline: none; color: #fff; background: #0f172a; font-size: 15px;
         }
-        .form-group input:focus, .form-group textarea:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15); }
+        .form-group input:focus, .form-group textarea:focus { border-color: #0766f5; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15); }
 
         #triggerAgentBtn {
             background: linear-gradient(135deg, #7033f5 0%, #3b82f6 100%);
@@ -418,10 +419,38 @@ export const Agents: React.FC = () => {
         </div>
 
         <div className="center-logo">
-          <div className="logo-icon" style={{ color: '#8b5cf6', fontSize: '40px' }}>
-            <i className="fa-solid fa-microchip"></i>
-          </div>
-          <h1>Wheedle AI</h1>
+      <div style={{ padding: '0 8px', marginBottom: '-20px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+        <div style={{
+          width: '36px', height: '36px', borderRadius: '10px',
+          // background: 'var(--accent-gradient)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', color: '#fff',
+          // boxShadow: '0 8px 16px rgba(112,51,245,0.25)', flexShrink: 0,
+        }}>
+          <div style={{
+  width: '36px',
+  height: '36px',
+  borderRadius: '10px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  overflow: 'hidden',
+  flexShrink: 0,
+}}>
+  {<img
+    src={logo}
+    alt="logo"
+    style={{
+      width: '100%',
+      height: '120%',
+      objectFit: 'contain',
+    }}
+  /> }
+</div>
+        </div>
+        <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, letterSpacing: '-0.8px', color: '#f5f5f5', fontFamily: 'Outfit', whiteSpace: 'nowrap' }}>
+          heedle.Ai
+        </h2>
+      </div>
           <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>Agent Ecosystem</p>
         </div>
 
