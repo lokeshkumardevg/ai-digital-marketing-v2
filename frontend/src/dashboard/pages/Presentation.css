@@ -1,11 +1,4 @@
-html, body {
-  margin: 0;
-  padding: 0;
-  background: #050a18;
-  color: white;
-  overflow: hidden;
-  font-family: 'Outfit', sans-serif;
-}
+/* Global styles removed to prevent breaking project-wide scrolling */
 
 /* Dark Scrollbar */
 ::-webkit-scrollbar {
