@@ -79,11 +79,13 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
         style={{
           width: '100%',
           height: 'calc(100vh - 40px)',
-          background: '#fff',
+          background: 'rgba(10, 15, 30, 0.98)',
+          backdropFilter: 'blur(30px)',
           borderRadius: '24px',
-          boxShadow: '0 30px 80px rgba(15, 23, 42, 0.18)',
+          boxShadow: '0 30px 80px rgba(0, 0, 0, 0.6)',
           padding: '28px 30px',
           overflow: 'auto',
+          border: '1px solid var(--glass-border)',
         }}
       >
         <div
@@ -94,7 +96,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
             marginBottom: '28px',
           }}
         >
-          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#111827' }}>
+          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             Upload by Group
           </h2>
 
@@ -105,12 +107,12 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
               height: '40px',
               borderRadius: '50%',
               border: 'none',
-              background: '#f3f4f6',
+              background: 'rgba(255, 255, 255, 0.05)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#111827',
+              color: 'var(--text-primary)',
             }}
           >
             <X size={18} />
@@ -122,19 +124,19 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
             display: 'flex',
             alignItems: 'end',
             gap: '0',
-            borderBottom: '1px solid #ececec',
+            borderBottom: '1px solid var(--glass-border)',
             marginBottom: '28px',
           }}
         >
           <button
             style={{
               padding: '14px 22px',
-              border: '1px solid #ececec',
+              border: '1px solid var(--glass-border)',
               borderBottom: 'none',
-              background: '#fff',
+              background: 'rgba(38, 49, 214, 0.1)',
               borderTopLeftRadius: '12px',
               borderTopRightRadius: '12px',
-              color: '#2631d6',
+              color: 'var(--text-primary)',
               fontWeight: 600,
               fontSize: '0.95rem',
               cursor: 'pointer',
@@ -148,16 +150,16 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
               marginLeft: '8px',
               width: '44px',
               height: '44px',
-              border: '1px solid #ececec',
+              border: '1px solid var(--glass-border)',
               borderBottom: 'none',
-              background: '#fff',
+              background: 'rgba(255, 255, 255, 0.03)',
               borderTopLeftRadius: '12px',
               borderTopRightRadius: '12px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#111827',
+              color: 'var(--text-primary)',
             }}
           >
             <CirclePlus size={18} />
@@ -188,7 +190,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
             <CheckCircle2 size={18} />
           </div>
 
-          <div style={{ fontSize: '1rem', fontWeight: 600, color: '#111827' }}>
+          <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
             Start by selecting a creative type.
           </div>
         </div>
@@ -210,7 +212,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                 alignItems: 'center',
                 gap: '8px',
                 marginBottom: '8px',
-                color: '#111827',
+                color: 'var(--text-primary)',
                 fontSize: '0.95rem',
                 fontWeight: 500,
               }}
@@ -227,11 +229,11 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                   width: '100%',
                   height: '44px',
                   borderRadius: '999px',
-                  border: '1px solid #8b5cf6',
+                  border: '1px solid var(--glass-border)',
                   padding: '0 42px 0 16px',
                   outline: 'none',
-                  background: '#fff',
-                  color: groupCreativeType ? '#111827' : '#64748b',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: groupCreativeType ? 'var(--text-primary)' : 'var(--text-secondary)',
                   fontSize: '0.92rem',
                   appearance: 'none',
                 }}
@@ -301,7 +303,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                 1
               </div>
 
-              <div style={{ fontSize: '1rem', fontWeight: 600, color: '#111827' }}>
+              <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 Upload creatives for targeted use.
               </div>
             </div>
@@ -321,9 +323,9 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
   onDragOver={onDragOver}
   style={{
     minHeight: '250px',
-    border: '1.5px dashed #e5e7eb',
+    border: '1.5px dashed var(--glass-border)',
     borderRadius: '28px',
-    background: '#fafafa',
+    background: 'rgba(255, 255, 255, 0.02)',
     padding: '18px',
     marginBottom: '20px',
   }}
@@ -518,7 +520,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
           style={{
             position: 'sticky',
             bottom: 0,
-            background: '#fff',
+            background: 'rgba(10, 15, 30, 0.98)',
             display: 'flex',
             justifyContent: 'flex-end',
             gap: '12px',
@@ -532,9 +534,9 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
               minWidth: '168px',
               height: '48px',
               borderRadius: '999px',
-              border: '1px solid #d6d6d6',
-              background: '#fff',
-              color: '#111827',
+              border: '1px solid var(--glass-border)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              color: 'var(--text-primary)',
               fontWeight: 500,
               fontSize: '0.98rem',
               cursor: 'pointer',

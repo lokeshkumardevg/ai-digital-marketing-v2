@@ -229,7 +229,7 @@ const getPageNumbers = () => {
                       height: '40px',
                       borderRadius: '999px',
                       border: 'none',
-                      background: 'rgba(255,255,255,0.96)',
+                      background: 'rgba(255,255,255,0.08)',
                       color: '#ef4444',
                       display: 'flex',
                       alignItems: 'center',
@@ -257,8 +257,8 @@ const getPageNumbers = () => {
                         height: '40px',
                         borderRadius: '999px',
                         border: 'none',
-                        background: 'rgba(255,255,255,0.96)',
-                        color: '#334155',
+                        background: 'rgba(255,255,255,0.08)',
+                        color: 'var(--text-secondary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -277,8 +277,8 @@ const getPageNumbers = () => {
                         height: '40px',
                         borderRadius: '999px',
                         border: 'none',
-                        background: 'rgba(255,255,255,0.96)',
-                        color: '#334155',
+                        background: 'rgba(255,255,255,0.08)',
+                        color: 'var(--text-secondary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -297,8 +297,8 @@ const getPageNumbers = () => {
                         height: '40px',
                         borderRadius: '999px',
                         border: 'none',
-                        background: 'rgba(255,255,255,0.96)',
-                        color: '#334155',
+                        background: 'rgba(255,255,255,0.08)',
+                        color: 'var(--text-secondary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -547,8 +547,8 @@ const getPageNumbers = () => {
 
 .creatives-pagination-arrow:hover:not(:disabled),
 .creatives-pagination-page:hover:not(.active) {
-  border-color: #cbd5e1;
-  background: #f8fafc;
+  border-color: #2631d6;
+  background: rgba(38, 49, 214, 0.1);
 }
 
 .creatives-pagination-page.active {

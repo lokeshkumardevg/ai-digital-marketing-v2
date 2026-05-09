@@ -325,15 +325,15 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
           >
             <div
               style={{
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '24px',
-                padding: '20px 18px',
-                background: 'rgba(255, 255, 255, 0.02)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                minHeight: 0,
-                overflow: 'hidden',
+              border: '1px solid var(--glass-border)',
+              borderRadius: '24px',
+              padding: '20px 18px',
+              background: 'rgba(255, 255, 255, 0.02)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              minHeight: 0,
+              overflow: 'hidden',
               }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -358,7 +358,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                         width: '100%',
                         height: '50px',
                         borderRadius: '999px',
-                        border: '1.5px solid #d4d4d8',
+                        border: '1px solid var(--glass-border)',
                         padding: '0 48px 0 18px',
                         fontSize: '0.96rem',
                         color: '#f8fafc',
@@ -397,7 +397,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       marginBottom: '10px',
                       fontSize: '1rem',
                       fontWeight: 600,
-                      color: '#18181b',
+                      color: 'var(--text-primary)',
                     }}
                   >
                     <span style={{ color: '#e11d48' }}>*</span>
@@ -407,8 +407,8 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                         width: '20px',
                         height: '20px',
                         borderRadius: '999px',
-                        background: '#e5e7eb',
-                        color: '#6b7280',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        color: 'var(--text-secondary)',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -427,7 +427,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       width: '100%',
                       height: '50px',
                       borderRadius: '999px',
-                      border: '1.5px solid #d4d4d8',
+                      border: '1px solid var(--glass-border)',
                       padding: '0 18px',
                       fontSize: '0.96rem',
                       color: '#f8fafc',
@@ -486,8 +486,8 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                 <div
                   style={{
                     borderRadius: '18px',
-                    background: '#faf7ff',
-                    border: '1px solid #eadcff',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid var(--glass-border)',
                     padding: '12px 14px',
                   }}
                 >
@@ -495,7 +495,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                     style={{
                       fontSize: '0.92rem',
                       fontWeight: 700,
-                      color: '#5b21b6',
+                      color: 'var(--text-primary)',
                       marginBottom: '4px',
                     }}
                   >
@@ -504,7 +504,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                   <div
                     style={{
                       fontSize: '0.82rem',
-                      color: '#6b7280',
+                      color: 'var(--text-secondary)',
                       lineHeight: 1.45,
                     }}
                   >

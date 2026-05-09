@@ -268,10 +268,10 @@ const response = await api.post(
       style={{
         width: '100%',
         minHeight: 'calc(100vh - 180px)',
-        background: '#fff',
+        background: 'rgba(10, 15, 30, 0.95)',
         borderRadius: '28px',
-        border: '1px solid #efeafc',
-        boxShadow: '0 20px 50px rgba(15, 23, 42, 0.06)',
+        border: '1px solid var(--glass-border)',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
         padding: '22px',
       }}
     >
@@ -293,9 +293,9 @@ const response = await api.post(
       width: '42px',
       height: '42px',
       borderRadius: '999px',
-      border: '1px solid #e5e7eb',
-      background: '#fff',
-      color: '#18181b',
+      border: '1px solid var(--glass-border)',
+      background: 'rgba(255, 255, 255, 0.05)',
+      color: 'var(--text-primary)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -313,7 +313,7 @@ const response = await api.post(
         margin: 0,
         fontSize: '1.42rem',
         fontWeight: 800,
-        color: '#18181b',
+        color: 'var(--text-primary)',
       }}
     >
       AI Creative Workspace
@@ -322,7 +322,7 @@ const response = await api.post(
     <p
       style={{
         margin: '6px 0 0',
-        color: '#6b7280',
+        color: 'var(--text-secondary)',
         fontSize: '0.92rem',
       }}
     >
@@ -346,9 +346,9 @@ const response = await api.post(
               height: '42px',
               padding: '0 16px',
               borderRadius: '999px',
-              border: '1px solid #d8b4fe',
-              background: '#fff',
-              color: '#2631d6',
+              border: '1px solid var(--glass-border)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              color: 'var(--text-primary)',
               fontWeight: 700,
               cursor: 'pointer',
             }}
@@ -363,9 +363,9 @@ const response = await api.post(
               height: '42px',
               padding: '0 16px',
               borderRadius: '999px',
-              border: '1px solid #e5e7eb',
-              background: '#fff',
-              color: '#52525b',
+              border: '1px solid var(--glass-border)',
+              background: 'rgba(255, 255, 255, 0.03)',
+              color: 'var(--text-secondary)',
               fontWeight: 700,
               cursor: 'pointer',
             }}
@@ -393,10 +393,10 @@ const response = await api.post(
         >
           <div
             style={{
-              border: '1px solid #ece7f9',
+              border: '1px solid var(--glass-border)',
               borderRadius: '22px',
               padding: '18px',
-              background: '#fff',
+              background: 'rgba(255, 255, 255, 0.02)',
             }}
           >
             <div
@@ -414,7 +414,7 @@ const response = await api.post(
                     marginBottom: '8px',
                     fontSize: '0.98rem',
                     fontWeight: 600,
-                    color: '#18181b',
+                    color: 'var(--text-primary)',
                   }}
                 >
                   <span style={{ color: '#e11d48' }}>*</span> Product URL
@@ -424,8 +424,8 @@ const response = await api.post(
                       width: '20px',
                       height: '20px',
                       borderRadius: '999px',
-                      background: '#e5e7eb',
-                      color: '#6b7280',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: 'var(--text-secondary)',
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -444,12 +444,12 @@ const response = await api.post(
                     width: '100%',
                     height: '48px',
                     borderRadius: '999px',
-                    border: '1.5px solid #d4d4d8',
+                    border: '1px solid var(--glass-border)',
                     padding: '0 18px',
                     fontSize: '0.96rem',
-                    color: '#18181b',
+                    color: 'var(--text-primary)',
                     outline: 'none',
-                    background: '#fff',
+                    background: 'rgba(255, 255, 255, 0.05)',
                   }}
                 />
               </div>
@@ -462,7 +462,7 @@ const response = await api.post(
                   padding: '0 24px',
                   borderRadius: '999px',
                   border: '1.5px solid #2631d6',
-                  background: '#fff',
+                  background: 'rgba(38, 49, 214, 0.1)',
                   color: '#2631d6',
                   fontWeight: 700,
                   fontSize: '0.96rem',
@@ -481,7 +481,7 @@ const response = await api.post(
                   marginBottom: '10px',
                   fontSize: '0.98rem',
                   fontWeight: 600,
-                  color: '#18181b',
+                  color: 'var(--text-primary)',
                 }}
               >
                 Upload product images
@@ -493,8 +493,8 @@ const response = await api.post(
                   alignItems: 'center',
                   gap: '12px',
                   flexWrap: 'wrap',
-                  background: '#f8f7fb',
-                  border: '1px solid #efebf8',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '18px',
                   padding: '14px',
                   minHeight: '118px',
@@ -508,8 +508,8 @@ const response = await api.post(
                       height: '98px',
                       borderRadius: '14px',
                       overflow: 'hidden',
-                      border: '1px solid #e9d5ff',
-                      background: '#fff',
+                      border: '1px solid var(--glass-border)',
+                      background: 'rgba(255, 255, 255, 0.05)',
                       flexShrink: 0,
                     }}
                   >
@@ -533,8 +533,8 @@ const response = await api.post(
                     width: '98px',
                     height: '98px',
                     borderRadius: '14px',
-                    border: '1.5px dashed #c4b5fd',
-                    background: '#fff',
+                    border: '1.5px dashed var(--glass-border)',
+                    background: 'rgba(255, 255, 255, 0.03)',
                     color: '#2631d6',
                     cursor: 'pointer',
                     display: 'flex',
@@ -566,7 +566,7 @@ const response = await api.post(
                 marginBottom: '14px',
                 fontSize: '0.98rem',
                 fontWeight: 600,
-                color: '#18181b',
+                color: 'var(--text-primary)',
               }}
             >
               <span style={{ color: '#e11d48' }}>*</span> Select Your Creative Source
@@ -575,8 +575,8 @@ const response = await api.post(
                   width: '20px',
                   height: '20px',
                   borderRadius: '999px',
-                  background: '#e5e7eb',
-                  color: '#6b7280',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: 'var(--text-secondary)',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -612,14 +612,14 @@ const response = await api.post(
                     minWidth: '250px',
                     height: '52px',
                     borderRadius: '999px',
-                    border:
-                      creativeSource === 'generator'
-                        ? '1.5px solid #2631d6'
-                        : '1.5px solid #e5e7eb',
-                    background: creativeSource === 'generator' ? '#faf5ff' : '#fff',
-                    color: '#18181b',
-                    fontWeight: 700,
-                    cursor: 'pointer',
+                        border:
+                          creativeSource === 'generator'
+                            ? '1.5px solid #2631d6'
+                            : '1px solid var(--glass-border)',
+                        background: creativeSource === 'generator' ? 'rgba(38, 49, 214, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+                        color: 'var(--text-primary)',
+                        fontWeight: 700,
+                        cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'flex-start',
@@ -661,14 +661,14 @@ const response = await api.post(
                     minWidth: '250px',
                     height: '52px',
                     borderRadius: '999px',
-                    border:
-                      creativeSource === 'reference'
-                        ? '1.5px solid #2631d6'
-                        : '1.5px solid #e5e7eb',
-                    background: creativeSource === 'reference' ? '#faf5ff' : '#fff',
-                    color: '#18181b',
-                    fontWeight: 700,
-                    cursor: 'pointer',
+                        border:
+                          creativeSource === 'reference'
+                            ? '1.5px solid #2631d6'
+                            : '1px solid var(--glass-border)',
+                        background: creativeSource === 'reference' ? 'rgba(38, 49, 214, 0.1)' : 'rgba(255, 255, 255, 0.03)',
+                        color: 'var(--text-primary)',
+                        fontWeight: 700,
+                        cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'flex-start',
@@ -710,13 +710,13 @@ const response = await api.post(
                 style={{
                   height: '40px',
                   borderRadius: '999px',
-                  border: '1px solid #ece7f9',
-                  background: '#fafafa',
+                  border: '1px solid var(--glass-border)',
+                  background: 'rgba(255, 255, 255, 0.03)',
                   padding: '0 14px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  color: '#71717a',
+                  color: 'var(--text-secondary)',
                   fontWeight: 600,
                   fontSize: '0.92rem',
                 }}
@@ -735,7 +735,7 @@ const response = await api.post(
                   marginBottom: '10px',
                   fontSize: '0.98rem',
                   fontWeight: 600,
-                  color: '#18181b',
+                  color: 'var(--text-primary)',
                 }}
               >
                 Prompt
@@ -751,12 +751,12 @@ const response = await api.post(
                     width: '100%',
                     height: '52px',
                     borderRadius: '999px',
-                    border: '1.5px solid #d4d4d8',
+                    border: '1px solid var(--glass-border)',
                     padding: '0 54px 0 18px',
                     fontSize: '1rem',
-                    color: '#18181b',
+                    color: 'var(--text-primary)',
                     outline: 'none',
-                    background: '#fff',
+                    background: 'rgba(255, 255, 255, 0.05)',
                   }}
                 />
 

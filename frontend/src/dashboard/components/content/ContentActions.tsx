@@ -64,12 +64,13 @@ const ContentActions: React.FC<ContentActionsProps> = ({
           gap: '7px',
           padding: '9px 18px',
           borderRadius: '999px',
-          border: '1.5px solid #c4b5fd',
-          background: 'transparent',
-          color: '#2631d6',
+          border: '1px solid var(--glass-border)',
+          background: 'rgba(255, 255, 255, 0.03)',
+          color: 'var(--text-primary)',
           cursor: 'pointer',
           fontWeight: 600,
           fontSize: '0.85rem',
+          transition: 'all 0.2s ease',
         }}
       >
         <Sparkles size={14} /> AI Creative Generation

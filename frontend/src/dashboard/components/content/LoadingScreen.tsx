@@ -14,7 +14,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#f5f6fa',
+        background: 'var(--bg-primary)',
       }}
     >
       <div

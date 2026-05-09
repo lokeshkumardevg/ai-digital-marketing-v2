@@ -734,11 +734,12 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       style={{
         width: '100%',
         maxWidth: '860px',
-        background: 'var(--bg-card)',
+        background: 'rgba(10, 15, 30, 0.98)',
+        backdropFilter: 'blur(20px)',
         borderRadius: '32px',
         padding: '24px',
-        boxShadow: '0 30px 80px rgba(15, 23, 42, 0.18)',
-        border: '1px solid #f1eafe',
+        boxShadow: '0 30px 80px rgba(0, 0, 0, 0.6)',
+        border: '1px solid var(--glass-border)',
       }}
     >
       <div
@@ -751,10 +752,10 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         }}
       >
         <div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#18181b' }}>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             {previewCreative.name}
           </div>
-          <div style={{ marginTop: '4px', fontSize: '0.9rem', color: '#71717a' }}>
+          <div style={{ marginTop: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
             {previewCreative.platform} • {previewCreative.uploadDate}
           </div>
         </div>
@@ -766,8 +767,9 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             width: '42px',
             height: '42px',
             borderRadius: '999px',
-            border: '1px solid #ece7f9',
-            background: 'var(--bg-elevated)',
+            border: '1px solid var(--glass-border)',
+            background: 'rgba(255, 255, 255, 0.05)',
+            color: 'var(--text-primary)',
             cursor: 'pointer',
             fontSize: '1.2rem',
           }}

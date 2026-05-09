@@ -29,8 +29,8 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
   return (
     <div
       style={{
-        background: '#fff',
-        border: '1px solid #e8eaf0',
+        background: 'rgba(255, 255, 255, 0.03)',
+        border: '1px solid var(--glass-border)',
         borderRadius: '12px',
         padding: '16px 20px',
         marginBottom: '16px',
@@ -49,7 +49,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
             style={{
               fontSize: '0.72rem',
               fontWeight: 600,
-              color: '#64748b',
+              color: 'var(--text-secondary)',
               marginBottom: '5px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -64,11 +64,11 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
               alignItems: 'center',
               gap: '6px',
               padding: '8px 12px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid var(--glass-border)',
               borderRadius: '8px',
-              background: '#fafafa',
+              background: 'rgba(255, 255, 255, 0.05)',
               fontSize: '0.82rem',
-              color: '#64748b',
+              color: 'var(--text-secondary)',
             }}
           >
             <Calendar size={13} />
@@ -80,7 +80,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
-                color: '#64748b',
+                color: 'var(--text-secondary)',
                 fontSize: '0.82rem',
               }}
             />
@@ -93,7 +93,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
-                color: '#64748b',
+                color: 'var(--text-secondary)',
                 fontSize: '0.82rem',
               }}
             />
@@ -105,7 +105,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
             style={{
               fontSize: '0.72rem',
               fontWeight: 600,
-              color: '#64748b',
+              color: 'var(--text-secondary)',
               marginBottom: '5px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -136,7 +136,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
-                color: '#64748b',
+                color: 'var(--text-secondary)',
                 fontSize: '0.82rem',
               }}
             />
@@ -149,7 +149,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
-                color: '#64748b',
+                color: 'var(--text-secondary)',
                 fontSize: '0.82rem',
               }}
             />
@@ -161,7 +161,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
             style={{
               fontSize: '0.72rem',
               fontWeight: 600,
-              color: '#64748b',
+              color: 'var(--text-secondary)',
               marginBottom: '5px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -193,7 +193,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
             style={{
               fontSize: '0.72rem',
               fontWeight: 600,
-              color: '#64748b',
+              color: 'var(--text-secondary)',
               marginBottom: '5px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -219,11 +219,11 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
               style={{
                 padding: '8px 12px 8px 30px',
                 borderRadius: '8px',
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--glass-border)',
                 fontSize: '0.82rem',
-                color: '#334155',
+                color: 'var(--text-primary)',
                 outline: 'none',
-                background: '#fafafa',
+                background: 'rgba(255, 255, 255, 0.05)',
                 width: '200px',
               }}
             />
