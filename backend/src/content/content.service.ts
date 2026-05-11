@@ -260,15 +260,21 @@ export class ContentService {
 }
 
   async getAllContent(): Promise<Content[]> {
+    console.log('getAllContent called');
     try {
-      const results = await this.contentModel.find().sort({ createdAt: -1 }).lean().exec();
+      const results = await this.contentModel
+        .aggregate([{ $sort: { createdAt: -1 } }])
+        .allowDiskUse(true)
+        .exec();
+      this.logger.log(`Found ${results.length} content items in database`);
 
       if (!results || results.length === 0) {
+        this.logger.log('No content found, returning mock data');
         return [
           {
             _id: 'mc-1',
             title: 'The Future of AI',
-            contentType: 'Blog Post',
+            contentType: 'blog',
             body: 'Artificial intelligence is fundamentally reshaping...',
             status: 'published',
             platforms: ['Medium'],
@@ -277,7 +283,7 @@ export class ContentService {
           {
             _id: 'mc-2',
             title: 'Growth Tactics 2026',
-            contentType: 'Twitter Thread',
+            contentType: 'social_post',
             body: 'Here are 5 ways to accelerate SaaS growth...',
             status: 'draft',
             platforms: [],

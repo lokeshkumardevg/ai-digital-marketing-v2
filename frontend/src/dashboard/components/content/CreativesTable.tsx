@@ -44,9 +44,15 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
 
   const normalizedCreatives = useMemo(() => {
-    return creatives.filter(
-      (item) => item.contentType === 'image' || item.type === 'image'
-    );
+    return creatives.map((item) => ({
+      ...item,
+      type:
+        item.contentType === 'blog'
+          ? 'text'
+          : item.contentType === 'video'
+          ? 'video'
+          : item.type || item.contentType || 'image',
+    }));
   }, [creatives]);
 
   const totalPages = Math.max(
@@ -116,7 +122,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
             color: '#f4f4f6',
           }}
         >
-          No creatives found
+          No content found
         </h3>
 
         <p
@@ -126,7 +132,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
             color: '#8b8b9e',
           }}
         >
-          AI generated creatives will appear here after you add them to Creative Hub.
+          AI generated content will appear here after you add it to Content Hub.
         </p>
       </div>
     );
@@ -190,9 +196,24 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      background: '#14141c',
                     }}
                   >
-                    <ImageIcon size={40} color="#2a2a38" />
+                    {creative.type === 'video' ? (
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 5v14l11-7z" fill="#2a2a38"/>
+                      </svg>
+                    ) : creative.type === 'text' || creative.contentType === 'blog' ? (
+                      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#2a2a38"/>
+                        <polyline points="14,2 14,8 20,8" fill="#2a2a38"/>
+                        <line x1="16" y1="13" x2="8" y2="13" stroke="#2a2a38" strokeWidth="1"/>
+                        <line x1="16" y1="17" x2="8" y2="17" stroke="#2a2a38" strokeWidth="1"/>
+                        <polyline points="10,9 9,9 8,9" stroke="#2a2a38" strokeWidth="1"/>
+                      </svg>
+                    ) : (
+                      <ImageIcon size={40} color="#2a2a38" />
+                    )}
                   </div>
                 )}
 

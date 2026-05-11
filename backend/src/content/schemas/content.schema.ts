@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 
 export type ContentDocument = Content & Document;
 
-@Schema({ timestamps: true })
+@Schema({ collection: 'contents', timestamps: true })
 export class Content {
   @Prop({ required: true })
   title: string;
@@ -47,3 +47,5 @@ isManualCreative: boolean;
 }
 
 export const ContentSchema = SchemaFactory.createForClass(Content);
+
+ContentSchema.index({ createdAt: -1 });
