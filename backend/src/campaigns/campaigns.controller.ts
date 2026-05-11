@@ -1,67 +1,215 @@
-import { Controller, Post, Body, Get, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Delete,
+  Query,
+  Res,
+  BadRequestException,
+} from '@nestjs/common';
+
+import type { Response } from 'express';
+import puppeteer from 'puppeteer';
+
 import { CampaignService } from './campaigns.service';
 
 @Controller('campaign')
 export class CampaignController {
 
-  constructor(private readonly service: CampaignService) {}
-  
+  constructor(
+    private readonly service: CampaignService,
+  ) {}
 
- @Post('discover')
-discover(@Body() body: { brandName: string; website: string }) {
-  return this.service.discoverBrand(body);
-}
+  @Post('discover')
+  discover(
+    @Body() body: {
+      brandName: string;
+      website: string;
+    },
+  ) {
+    return this.service.discoverBrand(body);
+  }
 
   @Post('budget-breakdown')
-budget(@Body() body : any) {
-  return this.service.budgetBreakdown(body);
-}
+  budget(@Body() body: any) {
+    return this.service.budgetBreakdown(body);
+  }
 
-@Post('draft')
-draft(@Body() body : any) {
-  return this.service.createDraft(body);
-}
+  @Post('draft')
+  draft(@Body() body: any) {
+    return this.service.createDraft(body);
+  }
 
-@Post('publish/:id')
-publish(@Param('id') id: string) {
-  return this.service.publish(id);
-}
+  @Post('publish/:id')
+  publish(@Param('id') id: string) {
+    return this.service.publish(id);
+  }
 
-@Get(':id/status')
-status(@Param('id') id: string) {
-  return this.service.getStatus(id);
-}
+  @Get(':id/status')
+  status(@Param('id') id: string) {
+    return this.service.getStatus(id);
+  }
 
-@Get(':id/live-dashboard')
-live(@Param('id') id: string) {
-  return this.service.getLiveDashboard(id);
-}
+  @Get(':id/live-dashboard')
+  live(@Param('id') id: string) {
+    return this.service.getLiveDashboard(id);
+  }
 
-// ============================================
-  // ✅ NEW SESSION APIs
+  // ============================================
+  // SESSION APIs
   // ============================================
 
-  // 🔹 RESTORE SESSION
   @Get('session/:userId')
   getSession(@Param('userId') userId: string) {
     return this.service.getSession(userId);
   }
 
-  // 🔹 SAVE SESSION
-@Post('session/save')
-saveSession(@Body() body: any) {
-  const userId = body.userId;
+  @Post('session/save')
+  saveSession(@Body() body: any) {
 
-  if (!userId) {
-    throw new Error('userId is required');
+    const userId = body.userId;
+
+    if (!userId) {
+      throw new Error('userId is required');
+    }
+
+    return this.service.saveSession(userId, body);
   }
 
-  return this.service.saveSession(userId, body);
-}
-
-  // 🔹 DELETE SESSION (RESET)
   @Delete('session/:userId')
-  deleteSession(@Param('userId') userId: string) {
+  deleteSession(
+    @Param('userId') userId: string,
+  ) {
     return this.service.deleteSession(userId);
   }
+
+  // ============================================
+  // WEBSITE SCREENSHOT API
+  // ============================================
+
+@Get('screenshot')
+async captureWebsite(
+  @Query('url') url: string,
+  @Res() res: Response,
+) {
+
+  let browser: any;
+
+  try {
+
+    if (!url) {
+      throw new BadRequestException(
+        'URL is required',
+      );
+    }
+
+    const cleanUrl = url.startsWith('http')
+      ? url
+      : `https://${url}`;
+
+    browser = await puppeteer.launch({
+      headless: true,
+
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+      ],
+    });
+
+    const page = await browser.newPage();
+
+    // desktop viewport
+    await page.setViewport({
+      width: 1440,
+      height: 900,
+    });
+
+    // real browser user-agent
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36',
+    );
+
+    // open website
+    await page.goto(cleanUrl, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+
+    // wait for full rendering
+    await new Promise((resolve) =>
+  setTimeout(resolve, 7000),
+);
+
+    // remove common preloaders/loaders
+    await page.evaluate(() => {
+
+      const selectors = [
+        '.loader',
+        '.preloader',
+        '#preloader',
+        '#loader',
+        '.loading',
+        '.spinner',
+        '.overlay',
+        '.site-loader',
+        '.page-loader',
+      ];
+
+      selectors.forEach((selector) => {
+
+        const elements =
+          document.querySelectorAll(selector);
+
+        elements.forEach((el) => {
+          (el as HTMLElement).style.display = 'none';
+        });
+      });
+
+      // enable scrolling
+      document.body.style.overflow = 'auto';
+
+    });
+
+    // additional wait after removing loader
+    await new Promise((resolve) =>
+  setTimeout(resolve, 2000),
+);
+
+    // wait for homepage content
+    await page.waitForSelector('body', {
+      visible: true,
+      timeout: 10000,
+    });
+
+    // screenshot
+    const image = await page.screenshot({
+      type: 'png',
+      fullPage: false,
+    });
+
+    await browser.close();
+
+    res.set({
+      'Content-Type': 'image/png',
+      'Cache-Control': 'no-cache',
+    });
+
+    return res.send(image);
+
+  } catch (error) {
+
+    console.log('SCREENSHOT ERROR:', error);
+
+    if (browser) {
+      await browser.close();
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to capture website',
+    });
+  }
+}
 }
