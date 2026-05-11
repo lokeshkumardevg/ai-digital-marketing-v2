@@ -12,7 +12,7 @@ const slides = [
   {
     type: 'hero',
     title: 'Autonomous <span class="text-gradient">AI Marketing</span>',
-    subtitle: 'Wheedle Technologies - Software Technologies Innovation. The future of digital growth starts here.',
+    subtitle: 'Wheedle Technologies - AI Services Company, helping businesses deploy Artificial Intelligence',
     bgImage: '/assets/presentation/hero.png'
   },
   {
