@@ -530,7 +530,7 @@ Return data in this exact structure:
 
   async generateImageFromReferences(payload: {
     prompt: string;
-    referenceImages?: string[];
+    referenceImages?: any[];
     size?: string;
     quality?: string;
   }): Promise<string> {
@@ -572,13 +572,32 @@ Return data in this exact structure:
       }
 
       // Download selected reference images as buffers/files
-      const inputImagesRaw = await Promise.all(
-        referenceImages.slice(0, 4).map((imageUrl, index) =>
-          this.urlToOpenAiFile(imageUrl, index),
-        ),
-      );
+      // const inputImagesRaw = await Promise.all(
+      //   referenceImages.slice(0, 4).map((imageUrl, index) =>
+      //     this.urlToOpenAiFile(imageUrl, index),
+      //   ),
+      // );
 
-      const inputImages = inputImagesRaw.filter(Boolean) as File[];
+      // const inputImages = inputImagesRaw.filter(Boolean) as File[];
+      const inputImagesRaw = await Promise.all(
+  referenceImages.slice(0, 4).map(async (item, index) => {
+    // uploaded file
+    if (item?.buffer) {
+      return new File(
+        [item.buffer],
+        item.originalname || `upload-${index + 1}.png`,
+        {
+          type: item.mimetype || 'image/png',
+        },
+      );
+    }
+
+    // old URL logic (unchanged)
+    return this.urlToOpenAiFile(item, index);
+  }),
+);
+
+const inputImages = inputImagesRaw.filter(Boolean) as File[];
 
       if (!inputImages.length) {
         throw new BadRequestException(

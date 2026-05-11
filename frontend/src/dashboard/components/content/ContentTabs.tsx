@@ -9,8 +9,8 @@ const ContentTabs: React.FC<ContentTabsProps> = ({ activeTab, onTabChange }) => 
   return (
     <div
       style={{
-        background: 'transparent',
-        borderBottom: '1px solid var(--glass-border)',
+        background: '#18181f',
+        borderBottom: '1px solid #2a2a38',
         padding: '0 32px',
       }}
     >
@@ -26,9 +26,9 @@ const ContentTabs: React.FC<ContentTabsProps> = ({ activeTab, onTabChange }) => 
               cursor: 'pointer',
               fontSize: '0.88rem',
               fontWeight: 600,
-              color: activeTab === tab ? '#2631d6' : 'var(--text-secondary)',
+              color: activeTab === tab ? '#a78bfa' : '#8b8b9e',
               borderBottom:
-                activeTab === tab ? '2px solid #2631d6' : '2px solid transparent',
+                activeTab === tab ? '2px solid #a78bfa' : '2px solid transparent',
             }}
           >
             {tab}

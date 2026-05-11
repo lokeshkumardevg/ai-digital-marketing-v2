@@ -29,8 +29,8 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
   return (
     <div
       style={{
-        background: 'rgba(255, 255, 255, 0.03)',
-        border: '1px solid var(--glass-border)',
+        background: '#18181f',
+        border: '1px solid #2a2a38',
         borderRadius: '12px',
         padding: '16px 20px',
         marginBottom: '16px',
@@ -49,7 +49,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
             style={{
               fontSize: '0.72rem',
               fontWeight: 600,
-              color: 'var(--text-secondary)',
+              color: '#8b8b9e',
               marginBottom: '5px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -64,11 +64,11 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
               alignItems: 'center',
               gap: '6px',
               padding: '8px 12px',
-              border: '1px solid var(--glass-border)',
+              border: '1px solid #2a2a38',
               borderRadius: '8px',
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: '#14141c',
               fontSize: '0.82rem',
-              color: 'var(--text-secondary)',
+              color: '#8b8b9e',
             }}
           >
             <Calendar size={13} />
@@ -80,8 +80,9 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
-                color: 'var(--text-secondary)',
+                color: '#8b8b9e',
                 fontSize: '0.82rem',
+                colorScheme: 'dark',
               }}
             />
             <span>→</span>
@@ -93,8 +94,9 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
-                color: 'var(--text-secondary)',
+                color: '#8b8b9e',
                 fontSize: '0.82rem',
+                colorScheme: 'dark',
               }}
             />
           </div>
@@ -105,7 +107,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
             style={{
               fontSize: '0.72rem',
               fontWeight: 600,
-              color: 'var(--text-secondary)',
+              color: '#8b8b9e',
               marginBottom: '5px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -120,11 +122,11 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
               alignItems: 'center',
               gap: '6px',
               padding: '8px 12px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #2a2a38',
               borderRadius: '8px',
-              background: '#fafafa',
+              background: '#14141c',
               fontSize: '0.82rem',
-              color: '#64748b',
+              color: '#8b8b9e',
             }}
           >
             <Calendar size={13} />
@@ -136,8 +138,9 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
-                color: 'var(--text-secondary)',
+                color: '#8b8b9e',
                 fontSize: '0.82rem',
+                colorScheme: 'dark',
               }}
             />
             <span>→</span>
@@ -149,8 +152,9 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
                 border: 'none',
                 outline: 'none',
                 background: 'transparent',
-                color: 'var(--text-secondary)',
+                color: '#8b8b9e',
                 fontSize: '0.82rem',
+                colorScheme: 'dark',
               }}
             />
           </div>
@@ -161,7 +165,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
             style={{
               fontSize: '0.72rem',
               fontWeight: 600,
-              color: 'var(--text-secondary)',
+              color: '#8b8b9e',
               marginBottom: '5px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -175,12 +179,12 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
               alignItems: 'center',
               gap: '6px',
               padding: '8px 12px',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #2a2a38',
               borderRadius: '8px',
-              background: '#fafafa',
+              background: '#14141c',
               cursor: 'pointer',
               fontSize: '0.82rem',
-              color: '#64748b',
+              color: '#8b8b9e',
               minWidth: '140px',
             }}
           >
@@ -193,7 +197,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
             style={{
               fontSize: '0.72rem',
               fontWeight: 600,
-              color: 'var(--text-secondary)',
+              color: '#8b8b9e',
               marginBottom: '5px',
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
@@ -209,7 +213,7 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
                 left: '10px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#94a3b8',
+                color: '#5a5a72',
               }}
             />
             <input
@@ -219,11 +223,11 @@ const ContentFilters: React.FC<ContentFiltersProps> = ({
               style={{
                 padding: '8px 12px 8px 30px',
                 borderRadius: '8px',
-                border: '1px solid var(--glass-border)',
+                border: '1px solid #2a2a38',
                 fontSize: '0.82rem',
-                color: 'var(--text-primary)',
+                color: '#f4f4f6',
                 outline: 'none',
-                background: 'rgba(255, 255, 255, 0.05)',
+                background: '#14141c',
                 width: '200px',
               }}
             />

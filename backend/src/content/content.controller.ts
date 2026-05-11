@@ -1,7 +1,8 @@
-import { Controller, Post, Body, Get, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, Delete, UploadedFiles,UseInterceptors } from '@nestjs/common';
 import { ContentService } from './content.service';
 import { FetchUrlImagesDto } from './dto/fetch-url-images.dto';
 import { GenerateReferenceCreativeDto } from './dto/generate-reference-creative.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('content')
 export class ContentController {
@@ -56,10 +57,21 @@ export class ContentController {
     return this.contentService.fetchUrlImages(dto.url);
   }
 
+  // @Post('generate-reference-creative')
+  // async generateReferenceCreative(@Body() body: GenerateReferenceCreativeDto) {
+  //   return this.contentService.generateReferenceCreative(body);
+  // }
   @Post('generate-reference-creative')
-  async generateReferenceCreative(@Body() body: GenerateReferenceCreativeDto) {
-    return this.contentService.generateReferenceCreative(body);
-  }
+@UseInterceptors(FilesInterceptor('referenceImages', 4))
+async generateReferenceCreative(
+  @UploadedFiles() files: Express.Multer.File[],
+  @Body() body: any,
+) {
+  return this.contentService.generateReferenceCreative({
+    ...body,
+    uploadedFiles: files,
+  });
+}
 
   @Patch(':id')
 async updateContent(

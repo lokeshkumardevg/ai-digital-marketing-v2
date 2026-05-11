@@ -43,13 +43,13 @@ const ContentActions: React.FC<ContentActionsProps> = ({
           gap: '7px',
           padding: '9px 18px',
           borderRadius: '999px',
-          background: 'linear-gradient(135deg, #2631d6, #1e27a8)',
+          background: 'linear-gradient(135deg, #6d28d9, #4c1d95)',
           color: '#fff',
           border: 'none',
           cursor: 'pointer',
           fontWeight: 600,
           fontSize: '0.85rem',
-          boxShadow: '0 4px 12px rgba(124,58,237,0.3)',
+          boxShadow: '0 4px 12px rgba(76,29,149,0.4)',
         }}
       >
         <Plus size={14} /> Add Creative
@@ -64,13 +64,12 @@ const ContentActions: React.FC<ContentActionsProps> = ({
           gap: '7px',
           padding: '9px 18px',
           borderRadius: '999px',
-          border: '1px solid var(--glass-border)',
-          background: 'rgba(255, 255, 255, 0.03)',
-          color: 'var(--text-primary)',
+          border: '1.5px solid #4c1d95',
+          background: '#1e1040',
+          color: '#a78bfa',
           cursor: 'pointer',
           fontWeight: 600,
           fontSize: '0.85rem',
-          transition: 'all 0.2s ease',
         }}
       >
         <Sparkles size={14} /> AI Creative Generation

@@ -14,12 +14,12 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--bg-primary)',
+        background: '#0f0f12',
       }}
     >
       <div
         className="animate-fade-in"
-        style={{ fontSize: '1rem', color: '#64748b', fontWeight: 600 }}
+        style={{ fontSize: '1rem', color: '#8b8b9e', fontWeight: 600 }}
       >
         {text}
       </div>

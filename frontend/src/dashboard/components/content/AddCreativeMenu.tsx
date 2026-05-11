@@ -26,11 +26,11 @@ const AddCreativeMenu: React.FC<AddCreativeMenuProps> = ({
         left: '0',
         width: '420px',
         maxWidth: 'calc(100vw - 64px)',
-        background: 'rgba(10, 15, 30, 0.95)',
-        backdropFilter: 'blur(20px)',
+        background: '#1a1d27',
         borderRadius: '24px',
-        border: '1px solid var(--glass-border)',
-        boxShadow: '0 24px 48px rgba(0, 0, 0, 0.4)',
+        border: '1px solid #2a2d3a',
+        boxShadow:
+          '0 24px 48px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.3)',
         padding: '14px',
         zIndex: 100,
       }}
@@ -50,7 +50,7 @@ const AddCreativeMenu: React.FC<AddCreativeMenuProps> = ({
           textAlign: 'left',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+          e.currentTarget.style.background = '#22253a';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = 'transparent';
@@ -62,11 +62,11 @@ const AddCreativeMenu: React.FC<AddCreativeMenuProps> = ({
             height: '42px',
             minWidth: '42px',
             borderRadius: '12px',
-            background: 'rgba(255, 255, 255, 0.05)',
+            background: '#2e2250',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--text-primary)',
+            color: '#a78bfa',
           }}
         >
           <LayoutGrid size={20} />
@@ -77,7 +77,7 @@ const AddCreativeMenu: React.FC<AddCreativeMenuProps> = ({
             style={{
               fontSize: '1rem',
               fontWeight: 700,
-              color: 'var(--text-primary)',
+              color: '#f0f0f5',
               marginBottom: '6px',
             }}
           >
@@ -86,7 +86,7 @@ const AddCreativeMenu: React.FC<AddCreativeMenuProps> = ({
           <div
             style={{
               fontSize: '0.92rem',
-              color: 'var(--text-secondary)',
+              color: '#6b7280',
               lineHeight: 1.55,
             }}
           >
@@ -110,7 +110,7 @@ const AddCreativeMenu: React.FC<AddCreativeMenuProps> = ({
           textAlign: 'left',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+          e.currentTarget.style.background = '#22253a';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = 'transparent';
@@ -122,11 +122,11 @@ const AddCreativeMenu: React.FC<AddCreativeMenuProps> = ({
             height: '42px',
             minWidth: '42px',
             borderRadius: '12px',
-            background: '#f5f3ff',
+            background: '#2e2250',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#2631d6',
+            color: '#a78bfa',
           }}
         >
           <Upload size={20} />
@@ -137,7 +137,7 @@ const AddCreativeMenu: React.FC<AddCreativeMenuProps> = ({
             style={{
               fontSize: '1rem',
               fontWeight: 700,
-              color: 'var(--text-primary)',
+              color: '#f0f0f5',
               marginBottom: '6px',
             }}
           >
@@ -146,7 +146,7 @@ const AddCreativeMenu: React.FC<AddCreativeMenuProps> = ({
           <div
             style={{
               fontSize: '0.92rem',
-              color: 'var(--text-secondary)',
+              color: '#6b7280',
               lineHeight: 1.55,
             }}
           >

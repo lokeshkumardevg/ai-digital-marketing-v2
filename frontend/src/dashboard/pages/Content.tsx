@@ -291,6 +291,7 @@ const handleContinueToAiWorkspace = (payload: {
       selectedImages: payload.selectedImages,
       allImages: payload.allImages,
       genType: payload.type,
+      workspaceType: payload.type,   // ✅ ADD THIS
     },
   });
 };
@@ -634,7 +635,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   }
 
   return (
-    <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
+    <div style={{ minHeight: '100%', background: '#0f1117' }}>
       <ContentTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div style={{ padding: '20px 32px' }}>
@@ -691,6 +692,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           genType: payload.type,
           selectedImages: [],
           promptOnly: true,
+          workspaceType: payload.type, // ✅ ADD
         },
       });
 
@@ -720,7 +722,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     style={{
       position: 'fixed',
       inset: 0,
-      background: 'rgba(17, 24, 39, 0.45)',
+      background: 'rgba(0, 0, 0, 0.75)',
       backdropFilter: 'blur(8px)',
       zIndex: 2000,
       display: 'flex',
@@ -734,12 +736,11 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       style={{
         width: '100%',
         maxWidth: '860px',
-        background: 'rgba(10, 15, 30, 0.98)',
-        backdropFilter: 'blur(20px)',
+        background: '#1a1d27',
         borderRadius: '32px',
         padding: '24px',
         boxShadow: '0 30px 80px rgba(0, 0, 0, 0.6)',
-        border: '1px solid var(--glass-border)',
+        border: '1px solid #2a2d3a',
       }}
     >
       <div
@@ -752,10 +753,10 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         }}
       >
         <div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f0f0f5' }}>
             {previewCreative.name}
           </div>
-          <div style={{ marginTop: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+          <div style={{ marginTop: '4px', fontSize: '0.9rem', color: '#6b7280' }}>
             {previewCreative.platform} • {previewCreative.uploadDate}
           </div>
         </div>
@@ -767,11 +768,11 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             width: '42px',
             height: '42px',
             borderRadius: '999px',
-            border: '1px solid var(--glass-border)',
-            background: 'rgba(255, 255, 255, 0.05)',
-            color: 'var(--text-primary)',
+            border: '1px solid #2e3141',
+            background: '#22253a',
             cursor: 'pointer',
             fontSize: '1.2rem',
+            color: '#a0a0b0',
           }}
         >
           ×
@@ -786,7 +787,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           borderRadius: '20px',
           overflow: 'hidden',
           maxHeight: '70vh',
-          background: 'var(--bg-card)',
+          background: '#12141e',
         }}
       >
         <img
@@ -810,7 +811,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     style={{
       position: 'fixed',
       inset: 0,
-      background: 'rgba(17, 24, 39, 0.35)',
+      background: 'rgba(0, 0, 0, 0.65)',
       backdropFilter: 'blur(6px)',
       zIndex: 1995,
       display: 'flex',
@@ -824,23 +825,23 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       style={{
         width: '100%',
         maxWidth: '520px',
-        background: 'var(--bg-card)',
+        background: '#1a1d27',
         borderRadius: '28px',
         padding: '24px',
-        boxShadow: '0 24px 60px rgba(15, 23, 42, 0.16)',
-        border: '1px solid #f1eafe',
+        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.5)',
+        border: '1px solid #2a2d3a',
       }}
     >
-      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#18181b', marginBottom: '18px' }}>
+      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f0f0f5', marginBottom: '18px' }}>
         Creative Details
       </div>
 
-      <div style={{ display: 'grid', gap: '12px',color: '#18181b' }}>    
-        <div><strong>Name:</strong> {watchCreative.name}</div>
-        <div><strong>Status:</strong> {watchCreative.status}</div>
-        <div><strong>Upload Date:</strong> {watchCreative.uploadDate}</div>
-        <div><strong>Lifetime Start:</strong> {watchCreative.lifetimeStartRaw ? new Date(watchCreative.lifetimeStartRaw).toLocaleDateString() : '-'}</div>
-        <div><strong>Lifetime End:</strong> {watchCreative.lifetimeEndRaw ? new Date(watchCreative.lifetimeEndRaw).toLocaleDateString() : '-'}</div>
+      <div style={{ display: 'grid', gap: '12px', color: '#c9cad4' }}>    
+        <div><strong style={{ color: '#f0f0f5' }}>Name:</strong> {watchCreative.name}</div>
+        <div><strong style={{ color: '#f0f0f5' }}>Status:</strong> {watchCreative.status}</div>
+        <div><strong style={{ color: '#f0f0f5' }}>Upload Date:</strong> {watchCreative.uploadDate}</div>
+        <div><strong style={{ color: '#f0f0f5' }}>Lifetime Start:</strong> {watchCreative.lifetimeStartRaw ? new Date(watchCreative.lifetimeStartRaw).toLocaleDateString() : '-'}</div>
+        <div><strong style={{ color: '#f0f0f5' }}>Lifetime End:</strong> {watchCreative.lifetimeEndRaw ? new Date(watchCreative.lifetimeEndRaw).toLocaleDateString() : '-'}</div>
       </div>
     </div>
   </div>
@@ -851,7 +852,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     style={{
       position: 'fixed',
       inset: 0,
-      background: 'rgba(17, 24, 39, 0.28)',
+      background: 'rgba(0, 0, 0, 0.55)',
       zIndex: 2010,
       display: 'flex',
       justifyContent: 'flex-end',
@@ -864,8 +865,8 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         width: '100%',
         maxWidth: '520px',
         height: '100vh',
-        background: 'var(--bg-card)',
-        boxShadow: '-20px 0 60px rgba(15, 23, 42, 0.14)',
+        background: '#1a1d27',
+        boxShadow: '-20px 0 60px rgba(0, 0, 0, 0.5)',
         padding: '28px 28px 24px',
         overflowY: 'auto',
       }}
@@ -878,7 +879,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
           marginBottom: '28px',
         }}
       >
-        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#18181b' }}>
+        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f0f0f5' }}>
           Edit
         </div>
 
@@ -889,10 +890,11 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             width: '42px',
             height: '42px',
             borderRadius: '999px',
-            border: '1px solid #ece7f9',
-            background: 'var(--bg-elevated)',
+            border: '1px solid #2e3141',
+            background: '#22253a',
             cursor: 'pointer',
             fontSize: '1.2rem',
+            color: '#a0a0b0',
           }}
         >
           ×
@@ -900,7 +902,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       </div>
 
       <div style={{ marginBottom: '22px' }}>
-        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 700, color: '#18181b' }}>
+        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 700, color: '#f0f0f5' }}>
           Creative Name
         </label>
         <input
@@ -911,16 +913,18 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             width: '100%',
             height: '52px',
             borderRadius: '999px',
-            border: '1.5px solid #e5e7eb',
+            border: '1.5px solid #2e3141',
             padding: '0 18px',
             fontSize: '1rem',
             outline: 'none',
+            background: '#12141e',
+            color: '#f0f0f5',
           }}
         />
       </div>
 
       <div style={{ marginBottom: '22px' }}>
-        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 700, color: '#18181b' }}>
+        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 700, color: '#f0f0f5' }}>
           Limited Lifetime
         </label>
 
@@ -933,10 +937,13 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               width: '100%',
               height: '52px',
               borderRadius: '999px',
-              border: '1.5px solid #e5e7eb',
+              border: '1.5px solid #2e3141',
               padding: '0 18px',
               fontSize: '1rem',
               outline: 'none',
+              background: '#12141e',
+              color: '#f0f0f5',
+              colorScheme: 'dark',
             }}
           />
 
@@ -948,10 +955,13 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               width: '100%',
               height: '52px',
               borderRadius: '999px',
-              border: '1.5px solid #e5e7eb',
+              border: '1.5px solid #2e3141',
               padding: '0 18px',
               fontSize: '1rem',
               outline: 'none',
+              background: '#12141e',
+              color: '#f0f0f5',
+              colorScheme: 'dark',
             }}
           />
         </div>
@@ -966,9 +976,9 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             minWidth: '120px',
             padding: '0 24px',
             borderRadius: '999px',
-            border: '1px solid #e5e7eb',
-            background: 'var(--bg-card)',
-            color: '#18181b',
+            border: '1px solid #2e3141',
+            background: '#22253a',
+            color: '#c9cad4',
             fontWeight: 700,
             cursor: 'pointer',
           }}
@@ -986,7 +996,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             padding: '0 24px',
             borderRadius: '999px',
             border: 'none',
-            background: 'linear-gradient(90deg, #8b5cf6 0%, #1e27a8 100%)',
+            background: 'linear-gradient(90deg, #8b5cf6 0%, #6d28d9 100%)',
             color: '#fff',
             fontWeight: 700,
             cursor: isUpdatingCreative ? 'not-allowed' : 'pointer',
