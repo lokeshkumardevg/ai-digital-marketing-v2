@@ -46,32 +46,7 @@ const imageCountOptions = ['1', '2', '3', '4'];
 
 const modelOptions = ['Nano Banana Pro', 'Nano Banana Lite', 'Creative Studio'];
 
-// const mockGeneratedImages: GeneratedCreativeItem[] = [
-//   {
-//     id: '1',
-//     imageUrl:
-//       'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80',
-//     label: 'AdsGo Creative Expert',
-//     sizeLabel: '1:1 (1024×1024)',
-//     createdAt: 'Just now',
-//   },
-//   {
-//     id: '2',
-//     imageUrl:
-//       'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80',
-//     label: 'AdsGo Creative Expert',
-//     sizeLabel: '4:3 (1280×960)',
-//     createdAt: '2 min ago',
-//   },
-//   {
-//     id: '3',
-//     imageUrl:
-//       'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=900&q=80',
-//     label: 'AdsGo Creative Expert',
-//     sizeLabel: '16:9 (1600×900)',
-//     createdAt: '5 min ago',
-//   },
-// ];
+ 
 
 const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
   open,
@@ -92,9 +67,7 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
 const [isDownloading, setIsDownloading] = useState(false);
 const [isSavingToHub, setIsSavingToHub] = useState(false);
 
-  // const canSubmit = useMemo(() => {
-  //   return prompt.trim().length > 0 && selectedImages.length > 0;
-  // }, [prompt, selectedImages]);
+   
 
   const canSubmit = useMemo(() => {
   return prompt.trim().length > 0;
@@ -116,29 +89,7 @@ const handleClosePreview = () => {
   setPreviewImage(null);
 };
 
-// const handleDownloadImage = async (imageUrl: string, fileName?: string) => {
-//   try {
-//     setIsDownloading(true);
-
-//     const response = await fetch(imageUrl);
-//     const blob = await response.blob();
-
-//     const objectUrl = window.URL.createObjectURL(blob);
-//     const link = document.createElement('a');
-//     link.href = objectUrl;
-//     link.download = fileName || `creative-${Date.now()}.png`;
-//     document.body.appendChild(link);
-//     link.click();
-//     document.body.removeChild(link);
-//     window.URL.revokeObjectURL(objectUrl);
-
-//     toast.success('Image downloaded successfully.');
-//   } catch {
-//     toast.error('Failed to download image.');
-//   } finally {
-//     setIsDownloading(false);
-//   }
-// };
+ 
 
 const handleAddToCreativeHub = async (item: GeneratedCreativeItem) => {
   try {
@@ -169,13 +120,7 @@ const handleAddToCreativeHub = async (item: GeneratedCreativeItem) => {
   }
 };
 
-//   const handleOpenPreview = (item: GeneratedCreativeItem) => {
-//   setPreviewImage(item);
-// };
-
-// const handleClosePreview = () => {
-//   setPreviewImage(null);
-// };
+ 
 
 const handleDownloadImage = async (imageUrl: string, fileName?: string) => {
   try {
@@ -208,15 +153,7 @@ const handleDownloadImage = async (imageUrl: string, fileName?: string) => {
       setIsGenerating(true);
       setGenerateError('');
 
-//     const response = await api.post('/content/generate-reference-creative', {
-//   prompt: prompt.trim(),
-//   referenceImages: selectedImages.slice(0, 4),
-//   productUrl,
-//   aspectRatio,
-//   imageCount,
-//   size: ratioToSizeMap[aspectRatio] || '1024x1024',
-//   quality: 'high',
-// });
+ 
 
 
 const payload: any = {
@@ -259,7 +196,7 @@ const response = await api.post(
     }
   };
 
-//   const generatedImages = mockGeneratedImages;
+ 
 
   if (!open) return null;
 
