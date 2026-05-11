@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Image as ImageIcon, Trash2, Eye, Pencil, Clock3,ChevronLeft, ChevronRight } from 'lucide-react';
+import { Image as ImageIcon, Trash2, Eye, Pencil, Clock3, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CreativeItem {
   _id?: string;
@@ -50,45 +50,45 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
   }, [creatives]);
 
   const totalPages = Math.max(
-  1,
-  Math.ceil(normalizedCreatives.length / ITEMS_PER_PAGE)
-);
+    1,
+    Math.ceil(normalizedCreatives.length / ITEMS_PER_PAGE)
+  );
 
-useEffect(() => {
-  if (currentPage > totalPages) {
-    setCurrentPage(totalPages);
-  }
-}, [currentPage, totalPages]);
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
-const paginatedCreatives = useMemo(() => {
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  return normalizedCreatives.slice(startIndex, endIndex);
-}, [normalizedCreatives, currentPage]);
+  const paginatedCreatives = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return normalizedCreatives.slice(startIndex, endIndex);
+  }, [normalizedCreatives, currentPage]);
 
-const getPageNumbers = () => {
-  const pages: (number | string)[] = [];
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
 
-  if (totalPages <= 5) {
-    for (let i = 1; i <= totalPages; i += 1) pages.push(i);
-  } else if (currentPage <= 3) {
-    pages.push(1, 2, 3, '...', totalPages);
-  } else if (currentPage >= totalPages - 2) {
-    pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages);
-  } else {
-    pages.push(1, '...', currentPage, '...', totalPages);
-  }
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i += 1) pages.push(i);
+    } else if (currentPage <= 3) {
+      pages.push(1, 2, 3, '...', totalPages);
+    } else if (currentPage >= totalPages - 2) {
+      pages.push(1, '...', totalPages - 2, totalPages - 1, totalPages);
+    } else {
+      pages.push(1, '...', currentPage, '...', totalPages);
+    }
 
-  return pages;
-};
+    return pages;
+  };
 
   if (!normalizedCreatives.length) {
     return (
       <div
         style={{
           borderRadius: '24px',
-          background: 'rgba(15, 22, 41, 0.4)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
+          border: '1px solid #2a2a38',
+          background: '#18181f',
           padding: '64px 24px',
           textAlign: 'center',
         }}
@@ -98,14 +98,14 @@ const getPageNumbers = () => {
             width: '64px',
             height: '64px',
             borderRadius: '999px',
-            background: 'rgba(255, 255, 255, 0.03)',
+            background: '#1e1e27',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 16px',
           }}
         >
-          <ImageIcon size={28} color="#94a3b8" />
+          <ImageIcon size={28} color="#5a5a72" />
         </div>
 
         <h3
@@ -113,7 +113,7 @@ const getPageNumbers = () => {
             margin: 0,
             fontSize: '1rem',
             fontWeight: 700,
-            color: '#f8fafc',
+            color: '#f4f4f6',
           }}
         >
           No creatives found
@@ -123,7 +123,7 @@ const getPageNumbers = () => {
           style={{
             margin: '6px 0 0',
             fontSize: '0.92rem',
-            color: '#94a3b8',
+            color: '#8b8b9e',
           }}
         >
           AI generated creatives will appear here after you add them to Creative Hub.
@@ -150,11 +150,11 @@ const getPageNumbers = () => {
               style={{
                 overflow: 'hidden',
                 borderRadius: '24px',
-                background: 'rgba(15, 22, 41, 0.6)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
+                border: '1px solid #2a2a38',
+                background: '#18181f',
                 boxShadow: isHovered
-                  ? '0 18px 40px rgba(15, 23, 42, 0.12)'
-                  : '0 4px 12px rgba(15, 23, 42, 0.05)',
+                  ? '0 18px 40px rgba(0, 0, 0, 0.45)'
+                  : '0 4px 12px rgba(0, 0, 0, 0.25)',
                 transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
                 transition: 'all 0.22s ease',
                 width: '100%',
@@ -167,7 +167,7 @@ const getPageNumbers = () => {
                   height: '190px',
                   width: '100%',
                   overflow: 'hidden',
-                  background: 'rgba(255, 255, 255, 0.03)',
+                  background: '#14141c',
                 }}
               >
                 {imageSrc ? (
@@ -179,7 +179,7 @@ const getPageNumbers = () => {
                       height: '100%',
                       objectFit: 'cover',
                       display: 'block',
-                      background: '#050a18',
+                      background: '#14141c',
                     }}
                   />
                 ) : (
@@ -192,7 +192,7 @@ const getPageNumbers = () => {
                       justifyContent: 'center',
                     }}
                   >
-                    <ImageIcon size={40} color="#cbd5e1" />
+                    <ImageIcon size={40} color="#2a2a38" />
                   </div>
                 )}
 
@@ -200,7 +200,7 @@ const getPageNumbers = () => {
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    background: isHovered ? 'rgba(0,0,0,0.16)' : 'rgba(0,0,0,0)',
+                    background: isHovered ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0)',
                     transition: 'all 0.22s ease',
                   }}
                 />
@@ -229,13 +229,13 @@ const getPageNumbers = () => {
                       height: '40px',
                       borderRadius: '999px',
                       border: 'none',
-                      background: 'rgba(255,255,255,0.08)',
-                      color: '#ef4444',
+                      background: 'rgba(30, 30, 39, 0.96)',
+                      color: '#f87171',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: isDeleting ? 'not-allowed' : 'pointer',
-                      boxShadow: '0 8px 20px rgba(15, 23, 42, 0.12)',
+                      boxShadow: '0 8px 20px rgba(0, 0, 0, 0.4)',
                       opacity: isDeleting ? 0.65 : 1,
                     }}
                   >
@@ -257,13 +257,13 @@ const getPageNumbers = () => {
                         height: '40px',
                         borderRadius: '999px',
                         border: 'none',
-                        background: 'rgba(255,255,255,0.08)',
-                        color: 'var(--text-secondary)',
+                        background: 'rgba(30, 30, 39, 0.96)',
+                        color: '#f4f4f6',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        boxShadow: '0 8px 20px rgba(15, 23, 42, 0.12)',
+                        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.4)',
                       }}
                     >
                       <Clock3 size={16} />
@@ -277,13 +277,13 @@ const getPageNumbers = () => {
                         height: '40px',
                         borderRadius: '999px',
                         border: 'none',
-                        background: 'rgba(255,255,255,0.08)',
-                        color: 'var(--text-secondary)',
+                        background: 'rgba(30, 30, 39, 0.96)',
+                        color: '#f4f4f6',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        boxShadow: '0 8px 20px rgba(15, 23, 42, 0.12)',
+                        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.4)',
                       }}
                     >
                       <Pencil size={16} />
@@ -297,13 +297,13 @@ const getPageNumbers = () => {
                         height: '40px',
                         borderRadius: '999px',
                         border: 'none',
-                        background: 'rgba(255,255,255,0.08)',
-                        color: 'var(--text-secondary)',
+                        background: 'rgba(30, 30, 39, 0.96)',
+                        color: '#f4f4f6',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        boxShadow: '0 8px 20px rgba(15, 23, 42, 0.12)',
+                        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.4)',
                       }}
                     >
                       <Eye size={16} />
@@ -314,7 +314,7 @@ const getPageNumbers = () => {
 
               <div
                 style={{
-                  borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                  borderTop: '1px solid #222230',
                   padding: '12px 14px 14px',
                 }}
               >
@@ -324,7 +324,7 @@ const getPageNumbers = () => {
                     margin: 0,
                     fontSize: '0.98rem',
                     fontWeight: 500,
-                    color: '#f1f5f9',
+                    color: '#f4f4f6',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -349,7 +349,7 @@ const getPageNumbers = () => {
                         margin: 0,
                         fontSize: '0.72rem',
                         fontWeight: 400,
-                        color: '#8b95a7',
+                        color: '#5a5a72',
                         lineHeight: 1.2,
                       }}
                     >
@@ -360,7 +360,7 @@ const getPageNumbers = () => {
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#f1f5f9',
+                        color: '#f4f4f6',
                         lineHeight: 1.2,
                       }}
                     >
@@ -374,7 +374,7 @@ const getPageNumbers = () => {
                         margin: 0,
                         fontSize: '0.72rem',
                         fontWeight: 400,
-                        color: '#8b95a7',
+                        color: '#5a5a72',
                         lineHeight: 1.2,
                       }}
                     >
@@ -385,7 +385,7 @@ const getPageNumbers = () => {
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#f1f5f9',
+                        color: '#f4f4f6',
                         lineHeight: 1.2,
                       }}
                     >
@@ -399,7 +399,7 @@ const getPageNumbers = () => {
                         margin: 0,
                         fontSize: '0.72rem',
                         fontWeight: 400,
-                        color: '#8b95a7',
+                        color: '#5a5a72',
                         lineHeight: 1.2,
                       }}
                     >
@@ -410,7 +410,7 @@ const getPageNumbers = () => {
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#f1f5f9',
+                        color: '#f4f4f6',
                         lineHeight: 1.2,
                       }}
                     >
@@ -424,7 +424,7 @@ const getPageNumbers = () => {
                         margin: 0,
                         fontSize: '0.72rem',
                         fontWeight: 400,
-                        color: '#8b95a7',
+                        color: '#5a5a72',
                         lineHeight: 1.2,
                       }}
                     >
@@ -435,7 +435,7 @@ const getPageNumbers = () => {
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#f1f5f9',
+                        color: '#f4f4f6',
                         lineHeight: 1.2,
                       }}
                     >
@@ -448,7 +448,6 @@ const getPageNumbers = () => {
           );
         })}
       </div>
-
 
       {normalizedCreatives.length > ITEMS_PER_PAGE && (
         <div className="creatives-pagination">
@@ -514,61 +513,61 @@ const getPageNumbers = () => {
           }
 
           .creatives-pagination {
-  margin-top: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
-}
+            margin-top: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+          }
 
-.creatives-pagination-pages {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+          .creatives-pagination-pages {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
 
-.creatives-pagination-arrow,
-.creatives-pagination-page {
-  min-width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  color: #f1f5f9;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.92rem;
-  font-weight: 600;
-}
+          .creatives-pagination-arrow,
+          .creatives-pagination-page {
+            min-width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            border: 1px solid #2a2a38;
+            background: #18181f;
+            color: #f4f4f6;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.92rem;
+            font-weight: 600;
+          }
 
-.creatives-pagination-arrow:hover:not(:disabled),
-.creatives-pagination-page:hover:not(.active) {
-  border-color: #2631d6;
-  background: rgba(38, 49, 214, 0.1);
-}
+          .creatives-pagination-arrow:hover:not(:disabled),
+          .creatives-pagination-page:hover:not(.active) {
+            border-color: #3a3a50;
+            background: #1e1e27;
+          }
 
-.creatives-pagination-page.active {
-  background: #2631d6;
-  border-color: #2631d6;
-  color: #ffffff;
-  box-shadow: 0 10px 24px rgba(124, 58, 237, 0.22);
-}
+          .creatives-pagination-page.active {
+            background: #6d28d9;
+            border-color: #6d28d9;
+            color: #ffffff;
+            box-shadow: 0 10px 24px rgba(109, 40, 217, 0.35);
+          }
 
-.creatives-pagination-arrow:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
+          .creatives-pagination-arrow:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+          }
 
-.creatives-pagination-ellipsis {
-  min-width: 24px;
-  text-align: center;
-  color: #94a3b8;
-  font-weight: 700;
-}
+          .creatives-pagination-ellipsis {
+            min-width: 24px;
+            text-align: center;
+            color: #5a5a72;
+            font-weight: 700;
+          }
         `}
       </style>
     </>

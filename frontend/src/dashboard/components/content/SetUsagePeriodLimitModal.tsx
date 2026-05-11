@@ -38,7 +38,7 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(15, 23, 42, 0.16)',
+        background: 'rgba(0, 0, 0, 0.6)',
         backdropFilter: 'blur(3px)',
         zIndex: 1300,
         padding: '20px',
@@ -51,13 +51,14 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
         style={{
           width: '100%',
           height: 'calc(100vh - 40px)',
-          background: '#fff',
+          background: '#0f1117',
           borderRadius: '24px',
-          boxShadow: '0 30px 80px rgba(15, 23, 42, 0.18)',
+          boxShadow: '0 30px 80px rgba(0, 0, 0, 0.6)',
           padding: '28px 30px',
           overflow: 'auto',
           display: 'flex',
           flexDirection: 'column',
+          border: '1px solid #1e2130',
         }}
       >
         <div
@@ -69,10 +70,10 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
           }}
         >
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.7rem', fontWeight: 700, color: '#111827' }}>
+            <h2 style={{ margin: 0, fontSize: '1.7rem', fontWeight: 700, color: '#f1f5f9' }}>
               Set usage period limit
             </h2>
-            <p style={{ margin: '10px 0 0', color: '#6b7280', fontSize: '1rem' }}>
+            <p style={{ margin: '10px 0 0', color: '#64748b', fontSize: '1rem' }}>
               Usage Limit Cycle enables system monitoring of creative validity, automatically pausing
               expired creatives to prevent poor ad performance.
             </p>
@@ -85,12 +86,12 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
               height: '42px',
               borderRadius: '50%',
               border: 'none',
-              background: '#f3f4f6',
+              background: '#1e2130',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#111827',
+              color: '#94a3b8',
               flexShrink: 0,
             }}
           >
@@ -103,19 +104,19 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
             display: 'flex',
             alignItems: 'end',
             gap: '0',
-            borderBottom: '1px solid #ececec',
+            borderBottom: '1px solid #1e2130',
             marginBottom: '28px',
           }}
         >
           <button
             style={{
               padding: '14px 22px',
-              border: '1px solid #ececec',
+              border: '1px solid #1e2130',
               borderBottom: 'none',
-              background: '#fff',
+              background: '#0f1117',
               borderTopLeftRadius: '12px',
               borderTopRightRadius: '12px',
-              color: '#2631d6',
+              color: '#a78bfa',
               fontWeight: 600,
               fontSize: '0.95rem',
               cursor: 'pointer',
@@ -131,8 +132,8 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
             alignItems: 'center',
             padding: '8px 14px',
             borderRadius: '999px',
-            background: '#f3e8ff',
-            color: '#2631d6',
+            background: '#1e1433',
+            color: '#a78bfa',
             fontWeight: 600,
             width: 'fit-content',
             marginBottom: '24px',
@@ -151,8 +152,8 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
             flexWrap: 'wrap',
           }}
         >
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#111827', fontWeight: 600 }}>
-            <Clock3 size={18} color="#2631d6" />
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', color: '#f1f5f9', fontWeight: 600 }}>
+            <Clock3 size={18} color="#a78bfa" />
             <span>Set limited lifetime</span>
           </div>
 
@@ -162,9 +163,9 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
               height: '44px',
               padding: '0 18px',
               borderRadius: '999px',
-              border: '1px solid #8b5cf6',
-              background: '#fff',
-              color: '#2631d6',
+              border: '1px solid #6d28d9',
+              background: 'transparent',
+              color: '#a78bfa',
               fontSize: '0.95rem',
               fontWeight: 600,
               cursor: 'pointer',
@@ -180,12 +181,13 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
               key={index}
               style={{
                 maxWidth: '620px',
-                border: '1px solid #e5e7eb',
+                border: '1px solid #1e2130',
                 borderRadius: '22px',
                 padding: '18px',
                 display: 'flex',
                 gap: '18px',
                 alignItems: 'center',
+                background: '#131720',
               }}
             >
               <img
@@ -205,7 +207,7 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
                   style={{
                     fontSize: '1rem',
                     fontWeight: 700,
-                    color: '#111827',
+                    color: '#f1f5f9',
                     marginBottom: '14px',
                     wordBreak: 'break-word',
                   }}
@@ -213,7 +215,7 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
                   {item.file.name}
                 </div>
 
-                <div style={{ fontSize: '1.05rem', color: '#6b7280', marginBottom: '8px' }}>
+                <div style={{ fontSize: '1.05rem', color: '#64748b', marginBottom: '8px' }}>
                   Limited Lifetime
                 </div>
 
@@ -227,15 +229,18 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
                         width: '180px',
                         height: '42px',
                         borderRadius: '999px',
-                        border: '1px solid #d1d5db',
+                        border: '1px solid #2d3348',
                         padding: '0 42px 0 14px',
                         outline: 'none',
                         fontSize: '0.95rem',
+                        background: '#1a1f2e',
+                        color: '#f1f5f9',
+                        colorScheme: 'dark',
                       }}
                     />
                     <CalendarDays
                       size={16}
-                      color="#9ca3af"
+                      color="#475569"
                       style={{
                         position: 'absolute',
                         right: '14px',
@@ -246,7 +251,7 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
                     />
                   </div>
 
-                  <span style={{ color: '#111827', fontWeight: 600 }}>~</span>
+                  <span style={{ color: '#f1f5f9', fontWeight: 600 }}>~</span>
 
                   <div style={{ position: 'relative' }}>
                     <input
@@ -257,15 +262,18 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
                         width: '180px',
                         height: '42px',
                         borderRadius: '999px',
-                        border: '1px solid #d1d5db',
+                        border: '1px solid #2d3348',
                         padding: '0 42px 0 14px',
                         outline: 'none',
                         fontSize: '0.95rem',
+                        background: '#1a1f2e',
+                        color: '#f1f5f9',
+                        colorScheme: 'dark',
                       }}
                     />
                     <CalendarDays
                       size={16}
-                      color="#9ca3af"
+                      color="#475569"
                       style={{
                         position: 'absolute',
                         right: '14px',
@@ -285,7 +293,7 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
           style={{
             position: 'sticky',
             bottom: 0,
-            background: '#fff',
+            background: '#0f1117',
             display: 'flex',
             justifyContent: 'flex-end',
             gap: '12px',
@@ -299,9 +307,9 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
               minWidth: '168px',
               height: '48px',
               borderRadius: '999px',
-              border: '1px solid #d6d6d6',
-              background: '#fff',
-              color: '#111827',
+              border: '1px solid #2d3348',
+              background: 'transparent',
+              color: '#94a3b8',
               fontWeight: 500,
               fontSize: '0.98rem',
               cursor: 'pointer',
@@ -318,7 +326,7 @@ const SetUsagePeriodLimitModal: React.FC<SetUsagePeriodLimitModalProps> = ({
               height: '48px',
               borderRadius: '999px',
               border: 'none',
-              background: 'linear-gradient(135deg, #2631d6, #1e27a8)',
+              background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
               color: '#fff',
               fontWeight: 600,
               fontSize: '0.98rem',

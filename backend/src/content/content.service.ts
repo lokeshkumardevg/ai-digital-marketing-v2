@@ -498,6 +498,7 @@ export class ContentService {
 async generateReferenceCreative(data: {
   prompt: string;
   referenceImages: string[];
+   uploadedFiles?: Express.Multer.File[];
   productUrl?: string;
   size?: string;
   quality?: 'low' | 'medium' | 'high' | 'auto';
@@ -511,9 +512,18 @@ async generateReferenceCreative(data: {
   // if (!data.referenceImages?.length) {
   //   throw new BadRequestException('At least one reference image is required');
   // }
-  const hasReferences =
+  // const hasReferences =
+  // Array.isArray(data.referenceImages) &&
+  // data.referenceImages.length > 0;
+  const hasUrlRefs =
   Array.isArray(data.referenceImages) &&
   data.referenceImages.length > 0;
+
+const hasUploads =
+  Array.isArray(data.uploadedFiles) &&
+  data.uploadedFiles.length > 0;
+
+const hasReferences = hasUrlRefs || hasUploads;
 
   const ratioToSizeMap: Record<string, string> = {
     '1:1': '1024x1024',
@@ -554,7 +564,10 @@ async generateReferenceCreative(data: {
     if (hasReferences) {
       generatedImageUrl = await this.aiService.generateImageFromReferences({
         prompt: finalPrompt,
-        referenceImages: data.referenceImages,
+        // referenceImages: data.referenceImages,
+        referenceImages: hasUploads
+? data.uploadedFiles
+  : data.referenceImages,
         size: finalSize,
         quality: data.quality || 'auto',
       });

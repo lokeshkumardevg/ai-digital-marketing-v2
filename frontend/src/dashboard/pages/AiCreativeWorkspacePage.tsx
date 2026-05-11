@@ -26,12 +26,20 @@ const AiCreativeWorkspacePage: React.FC = () => {
   //   navigate('/content', { replace: true });
   //   return null;
   // }
-  if (!productUrl && !promptOnly) {
+  if (!productUrl && !promptOnly && genType !== 'user_upload') {
   navigate('/content', { replace: true });
   return null;
 }
 
-if (!promptOnly && selectedImages.length === 0) {
+// if (!promptOnly && selectedImages.length === 0) {
+//   navigate('/content', { replace: true });
+//   return null;
+// }
+if (
+  !promptOnly &&
+   genType !== "user_upload" &&
+  selectedImages.length === 0
+) {
   navigate('/content', { replace: true });
   return null;
 }
@@ -59,6 +67,13 @@ if (!promptOnly && selectedImages.length === 0) {
           selectedImages={selectedImages}
           onBackToSelection={handleBackToSelection}
           onCloseWorkspace={handleCloseWorkspace}
+          workspaceType={
+    promptOnly
+      ? "prompt"
+      : genType === "user_upload"
+      ? "upload"
+      : "scrape"
+  }
         />
       </div>
     </div>
