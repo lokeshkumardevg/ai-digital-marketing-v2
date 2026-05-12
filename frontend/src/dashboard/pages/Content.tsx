@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../api/axios';
 
-import LoadingScreen from '../components/content/LoadingScreen';
 import ContentTabs from '../components/content/ContentTabs';
 import ContentActions from '../components/content/ContentActions';
 import ContentFilters from '../components/content/ContentFilters';
@@ -41,7 +40,8 @@ export const Content: React.FC = () => {
   const [activeTab, setActiveTab] = useState('All Creatives');
   const [search, setSearch] = useState('');
   const [creatives, setCreatives] = useState<CreativeItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [contentLoaded, setContentLoaded] = useState(false);
   const [previewCreative, setPreviewCreative] = useState<CreativeItem | null>(null);
 const [watchCreative, setWatchCreative] = useState<CreativeItem | null>(null);
 const [editingCreative, setEditingCreative] = useState<CreativeItem | null>(null);
@@ -85,10 +85,6 @@ const [deletingCreativeId, setDeletingCreativeId] = useState<string | null>(null
 
   const addCreativeMenuRef = useRef<HTMLDivElement | null>(null);
   const addCreativeButtonRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    fetchCreatives();
-  }, []);
 
   useEffect(() => {
   const state = location.state as
@@ -172,6 +168,11 @@ const [deletingCreativeId, setDeletingCreativeId] = useState<string | null>(null
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLoadCreativeContent = async () => {
+    setContentLoaded(true);
+    await fetchCreatives();
   };
 
   const handleGenerate = async () => {
@@ -356,6 +357,16 @@ const handleDeleteCreative = async (creative: CreativeItem) => {
   } finally {
     setDeletingCreativeId(null);
   }
+};
+
+const handleRepromptCreative = (creative: CreativeItem) => {
+  navigate('/content/ai-workspace', {
+    state: {
+      selectedImages: [creative.imageUrl || ''],
+      productUrl: creative.name || creative.title || 'Reprompt Creative',
+      promptOnly: true,
+    },
+  });
 };
 
 const handleSaveCreativeEdit = async () => {
@@ -630,10 +641,6 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     );
   });
 
-  if (loading) {
-    return <LoadingScreen />;
-  }
-
   return (
     <div style={{ minHeight: '100%', background: '#0f1117' }}>
       <ContentTabs activeTab={activeTab} onTabChange={setActiveTab} />
@@ -649,27 +656,61 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   onBulkUploadByFilename={handleBulkUploadByFilename}
 />
 
-        <ContentFilters
-          uploadDateStart={uploadDateStart}
-          uploadDateEnd={uploadDateEnd}
-          lifetimeStart={lifetimeStart}
-          lifetimeEnd={lifetimeEnd}
-          search={search}
-          setUploadDateStart={setUploadDateStart}
-          setUploadDateEnd={setUploadDateEnd}
-          setLifetimeStart={setLifetimeStart}
-          setLifetimeEnd={setLifetimeEnd}
-          setSearch={setSearch}
-        />
+        <div style={{ marginTop: '18px', marginBottom: '20px' }}>
+          <button
+            type="button"
+            onClick={handleLoadCreativeContent}
+            style={{
+              padding: '12px 22px',
+              borderRadius: '999px',
+              border: 'none',
+              background: '#7c3aed',
+              color: '#fff',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Show Creative Content
+          </button>
+          {loading && (
+            <div
+              style={{
+                marginTop: '12px',
+                color: '#a5b4fc',
+                fontSize: '0.95rem',
+              }}
+            >
+              Loading creatives...
+            </div>
+          )}
+        </div>
 
-      <CreativesTable
-  creatives={filtered}
-  onPreviewCreative={handlePreviewCreative}
-  onWatchCreative={handleWatchCreative}
-  onEditCreative={handleOpenEditCreative}
-  onDeleteCreative={handleDeleteCreative}
-  deletingCreativeId={deletingCreativeId}
-/>
+        {contentLoaded && (
+          <>
+            <ContentFilters
+              uploadDateStart={uploadDateStart}
+              uploadDateEnd={uploadDateEnd}
+              lifetimeStart={lifetimeStart}
+              lifetimeEnd={lifetimeEnd}
+              search={search}
+              setUploadDateStart={setUploadDateStart}
+              setUploadDateEnd={setUploadDateEnd}
+              setLifetimeStart={setLifetimeStart}
+              setLifetimeEnd={setLifetimeEnd}
+              setSearch={setSearch}
+            />
+
+            <CreativesTable
+              creatives={filtered}
+              onPreviewCreative={handlePreviewCreative}
+              onWatchCreative={handleWatchCreative}
+              onEditCreative={handleOpenEditCreative}
+              onDeleteCreative={handleDeleteCreative}
+              onRepromptCreative={handleRepromptCreative}
+              deletingCreativeId={deletingCreativeId}
+            />
+          </>
+        )}
 
 {showAiCreativePanel && (
   <AiCreativeModal

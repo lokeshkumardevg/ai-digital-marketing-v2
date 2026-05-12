@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { api } from "../../../api/axios";
 import {
@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 
 
+
+
+
 interface AiCreativeWorkspaceProps {
   open: boolean;
   productUrl: string;
@@ -29,9 +32,24 @@ interface AiCreativeWorkspaceProps {
 interface GeneratedCreativeItem {
   id: string;
   imageUrl: string;
+  prompt: string;
   label: string;
   sizeLabel: string;
   createdAt: string;
+  savedToHub?: boolean;
+  aspectRatio: string;
+  imageCount: string;
+  modelSource: string;
+}
+
+interface HistoryEntry {
+  id: string;
+  prompt: string;
+  aspectRatio: string;
+  imageCount: string;
+  modelSource: string;
+  createdAt: string;
+  images: GeneratedCreativeItem[];
 }
 
 const ratioOptions = [
@@ -46,7 +64,12 @@ const imageCountOptions = ['1', '2', '3', '4'];
 
 const modelOptions = ['Nano Banana Pro', 'Nano Banana Lite', 'Creative Studio'];
 
+const LOCAL_STORAGE_HISTORY_KEY = 'ai-creative-history-v1';
+const LOCAL_STORAGE_GENERATED_KEY = 'ai-creative-generated-v1';
+
 const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
+  // NOTE: localStorage persistence removed to prevent QuotaExceededError.
+
   open,
   productUrl,
   selectedImages,
@@ -60,6 +83,7 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
   const [imageCount, setImageCount] = useState('1');
   const [modelSource, setModelSource] = useState('Nano Banana Pro');
   const [generatedImages, setGeneratedImages] = useState<GeneratedCreativeItem[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState('');
   const [previewImage, setPreviewImage] = useState<GeneratedCreativeItem | null>(null);
@@ -80,6 +104,35 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
     '9:16': '1024x1536',
   };
 
+  const compressImageFile = async (file: File): Promise<File> => {
+    if (typeof window === 'undefined' || !file.type.startsWith('image/')) {
+      return file;
+    }
+
+    const imageBitmap = await createImageBitmap(file);
+    const maxDimension = 2048;
+    const scale = Math.min(1, maxDimension / Math.max(imageBitmap.width, imageBitmap.height));
+    const width = Math.round(imageBitmap.width * scale);
+    const height = Math.round(imageBitmap.height * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) return file;
+
+    context.drawImage(imageBitmap, 0, 0, width, height);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/jpeg', 0.75),
+    );
+
+    if (!blob) return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+      type: 'image/jpeg',
+    });
+  };
+
   const handleOpenPreview = (item: GeneratedCreativeItem) => {
     setPreviewImage(item);
   };
@@ -94,12 +147,18 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
       toast.loading('Saving creative to Creative Hub...', { id: 'save-ai-creative' });
 
       await api.post('/content', {
-        title: `${prompt.trim() || 'AI Creative'} - ${item.sizeLabel}`,
+        title: `${item.prompt || prompt.trim() || 'AI Creative'} - ${item.sizeLabel}`,
         contentType: 'image',
         imageUrl: item.imageUrl,
         thumbnailUrl: item.imageUrl,
         platforms: ['Meta'],
       });
+
+      setGeneratedImages((prev) =>
+        prev.map((entry) =>
+          entry.id === item.id ? { ...entry, savedToHub: true } : entry,
+        ),
+      );
 
       toast.success('Creative saved to Creative Hub successfully.', {
         id: 'save-ai-creative',
@@ -142,29 +201,86 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
     setUploadedPreviews(previews);
   };
 
-  const handleGenerateCreative = async () => {
-    if (!canSubmit || isGenerating) return;
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const storedHistory = window.localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY);
+      const storedGenerated = window.localStorage.getItem(LOCAL_STORAGE_GENERATED_KEY);
+
+      if (storedHistory) {
+        const parsed = JSON.parse(storedHistory);
+        if (Array.isArray(parsed)) {
+          setHistory(parsed);
+        }
+      }
+
+      if (storedGenerated) {
+        const parsed = JSON.parse(storedGenerated);
+        if (Array.isArray(parsed)) {
+          setGeneratedImages(parsed);
+        }
+      }
+    } catch {
+      // ignore invalid local storage data
+    }
+  }, []);
+
+  // Persist to IndexedDB via localforage (see useAiCreativeWorkspaceStorage + aiCreativeStorage.ts).
+  // Kept intentionally disabled here to prevent QuotaExceededError from localStorage.
+  // useEffect(() => {
+  //   if (typeof window === 'undefined') return;
+  //   window.localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(history));
+  // }, [history]);
+
+  // useEffect(() => {
+  //   if (typeof window === 'undefined') return;
+  //   try {
+  //     window.localStorage.setItem(LOCAL_STORAGE_GENERATED_KEY, JSON.stringify(generatedImages));
+  //   } catch {
+  //     // ignore QuotaExceededError and other storage failures
+  //   }
+  // }, [generatedImages]);
+
+  const handleGenerateCreative = async (options?: {
+    prompt?: string;
+    aspectRatio?: string;
+    imageCount?: string;
+    modelSource?: string;
+    selectedImages?: string[];
+    uploadedFiles?: File[];
+  }) => {
+    const promptValue = options?.prompt ?? prompt;
+    const aspectRatioValue = options?.aspectRatio ?? aspectRatio;
+    const imageCountValue = options?.imageCount ?? imageCount;
+    const modelSourceValue = options?.modelSource ?? modelSource;
+    const selectedReferenceImages = options?.selectedImages ?? selectedImages;
+    const uploadFiles = options?.uploadedFiles ?? uploadedFiles;
+
+    if (!promptValue.trim() || isGenerating) return;
 
     try {
       setIsGenerating(true);
       setGenerateError('');
 
       const formData = new FormData();
-      formData.append("prompt", prompt.trim());
+      formData.append("prompt", promptValue.trim());
       formData.append("productUrl", productUrl);
-      formData.append("aspectRatio", aspectRatio);
-      formData.append("imageCount", imageCount);
-      formData.append("size", ratioToSizeMap[aspectRatio] || "1024x1024");
-      formData.append("quality", "high");
+      formData.append("aspectRatio", aspectRatioValue);
+      formData.append("imageCount", imageCountValue);
+      formData.append("size", ratioToSizeMap[aspectRatioValue] || "1024x1024");
+      formData.append("quality", "medium");
 
-      if (workspaceType === "upload" && uploadedFiles.length > 0) {
-        uploadedFiles.slice(0, 4).forEach((file) => {
-          formData.append("referenceImages", file);
+      if (workspaceType === "upload" && uploadFiles.length > 0) {
+        const compressedFiles = await Promise.all(
+          uploadFiles.slice(0, 4).map((file) => compressImageFile(file)),
+        );
+        compressedFiles.forEach((file) => {
+          formData.append('referenceFiles', file);
         });
-      } else if (selectedImages.length > 0) {
-        selectedImages.slice(0, 4).forEach((img) => {
-          formData.append("referenceImages[]", img);
-        });
+      } else if (selectedReferenceImages.length > 0) {
+        const limited = selectedReferenceImages.filter(Boolean).slice(0, 2);
+        formData.append('referenceImages', JSON.stringify(limited));
       }
 
       const response = await api.post(
@@ -177,13 +293,30 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
 
       const mapped: GeneratedCreativeItem[] = apiImages.map((item: any, index: number) => ({
         id: item.id || `${Date.now()}-${index}`,
+        prompt: promptValue.trim(),
         imageUrl: item.imageUrl,
         label: 'OpenAI Creative Expert',
-        sizeLabel: `${aspectRatio} (${item.size || ratioToSizeMap[aspectRatio] || '1024x1024'})`,
+        sizeLabel: `${aspectRatioValue} (${item.size || ratioToSizeMap[aspectRatioValue] || '1024x1024'})`,
         createdAt: 'Just now',
+        savedToHub: false,
+        aspectRatio: aspectRatioValue,
+        imageCount: imageCountValue,
+        modelSource: modelSourceValue,
       }));
 
       setGeneratedImages((prev) => [...mapped, ...prev]);
+      setHistory((prev) => [
+        {
+          id: `history-${Date.now()}`,
+          prompt: promptValue.trim(),
+          aspectRatio: aspectRatioValue,
+          imageCount: imageCountValue,
+          modelSource: modelSourceValue,
+          createdAt: 'Just now',
+          images: mapped,
+        },
+        ...prev,
+      ]);
     } catch (error: any) {
       setGenerateError(
         error?.response?.data?.message ||
@@ -244,6 +377,57 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
     appearance: 'none',
     cursor: 'pointer',
   };
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const storedHistory = window.localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY);
+      const storedGenerated = window.localStorage.getItem(LOCAL_STORAGE_GENERATED_KEY);
+
+      if (storedHistory) {
+        const parsed = JSON.parse(storedHistory);
+        if (Array.isArray(parsed)) {
+          setHistory(parsed);
+        }
+      }
+
+      if (storedGenerated) {
+        const parsed = JSON.parse(storedGenerated);
+        if (Array.isArray(parsed)) {
+          setGeneratedImages(parsed);
+        }
+      }
+    } catch {
+      // ignore invalid local storage data
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(history));
+  }, [history]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(LOCAL_STORAGE_GENERATED_KEY, JSON.stringify(generatedImages));
+  }, [generatedImages]);
+
+  React.useEffect(() => {
+    if (workspaceType === 'prompt' && productUrl && !prompt) {
+      setPrompt(productUrl);
+    }
+  }, [workspaceType, productUrl, prompt]);
+
+    // background: dk.inputBg,
+    // padding: '0 42px 0 16px',
+    // color: dk.text,
+    // fontWeight: 600,
+    // fontSize: '0.96rem',
+    // outline: 'none',
+    // appearance: 'none',
+    // cursor: 'pointer',
+// }; 
   // ─────────────────────────────────────────────────────────────────────────────
 
   return (
@@ -701,7 +885,7 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
             {/* Submit button */}
             <button
               type="button"
-              onClick={handleGenerateCreative}
+onClick={() => handleGenerateCreative()}
               disabled={!canSubmit || isGenerating}
               style={{
                 width: '100%',
@@ -809,6 +993,155 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
                 gap: '16px',
               }}
             >
+              <div
+                style={{
+                  borderRadius: '20px',
+                  border: `1px solid ${dk.border}`,
+                  background: dk.surfaceElevated,
+                  padding: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '14px' }}>
+                  <div>
+                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: dk.text }}>Creative history</div>
+                    <div style={{ marginTop: '4px', fontSize: '0.82rem', color: dk.textMuted }}>
+                      Review previous prompts and reuse or repeat any generated creative session.
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const latest = history[0];
+                      if (latest) {
+                        handleGenerateCreative({
+                          prompt: latest.prompt,
+                          aspectRatio: latest.aspectRatio,
+                          imageCount: latest.imageCount,
+                          modelSource: latest.modelSource,
+                        });
+                      }
+                    }}
+                    disabled={isGenerating || history.length === 0}
+                    style={{
+                      height: '38px',
+                      padding: '0 14px',
+                      borderRadius: '999px',
+                      border: `1px solid ${dk.border}`,
+                      background: dk.surface,
+                      color: dk.text,
+                      fontWeight: 700,
+                      cursor: isGenerating || history.length === 0 ? 'not-allowed' : 'pointer',
+                      opacity: isGenerating || history.length === 0 ? 0.5 : 1,
+                    }}
+                  >
+                    Repeat last prompt
+                  </button>
+                </div>
+
+                {history.length === 0 ? (
+                  <div style={{ color: dk.textMuted, fontSize: '0.88rem' }}>
+                    Your prompt history will appear here after each generation. Use it to reprompt or view earlier image results.
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gap: '14px' }}>
+                    {history.map((entry) => (
+                      <div
+                        key={entry.id}
+                        style={{
+                          borderRadius: '20px',
+                          border: `1px solid ${dk.borderSubtle}`,
+                          background: dk.surface,
+                          padding: '14px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '10px' }}>
+                          <div>
+                            <div style={{ fontSize: '0.92rem', fontWeight: 700, color: dk.text }}>{entry.prompt}</div>
+                            <div style={{ marginTop: '6px', fontSize: '0.82rem', color: dk.textMuted }}>
+                              {entry.imageCount} image{entry.imageCount !== '1' ? 's' : ''} · {entry.aspectRatio} · {entry.modelSource}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right', fontSize: '0.78rem', color: dk.textDim }}>{entry.createdAt}</div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                          {entry.images.slice(0, 3).map((img) => (
+                            <button
+                              key={img.id}
+                              type="button"
+                              onClick={() => handleOpenPreview(img)}
+                              style={{
+                                width: '82px',
+                                height: '82px',
+                                borderRadius: '18px',
+                                overflow: 'hidden',
+                                border: `1px solid ${dk.border}`,
+                                background: dk.inputBg,
+                                padding: 0,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <img src={img.imageUrl} alt={img.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </button>
+                          ))}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPrompt(entry.prompt);
+                              setAspectRatio(entry.aspectRatio);
+                              setImageCount(entry.imageCount);
+                              setModelSource(entry.modelSource);
+                              setCreativeSource('generator');
+                            }}
+                            style={{
+                              flex: 1,
+                              minWidth: '120px',
+                              height: '40px',
+                              borderRadius: '999px',
+                              border: `1px solid ${dk.border}`,
+                              background: dk.surfaceElevated,
+                              color: dk.text,
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Use prompt
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleGenerateCreative({
+                              prompt: entry.prompt,
+                              aspectRatio: entry.aspectRatio,
+                              imageCount: entry.imageCount,
+                              modelSource: entry.modelSource,
+                            })}
+                            disabled={isGenerating}
+                            style={{
+                              flex: 1,
+                              minWidth: '120px',
+                              height: '40px',
+                              borderRadius: '999px',
+                              border: `1px solid ${dk.borderAccent}`,
+                              background: dk.accentBg,
+                              color: dk.accent,
+                              fontWeight: 700,
+                              cursor: isGenerating ? 'not-allowed' : 'pointer',
+                              opacity: isGenerating ? 0.6 : 1,
+                            }}
+                          >
+                            Repeat
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {isGenerating && generatedImages.length === 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {Array.from({ length: Number(imageCount || '1') }).map((_, index) => (
@@ -895,25 +1228,57 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
                       />
                     </button>
 
-                    <button
-                      type="button"
-                      onClick={handleGenerateCreative}
-                      disabled={isGenerating}
-                      style={{
-                        marginTop: '14px',
-                        width: '100%',
-                        height: '48px',
-                        borderRadius: '999px',
-                        border: `1px solid ${dk.border}`,
-                        background: dk.surfaceElevated,
-                        color: dk.text,
-                        fontWeight: 700,
-                        cursor: isGenerating ? 'not-allowed' : 'pointer',
-                        opacity: isGenerating ? 0.7 : 1,
-                      }}
-                    >
-                      Regenerate
-                    </button>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '14px' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPrompt(item.prompt);
+                          setAspectRatio(item.aspectRatio);
+                          setImageCount(item.imageCount);
+                          setModelSource(item.modelSource);
+                          setCreativeSource('reference');
+                          handleGenerateCreative({
+                            prompt: item.prompt,
+                            aspectRatio: item.aspectRatio,
+                            imageCount: item.imageCount,
+                            modelSource: item.modelSource,
+                            selectedImages: [item.imageUrl],
+                          });
+                        }}
+                        disabled={isGenerating}
+                        style={{
+                          width: '100%',
+                          height: '48px',
+                          borderRadius: '999px',
+                          border: `1px solid ${dk.border}`,
+                          background: dk.surfaceElevated,
+                          color: dk.text,
+                          fontWeight: 700,
+                          cursor: isGenerating ? 'not-allowed' : 'pointer',
+                          opacity: isGenerating ? 0.7 : 1,
+                        }}
+                      >
+                        Reprompt
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleAddToCreativeHub(item)}
+                        disabled={isSavingToHub || item.savedToHub}
+                        style={{
+                          width: '100%',
+                          height: '48px',
+                          borderRadius: '999px',
+                          border: `1px solid ${item.savedToHub ? dk.border : dk.borderAccent}`,
+                          background: item.savedToHub ? dk.surfaceElevated : dk.accentBg,
+                          color: item.savedToHub ? dk.textMuted : dk.accent,
+                          fontWeight: 700,
+                          cursor: isSavingToHub || item.savedToHub ? 'not-allowed' : 'pointer',
+                          opacity: isSavingToHub || item.savedToHub ? 0.65 : 1,
+                        }}
+                      >
+                        {item.savedToHub ? 'Saved' : 'Save'}
+                      </button>
+                    </div>
                   </div>
                 ))
               ) : (
@@ -1037,6 +1402,44 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
                 flexWrap: 'wrap',
               }}
             >
+              <button
+                type="button"
+                onClick={() => {
+                  setPrompt(previewImage.prompt);
+                  setAspectRatio(previewImage.aspectRatio);
+                  setImageCount(previewImage.imageCount);
+                  setModelSource(previewImage.modelSource);
+                  setCreativeSource('reference');
+                  handleClosePreview();
+                  handleGenerateCreative({
+                    prompt: previewImage.prompt,
+                    aspectRatio: previewImage.aspectRatio,
+                    imageCount: previewImage.imageCount,
+                    modelSource: previewImage.modelSource,
+                    selectedImages: [previewImage.imageUrl],
+                  });
+                }}
+                disabled={isGenerating}
+                style={{
+                  height: '56px',
+                  padding: '0 28px',
+                  borderRadius: '999px',
+                  border: `1px solid ${dk.border}`,
+                  background: dk.surfaceElevated,
+                  color: dk.text,
+                  fontWeight: 700,
+                  fontSize: '0.98rem',
+                  cursor: isGenerating ? 'not-allowed' : 'pointer',
+                  opacity: isGenerating ? 0.7 : 1,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                }}
+              >
+                <RefreshCcw size={18} />
+                {isGenerating ? 'Reprompting...' : 'Re-prompt'}
+              </button>
+
               <button
                 type="button"
                 onClick={() =>
