@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Image as ImageIcon, Trash2, Eye, Pencil, Clock3, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Image as ImageIcon, Trash2, Eye, Pencil, Clock3, ChevronLeft, ChevronRight, RefreshCcw } from 'lucide-react';
 
 interface CreativeItem {
   _id?: string;
@@ -27,6 +27,7 @@ interface CreativesTableProps {
   onWatchCreative: (creative: CreativeItem) => void;
   onEditCreative: (creative: CreativeItem) => void;
   onDeleteCreative: (creative: CreativeItem) => void;
+  onRepromptCreative: (creative: CreativeItem) => void;
   deletingCreativeId?: string | null;
 }
 
@@ -38,6 +39,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
   onWatchCreative,
   onEditCreative,
   onDeleteCreative,
+  onRepromptCreative,
   deletingCreativeId,
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -308,6 +310,26 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                       }}
                     >
                       <Pencil size={16} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onRepromptCreative(creative)}
+                      style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '999px',
+                        border: 'none',
+                        background: 'rgba(30, 30, 39, 0.96)',
+                        color: '#a78bfa',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.4)',
+                      }}
+                    >
+                      <RefreshCcw size={16} />
                     </button>
 
                     <button

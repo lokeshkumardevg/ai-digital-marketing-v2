@@ -3,6 +3,7 @@ import { ContentService } from './content.service';
 import { FetchUrlImagesDto } from './dto/fetch-url-images.dto';
 import { GenerateReferenceCreativeDto } from './dto/generate-reference-creative.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { ValidationPipe } from '@nestjs/common';
 
 @Controller('content')
 export class ContentController {
@@ -62,13 +63,31 @@ export class ContentController {
   //   return this.contentService.generateReferenceCreative(body);
   // }
   @Post('generate-reference-creative')
-@UseInterceptors(FilesInterceptor('referenceImages', 4))
+@UseInterceptors(FilesInterceptor('referenceFiles', 4))
 async generateReferenceCreative(
   @UploadedFiles() files: Express.Multer.File[],
   @Body() body: any,
 ) {
+  // Parse referenceImages if it's a JSON string
+  let referenceImages: string[] = [];
+  if (typeof body.referenceImages === 'string') {
+    try {
+      referenceImages = JSON.parse(body.referenceImages);
+    } catch {
+      referenceImages = [];
+    }
+  } else if (Array.isArray(body.referenceImages)) {
+    referenceImages = body.referenceImages;
+  }
+
   return this.contentService.generateReferenceCreative({
-    ...body,
+    prompt: body.prompt,
+    referenceImages: referenceImages,
+    productUrl: body.productUrl,
+    size: body.size,
+    quality: body.quality,
+    aspectRatio: body.aspectRatio,
+    imageCount: body.imageCount,
     uploadedFiles: files,
   });
 }

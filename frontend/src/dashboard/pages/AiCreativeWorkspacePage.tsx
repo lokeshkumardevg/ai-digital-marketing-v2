@@ -8,6 +8,7 @@ type WorkspaceLocationState = {
   allImages?: string[];
   genType?: string;
   promptOnly?: boolean;
+  workspaceType?: 'scrape' | 'prompt' | 'upload';
 };
 
 const AiCreativeWorkspacePage: React.FC = () => {
@@ -22,27 +23,13 @@ const AiCreativeWorkspacePage: React.FC = () => {
   const selectedImages = Array.isArray(state.selectedImages) ? state.selectedImages : [];
   const genType = state.genType || 'url_scrape';
 
-  // if (!productUrl || selectedImages.length === 0) {
-  //   navigate('/content', { replace: true });
-  //   return null;
-  // }
-  if (!productUrl && !promptOnly && genType !== 'user_upload') {
-  navigate('/content', { replace: true });
-  return null;
-}
+  const workspaceType =
+    promptOnly
+      ? 'prompt'
+      : genType === 'user_upload'
+      ? 'upload'
+      : 'scrape';
 
-// if (!promptOnly && selectedImages.length === 0) {
-//   navigate('/content', { replace: true });
-//   return null;
-// }
-if (
-  !promptOnly &&
-   genType !== "user_upload" &&
-  selectedImages.length === 0
-) {
-  navigate('/content', { replace: true });
-  return null;
-}
 
   const handleBackToSelection = () => {
     navigate('/content', {
@@ -67,13 +54,7 @@ if (
           selectedImages={selectedImages}
           onBackToSelection={handleBackToSelection}
           onCloseWorkspace={handleCloseWorkspace}
-          workspaceType={
-    promptOnly
-      ? "prompt"
-      : genType === "user_upload"
-      ? "upload"
-      : "scrape"
-  }
+          workspaceType={workspaceType}
         />
       </div>
     </div>
