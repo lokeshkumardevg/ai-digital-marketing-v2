@@ -1,57 +1,13 @@
 /**
- * Campaigns.tsx — Updated integration patch
+ * Campaigns.tsx — v7
  *
- * Changes from original:
- * 1.  Stores `promoData` in state so it reaches AdCampaignDashboard
- * 2.  Passes brandDetails + promoData + campaignId to <AdCampaignDashboard />
- * 3.  onBack    → goes back to chat (setViewMode('chat'))
- * 4.  onPublish → shows toast, stays on dashboard
- * 5.  onSaveDraft → calls /campaign/draft/save, shows toast
- *
- * Replace only the DASHBOARD VIEW section and add promoDataRef below brandDetails state.
- * The rest of the file is unchanged.
+ * Changes from v6:
+ * - handleRestoreSession: restores to the exact viewMode saved (including 'dashboard')
+ * - handleBackToChat: non-destructive back navigation (no state wipe, no clearSession)
+ * - handleReset: still the full wipe (↺ button only)
+ * - useEffect on viewMode: auto-saves session snapshot on every view change
+ * - Dashboard onBack now uses handleBackToChat instead of inline lambda
  */
-
-// ── ADD this state next to `brandDetails`: ──────────────────
-//   const [promoData, setPromoData] = useState<PromoObjectiveData | null>(null);
-
-// ── In handleBrandFormSubmit, before addMsg, store defaults:
-//   setPromoData(defaultPromo);   // already built — just also call setPromoData
-
-// ── In handleGenerateCampaign, store final data:
-//   setPromoData(promoData);      // the arg passed in
-
-// ── DASHBOARD VIEW (replace the existing if block): ─────────
-
-/*
-  if (viewMode === 'dashboard') {
-    return (
-      <>
-        <style>{CSS}</style>
-        <div className="dashboard-wrapper">
-          <AdCampaignDashboard
-            brandDetails={brandDetails || undefined}
-            promoData={promoData || undefined}
-            campaignId={campaignIdRef.current || undefined}
-            onBack={() => { setViewMode('chat'); setIsChatMode(true); }}
-            onPublish={(result) => {
-              console.log('Published:', result);
-              // optionally show a global toast
-            }}
-            onSaveDraft={(result) => {
-              console.log('Draft saved:', result);
-            }}
-            apiBase={API_BASE}
-          />
-        </div>
-      </>
-    );
-  }
-*/
-
-// ─────────────────────────────────────────────────────────────
-// Below is the FULL updated Campaigns.tsx for copy-paste:
-// ─────────────────────────────────────────────────────────────
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -61,83 +17,81 @@ import {
   ShieldCheck, RefreshCw, CheckCircle2, XCircle,
   ArrowRight, TrendingUp,
   Building2, Rocket, AlertTriangle, Loader2,
-  Layers, X, Upload, Image,
-  Sparkles, AlertCircle, LayoutDashboard,
+  X, Upload, Image,
+  Sparkles, AlertCircle, LayoutDashboard, History,
 } from 'lucide-react';
 import axios from 'axios';
 import { Header } from '../components/Header';
-import AdCampaignDashboard from '../components/AdCampaignDashboard';
+import AdCampaignDashboard from '../components/Adcampaigndashboard';
 
-// ============================================
-// TYPES (unchanged)
-// ============================================
+// ============================================================
+// TYPES
+// ============================================================
 interface CompetitorDetail {
   name: string;
   strengths?: string[];
   weaknesses?: string[];
 }
 
+interface BrandAssets {
+  logoUrl?: string;
+  logoPreview?: string;
+  websiteImages?: string[];
+  favicon?: string;
+  brandColors?: string[];
+  websiteScreenshot?: string;
+}
+
 interface BrandDetails {
   brandId?: string;
   campaignId?: string;
   brand?: {
-    name?: string;
-    tagline?: string;
-    industry?: string;
-    founded?: string;
-    businessModel?: string;
-    toneOfVoice?: string;
-    registeredAddress?: string;
-    CIN?: string;
-    overallScore?: number;
+    name?: string; tagline?: string; industry?: string; founded?: string;
+    businessModel?: string; toneOfVoice?: string; registeredAddress?: string;
+    CIN?: string; overallScore?: number;
   };
   brandName?: string;
   logo?: string;
+  logoPreview?: string;
   industry?: string;
-  avgCpc?: number;
-  avgCtr?: number;
-  conversionRate?: number;
-  tagline?: string;
-  overallScore?: number;
-  coreObjective?: string;
-  websiteAudit?: any;
-  keywords?: any;
-  competition?: any;
-  analyticsDashboard?: any;
-  budget?: any;
-  auditData?: any;
+  avgCpc?: number; avgCtr?: number; conversionRate?: number;
+  tagline?: string; overallScore?: number; coreObjective?: string;
+  website?: string;
+  websiteAudit?: any; keywords?: any; competition?: any;
+  analyticsDashboard?: any; budget?: any; auditData?: any;
+  assets?: BrandAssets;
 }
 
 interface PromoObjectiveData {
-  businessType: string;
-  adGoal: string;
-  businessGoal: string;
-  targetLocations: string;
-  platform: string;
-  promotionType: string;
-  dailyBudget: number;
-  platforms: string[];
+  businessType: string; adGoal: string; businessGoal: string;
+  targetLocations: string; platform: string; promotionType: string;
+  dailyBudget: number; platforms: string[];
+  headlines?: string[]; primaryTexts?: string[];
+  callToAction?: string; finalUrl?: string;
 }
 
 interface Message {
-  id: string;
-  role: 'user' | 'bot';
-  type: string;
-  content: any;
+  id: string; role: 'user' | 'bot'; type: string; content: any;
 }
 
 interface BrandFormData {
-  brandName: string;
-  brandUrl: string;
-  logoFile: File | null;
-  logoPreview: string | null;
+  brandName: string; brandUrl: string;
+  logoFile: File | null; logoPreview: string | null;
 }
 
-// ============================================
-// HELPERS
-// ============================================
-const API_BASE = 'http://localhost:3000';
+interface CampaignSession {
+  messages: Message[];
+  brandDetails: BrandDetails | null;
+  promoData: PromoObjectiveData | null;
+  campaignId: string | null;
+  viewMode: 'landing' | 'chat' | 'dashboard';
+  savedAt: string;
+}
 
+// ============================================================
+// HELPERS
+// ============================================================
+const API_BASE = 'http://localhost:3000';
 let msgCounter = 0;
 const newMsgId = () => `msg-${++msgCounter}`;
 
@@ -192,9 +146,93 @@ const resolveBrandName = (b: BrandDetails): string =>
 const resolveIndustry = (b: BrandDetails): string =>
   b.brand?.industry || b.industry || b.auditData?.brand?.industry || '';
 
-// ============================================
+const fetchBrandAssets = async (
+website: string,
+apiBase: string
+): Promise<BrandAssets> => {
+try {
+const { data } = await axios.post(
+`${apiBase}/campaign/assets`,
+{ website }
+);
+
+console.log('ASSETS API RESPONSE:', data);
+
+// Backend returns assets inside data.assets
+const assets = data?.assets || {};
+
+return {
+  logoUrl: assets.logoUrl ?? undefined,
+
+  websiteImages: Array.isArray(assets.websiteImages)
+    ? assets.websiteImages
+    : [],
+
+  favicon: assets.favicon ?? undefined,
+
+  brandColors: Array.isArray(assets.brandColors)
+    ? assets.brandColors
+    : [],
+
+  websiteScreenshot:
+    assets.websiteScreenshot ?? undefined,
+};
+
+} catch (error) {
+console.error('fetchBrandAssets error:', error);
+
+const hostname = getHostname(website);
+
+return {
+  favicon: `https://www.google.com/s2/favicons?sz=128&domain=${hostname}`,
+  websiteImages: [],
+  brandColors: [],
+};
+
+}
+};
+
+// ============================================================
+// SESSION HOOK
+// ============================================================
+const useCampaignSession = (userId: string) => {
+  const saveSession = useCallback(async (payload: CampaignSession) => {
+    if (!userId) return;
+    try {
+      await axios.post(`${API_BASE}/campaign/session/${userId}`, {
+        ...payload,
+        savedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn('[session] save failed:', err);
+    }
+  }, [userId]);
+
+  const loadSession = useCallback(async (): Promise<CampaignSession | null> => {
+    if (!userId) return null;
+    try {
+      const { data } = await axios.get(`${API_BASE}/campaign/session/${userId}`);
+      return data?.session ?? null;
+    } catch {
+      return null;
+    }
+  }, [userId]);
+
+  const clearSession = useCallback(async () => {
+    if (!userId) return;
+    try {
+      await axios.delete(`${API_BASE}/campaign/session/${userId}`);
+    } catch (err) {
+      console.warn('[session] clear failed:', err);
+    }
+  }, [userId]);
+
+  return { saveSession, loadSession, clearSession };
+};
+
+// ============================================================
 // ICONS
-// ============================================
+// ============================================================
 const FacebookIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="#3b82f6">
     <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
@@ -219,9 +257,9 @@ const LinkedInIcon = () => (
   </svg>
 );
 
-// ============================================
+// ============================================================
 // TYPING BUBBLE
-// ============================================
+// ============================================================
 const TypingBubble: React.FC<{ text: string; speed?: number; skipAnimation?: boolean }> = ({
   text, speed = 18, skipAnimation = false,
 }) => {
@@ -247,9 +285,9 @@ const TypingBubble: React.FC<{ text: string; speed?: number; skipAnimation?: boo
   );
 };
 
-// ============================================
+// ============================================================
 // ERROR BOUNDARY
-// ============================================
+// ============================================================
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode; fallback?: React.ReactNode },
   { hasError: boolean; error?: Error }
@@ -268,9 +306,59 @@ class ErrorBoundary extends React.Component<
   }
 }
 
-// ============================================
+// ============================================================
+// RESTORE SESSION BANNER
+// ============================================================
+const RestoreSessionBanner: React.FC<{
+  session: CampaignSession;
+  onRestore: () => void;
+  onDiscard: () => void;
+}> = ({ session, onRestore, onDiscard }) => {
+  const brandName = session.brandDetails
+    ? resolveBrandName(session.brandDetails)
+    : 'your previous campaign';
+  const savedDate = new Date(session.savedAt);
+  const timeAgo = (() => {
+    const diff = Date.now() - savedDate.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return savedDate.toLocaleDateString();
+  })();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="restore-banner"
+    >
+      <div className="restore-banner-icon">
+        <History size={20} />
+      </div>
+      <div className="restore-banner-body">
+        <div className="restore-banner-title">Resume where you left off</div>
+        <div className="restore-banner-sub">
+          You have an unsaved campaign for <strong>{brandName}</strong> from {timeAgo}.
+        </div>
+      </div>
+      <div className="restore-banner-actions">
+        <button className="restore-btn-primary" onClick={onRestore}>
+          <History size={13} /> Resume
+        </button>
+        <button className="restore-btn-secondary" onClick={onDiscard}>
+          <X size={13} /> Discard
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
+// ============================================================
 // WEBSITE PREVIEW CARD
-// ============================================
+// ============================================================
 const WebsitePreviewCard: React.FC<{ url: string }> = ({ url }) => {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -278,7 +366,6 @@ const WebsitePreviewCard: React.FC<{ url: string }> = ({ url }) => {
   const hostname = (() => { try { return new URL(cleanUrl).hostname; } catch { return cleanUrl; } })();
   const screenshotSrc = `${API_BASE}/campaign/screenshot?url=${encodeURIComponent(cleanUrl)}`;
   const fallbackSrc = `https://www.google.com/s2/favicons?sz=128&domain=${hostname}`;
-  // console.log('Preview card for', cleanUrl, { screenshotSrc, fallbackSrc });
   return (
     <div className="site-preview-card">
       <div className="site-preview-browser-bar">
@@ -290,74 +377,68 @@ const WebsitePreviewCard: React.FC<{ url: string }> = ({ url }) => {
       </div>
       <div className="site-preview-img-wrap">
         {!imgLoaded && !imgError && <div className="site-preview-loading"><Loader2 className="spin" size={24} /></div>}
-        {!imgError && <img src={screenshotSrc} alt={`${hostname} preview`} className={`site-preview-img ${imgLoaded ? 'loaded' : ''}`} onLoad={() => setImgLoaded(true)} onError={() => setImgError(true)} />}
-        {imgError && <div className="site-preview-fallback"><img src={fallbackSrc} alt="favicon" className="fallback-icon" /><h3>{hostname}</h3></div>}
-        {imgLoaded && !imgError && <div className="site-preview-loaded-badge"><CheckCircle2 size={14} /> Homepage Captured</div>}
+        {!imgError && (
+          <img
+            src={screenshotSrc}
+            alt={`${hostname} preview`}
+            className={`site-preview-img ${imgLoaded ? 'loaded' : ''}`}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => setImgError(true)}
+          />
+        )}
+        {imgError && (
+          <div className="site-preview-fallback">
+            <img src={fallbackSrc} alt="favicon" className="fallback-icon" />
+            <h3>{hostname}</h3>
+          </div>
+        )}
+        {imgLoaded && !imgError && (
+          <div className="site-preview-loaded-badge"><CheckCircle2 size={14} /> Homepage Captured</div>
+        )}
       </div>
     </div>
   );
 };
 
-// ============================================
+// ============================================================
 // RESEARCH TERMINAL
-// ============================================
+// ============================================================
 const ResearchTerminal: React.FC<{ url?: string }> = ({ url }) => {
   const safeUrl = typeof url === 'string' ? url.trim() : '';
-
-  const [logs, setLogs] = useState<string[]>([
-    `> Connecting to ${getHostname(safeUrl)}...`,
-  ]);
-
+  const [logs, setLogs] = useState<string[]>([`> Connecting to ${getHostname(safeUrl)}...`]);
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (!safeUrl) return;
-
-    const lines: string[] = [
+    const lines = [
       '> Fetching DOM structure...',
       '> Capturing website screenshot...',
+      '> Extracting brand images & logos...',
       '> Analyzing SEO meta tags...',
       '> Checking performance metrics...',
-      '[SUCCESS] Brand detected',
+      '[SUCCESS] Brand assets extracted',
       '> Analyzing competitors...',
       '> Extracting keywords...',
       '[SUCCESS] Analysis complete',
-      '> Generating AI report...',
+      '> Generating AI campaign report...',
     ];
-
     let i = 0;
-
     const interval = setInterval(() => {
       if (i < lines.length) {
-        const currentLine = lines[i] || '';
-
-        setLogs((prev) => [...prev, currentLine]);
-
-        if (i === 1) {
-          setShowPreview(true);
-        }
-
+        setLogs(prev => [...prev, lines[i] ?? '']);
+        if (i === 1) setShowPreview(true);
         i++;
-      } else {
-        clearInterval(interval);
-      }
+      } else clearInterval(interval);
     }, 600);
-
     return () => clearInterval(interval);
   }, [safeUrl]);
 
   return (
     <div className="camp-terminal">
       <div className="camp-terminal-header">
-        <span>
-          <Brain size={11} />
-        </span>
-
-        <span className="camp-terminal-url">
-          {getHostname(safeUrl)}
-        </span>
+        <span><Brain size={11} /></span>
+        <span className="camp-terminal-url">{getHostname(safeUrl)}</span>
       </div>
-
       {showPreview && safeUrl && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
@@ -368,30 +449,19 @@ const ResearchTerminal: React.FC<{ url?: string }> = ({ url }) => {
           <WebsitePreviewCard url={safeUrl} />
         </motion.div>
       )}
-
       {logs.map((log, idx) => (
-        <div
-          key={idx}
-          className={`camp-log-line ${typeof log === 'string' && log.includes('SUCCESS')
-              ? 'success'
-              : ''
-            }`}
-        >
-          {typeof log === 'string' ? log : ''}
-        </div>
+        <div key={idx} className={`camp-log-line ${log.includes('SUCCESS') ? 'success' : ''}`}>{log}</div>
       ))}
-
       <span className="camp-cursor" />
     </div>
   );
 };
 
-// ============================================
+// ============================================================
 // BRAND DETAILS FORM
-// ============================================
+// ============================================================
 const BrandDetailsForm: React.FC<{
-  initialName?: string;
-  initialUrl?: string;
+  initialName?: string; initialUrl?: string;
   onSubmit: (data: BrandFormData) => void;
 }> = ({ initialName = '', initialUrl = '', onSubmit }) => {
   const [brandName, setBrandName] = useState(initialName);
@@ -403,54 +473,92 @@ const BrandDetailsForm: React.FC<{
   const fileInputRef = useRef<HTMLInputElement>(null);
   const hostname = getHostname(initialUrl);
   const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${hostname}`;
+
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setLogoFile(file);
     const reader = new FileReader();
-    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
+    reader.onload = ev => setLogoPreview(ev.target?.result as string);
     reader.readAsDataURL(file);
   };
+
   const handleSubmit = () => {
     if (!brandName.trim()) { setError('Brand name is required'); return; }
     if (!brandUrl.trim()) { setError('Brand URL is required'); return; }
     setError(''); setSubmitted(true);
     onSubmit({ brandName: brandName.trim(), brandUrl: brandUrl.trim(), logoFile, logoPreview });
   };
-  if (submitted) return <div className="brand-form-done"><CheckCircle2 size={16} color="#10b981" /><span>Brand details confirmed — <strong>{brandName}</strong></span></div>;
+
+  if (submitted) return (
+    <div className="brand-form-done">
+      <CheckCircle2 size={16} color="#10b981" />
+      <span>Brand details confirmed — <strong>{brandName}</strong></span>
+    </div>
+  );
+
   return (
-    <motion.div initial={{ opacity: 0, y: 16, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.35 }} className="brand-form-card">
+    <motion.div
+      initial={{ opacity: 0, y: 16, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.35 }}
+      className="brand-form-card"
+    >
       <div className="brand-form-header">
         <div className="brand-form-icon"><Building2 size={20} /></div>
-        <div><div className="brand-form-title">Confirm your brand details</div><div className="brand-form-sub">AI pre-filled these — edit if anything looks off</div></div>
+        <div>
+          <div className="brand-form-title">Confirm your brand details</div>
+          <div className="brand-form-sub">AI pre-filled these — edit if anything looks off</div>
+        </div>
         <div className="brand-form-ai-tag"><Brain size={11} /><span>AI detected</span></div>
       </div>
       <div className="brand-form-grid">
-        <div className="brand-form-group"><label className="brand-form-label" htmlFor="bf-name"><Building2 size={12} /> Brand name</label><input id="bf-name" className="brand-form-input" type="text" placeholder="e.g. Acme Inc." value={brandName} onChange={e => { setBrandName(e.target.value); setError(''); }} /></div>
-        <div className="brand-form-group"><label className="brand-form-label" htmlFor="bf-url"><Globe size={12} /> Brand website</label><input id="bf-url" className="brand-form-input" type="url" placeholder="https://acme.com" value={brandUrl} onChange={e => { setBrandUrl(e.target.value); setError(''); }} /></div>
+        <div className="brand-form-group">
+          <label className="brand-form-label" htmlFor="bf-name"><Building2 size={12} /> Brand name</label>
+          <input id="bf-name" className="brand-form-input" type="text" placeholder="e.g. Acme Inc."
+            value={brandName} onChange={e => { setBrandName(e.target.value); setError(''); }} />
+        </div>
+        <div className="brand-form-group">
+          <label className="brand-form-label" htmlFor="bf-url"><Globe size={12} /> Brand website</label>
+          <input id="bf-url" className="brand-form-input" type="url" placeholder="https://acme.com"
+            value={brandUrl} onChange={e => { setBrandUrl(e.target.value); setError(''); }} />
+        </div>
       </div>
       <div className="brand-form-group">
         <label className="brand-form-label"><Image size={12} /> Brand logo</label>
         <div className="brand-logo-row">
-          <div className="brand-logo-preview">{logoPreview ? <img src={logoPreview} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 8 }} /> : <div className="brand-logo-placeholder"><Image size={20} color="#334155" /></div>}</div>
+          <div className="brand-logo-preview">
+            {logoPreview
+              ? <img src={logoPreview} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: 8 }} />
+              : <div className="brand-logo-placeholder"><Image size={20} color="#334155" /></div>}
+          </div>
           <div className="brand-logo-controls">
             <input ref={fileInputRef} type="file" accept="image/*,image/svg+xml" style={{ display: 'none' }} onChange={handleLogoChange} />
             <button className="brand-logo-upload-btn" onClick={() => fileInputRef.current?.click()}><Upload size={13} /> Upload logo</button>
-            <button className="brand-logo-favicon-btn" onClick={() => setLogoPreview(faviconUrl)}><img src={faviconUrl} alt="favicon" width={14} height={14} style={{ borderRadius: 3 }} />Use favicon from {hostname}</button>
-            {logoPreview && <button className="brand-logo-clear-btn" onClick={() => { setLogoPreview(null); setLogoFile(null); }}><X size={11} /> Clear</button>}
+            <button className="brand-logo-favicon-btn" onClick={() => setLogoPreview(faviconUrl)}>
+              <img src={faviconUrl} alt="favicon" width={14} height={14} style={{ borderRadius: 3 }} />
+              Use favicon from {hostname}
+            </button>
+            {logoPreview && (
+              <button className="brand-logo-clear-btn" onClick={() => { setLogoPreview(null); setLogoFile(null); }}>
+                <X size={11} /> Clear
+              </button>
+            )}
             <div className="brand-logo-hint">PNG, SVG, JPG · recommended 256×256px</div>
           </div>
         </div>
       </div>
       {error && <div className="brand-form-error"><AlertCircle size={13} /> {error}</div>}
-      <button className="brand-form-submit" onClick={handleSubmit}><CheckCircle2 size={16} />Confirm brand & continue<ArrowRight size={15} /></button>
+      <button className="brand-form-submit" onClick={handleSubmit}>
+        <CheckCircle2 size={16} />Confirm brand & continue<ArrowRight size={15} />
+      </button>
     </motion.div>
   );
 };
 
-// ============================================
+// ============================================================
 // BRAND AUDIT CARD
-// ============================================
+// ============================================================
 const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const tabs = ['overview', 'website', 'keywords', 'competition', 'analytics'];
@@ -460,15 +568,16 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
   const scoreColor = (s: number) => s >= 80 ? '#10b981' : s >= 65 ? '#f59e0b' : '#ef4444';
   const intensityColors: Record<string, string> = { High: '#ef4444', Medium: '#f59e0b', Low: '#10b981' };
   const intensityWidths: Record<string, string> = { High: '90%', Medium: '55%', Low: '25%' };
-  const trafficColors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
-  const trafficWidths = ['72%', '48%', '31%', '20%'];
 
   return (
     <div className="audit-card">
       <div className="audit-topbar">
         <div className="audit-brand-identity">
           <div className="audit-brand-icon"><Building2 size={20} /></div>
-          <div><div className="audit-brand-name">{displayName}</div><div className="audit-brand-industry">{displayIndustry}</div></div>
+          <div>
+            <div className="audit-brand-name">{displayName}</div>
+            <div className="audit-brand-industry">{displayIndustry}</div>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {overallScore && (
@@ -529,8 +638,6 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
             {brand.keywords.primary?.length > 0 && <div className="audit-kw-section"><h4>Primary Keywords</h4><div className="audit-pills">{brand.keywords.primary.map((k: string) => <span key={k} className="audit-pill blue">{k}</span>)}</div></div>}
             {brand.keywords.secondary?.length > 0 && <div className="audit-kw-section"><h4>Secondary Keywords</h4><div className="audit-pills">{brand.keywords.secondary.map((k: string) => <span key={k} className="audit-pill purple">{k}</span>)}</div></div>}
             {brand.keywords.longTail?.length > 0 && <div className="audit-kw-section"><h4>Long-Tail Keywords</h4><div className="audit-pills">{brand.keywords.longTail.map((k: string) => <span key={k} className="audit-pill teal">{k}</span>)}</div></div>}
-            {brand.keywords.gaps?.length > 0 && <div className="audit-issue-group"><div className="audit-issue-group-label">Keyword Gaps</div>{brand.keywords.gaps.map((g: string, i: number) => <div key={i} className="audit-issue warning">🕳️ {g}</div>)}</div>}
-            {brand.keywords.recommendations?.length > 0 && <div className="audit-issue-group"><div className="audit-issue-group-label">Recommendations</div>{brand.keywords.recommendations.map((r: string, i: number) => <div key={i} className="audit-issue success">💡 {r}</div>)}</div>}
           </div>
         )}
         {activeTab === 'competition' && brand.competition && (() => {
@@ -544,7 +651,6 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
                 <div className="comp-bar-track"><div className="comp-bar-fill" style={{ width: iw }} /></div>
                 <span className="comp-intensity-label" style={{ color: ic }}>{c.intensity}</span>
               </div>
-              {c.marketPosition && <div className="audit-objective" style={{ marginBottom: 12 }}>📍 {c.marketPosition}</div>}
               {c.competitors?.map((comp: CompetitorDetail, i: number) => (
                 <div key={i} className="competitor-card">
                   <div className="competitor-name">{comp.name}</div>
@@ -552,10 +658,8 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
                     <div className="comp-sw-box"><div className="comp-sw-title green">Strengths</div><ul className="comp-sw-list">{comp.strengths?.map((s, j) => <li key={j}>{s}</li>)}</ul></div>
                     <div className="comp-sw-box"><div className="comp-sw-title red">Weaknesses</div><ul className="comp-sw-list">{comp.weaknesses?.map((w, j) => <li key={j}>{w}</li>)}</ul></div>
                   </div>
-                  {comp.comparison && <div className="comp-comparison">💬 {comp.comparison}</div>}
                 </div>
               ))}
-              {c.differentiators?.length > 0 && <div style={{ marginTop: 12 }}><div className="audit-issue-group-label" style={{ marginBottom: 8 }}>Our Differentiators</div><div className="audit-pills">{c.differentiators.map((d: string) => <span key={d} className="audit-pill teal">⚡ {d}</span>)}</div></div>}
             </div>
           );
         })()}
@@ -566,12 +670,8 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
               <div className="audit-analytics-grid">
                 {a.estimatedMonthlyVisits && <div className="aa-metric"><div className="aa-value">{Number(a.estimatedMonthlyVisits).toLocaleString()}</div><div className="aa-label">Monthly Visits</div></div>}
                 {a.estimatedDomainAuthority && <div className="aa-metric"><div className="aa-value">{a.estimatedDomainAuthority}</div><div className="aa-label">Domain Authority</div></div>}
-                {a.estimatedBacklinks && <div className="aa-metric"><div className="aa-value">{a.estimatedBacklinks}</div><div className="aa-label">Backlinks</div></div>}
-                {a.avgSessionDuration && <div className="aa-metric"><div className="aa-value" style={{ fontSize: '1rem' }}>{a.avgSessionDuration}</div><div className="aa-label">Avg Session</div></div>}
                 {a.bounceRate && <div className="aa-metric"><div className="aa-value">{a.bounceRate}</div><div className="aa-label">Bounce Rate</div></div>}
               </div>
-              {a.topTrafficSources?.length > 0 && <div><div className="audit-issue-group-label" style={{ marginBottom: 8 }}>Top Traffic Sources</div><div className="audit-traffic-sources">{a.topTrafficSources.map((s: string, i: number) => (<div key={i} className="audit-traffic-item"><span className="audit-traffic-name">{s}</span><div className="audit-traffic-bar"><div className="audit-traffic-fill" style={{ width: trafficWidths[i] || '20%', background: trafficColors[i] || '#64748b' }} /></div></div>))}</div></div>}
-              {a.conversionFocusAreas?.length > 0 && <div style={{ marginTop: 14 }}><div className="audit-issue-group-label" style={{ marginBottom: 8 }}>Conversion Focus Areas</div><div className="audit-pills">{a.conversionFocusAreas.map((c: string) => <span key={c} className="audit-pill amber">{c}</span>)}</div></div>}
             </div>
           );
         })()}
@@ -580,40 +680,73 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
   );
 };
 
-// ============================================
+// ============================================================
 // BRAND VALUE CARD
-// ============================================
+// ============================================================
 const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
   const myScore = brand?.brand?.overallScore ?? 65;
   const competitors = brand?.competition?.competitors ?? [];
-  const brandName = brand?.brand?.name || 'Your Brand';
-  const rows = [{ name: brandName, score: myScore, isUs: true }, ...competitors.slice(0, 3).map((c: any, i: number) => ({ name: c.name, score: Math.max(20, Math.min(95, myScore + [-12, 15, -5][i % 3])), isUs: false }))];
-  const months = ['Now', '3mo', '6mo', '9mo', '12mo'];
+  const bName = brand?.brand?.name || 'Your Brand';
+  const rows = [
+    { name: bName, score: myScore, isUs: true },
+    ...competitors.slice(0, 3).map((c: any, i: number) => ({
+      name: c.name, score: Math.max(20, Math.min(95, myScore + [-12, 15, -5][i % 3])), isUs: false,
+    })),
+  ];
   const withUs = [myScore, myScore + 8, myScore + 18, myScore + 30, myScore + 45].map(v => Math.min(v, 99));
-  const withoutUs = [myScore, myScore + 1, myScore + 2, myScore + 3, myScore + 5].map(v => Math.min(v, 99));
   const industryAvg = rows.filter(r => !r.isUs).map(r => r.score);
   const avgScore = industryAvg.length ? Math.round(industryAvg.reduce((a, b) => a + b, 0) / industryAvg.length) : myScore - 8;
   const scoreColor = (s: number) => s >= 80 ? '#10b981' : s >= 60 ? '#f59e0b' : '#ef4444';
   const maxScore = Math.max(...rows.map(r => r.score), 100);
+
   return (
     <div className="bvc-wrap">
-      <div className="bvc-header"><div className="bvc-header-icon"><TrendingUp size={18} /></div><div><div className="bvc-title">Brand Value Intelligence</div><div className="bvc-sub">How you compare & where campaigns take you</div></div></div>
+      <div className="bvc-header">
+        <div className="bvc-header-icon"><TrendingUp size={18} /></div>
+        <div>
+          <div className="bvc-title">Brand Value Intelligence</div>
+          <div className="bvc-sub">How you compare & where campaigns take you</div>
+        </div>
+      </div>
       <div className="bvc-section-label">📊 Brand Score vs Competitors</div>
-      <div className="bvc-score-rows">{rows.map((row, i) => (<div key={i} className={`bvc-score-row ${row.isUs ? 'is-us' : ''}`}><div className="bvc-score-name">{row.isUs && <span className="bvc-us-dot" />}{row.name}{row.isUs && <span className="bvc-us-badge">You</span>}</div><div className="bvc-score-bar-wrap"><div className="bvc-score-bar-track"><div className="bvc-score-bar-fill" style={{ width: `${(row.score / maxScore) * 100}%`, background: row.isUs ? 'linear-gradient(90deg, #3b82f6, #8b5cf6)' : `${scoreColor(row.score)}88` }} /></div><span className="bvc-score-num" style={{ color: row.isUs ? '#60a5fa' : scoreColor(row.score) }}>{row.score}</span></div></div>))}</div>
-      <div className="bvc-gap-row"><div className="bvc-gap-item"><span className="bvc-gap-label">Industry Avg</span><strong style={{ color: '#f59e0b' }}>{avgScore}</strong></div><div className="bvc-gap-item"><span className="bvc-gap-label">Your Score</span><strong style={{ color: '#60a5fa' }}>{myScore}</strong></div><div className="bvc-gap-item"><span className="bvc-gap-label">Gap</span><strong style={{ color: myScore >= avgScore ? '#10b981' : '#ef4444' }}>{myScore >= avgScore ? '+' : ''}{myScore - avgScore}</strong></div><div className="bvc-gap-item"><span className="bvc-gap-label">Projected (12mo)</span><strong style={{ color: '#10b981' }}>{withUs[4]}</strong></div></div>
-      <div className="bvc-insight"><Zap size={13} color="#f59e0b" /><span>Our campaigns can grow your brand score from <strong style={{ color: '#60a5fa' }}>{myScore}</strong> to <strong style={{ color: '#10b981' }}>{withUs[4]}</strong> in 12 months.</span></div>
+      <div className="bvc-score-rows">
+        {rows.map((row, i) => (
+          <div key={i} className={`bvc-score-row ${row.isUs ? 'is-us' : ''}`}>
+            <div className="bvc-score-name">
+              {row.isUs && <span className="bvc-us-dot" />}
+              {row.name}
+              {row.isUs && <span className="bvc-us-badge">You</span>}
+            </div>
+            <div className="bvc-score-bar-wrap">
+              <div className="bvc-score-bar-track">
+                <div className="bvc-score-bar-fill" style={{
+                  width: `${(row.score / maxScore) * 100}%`,
+                  background: row.isUs
+                    ? 'linear-gradient(90deg, #3b82f6, #8b5cf6)'
+                    : `${scoreColor(row.score)}88`,
+                }} />
+              </div>
+              <span className="bvc-score-num" style={{ color: row.isUs ? '#60a5fa' : scoreColor(row.score) }}>{row.score}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="bvc-insight">
+        <Zap size={13} color="#f59e0b" />
+        <span>Our campaigns can grow your brand score from <strong style={{ color: '#60a5fa' }}>{myScore}</strong> to <strong style={{ color: '#10b981' }}>{withUs[4]}</strong> in 12 months.</span>
+      </div>
     </div>
   );
 };
 
-// ============================================
+// ============================================================
 // EDITABLE PROMO OBJECTIVE
-// ============================================
+// ============================================================
 const PLATFORM_OPTIONS = [
-  { value: 'meta', label: 'Meta', icon: <FacebookIcon /> },
-  { value: 'google', label: 'Google', icon: <GoogleIcon /> },
-  { value: 'twitter', label: 'Twitter/X', icon: <TwitterXIcon /> },
-  { value: 'linkedin', label: 'LinkedIn', icon: <LinkedInIcon /> },
+  { value: 'meta',     label: 'Meta',      icon: <FacebookIcon /> },
+  { value: 'google',   label: 'Google',    icon: <GoogleIcon /> },
+  { value: 'twitter',  label: 'Twitter/X', icon: <TwitterXIcon /> },
+  { value: 'linkedin', label: 'LinkedIn',  icon: <LinkedInIcon /> },
 ];
 
 const EditablePromoObjective: React.FC<{
@@ -626,34 +759,95 @@ const EditablePromoObjective: React.FC<{
   const [submitted, setSubmitted] = useState(false);
   const businessTypes = ['Online Shopping', 'Solution & Online Service', 'Local Store & Service', 'App'];
   const set = (key: keyof PromoObjectiveData, val: any) => setData(prev => ({ ...prev, [key]: val }));
-  if (submitted) return <div className="brand-form-done"><Rocket size={16} color="#10b981" /><span>Campaign generating for <strong>{brandName}</strong>…</span></div>;
+
+  if (submitted) return (
+    <div className="brand-form-done">
+      <Rocket size={16} color="#10b981" />
+      <span>Campaign generating for <strong>{brandName}</strong>…</span>
+    </div>
+  );
+
   return (
-    <motion.div initial={{ opacity: 0, y: 20, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.35 }} className="promo-obj-card">
-      <div className="promo-obj-banner"><Sparkles size={18} /><p>🎉 All set! Your best ad strategy is ready. Review your goals below and edit anything before generating.</p></div>
-      <div className="promo-obj-header"><div className="promo-obj-icon"><Rocket size={22} /></div><div><h3>Promotion Objective</h3><p>AI-analyzed <strong>{brandName}</strong> — edit any field below</p></div></div>
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.35 }}
+      className="promo-obj-card"
+    >
+      <div className="promo-obj-banner">
+        <Sparkles size={18} />
+        <p>🎉 All set! Your best ad strategy is ready. Review your goals below and edit anything before generating.</p>
+      </div>
+      <div className="promo-obj-header">
+        <div className="promo-obj-icon"><Rocket size={22} /></div>
+        <div>
+          <h3>Promotion Objective</h3>
+          <p>AI-analyzed <strong>{brandName}</strong> — edit any field below</p>
+        </div>
+      </div>
       <div className="promo-obj-grid">
-        <div className="promo-field"><label>Business Type</label><select className="promo-select" value={data.businessType} onChange={e => set('businessType', e.target.value)}>{businessTypes.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
-        <div className="promo-field"><label>Ad Performance Goal</label><select className="promo-select" value={data.adGoal} onChange={e => set('adGoal', e.target.value)}>{['In-web actions', 'Brand awareness', 'Lead generation', 'App installs', 'Video views', 'Store visits'].map(o => <option key={o} value={o}>{o}</option>)}</select></div>
-        <div className="promo-field"><label>Business Goal</label><select className="promo-select" value={data.businessGoal} onChange={e => set('businessGoal', e.target.value)}>{['Sales', 'Lead generation', 'Brand awareness', 'Customer retention', 'App growth', 'Traffic'].map(o => <option key={o} value={o}>{o}</option>)}</select></div>
-        <div className="promo-field"><label>Target Locations</label><input className="promo-input" value={data.targetLocations} onChange={e => set('targetLocations', e.target.value)} placeholder="e.g. India, USA" /></div>
         <div className="promo-field">
-          <label>Ad Platform</label>
+          <label>Business Type</label>
+          <select className="promo-select" value={data.businessType} onChange={e => set('businessType', e.target.value)}>
+            {businessTypes.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+        <div className="promo-field">
+          <label>Ad Performance Goal</label>
+          <select className="promo-select" value={data.adGoal} onChange={e => set('adGoal', e.target.value)}>
+            {['In-web actions', 'Brand awareness', 'Lead generation', 'App installs', 'Video views', 'Store visits'].map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </div>
+        <div className="promo-field">
+          <label>Business Goal</label>
+          <select className="promo-select" value={data.businessGoal} onChange={e => set('businessGoal', e.target.value)}>
+            {['Sales', 'Lead generation', 'Brand awareness', 'Customer retention', 'App growth', 'Traffic'].map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </div>
+        <div className="promo-field">
+          <label>Target Locations</label>
+          <input className="promo-input" value={data.targetLocations} onChange={e => set('targetLocations', e.target.value)} placeholder="e.g. India, USA" />
+        </div>
+        <div className="promo-field">
+          <label>Ad Platforms</label>
           <div className="promo-platform-row">
             {PLATFORM_OPTIONS.map(p => {
               const isActive = data.platforms?.includes(p.value);
               return (
                 <button key={p.value} type="button" className={`promo-plat-btn ${isActive ? 'active' : ''}`}
-                  onClick={() => { const current = data.platforms || []; const updated = isActive ? current.filter(v => v !== p.value) : [...current, p.value]; set('platforms', updated); }}>
+                  onClick={() => {
+                    const current = data.platforms || [];
+                    const updated = isActive ? current.filter(v => v !== p.value) : [...current, p.value];
+                    set('platforms', updated);
+                  }}>
                   {p.icon}<span>{p.label}</span>
                 </button>
               );
             })}
           </div>
         </div>
-        <div className="promo-field"><label>Promotion Type</label><select className="promo-select" value={data.promotionType} onChange={e => set('promotionType', e.target.value)}>{['Long-term', 'Short-term', 'Seasonal', 'Event-based', 'Always-on'].map(o => <option key={o} value={o}>{o}</option>)}</select></div>
-        <div className="promo-field promo-field-full"><label>Suggested Daily Limit (USD)</label><div className="promo-budget-row"><input className="promo-input promo-budget-input" type="number" min={1} value={data.dailyBudget} onChange={e => set('dailyBudget', Number(e.target.value))} /><span className="promo-budget-unit">USD / day</span></div></div>
+        <div className="promo-field">
+          <label>Promotion Type</label>
+          <select className="promo-select" value={data.promotionType} onChange={e => set('promotionType', e.target.value)}>
+            {['Long-term', 'Short-term', 'Seasonal', 'Event-based', 'Always-on'].map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </div>
+        <div className="promo-field promo-field-full">
+          <label>Suggested Daily Limit (USD)</label>
+          <div className="promo-budget-row">
+            <input className="promo-input promo-budget-input" type="number" min={1}
+              value={data.dailyBudget} onChange={e => set('dailyBudget', Number(e.target.value))} />
+            <span className="promo-budget-unit">USD / day</span>
+          </div>
+        </div>
       </div>
-      <div className="promo-benefits">{['AI-optimized budget allocation', 'Multi-platform campaign setup', 'Real-time performance tracking', 'Automatic ROI optimization'].map(item => (<div key={item} className="promo-benefit-row"><CheckCircle2 size={15} className="benefit-check" /><span>{item}</span></div>))}</div>
+      <div className="promo-benefits">
+        {['AI-optimized budget allocation', 'Multi-platform campaign setup', 'Real-time performance tracking', 'Automatic ROI optimization'].map(item => (
+          <div key={item} className="promo-benefit-row">
+            <CheckCircle2 size={15} className="benefit-check" /><span>{item}</span>
+          </div>
+        ))}
+      </div>
       <div className="promo-actions">
         <button className="promo-generate-btn" onClick={() => { setSubmitted(true); onGenerate(data); }}>
           <Rocket size={18} /> Generate Campaign
@@ -663,61 +857,33 @@ const EditablePromoObjective: React.FC<{
   );
 };
 
-// ============================================
+// ============================================================
 // GO TO DASHBOARD CARD
-// ============================================
-// ============================================
-// GO TO DASHBOARD CARD
-// ============================================
-const GoToDashboardCard: React.FC<{
-  campaignId?: string;
-  onGoToDashboard?: () => void;
-}> = ({
-  campaignId,
-  onGoToDashboard,
-}) => {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="go-to-dashboard-card loader-card"
-      >
-        <div className="gtds-header">
-          <div className="gtds-icon loader-spin">
-            <LayoutDashboard size={24} />
-          </div>
+// ============================================================
+const GoToDashboardCard: React.FC<{ campaignId?: string; onGoToDashboard?: () => void }> = ({ campaignId, onGoToDashboard }) => (
+  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="go-to-dashboard-card loader-card">
+    <div className="gtds-header">
+      <div className="gtds-icon loader-spin"><LayoutDashboard size={24} /></div>
+      <div className="gtds-content">
+        <h3>Launching campaign dashboard...</h3>
+        <p>Preparing AI campaign workspace</p>
+      </div>
+    </div>
+    <div className="gtds-progress"><div className="gtds-progress-bar" /></div>
+    {campaignId && (
+      <div className="gtds-info">
+        <span>Campaign ID:</span><code>{campaignId.slice(0, 20)}...</code>
+      </div>
+    )}
+    <button className="gtds-dashboard-btn" onClick={onGoToDashboard}>
+      <LayoutDashboard size={16} />Open Dashboard
+    </button>
+  </motion.div>
+);
 
-          <div className="gtds-content">
-            <h3>Launching campaign dashboard...</h3>
-            <p>Preparing AI campaign workspace</p>
-          </div>
-        </div>
-
-        <div className="gtds-progress">
-          <div className="gtds-progress-bar" />
-        </div>
-
-        {campaignId && (
-          <div className="gtds-info">
-            <span>Campaign ID:</span>
-            <code>{campaignId.slice(0, 20)}...</code>
-          </div>
-        )}
-
-        <button
-          className="gtds-dashboard-btn"
-          onClick={onGoToDashboard}
-        >
-          <LayoutDashboard size={16} />
-          Open Dashboard
-        </button>
-      </motion.div>
-    );
-  };
-
-// ============================================
+// ============================================================
 // MAIN COMPONENT
-// ============================================
+// ============================================================
 export const Campaigns: React.FC = () => {
   const [url, setUrl] = useState('');
   const [urlError, setUrlError] = useState<string>('');
@@ -729,14 +895,42 @@ export const Campaigns: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [brandDetails, setBrandDetails] = useState<BrandDetails | null>(null);
-  // ✅ NEW: store final promoData for dashboard
   const [promoData, setPromoData] = useState<PromoObjectiveData | null>(null);
   const campaignIdRef = useRef<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [viewMode, setViewMode] = useState<'landing' | 'chat' | 'dashboard'>('landing');
-  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Session state
+  const [pendingSession, setPendingSession] = useState<CampaignSession | null>(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
+
+  // ── FIX: track first render so the viewMode effect doesn't fire on mount
+  const isFirstRender = useRef(true);
 
   const userId = user?._id || '';
+  const { saveSession, loadSession, clearSession } = useCampaignSession(userId);
+
+  // ── Check for existing session on mount ──────────────────
+  useEffect(() => {
+    if (!userId) return;
+    loadSession().then(session => {
+      if (session && session.messages?.length > 0) {
+        setPendingSession(session);
+      }
+      setSessionChecked(true);
+    });
+  }, [userId, loadSession]);
+
+  // ── FIX: Auto-save whenever viewMode changes (skip mount + landing) ──
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (!userId || viewMode === 'landing') return;
+    saveSession(buildSessionSnapshot(messages, brandDetails, promoData, campaignIdRef.current, viewMode));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode]);
 
   useEffect(() => () => { if (pollRef.current) clearInterval(pollRef.current); }, []);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
@@ -751,7 +945,78 @@ export const Campaigns: React.FC = () => {
     return !messages.slice(idx + 1).some(m => m.type === type);
   };
 
-  // ── STEP 1 ──
+  // ── Helper: build session snapshot ───────────────────────
+  const buildSessionSnapshot = (
+    msgs: Message[],
+    brand: BrandDetails | null,
+    promo: PromoObjectiveData | null,
+    campId: string | null,
+    view: 'landing' | 'chat' | 'dashboard',
+  ): CampaignSession => ({
+    messages: msgs,
+    brandDetails: brand,
+    promoData: promo,
+    campaignId: campId,
+    viewMode: view,
+    savedAt: new Date().toISOString(),
+  });
+
+  // ── FIX: Restore to exact viewMode saved in session ──────
+  const handleRestoreSession = () => {
+    if (!pendingSession) return;
+    setMessages(pendingSession.messages);
+    setBrandDetails(pendingSession.brandDetails);
+    setPromoData(pendingSession.promoData);
+    campaignIdRef.current = pendingSession.campaignId;
+
+    // Restore to the exact view the user was in when the session was saved
+    const restoredView = pendingSession.viewMode ?? 'chat';
+    setViewMode(restoredView);
+    setIsChatMode(restoredView !== 'landing');
+    setPendingSession(null);
+  };
+
+  const handleDiscardSession = async () => {
+    setPendingSession(null);
+    await clearSession();
+  };
+
+  // ── FIX: Non-destructive back — just flip the view, touch nothing else ──
+  const handleBackToChat = useCallback(() => {
+    setViewMode('chat');
+    setIsChatMode(true);
+  }, []);
+
+  // ── Full reset: wipe everything (↺ button only) ──────────
+  const handleReset = async () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    await clearSession();
+    setIsChatMode(false);
+    setUrl('');
+    setMessages([]);
+    setBrandDetails(null);
+    setPromoData(null);
+    campaignIdRef.current = null;
+    setViewMode('landing');
+    setUrlStatus('idle');
+    setUrlError('');
+    setPendingSession(null);
+    isFirstRender.current = true; // reset so the viewMode effect skips the next mount
+  };
+
+  // ── Dashboard save draft: clear session ──────────────────
+  const handleDashboardSaveDraft = useCallback(async (result: { success: boolean; message?: string }) => {
+    console.log('Draft saved from dashboard:', result);
+    if (result.success) await clearSession();
+  }, [clearSession]);
+
+  // ── Dashboard publish: clear session ─────────────────────
+  const handleDashboardPublish = useCallback(async (result: { success: boolean; message?: string }, planId?: string) => {
+    console.log(`Published with plan ${planId}:`, result);
+    if (result.success) await clearSession();
+  }, [clearSession]);
+
+  // ── STEP 1: Deep research + asset extraction ──────────────
   const handleDeepResearch = async () => {
     const formatResult = validateUrlFormat(url);
     if (!formatResult.ok) { setUrlError(formatResult.message); setUrlStatus('error'); return; }
@@ -760,86 +1025,157 @@ export const Campaigns: React.FC = () => {
     const reachable = await checkUrlReachable(normalizedUrl);
     if (!reachable) { setUrlStatus('error'); setUrlError("We couldn't reach this website."); setLoading(false); return; }
     setUrlStatus('valid'); setIsChatMode(true); setViewMode('chat');
-    setMessages([
-      { id: newMsgId(), role: 'user', type: 'text', content: normalizedUrl },
-      { id: newMsgId(), role: 'bot', type: 'text', content: 'Initializing Neural Engine... Analyzing website structure:' },
-      { id: newMsgId(), role: 'bot', type: 'research', content: { url: normalizedUrl } },
-    ]);
+
+    const initialMessages: Message[] = [
+      { id: newMsgId(), role: 'user',  type: 'text',     content: normalizedUrl },
+      { id: newMsgId(), role: 'bot',   type: 'text',     content: 'Initializing Neural Engine... Analyzing website structure:' },
+      { id: newMsgId(), role: 'bot',   type: 'research', content: { url: normalizedUrl } },
+    ];
+    setMessages(initialMessages);
+
     try {
       const domain = new URL(normalizedUrl).hostname.replace('www.', '').split('.')[0];
-      const { data: brand } = await axios.post(`${API_BASE}/campaign/discover`, { website: normalizedUrl, brandName: domain });
+
+      const [brandResp, assets] = await Promise.all([
+        axios.post(`${API_BASE}/campaign/discover`, { website: normalizedUrl, brandName: domain }),
+        fetchBrandAssets(normalizedUrl, API_BASE),
+      ]);
+
+      const brand: BrandDetails = { ...brandResp.data, website: normalizedUrl, assets };
       setBrandDetails(brand);
       if (brand.campaignId) campaignIdRef.current = brand.campaignId;
       setLoading(false);
+
       const name = resolveBrandName(brand);
       const industry = resolveIndustry(brand);
-      addMsg([
-        { role: 'bot', type: 'audit', content: brand },
+      const assetSummary = [
+        assets.websiteImages?.length ? `${assets.websiteImages.length} website images` : null,
+        assets.favicon ? '1 favicon/logo' : null,
+        assets.websiteScreenshot ? '1 screenshot' : null,
+      ].filter(Boolean).join(', ');
+
+      const newMsgs: Omit<Message, 'id'>[] = [
+        { role: 'bot', type: 'audit',      content: brand },
         { role: 'bot', type: 'brand_form', content: { brandName: name, brandUrl: normalizedUrl } },
-        { role: 'bot', type: 'text', content: `✅ Brand analysis complete for ${name} in the ${industry} industry.\n\nPlease confirm your brand details above, then we'll build your campaign.` },
-      ]);
+        { role: 'bot', type: 'text',       content: `✅ Brand analysis complete for ${name} in the ${industry} industry.\n${assetSummary ? `📸 Brand assets extracted: ${assetSummary}.\n` : ''}Please confirm your brand details above, then we'll build your campaign.` },
+      ];
+      setMessages(prev => {
+        const updated = [...prev, ...newMsgs.map(m => ({ ...m, id: newMsgId() }))];
+        saveSession(buildSessionSnapshot(updated, brand, null, brand.campaignId || null, 'chat'));
+        return updated;
+      });
     } catch (e) {
       console.error(e); setLoading(false);
       addMsg([{ role: 'bot', type: 'text', content: '❌ Failed to analyze website. Please try again.' }]);
     }
   };
 
-  // ── STEP 2 ──
+  // ── STEP 2: Brand form submitted ─────────────────────────
   const handleBrandFormSubmit = (data: BrandFormData) => {
-    setBrandDetails(prev => prev ? {
-      ...prev, brandName: data.brandName, logo: data.logoPreview || prev.logo, logoFile: data.logoFile,
-      brand: prev.brand ? { ...prev.brand, name: data.brandName } : prev.brand,
-    } : prev);
-
-    console.log('Brand form submitted with data:', data);
-    console.log('Current brand details state:', brandDetails);
+    setBrandDetails(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        brandName: data.brandName,
+        logoPreview: data.logoPreview || prev.logoPreview,
+        logo: data.logoPreview || prev.logo,
+        assets: {
+          ...prev.assets,
+          logoUrl:     data.logoPreview || prev.assets?.logoUrl,
+          logoPreview: data.logoPreview || prev.assets?.logoPreview,
+        },
+        brand: prev.brand ? { ...prev.brand, name: data.brandName } : prev.brand,
+      };
+    });
 
     const defaultPromo: PromoObjectiveData = {
-      businessType: brandDetails?.brand?.businessModel || 'Solution & Online Service',
-      adGoal: 'In-web actions', businessGoal: 'Sales', targetLocations: 'India',
-      platform: 'meta', promotionType: 'Long-term', dailyBudget: 35,
-      platforms: ['meta'],
+      businessType:    brandDetails?.brand?.businessModel || 'Solution & Online Service',
+      adGoal:          'In-web actions',
+      businessGoal:    'Sales',
+      targetLocations: 'India',
+      platform:        'meta',
+      promotionType:   'Long-term',
+      dailyBudget:     35,
+      platforms:       ['meta', 'google'],
+      finalUrl:        data.brandUrl,
+      headlines:       [
+        `Discover ${data.brandName} Today`,
+        `Trusted by Thousands — ${data.brandName}`,
+        `Get Started with ${data.brandName}`,
+      ],
+      primaryTexts: [
+        `Discover our latest campaign — built for results.`,
+        `Affordable and trusted solutions from ${data.brandName}.`,
+      ],
+      callToAction: 'Learn More',
     };
-    // ✅ Store defaults immediately so dashboard can use them
     setPromoData(defaultPromo);
 
-    addMsg([
-      { role: 'user', type: 'text', content: `Brand confirmed: ${data.brandName}${data.logoPreview ? ' (with logo)' : ''}` },
-      { role: 'bot', type: 'text', content: `Perfect! 🎯 Here's your brand intelligence and campaign objectives. Review and edit anything before generating:` },
-      { role: 'bot', type: 'promo_objective', content: { brandName: data.brandName, promoData: defaultPromo } },
-    ]);
+    const newMsgs: Omit<Message, 'id'>[] = [
+      { role: 'user', type: 'text',           content: `Brand confirmed: ${data.brandName}${data.logoPreview ? ' (with logo)' : ''}` },
+      { role: 'bot',  type: 'text',           content: `Perfect! 🎯 Here's your brand intelligence and campaign objectives. Review and edit anything before generating:` },
+      { role: 'bot',  type: 'promo_objective', content: { brandName: data.brandName, promoData: defaultPromo } },
+    ];
+
+    setMessages(prev => {
+      const updated = [...prev, ...newMsgs.map(m => ({ ...m, id: newMsgId() }))];
+      const updatedBrand = brandDetails
+        ? { ...brandDetails, brandName: data.brandName, logoPreview: data.logoPreview || brandDetails.logoPreview }
+        : null;
+      saveSession(buildSessionSnapshot(updated, updatedBrand, defaultPromo, campaignIdRef.current, 'chat'));
+      return updated;
+    });
   };
 
-  // ── STEP 3 ──
+  // ── STEP 3: Generate campaign ─────────────────────────────
   const handleGenerateCampaign = async (finalPromo: PromoObjectiveData) => {
     const name = brandDetails ? resolveBrandName(brandDetails) : 'your brand';
-    // ✅ Store final promo so AdCampaignDashboard gets it
     setPromoData(finalPromo);
 
-    addMsg([{ role: 'user', type: 'text', content: `Generate campaign for ${name} on ${finalPromo.platforms?.join(', ') || finalPromo.platform} — $${finalPromo.dailyBudget}/day` }]);
+    addMsg([{
+      role: 'user', type: 'text',
+      content: `Generate campaign for ${name} on ${finalPromo.platforms?.join(', ') || finalPromo.platform} — $${finalPromo.dailyBudget}/day`,
+    }]);
     setLoading(true);
+
     try {
       const brandId = brandDetails?.brandId || brandDetails?.campaignId;
       const { data: draft } = await axios.post(`${API_BASE}/campaign/draft`, {
-        brandId, platforms: finalPromo.platforms || [finalPromo.platform],
-        budget: { daily: finalPromo.dailyBudget, total: finalPromo.dailyBudget * 30 },
-        userId, promoData: finalPromo,
+        brandId,
+        platforms:  finalPromo.platforms || [finalPromo.platform],
+        budget:     { daily: finalPromo.dailyBudget, total: finalPromo.dailyBudget * 30 },
+        userId,
+        promoData:  finalPromo,
+        assets:     brandDetails?.assets,
       });
       campaignIdRef.current = draft.campaignId;
       await axios.post(`${API_BASE}/campaign/publish/${draft.campaignId}`);
       setLoading(false);
-      addMsg([
-        { role: 'bot', type: 'text', content: '🎉 Campaign going for creation...' },
+
+      const successMsgs: Omit<Message, 'id'>[] = [
+        { role: 'bot', type: 'text',           content: '🎉 Campaign going for creation...' },
         { role: 'bot', type: 'live_dashboard', content: { campaignId: draft.campaignId } },
-      ]);
+      ];
+      setMessages(prev => {
+        const updated = [...prev, ...successMsgs.map(m => ({ ...m, id: newMsgId() }))];
+        saveSession(buildSessionSnapshot(updated, brandDetails, finalPromo, draft.campaignId, 'dashboard'));
+        return updated;
+      });
       setTimeout(() => setViewMode('dashboard'), 3000);
     } catch (err: any) {
-      setLoading(false); console.error(err);
-      // Even if API fails, still allow going to dashboard with local data
-      addMsg([
-        { role: 'bot', type: 'text', content: '⚠️ Campaign queued — API unavailable. Opening dashboard with your settings.' },
-        { role: 'bot', type: 'live_dashboard', content: { campaignId: `local-${Date.now()}` } },
-      ]);
+      setLoading(false);
+      const localId = `local-${Date.now()}`;
+      campaignIdRef.current = localId;
+
+      const fallbackMsgs: Omit<Message, 'id'>[] = [
+        { role: 'bot', type: 'text',           content: '⚠️ Campaign queued — API unavailable. Opening dashboard with your settings.' },
+        { role: 'bot', type: 'live_dashboard', content: { campaignId: localId } },
+      ];
+      setMessages(prev => {
+        const updated = [...prev, ...fallbackMsgs.map(m => ({ ...m, id: newMsgId() }))];
+        saveSession(buildSessionSnapshot(updated, brandDetails, finalPromo, localId, 'dashboard'));
+        return updated;
+      });
       setTimeout(() => setViewMode('dashboard'), 2000);
     }
   };
@@ -848,20 +1184,13 @@ export const Campaigns: React.FC = () => {
     const name = brandDetails ? resolveBrandName(brandDetails) : 'your brand';
     addMsg([
       { role: 'user', type: 'text', content: 'Maybe later' },
-      { role: 'bot', type: 'text', content: `No problem! The analysis for ${name} has been saved. Come back anytime.` },
+      { role: 'bot',  type: 'text', content: `No problem! The analysis for ${name} has been saved. Come back anytime.` },
     ]);
   };
 
-  const handleReset = () => {
-    if (pollRef.current) clearInterval(pollRef.current);
-    setIsChatMode(false); setUrl(''); setMessages([]); setBrandDetails(null);
-    setPromoData(null); campaignIdRef.current = null; setViewMode('landing');
-    setUrlStatus('idle'); setUrlError('');
-  };
-
-  // ============================================
+  // ============================================================
   // LANDING PAGE
-  // ============================================
+  // ============================================================
   if (!isChatMode) {
     return (
       <>
@@ -872,35 +1201,93 @@ export const Campaigns: React.FC = () => {
           <div className="land-orb land-orb-1" aria-hidden="true" />
           <div className="land-orb land-orb-2" aria-hidden="true" />
           <div className="land-orb land-orb-3" aria-hidden="true" />
-          <div className="land-particles" aria-hidden="true">{Array.from({ length: 18 }).map((_, i) => <span key={i} className="land-particle" style={{ '--i': i } as any} />)}</div>
+          <div className="land-particles" aria-hidden="true">
+            {Array.from({ length: 18 }).map((_, i) => (
+              <span key={i} className="land-particle" style={{ '--i': i } as any} />
+            ))}
+          </div>
           <div className="land-content">
-            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="land-badge"><span className="land-badge-dot" /><Zap size={11} /> AI-Powered · Real-time · Multi-Platform</motion.div>
-            <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="land-headline">Turn Your Brand Into a<span className="land-headline-line2"><span className="land-hl-static">Revenue</span><span className="land-hl-machine"> Machine</span></span></motion.h1>
-            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="land-sub">Drop your URL. Our AI deep-scans your brand, builds optimized campaigns across<br />Meta, Google, Twitter & LinkedIn — then manages spend for maximum ROI.</motion.p>
+            <AnimatePresence>
+              {sessionChecked && pendingSession && (
+                <RestoreSessionBanner
+                  session={pendingSession}
+                  onRestore={handleRestoreSession}
+                  onDiscard={handleDiscardSession}
+                />
+              )}
+            </AnimatePresence>
+
+            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="land-badge">
+              <span className="land-badge-dot" /><Zap size={11} /> AI-Powered · Real-time · Multi-Platform
+            </motion.div>
+            <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="land-headline">
+              Turn Your Brand Into a
+              <span className="land-headline-line2">
+                <span className="land-hl-static">Revenue</span>
+                <span className="land-hl-machine"> Machine</span>
+              </span>
+            </motion.h1>
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="land-sub">
+              Drop your URL. Our AI deep-scans your brand, extracts logos & images, builds optimized campaigns across<br />
+              Meta, Google, Twitter & LinkedIn — then manages spend for maximum ROI.
+            </motion.p>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} className="land-input-section">
               <div className={`land-input-shell ${urlStatus === 'error' ? 'is-error' : urlStatus === 'valid' ? 'is-valid' : urlStatus === 'checking' ? 'is-checking' : ''}`}>
                 <div className="land-input-prefix">
-                  {urlStatus === 'valid' ? <CheckCircle2 size={17} color="#10b981" /> : urlStatus === 'error' ? <XCircle size={17} color="#ef4444" /> : urlStatus === 'checking' ? <Loader2 size={17} color="#38bdf8" className="camp-spin" /> : <Globe size={17} color="#475569" />}
+                  {urlStatus === 'valid'    ? <CheckCircle2 size={17} color="#10b981" /> :
+                   urlStatus === 'error'    ? <XCircle      size={17} color="#ef4444" /> :
+                   urlStatus === 'checking' ? <Loader2      size={17} color="#38bdf8" className="camp-spin" /> :
+                                             <Globe         size={17} color="#475569" />}
                 </div>
-                <input value={url} onChange={e => { setUrl(e.target.value); if (urlStatus === 'error') { setUrlStatus('idle'); setUrlError(''); } }} onKeyDown={e => { if (e.key === 'Enter' && !loading && url) handleDeepResearch(); }} placeholder="https://your-company.com" className="land-url-input" disabled={loading} spellCheck={false} />
+                <input
+                  value={url}
+                  onChange={e => { setUrl(e.target.value); if (urlStatus === 'error') { setUrlStatus('idle'); setUrlError(''); } }}
+                  onKeyDown={e => { if (e.key === 'Enter' && !loading && url) handleDeepResearch(); }}
+                  placeholder="https://your-company.com"
+                  className="land-url-input"
+                  disabled={loading}
+                  spellCheck={false}
+                />
                 <button className="land-cta-btn" onClick={handleDeepResearch} disabled={loading || !url || urlStatus === 'checking'}>
                   {loading ? <><Loader2 size={15} className="camp-spin" /> Analyzing</> : <><Rocket size={15} /> Launch AI Scan</>}
                 </button>
               </div>
-              <AnimatePresence>{urlError && <motion.div className="land-url-error" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}><AlertTriangle size={12} /> {urlError}</motion.div>}</AnimatePresence>
+              <AnimatePresence>
+                {urlError && (
+                  <motion.div className="land-url-error" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+                    <AlertTriangle size={12} /> {urlError}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <div className="land-input-hint"><ShieldCheck size={12} color="#334155" /> No credit card needed to scan &nbsp;·&nbsp; Results in under 30 seconds</div>
             </motion.div>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="land-platforms">
               <span className="land-platforms-label">Runs campaigns on</span>
               <div className="land-platform-icons">
-                {[{ name: 'Meta', color: '#3b82f6', icon: <FacebookIcon /> }, { name: 'Google', color: '#ea4335', icon: <GoogleIcon /> }, { name: 'Twitter', color: '#e7e9ea', icon: <TwitterXIcon /> }, { name: 'LinkedIn', color: '#0a66c2', icon: <LinkedInIcon /> }].map(p => (
-                  <div key={p.name} className="land-platform-pill" style={{ '--pc': p.color } as any}>{p.icon}<span>{p.name}</span></div>
+                {[
+                  { name: 'Meta',     color: '#3b82f6', icon: <FacebookIcon /> },
+                  { name: 'Google',   color: '#ea4335', icon: <GoogleIcon /> },
+                  { name: 'Twitter',  color: '#e7e9ea', icon: <TwitterXIcon /> },
+                  { name: 'LinkedIn', color: '#0a66c2', icon: <LinkedInIcon /> },
+                ].map(p => (
+                  <div key={p.name} className="land-platform-pill" style={{ '--pc': p.color } as any}>
+                    {p.icon}<span>{p.name}</span>
+                  </div>
                 ))}
               </div>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }} className="land-stats">
-              {[{ value: '2,400+', label: 'Campaigns Launched', icon: <Rocket size={16} /> }, { value: '98.4%', label: 'Analysis Accuracy', icon: <Brain size={16} /> }, { value: '3.8×', label: 'Avg ROI Uplift', icon: <TrendingUp size={16} /> }, { value: '$12M+', label: 'Ad Spend Managed', icon: <DollarSign size={16} /> }].map(s => (
-                <div key={s.label} className="land-stat-card"><div className="land-stat-icon">{s.icon}</div><div className="land-stat-value">{s.value}</div><div className="land-stat-label">{s.label}</div></div>
+              {[
+                { value: '2,400+', label: 'Campaigns Launched', icon: <Rocket    size={16} /> },
+                { value: '98.4%',  label: 'Analysis Accuracy',  icon: <Brain     size={16} /> },
+                { value: '3.8×',   label: 'Avg ROI Uplift',     icon: <TrendingUp size={16} /> },
+                { value: '$12M+',  label: 'Ad Spend Managed',   icon: <DollarSign size={16} /> },
+              ].map(s => (
+                <div key={s.label} className="land-stat-card">
+                  <div className="land-stat-icon">{s.icon}</div>
+                  <div className="land-stat-value">{s.value}</div>
+                  <div className="land-stat-label">{s.label}</div>
+                </div>
               ))}
             </motion.div>
           </div>
@@ -909,11 +1296,10 @@ export const Campaigns: React.FC = () => {
     );
   }
 
-  // ============================================
-  // ✅ DASHBOARD VIEW — fully wired
-  // ============================================
+  // ============================================================
+  // DASHBOARD VIEW
+  // ============================================================
   if (viewMode === 'dashboard') {
-
     return (
       <>
         <style>{CSS}</style>
@@ -923,32 +1309,25 @@ export const Campaigns: React.FC = () => {
             promoData={promoData || undefined}
             campaignId={campaignIdRef.current || undefined}
             apiBase={API_BASE}
-            onBack={() => {
-              setViewMode('chat');
-              setIsChatMode(true);
-            }}
-            onPublish={(result) => {
-              console.log('Published:', result);
-            }}
-            onSaveDraft={(result) => {
-              console.log('Draft saved:', result);
-            }}
+            onBack={handleBackToChat}       // ← FIX: non-destructive, preserves all state
+            onPublish={handleDashboardPublish}
+            onSaveDraft={handleDashboardSaveDraft}
           />
         </div>
       </>
     );
   }
 
-  // ============================================
+  // ============================================================
   // CHAT VIEW
-  // ============================================
+  // ============================================================
   return (
     <>
       <style>{CSS}</style>
       <div className="camp-header-wrapper">
         <Header />
         <div className="camp-topbar-right">
-          {viewMode !== 'dashboard' && promoData && (
+          {promoData && (
             <button className="camp-dashboard-btn" onClick={() => setViewMode('dashboard')}>
               <LayoutDashboard size={14} /> Dashboard
             </button>
@@ -963,12 +1342,26 @@ export const Campaigns: React.FC = () => {
               {messages.map(msg => {
                 const latest = isLatestOfType(msg.id, msg.type);
                 return (
-                  <motion.div key={msg.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className={`camp-msg-row ${msg.role}`}>
-                    <div className={`camp-avatar ${msg.role}`}>{msg.role === 'bot' ? <Brain size={15} /> : <div className="camp-user-dot" />}</div>
+                  <motion.div
+                    key={msg.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className={`camp-msg-row ${msg.role}`}
+                  >
+                    <div className={`camp-avatar ${msg.role}`}>
+                      {msg.role === 'bot' ? <Brain size={15} /> : <div className="camp-user-dot" />}
+                    </div>
                     <div className="camp-msg-body">
-                      {msg.type === 'text' && msg.role === 'bot' && <TypingBubble text={msg.content} />}
-                      {msg.type === 'text' && msg.role === 'user' && <div className="camp-bubble-user">{msg.content}</div>}
-                      {msg.type === 'research' && <ErrorBoundary><ResearchTerminal url={msg.content?.url} /></ErrorBoundary>}
+                      {msg.type === 'text' && msg.role === 'bot' && (
+                        <TypingBubble text={msg.content} skipAnimation={!!pendingSession} />
+                      )}
+                      {msg.type === 'text' && msg.role === 'user' && (
+                        <div className="camp-bubble-user">{msg.content}</div>
+                      )}
+                      {msg.type === 'research' && (
+                        <ErrorBoundary><ResearchTerminal url={msg.content?.url} /></ErrorBoundary>
+                      )}
                       {msg.type === 'audit' && <BrandAuditCard brand={msg.content} />}
                       {msg.type === 'brand_form' && (latest
                         ? <BrandDetailsForm initialName={msg.content?.brandName} initialUrl={msg.content?.brandUrl} onSubmit={handleBrandFormSubmit} />
@@ -976,18 +1369,20 @@ export const Campaigns: React.FC = () => {
                       )}
                       {msg.type === 'promo_objective' && (latest
                         ? <div>
-                          <BrandValueCard brand={brandDetails!} />
-                          <EditablePromoObjective brandName={msg.content?.brandName} initialData={msg.content?.promoData} onGenerate={handleGenerateCampaign} onDecline={handleCampaignDecline} />
-                        </div>
+                            <BrandValueCard brand={brandDetails!} />
+                            <EditablePromoObjective
+                              brandName={msg.content?.brandName}
+                              initialData={msg.content?.promoData}
+                              onGenerate={handleGenerateCampaign}
+                              onDecline={handleCampaignDecline}
+                            />
+                          </div>
                         : <div className="camp-bubble-bot camp-muted">Campaign objectives confirmed ✓</div>
                       )}
                       {msg.type === 'live_dashboard' && (
                         <GoToDashboardCard
                           campaignId={msg.content?.campaignId}
-                          onGoToDashboard={() => {
-                            setViewMode('dashboard');
-                            setIsChatMode(true);
-                          }}
+                          onGoToDashboard={() => { setViewMode('dashboard'); setIsChatMode(true); }}
                         />
                       )}
                     </div>
@@ -997,7 +1392,9 @@ export const Campaigns: React.FC = () => {
               {loading && (
                 <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="camp-loading-row">
                   <div className="camp-avatar bot"><Brain size={15} /></div>
-                  <div className="camp-ai-thinking"><span className="camp-dot" /><span className="camp-dot" /><span className="camp-dot" /></div>
+                  <div className="camp-ai-thinking">
+                    <span className="camp-dot" /><span className="camp-dot" /><span className="camp-dot" />
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1009,12 +1406,50 @@ export const Campaigns: React.FC = () => {
   );
 };
 
-// CSS is the same as original — keeping all styles intact
+// ============================================================
+// CSS — all original styles + session restore banner styles
+// ============================================================
 const CSS = `
   *, *::before, *::after { box-sizing: border-box; }
   .camp-spin { animation: spin 1s linear infinite; }
   .spin { animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Restore session banner ── */
+  .restore-banner {
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; max-width: 680px; margin-bottom: 24px;
+    padding: 14px 16px;
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.35);
+    border-radius: 14px;
+  }
+  .restore-banner-icon {
+    width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(99,102,241,0.15); display: flex; align-items: center;
+    justify-content: center; color: #a5b4fc;
+  }
+  .restore-banner-body { flex: 1; min-width: 0; }
+  .restore-banner-title { font-size: 0.88rem; font-weight: 700; color: #e2e8f0; margin-bottom: 3px; }
+  .restore-banner-sub { font-size: 0.75rem; color: #64748b; }
+  .restore-banner-sub strong { color: #94a3b8; }
+  .restore-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .restore-btn-primary {
+    display: flex; align-items: center; gap: 6px; padding: 9px 16px;
+    border-radius: 9px; background: rgba(99,102,241,0.2);
+    border: 1px solid rgba(99,102,241,0.45); color: #a5b4fc;
+    font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .restore-btn-primary:hover { background: rgba(99,102,241,0.35); }
+  .restore-btn-secondary {
+    display: flex; align-items: center; gap: 6px; padding: 9px 14px;
+    border-radius: 9px; background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.09); color: #4b5563;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .restore-btn-secondary:hover { color: #64748b; border-color: rgba(255,255,255,0.15); }
 
   .camp-header-wrapper { position: fixed; width: 80%; z-index: 100; }
   .camp-topbar-right { position: absolute; top: 130%; right: 10px; transform: translateY(-50%); z-index: 200; display: flex; align-items: center; gap: 10px; }
@@ -1151,14 +1586,11 @@ const CSS = `
   .bvc-score-bar-track { flex: 1; height: 8px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; }
   .bvc-score-bar-fill { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
   .bvc-score-num { font-size: 0.78rem; font-weight: 700; width: 28px; text-align: right; flex-shrink: 0; }
-  .bvc-gap-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 10px; margin-bottom: 4px; }
-  .bvc-gap-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  .bvc-gap-label { font-size: 0.62rem; color: #4b5563; text-transform: uppercase; letter-spacing: 0.06em; }
   .bvc-insight { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); border-radius: 9px; font-size: 0.76rem; color: #cbd5e1; line-height: 1.5; margin-top: 12px; }
-  .promo-obj-card { background: rgba(12,16,28,0.97); border: 2px solid rgba(0, 86, 247, 0.3); border-radius: 24px; padding: 22px; max-width: 640px; }
+  .promo-obj-card { background: rgba(12,16,28,0.97); border: 2px solid rgba(0,86,247,0.3); border-radius: 24px; padding: 22px; max-width: 640px; }
   .promo-obj-banner { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding: 12px 16px; border-radius: 12px; border: 1px solid rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); color: #6ee7b7; font-size: 0.82rem; font-weight: 500; }
   .promo-obj-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
-  .promo-obj-icon { width: 48px; height: 48px; border-radius: 14px; background: rgba(92, 151, 246, 0.15); border: 1px solid rgba(92, 146, 246, 0.3); display: flex; align-items: center; justify-content: center; color: #0066ff; flex-shrink: 0; }
+  .promo-obj-icon { width: 48px; height: 48px; border-radius: 14px; background: rgba(92,151,246,0.15); border: 1px solid rgba(92,146,246,0.3); display: flex; align-items: center; justify-content: center; color: #0066ff; flex-shrink: 0; }
   .promo-obj-header h3 { margin: 0 0 4px; font-size: 1.1rem; font-weight: 700; color: #fff; }
   .promo-obj-header p { margin: 0; font-size: 0.78rem; color: #64748b; }
   .promo-obj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
@@ -1170,7 +1602,7 @@ const CSS = `
   .promo-select option { background: #1e293b; color: #fff; }
   .promo-platform-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .promo-plat-btn { display: flex; align-items: center; gap: 7px; padding: 9px 14px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: #64748b; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-  .promo-plat-btn.active { border-color: rgba(92, 143, 246, 0.7); background: rgba(139,92,246,0.15); color: #b5cdfd; box-shadow: 0 0 12px rgba(139,92,246,0.2); }
+  .promo-plat-btn.active { border-color: rgba(92,143,246,0.7); background: rgba(139,92,246,0.15); color: #b5cdfd; box-shadow: 0 0 12px rgba(139,92,246,0.2); }
   .promo-budget-row { display: flex; align-items: center; gap: 10px; }
   .promo-budget-input { flex: 1; }
   .promo-budget-unit { color: #64748b; font-size: 0.85rem; white-space: nowrap; }
@@ -1178,49 +1610,8 @@ const CSS = `
   .promo-benefit-row { display: flex; align-items: center; gap: 9px; font-size: 0.82rem; color: #94a3b8; }
   .benefit-check { color: #10b981; flex-shrink: 0; }
   .promo-actions { display: flex; gap: 12px; }
-  .promo-generate-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 20px; background: linear-gradient(135deg, #0073ff, #022b5e); border: none; border-radius: 14px; color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 20px rgba(58, 142, 237, 0.35); }
-  .promo-generate-btn:hover { transform: scale(1.02); box-shadow: 0 8px 28px rgba(58, 136, 237, 0.5); }
-  .audit-card { background: rgba(12,14,22,0.95); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; margin-top: 6px; overflow: hidden; }
-  .audit-topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .audit-brand-identity { display: flex; align-items: center; gap: 12px; }
-  .audit-brand-icon { width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(135deg, #1e3a5f, #1e1b4b); border: 1px solid rgba(59,130,246,0.3); display: flex; align-items: center; justify-content: center; color: #60a5fa; flex-shrink: 0; }
-  .audit-brand-name { font-size: 1rem; font-weight: 700; color: #fff; }
-  .audit-brand-industry { font-size: 0.72rem; color: #64748b; margin-top: 2px; }
-  .audit-tabs { display: flex; overflow-x: auto; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 0 16px; scrollbar-width: none; }
-  .audit-tab { padding: 12px 16px; font-size: 0.78rem; font-weight: 600; color: #4b5563; background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: color 0.2s, border-color 0.2s; white-space: nowrap; }
-  .audit-tab.active { color: #60a5fa; border-bottom-color: #3b82f6; }
-  .audit-panel { padding: 16px; }
-  .audit-section-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px; }
-  .audit-section-card h4 { margin: 0 0 10px; color: #fff; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
-  .audit-info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-  .audit-info-row span { color: #64748b; font-size: 0.82rem; }
-  .audit-info-row strong { color: #e2e8f0; }
-  .audit-info-row p { color: #94a3b8; font-size: 0.8rem; font-style: italic; margin: 0; text-align: right; }
-  .audit-kw-section h4 { margin: 0 0 10px; color: #94a3b8; font-size: 0.78rem; text-transform: uppercase; }
-  .audit-kw-section { margin-bottom: 14px; }
-  .audit-pills { display: flex; flex-wrap: wrap; gap: 8px; }
-  .audit-pill { display: inline-block; padding: 5px 12px; border-radius: 99px; font-size: 0.78rem; font-weight: 500; }
-  .audit-pill.blue { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
-  .audit-pill.purple { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
-  .audit-pill.teal { background: rgba(20,184,166,0.12); color: #2dd4bf; border: 1px solid rgba(20,184,166,0.28); }
-  .audit-objective { padding: 12px 14px; background: linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.06)); border: 1px solid rgba(59,130,246,0.18); border-radius: 10px; color: #93c5fd; font-size: 0.82rem; line-height: 1.55; margin-bottom: 12px; }
-  .audit-analytics-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
-  .aa-metric { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; text-align: center; }
-  .aa-value { font-size: 1.5rem; font-weight: 800; color: #60a5fa; margin-bottom: 4px; }
-  .aa-label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
-  .audit-score-badge { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 12px; background: linear-gradient(135deg,rgba(16,185,129,0.15),rgba(59,130,246,0.1)); border: 1px solid rgba(16,185,129,0.3); }
-  .audit-score-num { font-size: 1.2rem; font-weight: 800; color: #10b981; line-height: 1; }
-  .audit-score-lbl { font-size: 0.52rem; color: #4b5563; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
-  .go-to-dashboard-card { background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.05)); border: 1px solid rgba(16,185,129,0.3); border-radius: 16px; padding: 24px; margin-top: 6px; max-width: 420px; }
-  .gtds-header { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 16px; }
-  .gtds-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(16,185,129,0.15); display: flex; align-items: center; justify-content: center; color: #10b981; flex-shrink: 0; }
-  .gtds-header h3 { margin: 0 0 4px; color: #fff; font-size: 1.05rem; }
-  .gtds-header p { margin: 0; color: #94a3b8; font-size: 0.82rem; }
-  .gtds-info { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 16px; color: #64748b; font-size: 0.78rem; }
-  .gtds-info code { color: #38bdf8; font-family: monospace; }
-  .gtds-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.2s; }
-  .gtds-btn:hover { transform: scale(1.02); box-shadow: 0 0 24px rgba(16,185,129,0.4); }
-  .dashboard-wrapper { min-height: 100vh; background: #0a0a0f; }
+  .promo-generate-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 20px; background: linear-gradient(135deg, #0073ff, #022b5e); border: none; border-radius: 14px; color: #fff; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 6px 20px rgba(58,142,237,0.35); }
+  .promo-generate-btn:hover { transform: scale(1.02); box-shadow: 0 8px 28px rgba(58,136,237,0.5); }
   .audit-card { background: rgba(12,14,22,0.95); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; margin-top: 6px; overflow: hidden; }
   .audit-topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); }
   .audit-brand-identity { display: flex; align-items: center; gap: 12px; }
@@ -1230,7 +1621,6 @@ const CSS = `
   .audit-tabs { display: flex; overflow-x: auto; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 0 16px; scrollbar-width: none; }
   .audit-tabs::-webkit-scrollbar { display: none; }
   .audit-tab { padding: 12px 16px; font-size: 0.78rem; font-weight: 600; color: #4b5563; background: transparent; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: color 0.2s, border-color 0.2s; white-space: nowrap; }
-  .audit-tab:hover { color: #94a3b8; }
   .audit-tab.active { color: #60a5fa; border-bottom-color: #3b82f6; }
   .audit-panel { padding: 16px; }
   .audit-section-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px; }
@@ -1239,17 +1629,20 @@ const CSS = `
   .audit-info-row:last-child { border-bottom: none; }
   .audit-info-row span { color: #64748b; font-size: 0.82rem; }
   .audit-info-row strong { color: #e2e8f0; }
+  .audit-info-row p { color: #94a3b8; font-size: 0.8rem; font-style: italic; margin: 0; text-align: right; }
+  .audit-mono { font-family: 'Courier New',monospace; font-size: 0.72rem !important; }
+  .audit-objective { padding: 12px 14px; background: linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.06)); border: 1px solid rgba(59,130,246,0.18); border-radius: 10px; color: #93c5fd; font-size: 0.82rem; line-height: 1.55; margin-bottom: 12px; }
   .audit-score-circles { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
   .audit-circle { width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(59,130,246,0.3); display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .ac-value { font-size: 1.4rem; font-weight: 800; color: #60a5fa; }
   .ac-label { font-size: 0.6rem; color: #64748b; text-transform: uppercase; }
+  .audit-kw-section { margin-bottom: 14px; }
   .audit-kw-section h4 { margin: 0 0 10px; color: #94a3b8; font-size: 0.78rem; text-transform: uppercase; }
   .audit-pills { display: flex; flex-wrap: wrap; gap: 8px; }
   .audit-pill { display: inline-block; padding: 5px 12px; border-radius: 99px; font-size: 0.78rem; font-weight: 500; }
   .audit-pill.blue { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
   .audit-pill.purple { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
   .audit-pill.teal { background: rgba(20,184,166,0.12); color: #2dd4bf; border: 1px solid rgba(20,184,166,0.28); }
-  .audit-pill.amber { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.28); }
   .audit-issue-list { display: flex; flex-direction: column; gap: 6px; }
   .audit-issue-group { margin-top: 12px; }
   .audit-issue-group-label { font-size: 0.68rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
@@ -1263,89 +1656,34 @@ const CSS = `
   .comp-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444); }
   .comp-intensity-label { font-size: 0.75rem; font-weight: 700; }
   .competitor-card { background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
-  .competitor-name { font-size: 0.9rem; font-weight: 700; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-  .competitor-name::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: #0062ff; }
-  .comp-sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .competitor-name { font-size: 0.9rem; font-weight: 700; color: #fff; margin-bottom: 10px; }
+  .comp-sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .comp-sw-box { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; }
   .comp-sw-title { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
   .comp-sw-title.green { color: #10b981; } .comp-sw-title.red { color: #ef4444; }
   .comp-sw-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
-  .comp-sw-list li { font-size: 0.73rem; color: #94a3b8; line-height: 1.4; display: flex; align-items: flex-start; gap: 5px; }
-  .comp-sw-list li::before { content: '–'; color: #4b5563; flex-shrink: 0; }
-  .comp-comparison { padding: 8px 12px; background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.14); border-radius: 8px; color: #93c5fd; font-size: 0.75rem; font-style: italic; line-height: 1.5; }
+  .comp-sw-list li { font-size: 0.73rem; color: #94a3b8; line-height: 1.4; }
   .audit-analytics-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
   .aa-metric { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; text-align: center; }
   .aa-value { font-size: 1.5rem; font-weight: 800; color: #60a5fa; margin-bottom: 4px; }
   .aa-label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; }
-  .audit-traffic-sources { display: flex; flex-direction: column; gap: 6px; }
-  .audit-traffic-item { display: flex; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.025); border-radius: 8px; gap: 10px; }
-  .audit-traffic-name { font-size: 0.78rem; color: #94a3b8; width: 130px; flex-shrink: 0; }
-  .audit-traffic-bar { flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
-  .audit-traffic-fill { height: 100%; border-radius: 99px; }
   .audit-score-badge { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 12px; background: linear-gradient(135deg,rgba(16,185,129,0.15),rgba(59,130,246,0.1)); border: 1px solid rgba(16,185,129,0.3); }
   .audit-score-num { font-size: 1.2rem; font-weight: 800; color: #10b981; line-height: 1; }
   .audit-score-lbl { font-size: 0.52rem; color: #4b5563; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
-  .audit-objective { padding: 12px 14px; background: linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.06)); border: 1px solid rgba(59,130,246,0.18); border-radius: 10px; color: #93c5fd; font-size: 0.82rem; line-height: 1.55; margin-bottom: 12px; }
-  .audit-info-row p { color: #94a3b8; font-size: 0.8rem; font-style: italic; margin: 0; text-align: right; }
-  .audit-mono { font-family: 'Courier New',monospace; font-size: 0.72rem !important; }
-.loader-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.gtds-content h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.gtds-content p {
-  margin: 4px 0 0;
-  opacity: 0.7;
-  font-size: 14px;
-}
-
-.loader-spin {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: spin 1.4s linear infinite;
-}
-
-.gtds-progress {
-  width: 100%;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  overflow: hidden;
-  margin-top: 18px;
-}
-
-.gtds-progress-bar {
-  width: 40%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #3b82f6, #06b6d4);
-  animation: loadingBar 1.6s ease-in-out infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes loadingBar {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(260%);
-  }
-}
+  .go-to-dashboard-card { background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(59,130,246,0.05)); border: 1px solid rgba(16,185,129,0.3); border-radius: 16px; padding: 24px; margin-top: 6px; max-width: 420px; }
+  .gtds-header { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 16px; }
+  .gtds-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(16,185,129,0.15); display: flex; align-items: center; justify-content: center; color: #10b981; flex-shrink: 0; }
+  .gtds-content h3 { margin: 0; font-size: 16px; font-weight: 700; color: #fff; }
+  .gtds-content p { margin: 4px 0 0; opacity: 0.7; font-size: 13px; color: #94a3b8; }
+  .gtds-info { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 16px; color: #64748b; font-size: 0.78rem; }
+  .gtds-info code { color: #38bdf8; font-family: monospace; }
+  .gtds-progress { width: 100%; height: 8px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 18px; margin-bottom: 16px; }
+  .gtds-progress-bar { width: 40%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #3b82f6, #06b6d4); animation: loadingBar 1.6s ease-in-out infinite; }
+  @keyframes loadingBar { 0% { transform: translateX(-100%); } 100% { transform: translateX(260%); } }
+  .loader-spin { animation: spin 1.4s linear infinite; }
+  .gtds-dashboard-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+  .dashboard-wrapper { min-height: 100vh; background: #0a0a0f; }
 `;
 
 export default Campaigns;
+  

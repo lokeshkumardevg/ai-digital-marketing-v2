@@ -20,7 +20,7 @@ export class CampaignController {
 
   constructor(
     private readonly service: CampaignService,
-  ) {}
+  ) { }
 
   @Post('discover')
   discover(
@@ -61,27 +61,24 @@ export class CampaignController {
   // SESSION APIs
   // ============================================
 
+  // GET /session/:userId
   @Get('session/:userId')
-  getSession(@Param('userId') userId: string) {
+  async getSession(@Param('userId') userId: string) {
     return this.service.getSession(userId);
   }
 
-  @Post('session/save')
-  saveSession(@Body() body: any) {
-
-    const userId = body.userId;
-
-    if (!userId) {
-      throw new Error('userId is required');
-    }
-
+  // POST /session/:userId
+  @Post('session/:userId')
+  async saveSession(
+    @Param('userId') userId: string,
+    @Body() body: any,
+  ) {
     return this.service.saveSession(userId, body);
   }
 
+  // DELETE /session/:userId
   @Delete('session/:userId')
-  deleteSession(
-    @Param('userId') userId: string,
-  ) {
+  async deleteSession(@Param('userId') userId: string) {
     return this.service.deleteSession(userId);
   }
 
@@ -89,127 +86,163 @@ export class CampaignController {
   // WEBSITE SCREENSHOT API
   // ============================================
 
-@Get('screenshot')
-async captureWebsite(
-  @Query('url') url: string,
-  @Res() res: Response,
-) {
+  @Get('screenshot')
+  async captureWebsite(
+    @Query('url') url: string,
+    @Res() res: Response,
+  ) {
 
-  let browser: any;
+    let browser: any;
 
-  try {
+    try {
 
-    if (!url) {
-      throw new BadRequestException(
-        'URL is required',
-      );
-    }
+      if (!url) {
+        throw new BadRequestException(
+          'URL is required',
+        );
+      }
 
-    const cleanUrl = url.startsWith('http')
-      ? url
-      : `https://${url}`;
+      const cleanUrl = url.startsWith('http')
+        ? url
+        : `https://${url}`;
 
-    browser = await puppeteer.launch({
-      headless: true,
+      browser = await puppeteer.launch({
+        headless: true,
 
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-      ],
-    });
-
-    const page = await browser.newPage();
-
-    // desktop viewport
-    await page.setViewport({
-      width: 1440,
-      height: 900,
-    });
-
-    // real browser user-agent
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36',
-    );
-
-    // open website
-    await page.goto(cleanUrl, {
-      waitUntil: 'domcontentloaded',
-      timeout: 60000,
-    });
-
-    // wait for full rendering
-    await new Promise((resolve) =>
-  setTimeout(resolve, 7000),
-);
-
-    // remove common preloaders/loaders
-    await page.evaluate(() => {
-
-      const selectors = [
-        '.loader',
-        '.preloader',
-        '#preloader',
-        '#loader',
-        '.loading',
-        '.spinner',
-        '.overlay',
-        '.site-loader',
-        '.page-loader',
-      ];
-
-      selectors.forEach((selector) => {
-
-        const elements =
-          document.querySelectorAll(selector);
-
-        elements.forEach((el) => {
-          (el as HTMLElement).style.display = 'none';
-        });
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+        ],
       });
 
-      // enable scrolling
-      document.body.style.overflow = 'auto';
+      const page = await browser.newPage();
 
-    });
+      // desktop viewport
+      await page.setViewport({
+        width: 1440,
+        height: 900,
+      });
 
-    // additional wait after removing loader
-    await new Promise((resolve) =>
-  setTimeout(resolve, 2000),
-);
+      // real browser user-agent
+      await page.setUserAgent(
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/122 Safari/537.36',
+      );
 
-    // wait for homepage content
-    await page.waitForSelector('body', {
-      visible: true,
-      timeout: 10000,
-    });
+      // open website
+      await page.goto(cleanUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 60000,
+      });
 
-    // screenshot
-    const image = await page.screenshot({
-      type: 'png',
-      fullPage: false,
-    });
+      // wait for full rendering
+      await new Promise((resolve) =>
+        setTimeout(resolve, 7000),
+      );
 
-    await browser.close();
+      // remove common preloaders/loaders
+      await page.evaluate(() => {
 
-    res.set({
-      'Content-Type': 'image/png',
-      'Cache-Control': 'no-cache',
-    });
+        const selectors = [
+          '.loader',
+          '.preloader',
+          '#preloader',
+          '#loader',
+          '.loading',
+          '.spinner',
+          '.overlay',
+          '.site-loader',
+          '.page-loader',
+        ];
 
-    return res.send(image);
+        selectors.forEach((selector) => {
 
-  } catch (error) {
+          const elements =
+            document.querySelectorAll(selector);
 
-    console.log('SCREENSHOT ERROR:', error);
+          elements.forEach((el) => {
+            (el as HTMLElement).style.display = 'none';
+          });
+        });
 
-    if (browser) {
+        // enable scrolling
+        document.body.style.overflow = 'auto';
+
+      });
+
+      // additional wait after removing loader
+      await new Promise((resolve) =>
+        setTimeout(resolve, 2000),
+      );
+
+      // wait for homepage content
+      await page.waitForSelector('body', {
+        visible: true,
+        timeout: 10000,
+      });
+
+      // screenshot
+      const image = await page.screenshot({
+        type: 'png',
+        fullPage: false,
+      });
+
       await browser.close();
-    }
 
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to capture website',
-    });
+      res.set({
+        'Content-Type': 'image/png',
+        'Cache-Control': 'no-cache',
+      });
+
+      return res.send(image);
+
+    } catch (error) {
+
+      console.log('SCREENSHOT ERROR:', error);
+
+      if (browser) {
+        await browser.close();
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to capture website',
+      });
+    }
   }
+   // ---------------------------------------------
+  // BRAND ASSETS API
+  // ---------------------------------------------
+
+  @Post('assets')
+  async extractAssets(
+    @Body('website') website: string,
+  ) {
+    return this.service.extractAssets(
+      website,
+    );
+  }
+  // ============================================
+ // BRAND SAVE API
+ // ============================================
+
+ @Post('brand-save/:userId')
+ async brandSave(
+   @Param('userId') userId: string,
+   @Body() body: any,
+ ) {
+   return this.service.brandsave(
+     userId,
+     body,
+     body.forceReplace || false,
+   );
+ }
+
+ @Get('brand/:userId')
+async getUserBrand(
+  @Param('userId') userId: string,
+) {
+  return this.service.getUserBrand(
+    userId,
+  );
 }
 }

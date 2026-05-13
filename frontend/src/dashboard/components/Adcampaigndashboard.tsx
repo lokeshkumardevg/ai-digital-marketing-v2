@@ -21,27 +21,80 @@ export interface Platform {
   active?: boolean;
 }
 export interface BrandInfo {
-  name?: string;
-  tagline?: string;
-  industry?: string;
-  founded?: string;
-  businessModel?: string;
-  toneOfVoice?: string;
-  registeredAddress?: string;
-  CIN?: string;
-  overallScore?: number;
+name?: string;
+tagline?: string;
+industry?: string;
+founded?: string;
+businessModel?: string;
+toneOfVoice?: string;
+registeredAddress?: string;
+CIN?: string;
+overallScore?: number;
 }
 
 export interface BrandDetails {
-  brand?: BrandInfo;
-  website?: string;
-  logoUrl?: string;
+brandId?: string;
+campaignId?: string;
+
+brand?: BrandInfo;
+
+brandName?: string;
+industry?: string;
+tagline?: string;
+
+website?: string;
+
+logo?: string;
+logoUrl?: string;
+logoPreview?: string;
+
+coreObjective?: string;
+
+websiteAudit?: any;
+keywords?: any;
+competition?: any;
+analyticsDashboard?: any;
+budget?: any;
+
+avgCpc?: number;
+avgCtr?: number;
+conversionRate?: number;
+
+assets?: BrandAssets;
+
+auditData?: any;
 }
 export interface PromoObjectiveData {
-  objective?: string; budget?: number|string; currency?: string; schedule?: string;
-  targetLocation?: string; event?: string; advantagePlus?: boolean;
-  headlines?: string[]; primaryTexts?: string[];
-  callToAction?: string; finalUrl?: string; estimatedAudience?: string;
+businessType?: string;
+adGoal?: string;
+businessGoal?: string;
+
+targetLocations?: string;
+
+platform?: string;
+platforms?: string[];
+
+promotionType?: string;
+
+dailyBudget?: number;
+
+objective?: string;
+budget?: number | string;
+currency?: string;
+schedule?: string;
+
+targetLocation?: string;
+
+event?: string;
+advantagePlus?: boolean;
+
+headlines?: string[];
+primaryTexts?: string[];
+
+callToAction?: string;
+finalUrl?: string;
+
+estimatedAudience?: string;
 }
 export interface PublishResult { success:boolean; campaignId?:string; message?:string; }
 interface CampaignEntry { id:string; name:string; platformId:string; }
@@ -63,6 +116,15 @@ export interface AdCampaignDashboardProps {
   platforms?: Platform[]; onBack?: ()=>void;
   onPublish?: (r:PublishResult, planId?: string) => void; onSaveDraft?: (r:PublishResult)=>void;
   onAddCampaign?: (pid:string)=>void; apiBase?: string; openAiKey?: string;
+}
+
+export interface BrandAssets {
+logoUrl?: string;
+logoPreview?: string;
+favicon?: string;
+websiteScreenshot?: string;
+websiteImages?: string[];
+brandColors?: string[];
 }
 
 /* ─── PLAN ICONS ─────────────────────────────────────────── */
@@ -1047,7 +1109,7 @@ function CreativeStudio({brandName,adCopy,activePlatformId,onHeadingChange,onSub
           {/* AI box */}
           <div style={{background:'var(--purple-lt)',border:'1px solid var(--purple-bdr)',borderRadius:10,padding:12,marginBottom:10}}>
             <div style={{fontSize:10,fontWeight:700,color:'var(--purple)',textTransform:'uppercase',letterSpacing:'.6px',marginBottom:7,display:'flex',alignItems:'center',gap:5}}>
-              <I.Sparkle/> AI Image Generator · DALL·E 3
+              <I.Sparkle/> AI Image Generator
             </div>
             <textarea className="pt-ta" value={aiPrompt} onChange={e=>setAiPrompt(e.target.value)}
               placeholder={`e.g. "Eco-friendly solar panels on a rooftop at golden hour, commercial photography"`}
@@ -1122,30 +1184,95 @@ function BottomBar({onBack,onPublish,onSaveDraft,loading,activePlatformName}:{
 }
 
 /* ─── DATA BUILDER ───────────────────────────────────────── */
-function buildData(brandDetails?:BrandDetails,promoData?:PromoObjectiveData){
-  const brand=brandDetails?.brand?.name;
-  const website=brandDetails?.website??SEED.adSetting.finalUrl;
-  const today=new Date().toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'});
-  return{
-    campaignTitle:`${brand}_${promoData?.objective??'OUTCOME_SALES'}_Advantage+_${today}`,
-    topbarFields:SEED.topbarFields,
-    adSetting:{
-      event:promoData?.event??SEED.adSetting.event,
-      budget:promoData?.budget!=null?`${promoData.budget} ${promoData.currency??'USD'}`:SEED.adSetting.budget,
-      schedule:promoData?.schedule??SEED.adSetting.schedule,
-      finalUrl:promoData?.finalUrl??website,
+function buildData(
+  brandDetails?: BrandDetails,
+  promoData?: PromoObjectiveData
+) {
+  const brandName =
+    brandDetails?.brand?.name ||
+    brandDetails?.name ||
+    'Brand';
+
+  const website =
+    brandDetails?.website ||
+    promoData?.finalUrl ||
+    SEED.adSetting.finalUrl;
+
+  const today = new Date().toLocaleDateString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  });
+
+  return {
+    campaignTitle: `${brandName}_${promoData?.objective ?? 'OUTCOME_SALES'}_Advantage+_${today}`,
+
+    topbarFields: SEED.topbarFields,
+
+    adSetting: {
+      event:
+        promoData?.event ||
+        SEED.adSetting.event,
+
+      budget:
+        promoData?.budget != null
+          ? `${promoData.budget} ${promoData?.currency ?? 'USD'}`
+          : SEED.adSetting.budget,
+
+      schedule:
+        promoData?.schedule ||
+        SEED.adSetting.schedule,
+
+      finalUrl:
+        promoData?.finalUrl ||
+        website,
     },
-    audience:{location:promoData?.targetLocation??SEED.audience.location,advantagePlus:promoData?.advantagePlus??SEED.audience.advantagePlus},
-    preview:{
-      brandName:brand,logoUrl:brandDetails?.logoUrl,
-      caption:promoData?.primaryTexts?.[0]??SEED.preview.caption,
-      cta:promoData?.callToAction??SEED.preview.cta,
-      estimatedAudience:promoData?.estimatedAudience??SEED.preview.estimatedAudience,
+
+    audience: {
+      location:
+        promoData?.targetLocation ||
+        SEED.audience.location,
+
+      advantagePlus:
+        promoData?.advantagePlus ??
+        SEED.audience.advantagePlus,
     },
-    adCopy:{
-      headlines:promoData?.headlines??SEED.adCopy.headlines,
-      primaryTexts:promoData?.primaryTexts??SEED.adCopy.primaryTexts,
-      callToAction:promoData?.callToAction??SEED.adCopy.callToAction,
+
+    preview: {
+      brandName,
+
+      logoUrl:
+        brandDetails?.logoUrl ||
+        brandDetails?.brand?.logoUrl ||
+        '',
+
+      caption:
+        promoData?.primaryTexts?.[0] ||
+        SEED.preview.caption,
+
+      cta:
+        promoData?.callToAction ||
+        SEED.preview.cta,
+
+      estimatedAudience:
+        promoData?.estimatedAudience ||
+        SEED.preview.estimatedAudience,
+    },
+
+    adCopy: {
+      headlines:
+        promoData?.headlines?.length
+          ? promoData.headlines
+          : SEED.adCopy.headlines,
+
+      primaryTexts:
+        promoData?.primaryTexts?.length
+          ? promoData.primaryTexts
+          : SEED.adCopy.primaryTexts,
+
+      callToAction:
+        promoData?.callToAction ||
+        SEED.adCopy.callToAction,
     },
   };
 }
@@ -1175,6 +1302,7 @@ export default function AdCampaignDashboard({
   const[activeCid,setActiveCid]=useState<string>(sid);
 
   const d=buildData(brandDetails,promoData);
+  console.log('Built data for dashboard:', d);
   const[pvCaption,setPvCaption]=useState(d.preview.caption);
   const[pvImage,setPvImage]=useState<string|null>(null);
 
@@ -1282,7 +1410,7 @@ export default function AdCampaignDashboard({
               </div>
               {/* Center */}
               <MetaPostPreview
-                brandName={brand} logoUrl={d.preview.logoUrl}
+                brandName={brand} logoUrl={brandDetails?.assets?.favicon}
                 caption={pvCaption} cta={d.preview.cta}
                 estimatedAudience={d.preview.estimatedAudience}
                 imageUrl={pvImage} activePlatformId={activePid}
