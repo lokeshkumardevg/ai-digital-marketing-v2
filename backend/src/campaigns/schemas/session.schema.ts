@@ -1,29 +1,25 @@
 import { Schema } from 'mongoose';
 
-export const SessionSchema = new Schema({
-  userId: { type: String, required: true, unique: true },
+export const SessionSchema = new Schema(
+  {
+    userId: { type: String, required: true, unique: true },
 
-  version:    String,
-  url:        String,
-  urlStatus:  String,
-  isChatMode: Boolean,
-  viewMode:   String,
+    // Version sentinel — bump SESSION_VERSION in the service to invalidate old sessions
+    version: { type: String, default: 'v2' },
 
-  // Complex JSON objects — must be Mixed
-  brandDetails:    { type: Schema.Types.Mixed },
-  budgetBreakdown: { type: Schema.Types.Mixed },
-  liveCampaign:    { type: Schema.Types.Mixed },
-  selectedTier:    { type: Schema.Types.Mixed }, // ← was String, caused CastError
+    // ── Core campaign session fields (mirrors CampaignSession on the frontend) ──
+    messages:      { type: Schema.Types.Mixed, default: [] },
+    brandDetails:  { type: Schema.Types.Mixed, default: null },
+    promoData:     { type: Schema.Types.Mixed, default: null },
+    campaignId:    { type: String, default: null },
+    viewMode:      { type: String, default: 'landing' },
 
-  selectedPlatform: String,
-  campaignId:       String,
-
-  // Large message array
-  messages: { type: Array },
-
-  updatedAt: String,
-},
-{
-  // Auto-update updatedAt on every save
-  timestamps: { updatedAt: 'updatedAt', createdAt: 'createdAt' },
-});
+    // ISO timestamp set by the frontend on every save
+    savedAt: { type: String, default: null },
+  },
+  {
+    // createdAt + updatedAt managed automatically by Mongoose
+    // Do NOT also declare updatedAt as a plain field — that causes a conflict
+    timestamps: true,
+  },
+);

@@ -5,11 +5,13 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import ColorThief from 'color-thief-node';
+import { chromium } from 'playwright';
 @Injectable()
 export class CampaignService {
   constructor(
     @InjectModel('Session') private sessionModel: Model<any>,
-  ) {}
+  ) { }
   private openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
@@ -17,7 +19,11 @@ export class CampaignService {
   private brands = new Map<string, any>();
   private campaigns = new Map<string, any>();
   private sessions = new Map<string, any>();
-private readonly SESSION_VERSION = 'v2';
+  private readonly SESSION_VERSION = 'v2';
+
+  // Max session age: 7 days for normal sessions, 30 days if a campaign is live
+  private readonly MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+  private readonly MAX_AGE_LIVE_MS = 30 * 24 * 60 * 60 * 1000;
 
   // ============================================
   // MAIN: DISCOVER BRAND
@@ -26,180 +32,180 @@ private readonly SESSION_VERSION = 'v2';
     const campaignId = uuidv4();
 
     const MOCK_AUDIT_DATA = {
-  "coreObjective": "Generate qualified B2B/B2C leads for solar EPC, installation, and O&M services across India — converting the company's strong operational track record (150+ MWp, 8 states, 70+ clients) into a credible digital presence that attracts commercial and industrial project inquiries.",
-  "brand": {
-    "name": "Savorka Solar",
-    "tagline": "Reliable. Scalable. High-Performance Solar Solutions.",
-    "industry": "Renewable Energy — Solar EPC & O&M",
-    "founded": "2016",
-    "businessModel": "B2B + B2C",
-    "toneOfVoice": "Professional, technical, reliability-focused",
-    "registeredAddress": "Unit B 1425 & 1426, Tower-B, 4th Fl, Sector-90, Maharishi Nagar, Gautam Buddha Nagar, UP 201304",
-    "CIN": "U26100UP2025PTC234383",
-    "overallScore": 42
-  },
-  "websiteAudit": {
-    "overallScore": 42,
-    "seoScore": 35,
-    "performanceScore": 30,
-    "uxScore": 50,
-    "contentScore": 45,
-    "technicalScore": 28,
-    "mobileScore": 38,
-    "accessibilityScore": 40,
-    "securityScore": 55,
-    "criticalIssue": "JavaScript-only React SPA — Googlebot cannot index content without SSR/pre-rendering",
-    "findings": [
-      "JS rendering blocks all SEO crawlability",
-      "No meta tags in page source — dynamically injected",
-      "Zero blog or resource content — no organic funnel",
-      "Strong homepage social proof: 150 MWp, 70+ clients, testimonials",
-      "Full product portfolio covered: rooftop, water heaters, pumps, street lights"
-    ],
-    "technicalIssues": [
-      "No SSR — React SPA invisible to search engines",
-      "No sitemap.xml / robots.txt",
-      "Domain authority ~12 — very low backlink profile",
-      "No Google Analytics or GTM detected — zero tracking",
-      "Page speed likely poor due to unoptimized JS bundle"
-    ],
-    "quickWins": [
-      "Implement SSR or pre-rendering immediately",
-      "Install GA4 + GTM and set conversion events",
-      "Claim Google Business Profile and gather 70+ reviews",
-      "Add meta titles, descriptions, and schema markup",
-      "Submit sitemap to Google Search Console"
-    ]
-  },
-  "keywords": {
-    "primary": [
-      "solar EPC company India",
-      "solar installation India",
-      "on-grid solar system",
-      "off-grid solar system",
-      "hybrid solar system",
-      "solar O&M services"
-    ],
-    "secondary": [
-      "rooftop solar plant",
-      "commercial solar installation",
-      "industrial solar EPC",
-      "solar water heater India",
-      "solar water pump",
-      "solar street light",
-      "solar structure manufacturing",
-      "net metering India"
-    ],
-    "longTail": [
-      "solar panel installation for factory in UP",
-      "best solar EPC company Noida",
-      "500 kWp commercial solar rooftop India",
-      "solar operation maintenance contract India",
-      "on-grid solar system with net metering Uttar Pradesh",
-      "PM Surya Ghar subsidy rooftop solar",
-      "solar panel for warehouse India"
-    ],
-    "gaps": [
-      "PM Surya Ghar Yojana",
-      "solar subsidy UP 2025",
-      "MNRE empanelled solar company",
-      "solar financing EMI India",
-      "bifacial solar panel supplier",
-      "solar EPC tender"
-    ],
-    "recommendations": [
-      "Target PM Surya Ghar Yojana informational content — government-driven search surge",
-      "Create geo-targeted pages per state (UP, Delhi, Rajasthan, Maharashtra)",
-      "Build product pages with technical specs targeting B2B EPC comparison queries",
-      "Publish project case studies as indexed pages for long-tail capture",
-      "Blog around solar ROI calculators — highest-converting solar content type"
-    ]
-  },
-  "competition": {
-    "intensity": "High",
-    "competitors": [
-      {
-        "name": "SolarSquare Energy",
-        "strengths": [
-          "VC-backed ($40M Series B)",
-          "India #1 home rooftop brand",
-          "25,000+ homeowners",
-          "UL-certified",
-          "Digital-first with EMI plans"
-        ],
-        "weaknesses": [
-          "Primarily residential focus",
-          "Less depth in industrial EPC"
-        ],
-        "comparison": "Stronger brand, larger marketing budget, primarily residential — Savorka can win on C&I expertise and regional depth"
+      "coreObjective": "Generate qualified B2B/B2C leads for solar EPC, installation, and O&M services across India — converting the company's strong operational track record (150+ MWp, 8 states, 70+ clients) into a credible digital presence that attracts commercial and industrial project inquiries.",
+      "brand": {
+        "name": "Savorka Solar",
+        "tagline": "Reliable. Scalable. High-Performance Solar Solutions.",
+        "industry": "Renewable Energy — Solar EPC & O&M",
+        "founded": "2016",
+        "businessModel": "B2B + B2C",
+        "toneOfVoice": "Professional, technical, reliability-focused",
+        "registeredAddress": "Unit B 1425 & 1426, Tower-B, 4th Fl, Sector-90, Maharishi Nagar, Gautam Buddha Nagar, UP 201304",
+        "CIN": "U26100UP2025PTC234383",
+        "overallScore": 42
       },
-      {
-        "name": "Tata Power Solar",
-        "strengths": [
-          "Tata Group brand trust",
-          "Pan-India 300+ districts",
-          "Residential + utility-scale",
-          "Strong SEO dominance"
+      "websiteAudit": {
+        "overallScore": 42,
+        "seoScore": 35,
+        "performanceScore": 30,
+        "uxScore": 50,
+        "contentScore": 45,
+        "technicalScore": 28,
+        "mobileScore": 38,
+        "accessibilityScore": 40,
+        "securityScore": 55,
+        "criticalIssue": "JavaScript-only React SPA — Googlebot cannot index content without SSR/pre-rendering",
+        "findings": [
+          "JS rendering blocks all SEO crawlability",
+          "No meta tags in page source — dynamically injected",
+          "Zero blog or resource content — no organic funnel",
+          "Strong homepage social proof: 150 MWp, 70+ clients, testimonials",
+          "Full product portfolio covered: rooftop, water heaters, pumps, street lights"
         ],
-        "weaknesses": [
-          "Premium pricing",
-          "Less agile for mid-scale C&I projects"
+        "technicalIssues": [
+          "No SSR — React SPA invisible to search engines",
+          "No sitemap.xml / robots.txt",
+          "Domain authority ~12 — very low backlink profile",
+          "No Google Analytics or GTM detected — zero tracking",
+          "Page speed likely poor due to unoptimized JS bundle"
         ],
-        "comparison": "National legacy brand — outmatched on brand but Savorka can compete on agility and pricing for mid-scale projects"
+        "quickWins": [
+          "Implement SSR or pre-rendering immediately",
+          "Install GA4 + GTM and set conversion events",
+          "Claim Google Business Profile and gather 70+ reviews",
+          "Add meta titles, descriptions, and schema markup",
+          "Submit sitemap to Google Search Console"
+        ]
       },
-      {
-        "name": "Freyr Energy",
-        "strengths": [
-          "MNRE-empanelled",
-          "15,000+ customers",
-          "100% financing options",
-          "Strong content SEO"
+      "keywords": {
+        "primary": [
+          "solar EPC company India",
+          "solar installation India",
+          "on-grid solar system",
+          "off-grid solar system",
+          "hybrid solar system",
+          "solar O&M services"
         ],
-        "weaknesses": [
-          "Limited industrial scale",
-          "Weaker north India penetration"
+        "secondary": [
+          "rooftop solar plant",
+          "commercial solar installation",
+          "industrial solar EPC",
+          "solar water heater India",
+          "solar water pump",
+          "solar street light",
+          "solar structure manufacturing",
+          "net metering India"
         ],
-        "comparison": "Similar size but stronger digitally — Savorka needs to match on certification visibility and content marketing"
+        "longTail": [
+          "solar panel installation for factory in UP",
+          "best solar EPC company Noida",
+          "500 kWp commercial solar rooftop India",
+          "solar operation maintenance contract India",
+          "on-grid solar system with net metering Uttar Pradesh",
+          "PM Surya Ghar subsidy rooftop solar",
+          "solar panel for warehouse India"
+        ],
+        "gaps": [
+          "PM Surya Ghar Yojana",
+          "solar subsidy UP 2025",
+          "MNRE empanelled solar company",
+          "solar financing EMI India",
+          "bifacial solar panel supplier",
+          "solar EPC tender"
+        ],
+        "recommendations": [
+          "Target PM Surya Ghar Yojana informational content — government-driven search surge",
+          "Create geo-targeted pages per state (UP, Delhi, Rajasthan, Maharashtra)",
+          "Build product pages with technical specs targeting B2B EPC comparison queries",
+          "Publish project case studies as indexed pages for long-tail capture",
+          "Blog around solar ROI calculators — highest-converting solar content type"
+        ]
+      },
+      "competition": {
+        "intensity": "High",
+        "competitors": [
+          {
+            "name": "SolarSquare Energy",
+            "strengths": [
+              "VC-backed ($40M Series B)",
+              "India #1 home rooftop brand",
+              "25,000+ homeowners",
+              "UL-certified",
+              "Digital-first with EMI plans"
+            ],
+            "weaknesses": [
+              "Primarily residential focus",
+              "Less depth in industrial EPC"
+            ],
+            "comparison": "Stronger brand, larger marketing budget, primarily residential — Savorka can win on C&I expertise and regional depth"
+          },
+          {
+            "name": "Tata Power Solar",
+            "strengths": [
+              "Tata Group brand trust",
+              "Pan-India 300+ districts",
+              "Residential + utility-scale",
+              "Strong SEO dominance"
+            ],
+            "weaknesses": [
+              "Premium pricing",
+              "Less agile for mid-scale C&I projects"
+            ],
+            "comparison": "National legacy brand — outmatched on brand but Savorka can compete on agility and pricing for mid-scale projects"
+          },
+          {
+            "name": "Freyr Energy",
+            "strengths": [
+              "MNRE-empanelled",
+              "15,000+ customers",
+              "100% financing options",
+              "Strong content SEO"
+            ],
+            "weaknesses": [
+              "Limited industrial scale",
+              "Weaker north India penetration"
+            ],
+            "comparison": "Similar size but stronger digitally — Savorka needs to match on certification visibility and content marketing"
+          }
+        ],
+        "differentiators": [
+          "Full in-house EPC + O&M lifecycle management",
+          "In-house solar structure manufacturing",
+          "150+ MWp real-world project experience",
+          "Regional depth across 8 states",
+          "Mid-to-large C&I project specialization"
+        ],
+        "marketPosition": "Regional challenger with strong operational credentials but significantly underdeveloped digital presence. Best positioned for mid-scale C&I in North/Central India."
+      },
+      "analyticsDashboard": {
+        "estimatedMonthlyVisits": "2,000–5,000",
+        "estimatedDomainAuthority": 12,
+        "estimatedBacklinks": "<100",
+        "topTrafficSources": [
+          "Direct / brand search",
+          "Organic (very low)",
+          "LinkedIn referral"
+        ],
+        "avgSessionDuration": "1.5–2.5 min (estimated)",
+        "bounceRate": "55–70% (estimated)",
+        "conversionFocusAreas": [
+          "Contact form submissions",
+          "WhatsApp / phone click-to-call"
+        ]
+      },
+      "budget": {
+        "estimatedAdSpend": "$0–$50K/month (likely minimal currently)",
+        "recommendedChannels": [
+          "Google Search Ads (solar EPC, geo-targeted)",
+          "LinkedIn Ads (B2B C&I decision makers)",
+          "Content/SEO (long-term organic)"
+        ],
+        "estimatedCPCRange": "$40–$120 for solar EPC keywords",
+        "roiPotential": "High — average project value likely $20L–$5Cr"
       }
-    ],
-    "differentiators": [
-      "Full in-house EPC + O&M lifecycle management",
-      "In-house solar structure manufacturing",
-      "150+ MWp real-world project experience",
-      "Regional depth across 8 states",
-      "Mid-to-large C&I project specialization"
-    ],
-    "marketPosition": "Regional challenger with strong operational credentials but significantly underdeveloped digital presence. Best positioned for mid-scale C&I in North/Central India."
-  },
-  "analyticsDashboard": {
-    "estimatedMonthlyVisits": "2,000–5,000",
-    "estimatedDomainAuthority": 12,
-    "estimatedBacklinks": "<100",
-    "topTrafficSources": [
-      "Direct / brand search",
-      "Organic (very low)",
-      "LinkedIn referral"
-    ],
-    "avgSessionDuration": "1.5–2.5 min (estimated)",
-    "bounceRate": "55–70% (estimated)",
-    "conversionFocusAreas": [
-      "Contact form submissions",
-      "WhatsApp / phone click-to-call"
-    ]
-  },
-  "budget": {
-    "estimatedAdSpend": "$0–$50K/month (likely minimal currently)",
-    "recommendedChannels": [
-      "Google Search Ads (solar EPC, geo-targeted)",
-      "LinkedIn Ads (B2B C&I decision makers)",
-      "Content/SEO (long-term organic)"
-    ],
-    "estimatedCPCRange": "$40–$120 for solar EPC keywords",
-    "roiPotential": "High — average project value likely $20L–$5Cr"
-  }
-}
+    }
 
-    
+
     try {
       const prompt = await this.buildPrompt(body); // ✅ FIXED (await)
 
@@ -235,10 +241,10 @@ private readonly SESSION_VERSION = 'v2';
     } catch (error) {
       console.error('AI ERROR:', error instanceof Error ? error.message : error);
       // throw new InternalServerErrorException('Failed to generate audit report');
-          return {
-      campaignId,
-      ...MOCK_AUDIT_DATA,
-    };
+      return {
+        campaignId,
+        ...MOCK_AUDIT_DATA,
+      };
     }
   }
   private mockAudit(name = 'Brand', website = '') {
@@ -379,17 +385,17 @@ private readonly SESSION_VERSION = 'v2';
     };
   }
 
-    // ============================================
+  // ============================================
   // PROMPT BUILDER
   // ============================================
-private async buildPrompt(data: {
-  brandName: string;
-  website: string;
-}): Promise<string> {
+  private async buildPrompt(data: {
+    brandName: string;
+    website: string;
+  }): Promise<string> {
 
-  const industry = await this.detectIndustry(data.website);
+    const industry = await this.detectIndustry(data.website);
 
-  return `
+    return `
 You are a senior digital marketing strategist, SEO auditor, competitive intelligence analyst, and web research expert.
 
 Your task is to perform a COMPLETE brand intelligence analysis using REAL VERIFIED DATA.
@@ -549,9 +555,9 @@ OUTPUT FORMAT:
 
 Return ONLY JSON.
 `;
-}
+  }
 
-    // ============================================
+  // ============================================
   // VALIDATION
   // ============================================
   private validateResponse(data: any) {
@@ -642,79 +648,395 @@ Return ONLY JSON.
     return 'General Business';
   }
   // ============================================
-// SESSION: GET (RESTORE)
-// ============================================
-async getSession(userId: string) {
-  const session = await this.sessionModel.findOne({ userId });
+  // SESSION: GET (RESTORE)
+  // ============================================
+  async getSession(userId: string) {
+    const session = await this.sessionModel.findOne({ userId });
 
-  if (!session) return { found: false };
+    if (!session) return { found: false };
 
-  if (session.version !== this.SESSION_VERSION) {
-    await this.sessionModel.deleteOne({ userId });
-    return { found: false, reason: 'expired' };
+    if (session.version !== this.SESSION_VERSION) {
+      await this.sessionModel.deleteOne({ userId });
+      return { found: false, reason: 'expired' };
+    }
+
+    const maxAge = session.liveCampaign
+      ? 30 * 24 * 60 * 60 * 1000
+      : 7 * 24 * 60 * 60 * 1000;
+
+    const age = Date.now() - new Date(session.updatedAt).getTime();
+
+    if (age > maxAge) {
+      await this.sessionModel.deleteOne({ userId });
+      return { found: false, reason: 'expired' };
+    }
+
+    return { found: true, session };
   }
 
-  const maxAge = session.liveCampaign
-    ? 30 * 24 * 60 * 60 * 1000
-    : 7 * 24 * 60 * 60 * 1000;
+  // ============================================
+  // SESSION: SAVE (UPSERT)
+  // ============================================
+  async saveSession(userId: string, body: any) {
+    // The frontend POSTs the CampaignSession object directly as the request body
+    const incoming = body.session ?? body;
 
-  const age = Date.now() - new Date(session.updatedAt).getTime();
-
-  if (age > maxAge) {
-    await this.sessionModel.deleteOne({ userId });
-    return { found: false, reason: 'expired' };
-  }
-
-  return { found: true, session };
-}
-
-// ============================================
-// SESSION: SAVE (DEBOUNCED CALL FROM FRONTEND)
-// ============================================
-async saveSession(userId: string, body: any) {
-  try {
-    console.log("🔥 Incoming:", body);
-
-    const incoming = body.session || body;
-
-    const session = {
-      userId, // ✅ always from param
-      version: incoming.version || this.SESSION_VERSION,
-      url: incoming.url || '',
-      urlStatus: incoming.urlStatus || 'idle',
-      isChatMode: incoming.isChatMode ?? false,
-      viewMode: incoming.viewMode || 'landing',
+    const payload = {
+      userId,
+      version: this.SESSION_VERSION,
+      messages: Array.isArray(incoming.messages) ? incoming.messages : [],
       brandDetails: incoming.brandDetails ?? null,
-      selectedPlatform: incoming.selectedPlatform || '',
-      budgetBreakdown: incoming.budgetBreakdown ?? null,
-      selectedTier: incoming.selectedTier ?? null,
-      liveCampaign: incoming.liveCampaign ?? null,
+      promoData: incoming.promoData ?? null,
       campaignId: incoming.campaignId ?? null,
-      messages: incoming.messages || [],
-      updatedAt: new Date().toISOString(),
+      viewMode: incoming.viewMode ?? 'landing',
+      savedAt: incoming.savedAt ?? new Date().toISOString(),
     };
 
-    const result = await this.sessionModel.findOneAndUpdate(
+    await this.sessionModel.findOneAndUpdate(
       { userId },
-      session,
-      { upsert: true, new: true }
+      payload,
+      { upsert: true, new: true },
     );
 
-    console.log("✅ SAVED:", result);
+    return { ok: true };
+  }
 
-    return { success: true };
+  // ============================================
+  // SESSION: DELETE (RESET / PUBLISH / DRAFT-SAVE)
+  // ============================================
+  async deleteSession(userId: string) {
+    await this.sessionModel.deleteOne({ userId });
+    return { ok: true };
+  }
 
-  } catch (error) {
-    console.error("❌ SAVE ERROR:", error);
-    throw error;
+  // =====================================================
+  // EXTRACT BRAND ASSETS
+  // =====================================================
+
+  async extractAssets(website: string) {
+    try {
+      const { data } = await axios.get(website);
+
+      const $ = cheerio.load(data);
+
+      // -------------------------------------------------
+      // WEBSITE IMAGES
+      // -------------------------------------------------
+
+      const websiteImages: string[] = [];
+
+      $('img').each((_, el) => {
+        const src = $(el).attr('src');
+
+        if (!src) return;
+
+        const imageUrl = this.resolveUrl(
+          website,
+          src,
+        );
+
+        websiteImages.push(imageUrl);
+      });
+
+      // -------------------------------------------------
+      // FAVICON
+      // -------------------------------------------------
+
+      const favicon =
+        $('link[rel="icon"]').attr('href') ||
+        $('link[rel="shortcut icon"]').attr(
+          'href',
+        ) ||
+        '/favicon.ico';
+
+      const faviconUrl = this.resolveUrl(
+        website,
+        favicon,
+      );
+
+      // -------------------------------------------------
+      // LOGO DETECTION
+      // -------------------------------------------------
+
+      let logoUrl = '';
+
+      const possibleLogo = $('img')
+        .filter((_, el) => {
+          const alt = (
+            $(el).attr('alt') || ''
+          ).toLowerCase();
+
+          const cls = (
+            $(el).attr('class') || ''
+          ).toLowerCase();
+
+          const src = (
+            $(el).attr('src') || ''
+          ).toLowerCase();
+
+          return (
+            alt.includes('logo') ||
+            cls.includes('logo') ||
+            src.includes('logo')
+          );
+        })
+        .first();
+
+      if (possibleLogo.length) {
+        logoUrl = this.resolveUrl(
+          website,
+          possibleLogo.attr('src') || '',
+        );
+      }
+
+      // -------------------------------------------------
+      // WEBSITE SCREENSHOT
+      // -------------------------------------------------
+
+      const websiteScreenshot =
+        await this.captureScreenshot(website);
+
+      // -------------------------------------------------
+      // BRAND COLORS
+      // -------------------------------------------------
+
+      const brandColors =
+        await this.extractColors(
+          logoUrl || faviconUrl,
+        );
+
+      return {
+        success: true,
+
+        assets: {
+          logoUrl,
+
+          favicon: faviconUrl,
+
+          websiteScreenshot,
+
+          websiteImages: [
+            ...new Set(websiteImages),
+          ].slice(0, 20),
+
+          brandColors,
+        },
+      };
+    } catch (error) {
+      console.error(error);
+
+      throw new InternalServerErrorException(
+        'Failed to extract assets',
+      );
+    }
+  }
+  private resolveUrl(
+    base: string,
+    path: string,
+  ) {
+    try {
+      return new URL(path, base).href;
+    } catch {
+      return path;
+    }
+  }
+
+  // =====================================================
+  // SCREENSHOT CAPTURE
+  // =====================================================
+
+  private async captureScreenshot(url: string) {
+    const browser = await chromium.launch({
+      headless: true,
+    });
+
+    const page = await browser.newPage({
+      viewport: {
+        width: 1440,
+        height: 2000,
+      },
+    });
+
+    await page.goto(url, {
+      waitUntil: 'networkidle',
+      timeout: 60000,
+    });
+
+    const fileName = `screenshot-${Date.now()}.png`;
+
+    const filePath = `uploads/${fileName}`;
+
+    await page.screenshot({
+      path: filePath,
+      fullPage: true,
+    });
+
+    await browser.close();
+
+    return filePath;
+  }
+
+  // =====================================================
+  // COLOR EXTRACTION
+  // =====================================================
+
+private async extractColors(
+  imageUrl: string,
+) {
+  try {
+    const palette =
+      await ColorThief.getPalette(
+        imageUrl,
+        5,
+      );
+
+    return palette.map((rgb: number[]) => {
+      return (
+        '#' +
+        rgb
+          .map((x: number) =>
+            x
+              .toString(16)
+              .padStart(2, '0'),
+          )
+          .join('')
+      );
+    });
+  } catch {
+    return [
+      '#111827',
+      '#2563EB',
+      '#F59E0B',
+    ];
   }
 }
+public async brandsave(
+  userId: string,
+  body: any,
+  forceReplace = false,
+) {
+  // frontend may send session directly
+  const incoming = body.session ?? body;
 
+  const newBrand = incoming.brandDetails ?? null;
+
+  // --------------------------------------------
+  // CHECK EXISTING USER SESSION
+  // --------------------------------------------
+  const existingSession =
+    await this.sessionModel.findOne({
+      userId,
+    });
+
+  // --------------------------------------------
+  // USER ALREADY HAS A BRAND
+  // --------------------------------------------
+  if (
+    existingSession?.brandDetails &&
+    newBrand &&
+    !forceReplace
+  ) {
+    // compare by id if available
+    const existingBrandId =
+      existingSession.brandDetails?.id ||
+      existingSession.brandDetails?._id ||
+      existingSession.brandDetails?.name;
+
+    const newBrandId =
+      newBrand?.id ||
+      newBrand?._id ||
+      newBrand?.name;
+
+    // different brand selected
+    if (existingBrandId !== newBrandId) {
+      return {
+        ok: false,
+
+        replaceRequired: true,
+
+        message: `You already selected "${existingSession.brandDetails?.name || 'a brand'}". Do you want to replace it with "${newBrand?.name || 'new brand'}"?`,
+
+        existingBrand:
+          existingSession.brandDetails,
+
+        newBrand,
+      };
+    }
+  }
+
+  // --------------------------------------------
+  // SAVE / REPLACE BRAND
+  // --------------------------------------------
+  const payload = {
+    userId,
+
+    version: this.SESSION_VERSION,
+
+    messages: Array.isArray(
+      incoming.messages,
+    )
+      ? incoming.messages
+      : [],
+
+    brandDetails: newBrand,
+
+    promoData:
+      incoming.promoData ?? null,
+
+    campaignId:
+      incoming.campaignId ?? null,
+
+    viewMode:
+      incoming.viewMode ??
+      'landing',
+
+    savedAt:
+      new Date().toISOString(),
+  };
+
+  await this.sessionModel.findOneAndUpdate(
+    { userId },
+    payload,
+    {
+      upsert: true,
+      new: true,
+    },
+  );
+
+  return {
+    ok: true,
+
+    replaced:
+      !!existingSession?.brandDetails,
+
+    message:
+      existingSession?.brandDetails
+        ? 'Brand replaced successfully'
+        : 'Brand saved successfully',
+  };
+}
 // ============================================
-// SESSION: DELETE (RESET)
+// GET USER BRAND
 // ============================================
-async deleteSession(userId: string) {
-  await this.sessionModel.deleteOne({ userId });
-  return { success: true };
+async getUserBrand(userId: string) {
+
+  const session =
+    await this.sessionModel.findOne({
+      userId,
+    });
+
+  if (!session) {
+    return {
+      ok: false,
+      message: 'No brand found',
+      brand: null,
+    };
+  }
+
+  return {
+    ok: true,
+    brand:
+      session.brandDetails || null,
+  };
 }
 }
