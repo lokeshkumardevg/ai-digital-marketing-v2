@@ -13,7 +13,6 @@ import UploadByGroupModal from '../components/content/UploadByGroupModal';
 import { PageLoader } from '../components/Loader';
 
 type CreativeItem = {
-
   id: string;
   name: string;
   type: string;
@@ -23,7 +22,7 @@ type CreativeItem = {
   status: string;
   createdAtRaw: string;
   scheduledForRaw: string;
-   imageUrl: string;
+  imageUrl: string;
   thumbnailUrl: string;
   lifetimeStartRaw?: string;
   lifetimeEndRaw?: string;
@@ -43,7 +42,7 @@ export const Content: React.FC = () => {
   const [search, setSearch] = useState('');
   const [creatives, setCreatives] = useState<CreativeItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [contentLoaded, setContentLoaded] = useState(false);
+  // const [contentLoaded, setContentLoaded] = useState(false);
   const [previewCreative, setPreviewCreative] = useState<CreativeItem | null>(null);
 const [watchCreative, setWatchCreative] = useState<CreativeItem | null>(null);
 const [editingCreative, setEditingCreative] = useState<CreativeItem | null>(null);
@@ -140,7 +139,7 @@ const [deletingCreativeId, setDeletingCreativeId] = useState<string | null>(null
 
      const mapped = json.map((c: any) => ({
   id: c._id,
-  name: c.title || 'Untitled Creative',
+  name: c.title || c.name || 'Untitled Creative',
   type:
     c.contentType === 'blog'
       ? 'text'
@@ -172,11 +171,32 @@ const [deletingCreativeId, setDeletingCreativeId] = useState<string | null>(null
     }
   };
 
-  const handleLoadCreativeContent = async () => {
-    setContentLoaded(false);
-    await fetchCreatives();
-    setContentLoaded(true);
-  };
+  useEffect(() => {
+    // initial fetch + auto-refresh on creative changes (filters trigger refetch below)
+    // setContentLoaded(false);
+    // fetchCreatives().finally(() => setContentLoaded(true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    const run = async () => {
+      try {
+        await fetchCreatives();
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    // refetch whenever user changes filters/search
+    run();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadDateStart, uploadDateEnd, lifetimeStart, lifetimeEnd, search]);
 
 
   const handleGenerate = async () => {
@@ -314,7 +334,7 @@ const handleWatchCreative = (creative: CreativeItem) => {
   setWatchCreative(creative);
 };
 
-const handleOpenEditCreative = (creative: CreativeItem) => {
+  const handleOpenEditCreative = (creative: CreativeItem) => {
   setEditingCreative(creative);
   setEditName(creative.name || '');
   setEditLifetimeStart(
@@ -367,7 +387,7 @@ const handleRepromptCreative = (creative: CreativeItem) => {
   navigate('/content/ai-workspace', {
     state: {
       selectedImages: [creative.imageUrl || ''],
-      productUrl: creative.name || creative.title || 'Reprompt Creative',
+      productUrl: creative.name || 'Reprompt Creative',
       promptOnly: true,
     },
   });
@@ -670,56 +690,54 @@ const filtered = creatives.filter((c) => {
   onBulkUploadByFilename={handleBulkUploadByFilename}
 />
 
-        <div style={{ marginTop: '18px', marginBottom: '20px' }}>
-          <button
-            type="button"
-            onClick={handleLoadCreativeContent}
-            style={{
-              padding: '12px 22px',
-              borderRadius: '999px',
-              border: 'none',
-              background: '#7c3aed',
-              color: '#fff',
-              fontWeight: 700,
-              cursor: 'pointer',
-            }}
-          >
-            Show Creative Content
-          </button>
-          {loading && (
-            <div style={{ marginTop: '12px' }}>
-              <PageLoader message="Loading creatives..." />
-            </div>
-          )}
+         
 
-        </div>
+<div style={{ position: 'relative' }}>
+  <ContentFilters
+    uploadDateStart={uploadDateStart}
+    uploadDateEnd={uploadDateEnd}
+    lifetimeStart={lifetimeStart}
+    lifetimeEnd={lifetimeEnd}
+    search={search}
+    setUploadDateStart={setUploadDateStart}
+    setUploadDateEnd={setUploadDateEnd}
+    setLifetimeStart={setLifetimeStart}
+    setLifetimeEnd={setLifetimeEnd}
+    setSearch={setSearch}
+  />
 
-        {contentLoaded && (
-          <>
-            <ContentFilters
-              uploadDateStart={uploadDateStart}
-              uploadDateEnd={uploadDateEnd}
-              lifetimeStart={lifetimeStart}
-              lifetimeEnd={lifetimeEnd}
-              search={search}
-              setUploadDateStart={setUploadDateStart}
-              setUploadDateEnd={setUploadDateEnd}
-              setLifetimeStart={setLifetimeStart}
-              setLifetimeEnd={setLifetimeEnd}
-              setSearch={setSearch}
-            />
+  {loading && (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'rgba(15,17,23,0.65)',
+        backdropFilter: 'blur(2px)',
+        borderRadius: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingTop: '280px',
+        zIndex: 20,
 
-            <CreativesTable
-              creatives={filtered}
-              onPreviewCreative={handlePreviewCreative}
-              onWatchCreative={handleWatchCreative}
-              onEditCreative={handleOpenEditCreative}
-              onDeleteCreative={handleDeleteCreative}
-              onRepromptCreative={handleRepromptCreative}
-              deletingCreativeId={deletingCreativeId}
-            />
-          </>
-        )}
+      }}
+    >
+      <PageLoader message="Loading filters..." />
+    </div>
+  )}
+</div>
+
+<CreativesTable
+  creatives={filtered}
+  onPreviewCreative={handlePreviewCreative}
+  onWatchCreative={handleWatchCreative}
+  onEditCreative={handleOpenEditCreative}
+  onDeleteCreative={handleDeleteCreative}
+  onRepromptCreative={handleRepromptCreative}
+  deletingCreativeId={deletingCreativeId}
+  loading={loading}
+/>
+
 
 {showAiCreativePanel && (
   <AiCreativeModal
