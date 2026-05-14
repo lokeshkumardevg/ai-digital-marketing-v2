@@ -10,8 +10,10 @@ import CreativesTable from '../components/content/CreativesTable';
 import AiCreativeModal from '../components/content/AiCreativeModal';
 import UploadByGroupModal from '../components/content/UploadByGroupModal';
 // import AiCreativeWorkspace from '../components/content/AiCreativeWorkspace';
+import { PageLoader } from '../components/Loader';
 
 type CreativeItem = {
+
   id: string;
   name: string;
   type: string;
@@ -171,9 +173,11 @@ const [deletingCreativeId, setDeletingCreativeId] = useState<string | null>(null
   };
 
   const handleLoadCreativeContent = async () => {
-    setContentLoaded(true);
+    setContentLoaded(false);
     await fetchCreatives();
+    setContentLoaded(true);
   };
+
 
   const handleGenerate = async () => {
     if (!genTopic.trim()) {
@@ -683,16 +687,11 @@ const filtered = creatives.filter((c) => {
             Show Creative Content
           </button>
           {loading && (
-            <div
-              style={{
-                marginTop: '12px',
-                color: '#a5b4fc',
-                fontSize: '0.95rem',
-              }}
-            >
-              Loading creatives...
+            <div style={{ marginTop: '12px' }}>
+              <PageLoader message="Loading creatives..." />
             </div>
           )}
+
         </div>
 
         {contentLoaded && (
