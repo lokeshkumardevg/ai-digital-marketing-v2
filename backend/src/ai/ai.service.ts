@@ -449,19 +449,43 @@ Return data in this exact structure:
 
   // ── IMAGE ────────────────────────────────────────────────
 
-  async generateImage(prompt: string): Promise<string> {
-    try {
-      const image = await this.openai.images.generate({
-        model: 'dall-e-3',
-        prompt,
-        size: '1024x1024',
-      });
+async generateImage(data: {
+  prompt: string;
+  size?: string;
+  quality?: 'low' | 'medium' | 'high' | 'auto';
+}): Promise<string> {
+  try {
+    const response = await this.openai.images.generate({
+      model: 'gpt-image-1',
+      prompt: data.prompt,
+      size: (data.size || '1024x1024') as any,
+      quality: data.quality || 'auto',
+    });
 
-      return image?.data?.[0]?.url || '';
-    } catch {
-      return 'https://via.placeholder.com/1024x1024';
+    const imageData = response?.data?.[0];
+
+    // ✅ CASE 1: base64 image (most common)
+    if (imageData?.b64_json) {
+      return `data:image/png;base64,${imageData.b64_json}`;
     }
+
+    // ✅ CASE 2: URL (if provider returns hosted image)
+    if (imageData?.url) {
+      return imageData.url;
+    }
+
+    throw new Error('No image returned from model');
+  } catch (error: any) {
+    console.error(
+      'Image generation failed:',
+      error?.response?.data || error,
+    );
+
+    throw new Error(
+      error?.message || 'Failed to generate image',
+    );
   }
+}
 
   // ── PRIVATE HELPERS ───────────────────────────────────────
 

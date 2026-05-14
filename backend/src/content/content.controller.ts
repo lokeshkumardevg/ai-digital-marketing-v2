@@ -58,31 +58,45 @@ export class ContentController {
     return this.contentService.fetchUrlImages(dto.url);
   }
 
-  // @Post('generate-reference-creative')
-  // async generateReferenceCreative(@Body() body: GenerateReferenceCreativeDto) {
-  //   return this.contentService.generateReferenceCreative(body);
-  // }
-  @Post('generate-reference-creative')
+
+//   @Post('generate-reference-creative')
+// @UseInterceptors(FilesInterceptor('referenceFiles', 4))
+// async generateReferenceCreative(
+//   @UploadedFiles() files: Express.Multer.File[],
+//   @Body() body: any,
+// ) {
+//   // Parse referenceImages if it's a JSON string
+//   let referenceImages: string[] = [];
+//   if (typeof body.referenceImages === 'string') {
+//     try {
+//       referenceImages = JSON.parse(body.referenceImages);
+//     } catch {
+//       referenceImages = [];
+//     }
+//   } else if (Array.isArray(body.referenceImages)) {
+//     referenceImages = body.referenceImages;
+//   }
+
+//   return this.contentService.generateReferenceCreative({
+//     prompt: body.prompt,
+//     referenceImages: referenceImages,
+//     productUrl: body.productUrl,
+//     size: body.size,
+//     quality: body.quality,
+//     aspectRatio: body.aspectRatio,
+//     imageCount: body.imageCount,
+//     uploadedFiles: files,
+//   });
+// }
+
+@Post('generate-reference-creative')
 @UseInterceptors(FilesInterceptor('referenceFiles', 4))
 async generateReferenceCreative(
   @UploadedFiles() files: Express.Multer.File[],
   @Body() body: any,
 ) {
-  // Parse referenceImages if it's a JSON string
-  let referenceImages: string[] = [];
-  if (typeof body.referenceImages === 'string') {
-    try {
-      referenceImages = JSON.parse(body.referenceImages);
-    } catch {
-      referenceImages = [];
-    }
-  } else if (Array.isArray(body.referenceImages)) {
-    referenceImages = body.referenceImages;
-  }
-
   return this.contentService.generateReferenceCreative({
     prompt: body.prompt,
-    referenceImages: referenceImages,
     productUrl: body.productUrl,
     size: body.size,
     quality: body.quality,

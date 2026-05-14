@@ -147,7 +147,10 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
       toast.loading('Saving creative to Creative Hub...', { id: 'save-ai-creative' });
 
       await api.post('/content', {
-        title: `${item.prompt || prompt.trim() || 'AI Creative'} - ${item.sizeLabel}`,
+        title: (item.prompt || prompt.trim() || 'AI Creative')
+        .split(' ')
+        .slice(0, 4)
+        .join(' '),
         contentType: 'image',
         imageUrl: item.imageUrl,
         thumbnailUrl: item.imageUrl,
@@ -226,77 +229,83 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
     }
   }, []);
 
-  // Persist to IndexedDB via localforage (see useAiCreativeWorkspaceStorage + aiCreativeStorage.ts).
-  // Kept intentionally disabled here to prevent QuotaExceededError from localStorage.
-  // useEffect(() => {
-  //   if (typeof window === 'undefined') return;
-  //   window.localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(history));
-  // }, [history]);
-
-  // useEffect(() => {
-  //   if (typeof window === 'undefined') return;
-  //   try {
-  //     window.localStorage.setItem(LOCAL_STORAGE_GENERATED_KEY, JSON.stringify(generatedImages));
-  //   } catch {
-  //     // ignore QuotaExceededError and other storage failures
-  //   }
-  // }, [generatedImages]);
 
   const handleGenerateCreative = async (options?: {
-    prompt?: string;
-    aspectRatio?: string;
-    imageCount?: string;
-    modelSource?: string;
-    selectedImages?: string[];
-    uploadedFiles?: File[];
-  }) => {
-    const promptValue = options?.prompt ?? prompt;
-    const aspectRatioValue = options?.aspectRatio ?? aspectRatio;
-    const imageCountValue = options?.imageCount ?? imageCount;
-    const modelSourceValue = options?.modelSource ?? modelSource;
-    const selectedReferenceImages = options?.selectedImages ?? selectedImages;
-    const uploadFiles = options?.uploadedFiles ?? uploadedFiles;
+  prompt?: string;
+  aspectRatio?: string;
+  imageCount?: string;
+  modelSource?: string;
+  selectedImages?: string[];
+  uploadedFiles?: File[];
+}) => {
+  const promptValue = options?.prompt ?? prompt;
+  const aspectRatioValue = options?.aspectRatio ?? aspectRatio;
+  const imageCountValue = options?.imageCount ?? imageCount;
+  const modelSourceValue = options?.modelSource ?? modelSource;
 
-    if (!promptValue.trim() || isGenerating) return;
+  const uploadFiles =
+    options?.uploadedFiles ?? uploadedFiles;
 
-    try {
-      setIsGenerating(true);
-      setGenerateError('');
+  if (!promptValue.trim() || isGenerating) return;
 
-      const formData = new FormData();
-      formData.append("prompt", promptValue.trim());
-      formData.append("productUrl", productUrl);
-      formData.append("aspectRatio", aspectRatioValue);
-      formData.append("imageCount", imageCountValue);
-      formData.append("size", ratioToSizeMap[aspectRatioValue] || "1024x1024");
-      formData.append("quality", "medium");
+  try {
+    setIsGenerating(true);
+    setGenerateError('');
 
-      if (workspaceType === "upload" && uploadFiles.length > 0) {
-        const compressedFiles = await Promise.all(
-          uploadFiles.slice(0, 4).map((file) => compressImageFile(file)),
-        );
-        compressedFiles.forEach((file) => {
-          formData.append('referenceFiles', file);
-        });
-      } else if (selectedReferenceImages.length > 0) {
-        const limited = selectedReferenceImages.filter(Boolean).slice(0, 2);
-        formData.append('referenceImages', JSON.stringify(limited));
-      }
+    const formData = new FormData();
 
-      const response = await api.post(
-        '/content/generate-reference-creative',
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+    formData.append('prompt', promptValue.trim());
+    formData.append('productUrl', productUrl || '');
+    formData.append('aspectRatio', aspectRatioValue);
+    formData.append('imageCount', imageCountValue);
+    formData.append(
+      'size',
+      ratioToSizeMap[aspectRatioValue] || '1024x1024',
+    );
+
+    formData.append('quality', 'medium');
+
+    if (
+      workspaceType === 'upload' &&
+      uploadFiles &&
+      uploadFiles.length > 0
+    ) {
+      const compressedFiles = await Promise.all(
+        uploadFiles
+          .slice(0, 4)
+          .map((file) => compressImageFile(file)),
       );
 
-      const apiImages = Array.isArray(response?.data?.images) ? response.data.images : [];
+      compressedFiles.forEach((file) => {
+        formData.append('referenceFiles', file);
+      });
+    }
 
-      const mapped: GeneratedCreativeItem[] = apiImages.map((item: any, index: number) => ({
+    const response = await api.post(
+      '/content/generate-reference-creative',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      },
+    );
+
+    const apiImages = Array.isArray(response?.data?.images)
+      ? response.data.images
+      : [];
+
+    const mapped: GeneratedCreativeItem[] =
+      apiImages.map((item: any, index: number) => ({
         id: item.id || `${Date.now()}-${index}`,
         prompt: promptValue.trim(),
         imageUrl: item.imageUrl,
         label: 'OpenAI Creative Expert',
-        sizeLabel: `${aspectRatioValue} (${item.size || ratioToSizeMap[aspectRatioValue] || '1024x1024'})`,
+        sizeLabel: `${aspectRatioValue} (${
+          item.size ||
+          ratioToSizeMap[aspectRatioValue] ||
+          '1024x1024'
+        })`,
         createdAt: 'Just now',
         savedToHub: false,
         aspectRatio: aspectRatioValue,
@@ -304,29 +313,30 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
         modelSource: modelSourceValue,
       }));
 
-      setGeneratedImages((prev) => [...mapped, ...prev]);
-      setHistory((prev) => [
-        {
-          id: `history-${Date.now()}`,
-          prompt: promptValue.trim(),
-          aspectRatio: aspectRatioValue,
-          imageCount: imageCountValue,
-          modelSource: modelSourceValue,
-          createdAt: 'Just now',
-          images: mapped,
-        },
-        ...prev,
-      ]);
-    } catch (error: any) {
-      setGenerateError(
-        error?.response?.data?.message ||
-          error?.message ||
-          'Failed to generate creative',
-      );
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+    setGeneratedImages((prev) => [...mapped, ...prev]);
+
+    setHistory((prev) => [
+      {
+        id: `history-${Date.now()}`,
+        prompt: promptValue.trim(),
+        aspectRatio: aspectRatioValue,
+        imageCount: imageCountValue,
+        modelSource: modelSourceValue,
+        createdAt: 'Just now',
+        images: mapped,
+      },
+      ...prev,
+    ]);
+  } catch (error: any) {
+    setGenerateError(
+      error?.response?.data?.message ||
+        error?.message ||
+        'Failed to generate creative',
+    );
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
   if (!open) return null;
 
@@ -403,15 +413,57 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
     }
   }, []);
 
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(history));
-  }, [history]);
+useEffect(() => {
+  if (typeof window === 'undefined') return;
 
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(LOCAL_STORAGE_GENERATED_KEY, JSON.stringify(generatedImages));
-  }, [generatedImages]);
+  const safeHistory = history.map((h) => ({
+    id: h.id,
+    prompt: h.prompt,
+    aspectRatio: h.aspectRatio,
+    imageCount: h.imageCount,
+    modelSource: h.modelSource,
+    createdAt: h.createdAt,
+    images: h.images.map((img) => ({
+      id: img.id,
+      imageUrl: '', // ❌ remove image
+    })),
+  }));
+
+  try {
+    localStorage.setItem(
+      LOCAL_STORAGE_HISTORY_KEY,
+      JSON.stringify(safeHistory),
+    );
+  } catch (e) {
+    console.warn('History storage skipped (quota safe)');
+  }
+}, [history]);
+
+useEffect(() => {
+  if (typeof window === 'undefined') return;
+
+  const safeHistory = history.map((h) => ({
+    id: h.id,
+    prompt: h.prompt,
+    aspectRatio: h.aspectRatio,
+    imageCount: h.imageCount,
+    modelSource: h.modelSource,
+    createdAt: h.createdAt,
+    images: h.images.map((img) => ({
+      id: img.id,
+      imageUrl: '', // ❌ remove image
+    })),
+  }));
+
+  try {
+    localStorage.setItem(
+      LOCAL_STORAGE_HISTORY_KEY,
+      JSON.stringify(safeHistory),
+    );
+  } catch (e) {
+    console.warn('History storage skipped (quota safe)');
+  }
+}, [history]);
 
   React.useEffect(() => {
     if (workspaceType === 'prompt' && productUrl && !prompt) {
@@ -419,16 +471,6 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
     }
   }, [workspaceType, productUrl, prompt]);
 
-    // background: dk.inputBg,
-    // padding: '0 42px 0 16px',
-    // color: dk.text,
-    // fontWeight: 600,
-    // fontSize: '0.96rem',
-    // outline: 'none',
-    // appearance: 'none',
-    // cursor: 'pointer',
-// }; 
-  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
     <div
@@ -852,34 +894,34 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
               }}
             >
               {/* Aspect ratio */}
-              <div style={{ position: 'relative' }}>
+              {/* <div style={{ position: 'relative' }}>
                 <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)} style={selectStyle}>
                   {ratioOptions.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
                 <ChevronDown size={16} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: dk.textMuted }} />
-              </div>
+              </div> */}
 
               {/* Image count */}
-              <div style={{ position: 'relative' }}>
+              {/* <div style={{ position: 'relative' }}>
                 <select value={imageCount} onChange={(e) => setImageCount(e.target.value)} style={selectStyle}>
                   {imageCountOptions.map((count) => (
                     <option key={count} value={count}>{count} image{count !== '1' ? 's' : ''}</option>
                   ))}
                 </select>
                 <ChevronDown size={16} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: dk.textMuted }} />
-              </div>
+              </div> */}
 
               {/* Model */}
-              <div style={{ position: 'relative' }}>
+              {/* <div style={{ position: 'relative' }}>
                 <select value={modelSource} onChange={(e) => setModelSource(e.target.value)} style={selectStyle}>
                   {modelOptions.map((model) => (
                     <option key={model} value={model}>{model}</option>
                   ))}
                 </select>
                 <ChevronDown size={16} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: dk.textMuted }} />
-              </div>
+              </div> */}
             </div>
 
             {/* Submit button */}

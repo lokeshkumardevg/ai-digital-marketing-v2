@@ -602,45 +602,55 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     }
   };
 
-  const filtered = creatives.filter((c) => {
-    const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase());
+const filtered = creatives.filter((c) => {
+  const matchesSearch = c.name
+    .toLowerCase()
+    .includes(search.toLowerCase());
 
-    const createdAt = c.createdAtRaw ? new Date(c.createdAtRaw) : null;
-    const scheduledAt = c.scheduledForRaw ? new Date(c.scheduledForRaw) : null;
+  const createdAt = c.createdAtRaw
+    ? new Date(c.createdAtRaw)
+    : null;
 
-    const matchesUploadStart = uploadDateStart
-      ? createdAt
-        ? createdAt >= new Date(`${uploadDateStart}T00:00:00`)
-        : false
-      : true;
+  const lifetimeStartAt = c.lifetimeStartRaw
+    ? new Date(c.lifetimeStartRaw)
+    : null;
 
-    const matchesUploadEnd = uploadDateEnd
-      ? createdAt
-        ? createdAt <= new Date(`${uploadDateEnd}T23:59:59`)
-        : false
-      : true;
+  const lifetimeEndAt = c.lifetimeEndRaw
+    ? new Date(c.lifetimeEndRaw)
+    : null;
 
-    const matchesLifetimeStart = lifetimeStart
-      ? scheduledAt
-        ? scheduledAt >= new Date(`${lifetimeStart}T00:00:00`)
-        : false
-      : true;
+  const matchesUploadStart = uploadDateStart
+    ? createdAt
+      ? createdAt >= new Date(`${uploadDateStart}T00:00:00`)
+      : false
+    : true;
 
-    const matchesLifetimeEnd = lifetimeEnd
-      ? scheduledAt
-        ? scheduledAt <= new Date(`${lifetimeEnd}T23:59:59`)
-        : false
-      : true;
+  const matchesUploadEnd = uploadDateEnd
+    ? createdAt
+      ? createdAt <= new Date(`${uploadDateEnd}T23:59:59`)
+      : false
+    : true;
 
-    return (
-      matchesSearch &&
-      matchesUploadStart &&
-      matchesUploadEnd &&
-      matchesLifetimeStart &&
-      matchesLifetimeEnd
-    );
-  });
+  const matchesLifetimeStart = lifetimeStart
+    ? lifetimeStartAt
+      ? lifetimeStartAt >= new Date(`${lifetimeStart}T00:00:00`)
+      : false
+    : true;
 
+  const matchesLifetimeEnd = lifetimeEnd
+    ? lifetimeEndAt
+      ? lifetimeEndAt <= new Date(`${lifetimeEnd}T23:59:59`)
+      : false
+    : true;
+
+  return (
+    matchesSearch &&
+    matchesUploadStart &&
+    matchesUploadEnd &&
+    matchesLifetimeStart &&
+    matchesLifetimeEnd
+  );
+});
   return (
     <div style={{ minHeight: '100%', background: '#0f1117' }}>
       <ContentTabs activeTab={activeTab} onTabChange={setActiveTab} />
