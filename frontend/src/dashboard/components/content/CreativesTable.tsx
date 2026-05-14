@@ -29,6 +29,7 @@ interface CreativesTableProps {
   onDeleteCreative: (creative: CreativeItem) => void;
   onRepromptCreative: (creative: CreativeItem) => void;
   deletingCreativeId?: string | null;
+  loading?: boolean;
 }
 
 const ITEMS_PER_PAGE = 8;
@@ -41,6 +42,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
   onDeleteCreative,
   onRepromptCreative,
   deletingCreativeId,
+  loading = false,
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -90,7 +92,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
     return pages;
   };
 
-  if (!normalizedCreatives.length) {
+  if (!normalizedCreatives.length && !loading) {
     return (
       <div
         style={{

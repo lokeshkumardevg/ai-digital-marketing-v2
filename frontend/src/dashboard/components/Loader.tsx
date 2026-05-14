@@ -106,7 +106,7 @@ const OrbitDots: React.FC<{ size: number }> = ({ size }) => {
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
       {/* Faint center */}
-      <div style={{ position: 'absolute', inset: size * 0.3, borderRadius: '50%', background: 'rgba(124,58,237,0.12)', filter: 'blur(2px)' }} />
+      <div style={{ position: 'absolute', inset: size * 0.3 }} />
       {dots.map((d, i) => (
         <div key={i} style={{
           position: 'absolute',
@@ -216,7 +216,6 @@ export const Loader: React.FC<LoaderProps> = ({
     return (
       <div style={{
         position: 'fixed', inset: 0, zIndex: 9999,
-        background: '#080d1a',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
         gap: s.gap,
