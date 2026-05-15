@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback, useRef } from "react";
+import { useSelector } from "react-redux";
 
 type PlatformId = "meta" | "google" | "x" | "linkedin";
 type LoadingState = "publish" | "draft" | null;
@@ -72,7 +73,7 @@ interface Plan {
   color: string;
   popular?: boolean;
 }
-
+const API_BASE = 'http://localhost:3000';
 /* ─── GLOBAL STYLES ─────────────────────────────────────── */
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
@@ -264,7 +265,7 @@ function MetaPreview({ brandName, logoUrl, caption, cta, imageUrl }: PreviewProp
       <div style={{ width: "100%", aspectRatio: "1.91/1", background: "#EFF6FF", position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {imageUrl ? <img src={imageUrl} alt="Ad" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> :
           <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="32" height="32" rx="4" stroke="#2563EB" strokeWidth="1.5" strokeDasharray="4 2"/><path d="M12 28l8-10 5 6 3-4 7 8" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="15" cy="16" r="3" stroke="#2563EB" strokeWidth="1.5"/></svg>
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><rect x="4" y="4" width="32" height="32" rx="4" stroke="#2563EB" strokeWidth="1.5" strokeDasharray="4 2" /><path d="M12 28l8-10 5 6 3-4 7 8" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><circle cx="15" cy="16" r="3" stroke="#2563EB" strokeWidth="1.5" /></svg>
             <span style={{ fontSize: 11, color: "#93C5FD" }}>Upload or generate image</span>
           </div>}
       </div>
@@ -318,7 +319,7 @@ function XPreview({ brandName, logoUrl, caption, cta, imageUrl }: PreviewProps) 
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: "#0F1733" }}>{brandName}</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#1d9bf0"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91-1.01-1.01-2.52-1.27-3.91-.81-.67-1.31-1.91-2.19-3.34-2.19-1.43 0-2.67.88-3.34 2.19-1.39-.46-2.9-.2-3.91.81-1.01 1.01-1.27 2.52-.81 3.91C2.88 9.33 2 10.57 2 12c0 1.43.88 2.67 2.19 3.34-.46 1.39-.2 2.9.81 3.91 1.01 1.01 2.52 1.27 3.91.81.67 1.31 1.91 2.19 3.34 2.19 1.43 0 2.67-.88 3.34-2.19 1.39.46 2.9.2 3.91-.81 1.01-1.01 1.27-2.52.81-3.91C21.32 14.67 22.25 13.43 22.25 12z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#1d9bf0"><path d="M22.25 12c0-1.43-.88-2.67-2.19-3.34.46-1.39.2-2.9-.81-3.91-1.01-1.01-2.52-1.27-3.91-.81-.67-1.31-1.91-2.19-3.34-2.19-1.43 0-2.67.88-3.34 2.19-1.39-.46-2.9-.2-3.91.81-1.01 1.01-1.27 2.52-.81 3.91C2.88 9.33 2 10.57 2 12c0 1.43.88 2.67 2.19 3.34-.46 1.39-.2 2.9.81 3.91 1.01 1.01 2.52 1.27 3.91.81.67 1.31 1.91 2.19 3.34 2.19 1.43 0 2.67-.88 3.34-2.19 1.39.46 2.9.2 3.91-.81 1.01-1.01 1.27-2.52.81-3.91C21.32 14.67 22.25 13.43 22.25 12z" /></svg>
             <span style={{ fontSize: 11, color: "#8A97B0" }}>· Promoted</span>
           </div>
           <div style={{ fontSize: 14, color: "#0F1733", lineHeight: 1.6, marginBottom: 10 }}>{caption}</div>
@@ -388,10 +389,10 @@ function PlatformPreview({ platformId, brandName, logoUrl, caption, cta, estimat
   };
 
   const platformMeta: Record<PlatformId, { label: string; color: string; bg: string }> = {
-    meta:     { label: "Meta Ads Feed Preview",        color: "#2563eb", bg: "#EFF6FF" },
-    google:   { label: "Google Search Ad Preview",     color: "#34a853", bg: "#ECFDF5" },
-    x:        { label: "X (Twitter) Promoted Post",    color: "#0F1733", bg: "#F1F5FE" },
-    linkedin: { label: "LinkedIn Sponsored Content",   color: "#0a66c2", bg: "#EFF6FF" },
+    meta: { label: "Meta Ads Feed Preview", color: "#2563eb", bg: "#EFF6FF" },
+    google: { label: "Google Search Ad Preview", color: "#34a853", bg: "#ECFDF5" },
+    x: { label: "X (Twitter) Promoted Post", color: "#0F1733", bg: "#F1F5FE" },
+    linkedin: { label: "LinkedIn Sponsored Content", color: "#0a66c2", bg: "#EFF6FF" },
   };
 
   const meta = platformMeta[platformId];
@@ -425,80 +426,80 @@ function PlatformPreview({ platformId, brandName, logoUrl, caption, cta, estimat
 const MetaIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" style={{ flex: 'none', lineHeight: 1 }}>
     <title>Meta</title>
-    <path d="M6.897 4h-.024l-.031 2.615h.022c1.715 0 3.046 1.357 5.94 6.246l.175.297.012.02 1.62-2.438-.012-.019a48.763 48.763 0 0 0-1.098-1.716 28.01 28.01 0 0 0-1.175-1.629C10.413 4.932 8.812 4 6.896 4z" fill="url(#meta-0)"/>
-    <path d="M6.873 4C4.95 4.01 3.247 5.258 2.02 7.17a4.352 4.352 0 0 0-.01.017l2.254 1.231.011-.017c.718-1.083 1.61-1.774 2.568-1.785h.021L6.896 4h-.023z" fill="url(#meta-1)"/>
-    <path d="M2.019 7.17l-.011.017C1.2 8.447.598 9.995.274 11.664l-.005.022 2.534.6.004-.022c.27-1.467.786-2.828 1.456-3.845l.011-.017L2.02 7.17z" fill="url(#meta-2)"/>
-    <path d="M2.807 12.264l-2.533-.6-.005.022c-.177.918-.267 1.851-.269 2.786v.023l2.598.233v-.023a12.591 12.591 0 0 1 .21-2.44z" fill="url(#meta-3)"/>
-    <path d="M2.677 15.537a5.462 5.462 0 0 1-.079-.813v-.022L0 14.468v.024a8.89 8.89 0 0 0 .146 1.652l2.535-.585a4.106 4.106 0 0 1-.004-.022z" fill="url(#meta-4)"/>
-    <path d="M3.27 16.89c-.284-.31-.484-.756-.589-1.328l-.004-.021-2.535.585.004.021c.192 1.01.568 1.85 1.106 2.487l.014.017 2.018-1.745a2.106 2.106 0 0 1-.015-.016z" fill="url(#meta-5)"/>
-    <path d="M10.78 9.654c-1.528 2.35-2.454 3.825-2.454 3.825-2.035 3.2-2.739 3.917-3.871 3.917a1.545 1.545 0 0 1-1.186-.508l-2.017 1.744.014.017C2.01 19.518 3.058 20 4.356 20c1.963 0 3.374-.928 5.884-5.33l1.766-3.13a41.283 41.283 0 0 0-1.227-1.886z" fill="#0082FB"/>
-    <path d="M13.502 5.946l-.016.016c-.4.43-.786.908-1.16 1.416.378.483.768 1.024 1.175 1.63.48-.743.928-1.345 1.367-1.807l.016-.016-1.382-1.24z" fill="url(#meta-6)"/>
-    <path d="M20.918 5.713C19.853 4.633 18.583 4 17.225 4c-1.432 0-2.637.787-3.723 1.944l-.016.016 1.382 1.24.016-.017c.715-.747 1.408-1.12 2.176-1.12.826 0 1.6.39 2.27 1.075l.015.016 1.589-1.425-.016-.016z" fill="#0082FB"/>
-    <path d="M23.998 14.125c-.06-3.467-1.27-6.566-3.064-8.396l-.016-.016-1.588 1.424.015.016c1.35 1.392 2.277 3.98 2.361 6.971v.023h2.292v-.022z" fill="url(#meta-7)"/>
-    <path d="M23.998 14.15v-.023h-2.292v.022c.004.14.006.282.006.424 0 .815-.121 1.474-.368 1.95l-.011.022 1.708 1.782.013-.02c.62-.96.946-2.293.946-3.91 0-.083 0-.165-.002-.247z" fill="url(#meta-8)"/>
-    <path d="M21.344 16.52l-.011.02c-.214.402-.519.67-.917.787l.778 2.462a3.493 3.493 0 0 0 .438-.182 3.558 3.558 0 0 0 1.366-1.218l.044-.065.012-.02-1.71-1.784z" fill="url(#meta-9)"/>
-    <path d="M19.92 17.393c-.262 0-.492-.039-.718-.14l-.798 2.522c.449.153.927.222 1.46.222.492 0 .943-.073 1.352-.215l-.78-2.462c-.167.05-.341.075-.517.073z" fill="url(#meta-10)"/>
-    <path d="M18.323 16.534l-.014-.017-1.836 1.914.016.017c.637.682 1.246 1.105 1.937 1.337l.797-2.52c-.291-.125-.573-.353-.9-.731z" fill="url(#meta-11)"/>
-    <path d="M18.309 16.515c-.55-.642-1.232-1.712-2.303-3.44l-1.396-2.336-.011-.02-1.62 2.438.012.02.989 1.668c.959 1.61 1.74 2.774 2.493 3.585l.016.016 1.834-1.914a2.353 2.353 0 0 1-.014-.017z" fill="url(#meta-12)"/>
+    <path d="M6.897 4h-.024l-.031 2.615h.022c1.715 0 3.046 1.357 5.94 6.246l.175.297.012.02 1.62-2.438-.012-.019a48.763 48.763 0 0 0-1.098-1.716 28.01 28.01 0 0 0-1.175-1.629C10.413 4.932 8.812 4 6.896 4z" fill="url(#meta-0)" />
+    <path d="M6.873 4C4.95 4.01 3.247 5.258 2.02 7.17a4.352 4.352 0 0 0-.01.017l2.254 1.231.011-.017c.718-1.083 1.61-1.774 2.568-1.785h.021L6.896 4h-.023z" fill="url(#meta-1)" />
+    <path d="M2.019 7.17l-.011.017C1.2 8.447.598 9.995.274 11.664l-.005.022 2.534.6.004-.022c.27-1.467.786-2.828 1.456-3.845l.011-.017L2.02 7.17z" fill="url(#meta-2)" />
+    <path d="M2.807 12.264l-2.533-.6-.005.022c-.177.918-.267 1.851-.269 2.786v.023l2.598.233v-.023a12.591 12.591 0 0 1 .21-2.44z" fill="url(#meta-3)" />
+    <path d="M2.677 15.537a5.462 5.462 0 0 1-.079-.813v-.022L0 14.468v.024a8.89 8.89 0 0 0 .146 1.652l2.535-.585a4.106 4.106 0 0 1-.004-.022z" fill="url(#meta-4)" />
+    <path d="M3.27 16.89c-.284-.31-.484-.756-.589-1.328l-.004-.021-2.535.585.004.021c.192 1.01.568 1.85 1.106 2.487l.014.017 2.018-1.745a2.106 2.106 0 0 1-.015-.016z" fill="url(#meta-5)" />
+    <path d="M10.78 9.654c-1.528 2.35-2.454 3.825-2.454 3.825-2.035 3.2-2.739 3.917-3.871 3.917a1.545 1.545 0 0 1-1.186-.508l-2.017 1.744.014.017C2.01 19.518 3.058 20 4.356 20c1.963 0 3.374-.928 5.884-5.33l1.766-3.13a41.283 41.283 0 0 0-1.227-1.886z" fill="#0082FB" />
+    <path d="M13.502 5.946l-.016.016c-.4.43-.786.908-1.16 1.416.378.483.768 1.024 1.175 1.63.48-.743.928-1.345 1.367-1.807l.016-.016-1.382-1.24z" fill="url(#meta-6)" />
+    <path d="M20.918 5.713C19.853 4.633 18.583 4 17.225 4c-1.432 0-2.637.787-3.723 1.944l-.016.016 1.382 1.24.016-.017c.715-.747 1.408-1.12 2.176-1.12.826 0 1.6.39 2.27 1.075l.015.016 1.589-1.425-.016-.016z" fill="#0082FB" />
+    <path d="M23.998 14.125c-.06-3.467-1.27-6.566-3.064-8.396l-.016-.016-1.588 1.424.015.016c1.35 1.392 2.277 3.98 2.361 6.971v.023h2.292v-.022z" fill="url(#meta-7)" />
+    <path d="M23.998 14.15v-.023h-2.292v.022c.004.14.006.282.006.424 0 .815-.121 1.474-.368 1.95l-.011.022 1.708 1.782.013-.02c.62-.96.946-2.293.946-3.91 0-.083 0-.165-.002-.247z" fill="url(#meta-8)" />
+    <path d="M21.344 16.52l-.011.02c-.214.402-.519.67-.917.787l.778 2.462a3.493 3.493 0 0 0 .438-.182 3.558 3.558 0 0 0 1.366-1.218l.044-.065.012-.02-1.71-1.784z" fill="url(#meta-9)" />
+    <path d="M19.92 17.393c-.262 0-.492-.039-.718-.14l-.798 2.522c.449.153.927.222 1.46.222.492 0 .943-.073 1.352-.215l-.78-2.462c-.167.05-.341.075-.517.073z" fill="url(#meta-10)" />
+    <path d="M18.323 16.534l-.014-.017-1.836 1.914.016.017c.637.682 1.246 1.105 1.937 1.337l.797-2.52c-.291-.125-.573-.353-.9-.731z" fill="url(#meta-11)" />
+    <path d="M18.309 16.515c-.55-.642-1.232-1.712-2.303-3.44l-1.396-2.336-.011-.02-1.62 2.438.012.02.989 1.668c.959 1.61 1.74 2.774 2.493 3.585l.016.016 1.834-1.914a2.353 2.353 0 0 1-.014-.017z" fill="url(#meta-12)" />
     <defs>
-      <linearGradient id="meta-0" x1="75.897%" x2="26.312%" y1="89.199%" y2="12.194%"><stop offset=".06%" stopColor="#0867DF"/><stop offset="45.39%" stopColor="#0668E1"/><stop offset="85.91%" stopColor="#0064E0"/></linearGradient>
-      <linearGradient id="meta-1" x1="21.67%" x2="97.068%" y1="75.874%" y2="23.985%"><stop offset="13.23%" stopColor="#0064DF"/><stop offset="99.88%" stopColor="#0064E0"/></linearGradient>
-      <linearGradient id="meta-2" x1="38.263%" x2="60.895%" y1="89.127%" y2="16.131%"><stop offset="1.47%" stopColor="#0072EC"/><stop offset="68.81%" stopColor="#0064DF"/></linearGradient>
-      <linearGradient id="meta-3" x1="47.032%" x2="52.15%" y1="90.19%" y2="15.745%"><stop offset="7.31%" stopColor="#007CF6"/><stop offset="99.43%" stopColor="#0072EC"/></linearGradient>
-      <linearGradient id="meta-4" x1="52.155%" x2="47.591%" y1="58.301%" y2="37.004%"><stop offset="7.31%" stopColor="#007FF9"/><stop offset="100%" stopColor="#007CF6"/></linearGradient>
-      <linearGradient id="meta-5" x1="37.689%" x2="61.961%" y1="12.502%" y2="63.624%"><stop offset="7.31%" stopColor="#007FF9"/><stop offset="100%" stopColor="#0082FB"/></linearGradient>
-      <linearGradient id="meta-6" x1="34.808%" x2="62.313%" y1="68.859%" y2="23.174%"><stop offset="27.99%" stopColor="#007FF8"/><stop offset="91.41%" stopColor="#0082FB"/></linearGradient>
-      <linearGradient id="meta-7" x1="43.762%" x2="57.602%" y1="6.235%" y2="98.514%"><stop offset="0%" stopColor="#0082FB"/><stop offset="99.95%" stopColor="#0081FA"/></linearGradient>
-      <linearGradient id="meta-8" x1="60.055%" x2="39.88%" y1="4.661%" y2="69.077%"><stop offset="6.19%" stopColor="#0081FA"/><stop offset="100%" stopColor="#0080F9"/></linearGradient>
-      <linearGradient id="meta-9" x1="30.282%" x2="61.081%" y1="59.32%" y2="33.244%"><stop offset="0%" stopColor="#027AF3"/><stop offset="100%" stopColor="#0080F9"/></linearGradient>
-      <linearGradient id="meta-10" x1="20.433%" x2="82.112%" y1="50.001%" y2="50.001%"><stop offset="0%" stopColor="#0377EF"/><stop offset="99.94%" stopColor="#0279F1"/></linearGradient>
-      <linearGradient id="meta-11" x1="40.303%" x2="72.394%" y1="35.298%" y2="57.811%"><stop offset=".19%" stopColor="#0471E9"/><stop offset="100%" stopColor="#0377EF"/></linearGradient>
-      <linearGradient id="meta-12" x1="32.254%" x2="68.003%" y1="19.719%" y2="84.908%"><stop offset="27.65%" stopColor="#0867DF"/><stop offset="100%" stopColor="#0471E9"/></linearGradient>
+      <linearGradient id="meta-0" x1="75.897%" x2="26.312%" y1="89.199%" y2="12.194%"><stop offset=".06%" stopColor="#0867DF" /><stop offset="45.39%" stopColor="#0668E1" /><stop offset="85.91%" stopColor="#0064E0" /></linearGradient>
+      <linearGradient id="meta-1" x1="21.67%" x2="97.068%" y1="75.874%" y2="23.985%"><stop offset="13.23%" stopColor="#0064DF" /><stop offset="99.88%" stopColor="#0064E0" /></linearGradient>
+      <linearGradient id="meta-2" x1="38.263%" x2="60.895%" y1="89.127%" y2="16.131%"><stop offset="1.47%" stopColor="#0072EC" /><stop offset="68.81%" stopColor="#0064DF" /></linearGradient>
+      <linearGradient id="meta-3" x1="47.032%" x2="52.15%" y1="90.19%" y2="15.745%"><stop offset="7.31%" stopColor="#007CF6" /><stop offset="99.43%" stopColor="#0072EC" /></linearGradient>
+      <linearGradient id="meta-4" x1="52.155%" x2="47.591%" y1="58.301%" y2="37.004%"><stop offset="7.31%" stopColor="#007FF9" /><stop offset="100%" stopColor="#007CF6" /></linearGradient>
+      <linearGradient id="meta-5" x1="37.689%" x2="61.961%" y1="12.502%" y2="63.624%"><stop offset="7.31%" stopColor="#007FF9" /><stop offset="100%" stopColor="#0082FB" /></linearGradient>
+      <linearGradient id="meta-6" x1="34.808%" x2="62.313%" y1="68.859%" y2="23.174%"><stop offset="27.99%" stopColor="#007FF8" /><stop offset="91.41%" stopColor="#0082FB" /></linearGradient>
+      <linearGradient id="meta-7" x1="43.762%" x2="57.602%" y1="6.235%" y2="98.514%"><stop offset="0%" stopColor="#0082FB" /><stop offset="99.95%" stopColor="#0081FA" /></linearGradient>
+      <linearGradient id="meta-8" x1="60.055%" x2="39.88%" y1="4.661%" y2="69.077%"><stop offset="6.19%" stopColor="#0081FA" /><stop offset="100%" stopColor="#0080F9" /></linearGradient>
+      <linearGradient id="meta-9" x1="30.282%" x2="61.081%" y1="59.32%" y2="33.244%"><stop offset="0%" stopColor="#027AF3" /><stop offset="100%" stopColor="#0080F9" /></linearGradient>
+      <linearGradient id="meta-10" x1="20.433%" x2="82.112%" y1="50.001%" y2="50.001%"><stop offset="0%" stopColor="#0377EF" /><stop offset="99.94%" stopColor="#0279F1" /></linearGradient>
+      <linearGradient id="meta-11" x1="40.303%" x2="72.394%" y1="35.298%" y2="57.811%"><stop offset=".19%" stopColor="#0471E9" /><stop offset="100%" stopColor="#0377EF" /></linearGradient>
+      <linearGradient id="meta-12" x1="32.254%" x2="68.003%" y1="19.719%" y2="84.908%"><stop offset="27.65%" stopColor="#0867DF" /><stop offset="100%" stopColor="#0471E9" /></linearGradient>
     </defs>
   </svg>
 );
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 48 48">
-    <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.6h12.4c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-3.9 6.9-9.7 6.9-16.5z"/>
-    <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.3-5.6c-2.1 1.4-4.7 2.2-8.6 2.2-6.6 0-12.2-4.5-14.2-10.5H2.3v5.8C6.3 42.6 14.6 48 24 48z"/>
-    <path fill="#FBBC05" d="M9.8 28.3c-.5-1.4-.8-2.9-.8-4.3s.3-2.9.8-4.3v-5.8H2.3C.8 17.1 0 20.5 0 24s.8 6.9 2.3 10.1l7.5-5.8z"/>
-    <path fill="#EA4335" d="M24 9.5c3.7 0 7 1.3 9.6 3.8l7.2-7.2C36.9 2.1 31.5 0 24 0 14.6 0 6.3 5.4 2.3 13.9l7.5 5.8C11.8 14 17.4 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.6h12.4c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-3.9 6.9-9.7 6.9-16.5z" />
+    <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.3-5.6c-2.1 1.4-4.7 2.2-8.6 2.2-6.6 0-12.2-4.5-14.2-10.5H2.3v5.8C6.3 42.6 14.6 48 24 48z" />
+    <path fill="#FBBC05" d="M9.8 28.3c-.5-1.4-.8-2.9-.8-4.3s.3-2.9.8-4.3v-5.8H2.3C.8 17.1 0 20.5 0 24s.8 6.9 2.3 10.1l7.5-5.8z" />
+    <path fill="#EA4335" d="M24 9.5c3.7 0 7 1.3 9.6 3.8l7.2-7.2C36.9 2.1 31.5 0 24 0 14.6 0 6.3 5.4 2.3 13.9l7.5 5.8C11.8 14 17.4 9.5 24 9.5z" />
   </svg>
 );
 
 const XIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="#0F1733">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
   </svg>
 );
 
 const LinkedInIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="#0a66c2">
-    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
   </svg>
 );
 
 const PLATFORMS: Platform[] = [
-  { id: "meta",     name: "Meta",     icon: <MetaIcon/>,     color: "#2563eb", bg: "#EFF6FF" },
-  { id: "google",   name: "Google",   icon: <GoogleIcon/>,   color: "#34a853", bg: "#ECFDF5" },
-  { id: "x",        name: "X",        icon: <XIcon/>,        color: "#0F1733", bg: "#F1F5FE" },
-  { id: "linkedin", name: "LinkedIn", icon: <LinkedInIcon/>, color: "#0a66c2", bg: "#EFF6FF" },
+  { id: "meta", name: "Meta", icon: <MetaIcon />, color: "#2563eb", bg: "#EFF6FF" },
+  { id: "google", name: "Google", icon: <GoogleIcon />, color: "#34a853", bg: "#ECFDF5" },
+  { id: "x", name: "X", icon: <XIcon />, color: "#0F1733", bg: "#F1F5FE" },
+  { id: "linkedin", name: "LinkedIn", icon: <LinkedInIcon />, color: "#0a66c2", bg: "#EFF6FF" },
 ];
 
 /* ─── ICONS ─────────────────────────────────────────────── */
 const I = {
-  Settings: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 10a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" strokeWidth="1.4"/><path d="M13.5 8a5.5 5.5 0 01-.1 1l1.4 1.1-1.5 2.6-1.7-.7a5.5 5.5 0 01-1.7 1l-.3 1.8h-3l-.3-1.8a5.5 5.5 0 01-1.7-1l-1.7.7L1.2 10.1 2.6 9A5.5 5.5 0 012.5 8a5.5 5.5 0 01.1-1L1.2 5.9l1.5-2.6 1.7.7a5.5 5.5 0 011.7-1L6.4 1.3h3l.3 1.7a5.5 5.5 0 011.7 1l1.7-.7 1.5 2.6-1.4 1.1a5.5 5.5 0 01.1 1z" stroke="currentColor" strokeWidth="1.3"/></svg>,
-  Users:    () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.4"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>,
-  Sparkle:  () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M3.8 3.8l2 2M10.2 10.2l2 2M10.2 3.8l-2 2M5.8 10.2l-2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
-  Upload:   () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 10V4M5.5 6.5L8 4l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><rect x="2" y="12" width="12" height="1.5" rx=".75" fill="currentColor"/></svg>,
-  Plus:     () => <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
-  Back:     () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-  Check:    () => <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-  Lock:     () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M5 7V5.5a3 3 0 016 0V7" stroke="currentColor" strokeWidth="1.4"/></svg>,
-  Campaign: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 5h12M2 8h8M2 11h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>,
-  Image:    () => <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M2 11l4-4 3 3 2-2 3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/><circle cx="5.5" cy="5.5" r="1" fill="currentColor"/></svg>,
-  Edit:     () => <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  Settings: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 10a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" strokeWidth="1.4" /><path d="M13.5 8a5.5 5.5 0 01-.1 1l1.4 1.1-1.5 2.6-1.7-.7a5.5 5.5 0 01-1.7 1l-.3 1.8h-3l-.3-1.8a5.5 5.5 0 01-1.7-1l-1.7.7L1.2 10.1 2.6 9A5.5 5.5 0 012.5 8a5.5 5.5 0 01.1-1L1.2 5.9l1.5-2.6 1.7.7a5.5 5.5 0 011.7-1L6.4 1.3h3l.3 1.7a5.5 5.5 0 011.7 1l1.7-.7 1.5 2.6-1.4 1.1a5.5 5.5 0 01.1 1z" stroke="currentColor" strokeWidth="1.3" /></svg>,
+  Users: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.4" /><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>,
+  Sparkle: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M3.8 3.8l2 2M10.2 10.2l2 2M10.2 3.8l-2 2M5.8 10.2l-2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
+  Upload: () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 10V4M5.5 6.5L8 4l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><rect x="2" y="12" width="12" height="1.5" rx=".75" fill="currentColor" /></svg>,
+  Plus: () => <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>,
+  Back: () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  Check: () => <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  Lock: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.4" /><path d="M5 7V5.5a3 3 0 016 0V7" stroke="currentColor" strokeWidth="1.4" /></svg>,
+  Campaign: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 5h12M2 8h8M2 11h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>,
+  Image: () => <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.4" /><path d="M2 11l4-4 3 3 2-2 3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /><circle cx="5.5" cy="5.5" r="1" fill="currentColor" /></svg>,
+  Edit: () => <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>,
 };
 
 const card = (ex: React.CSSProperties = {}): React.CSSProperties => ({
@@ -535,7 +536,7 @@ function Sidebar({ platforms, campaigns, activePlatformId, activeCampaignId, onP
       <div style={{ padding: "18px 16px 14px", borderBottom: "1px solid var(--bdr)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
           <div style={{ width: 28, height: 28, background: "var(--blue)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M3 8h7M3 12h9" stroke="#fff" strokeWidth="1.5" strokeLinecap="round"/></svg>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M3 8h7M3 12h9" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" /></svg>
           </div>
           <span style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", fontFamily: "'Space Grotesk', sans-serif" }}>AdStudio</span>
         </div>
@@ -576,21 +577,21 @@ function Sidebar({ platforms, campaigns, activePlatformId, activeCampaignId, onP
         </div>
         {aCamps.length === 0
           ? <div style={{ padding: "8px", fontSize: 11, color: "var(--t3)", textAlign: "center" }}>
-              No campaigns. <span style={{ color: "var(--blue)", cursor: "pointer" }} onClick={() => onAddCampaign(activePlatformId)}>+ Add</span>
-            </div>
+            No campaigns. <span style={{ color: "var(--blue)", cursor: "pointer" }} onClick={() => onAddCampaign(activePlatformId)}>+ Add</span>
+          </div>
           : aCamps.map(c => {
-              const a = c.id === activeCampaignId;
-              return (
-                <div key={c.id} className="sid-cam" onClick={() => onSelectCampaign(c.id)}
-                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 8px", borderRadius: 10, cursor: "pointer", marginBottom: 3, background: a ? "var(--blue-lt)" : "transparent", border: `1px solid ${a ? "var(--blue-bdr)" : "transparent"}`, transition: "all .15s" }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: a ? "var(--blue-mid)" : "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s", color: a ? "var(--blue)" : "var(--t3)" }}>
-                    <I.Campaign />
-                  </div>
-                  <span style={{ fontSize: 12, color: a ? "var(--blue)" : "var(--t2)", fontWeight: a ? 600 : 400, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
-                  {a && <span style={{ color: "var(--blue)" }}><I.Check /></span>}
+            const a = c.id === activeCampaignId;
+            return (
+              <div key={c.id} className="sid-cam" onClick={() => onSelectCampaign(c.id)}
+                style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 8px", borderRadius: 10, cursor: "pointer", marginBottom: 3, background: a ? "var(--blue-lt)" : "transparent", border: `1px solid ${a ? "var(--blue-bdr)" : "transparent"}`, transition: "all .15s" }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: a ? "var(--blue-mid)" : "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all .15s", color: a ? "var(--blue)" : "var(--t3)" }}>
+                  <I.Campaign />
                 </div>
-              );
-            })}
+                <span style={{ fontSize: 12, color: a ? "var(--blue)" : "var(--t2)", fontWeight: a ? 600 : 400, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
+                {a && <span style={{ color: "var(--blue)" }}><I.Check /></span>}
+              </div>
+            );
+          })}
       </div>
     </aside>
   );
@@ -602,9 +603,9 @@ interface TopBarProps { activePlatformId: PlatformId; }
 function TopBar({ activePlatformId }: TopBarProps) {
   const fields = [
     { label: "Ad Account", placeholder: "Select account" },
-    { label: "Page",       placeholder: "Select page" },
-    { label: "Instagram",  placeholder: "Select" },
-    { label: "Pixel",      placeholder: "Select pixel" },
+    { label: "Page", placeholder: "Select page" },
+    { label: "Instagram", placeholder: "Select" },
+    { label: "Pixel", placeholder: "Select pixel" },
   ];
   const en = activePlatformId === "meta";
   return (
@@ -641,21 +642,21 @@ function AdSettingCard({ event, budget, schedule, finalUrl, enabled, onEventChan
       <div style={sLabel("var(--blue)")}><I.Settings /> Ad Setting</div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
         <div>
-          <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display:"flex", alignItems:"center", gap:4 }}><I.Edit/> Event</div>
+          <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}><I.Edit /> Event</div>
           <input className="editable-input" value={event} onChange={e => onEventChange(e.target.value)} placeholder="e.g. Purchase" />
         </div>
         <div>
-          <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display:"flex", alignItems:"center", gap:4 }}><I.Edit/> Budget</div>
+          <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}><I.Edit /> Budget</div>
           <input className="editable-input" value={budget} onChange={e => onBudgetChange(e.target.value)} placeholder="e.g. 5.83 USD" style={{ color: "var(--blue)", fontWeight: 700 }} />
         </div>
       </div>
       <div style={{ borderTop: "1px solid var(--bdr)", margin: "10px 0" }} />
       <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display:"flex", alignItems:"center", gap:4 }}><I.Edit/> Schedule</div>
+        <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}><I.Edit /> Schedule</div>
         <input className="editable-input" value={schedule} onChange={e => onScheduleChange(e.target.value)} placeholder="e.g. May 08, 2026" />
       </div>
       <div>
-        <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display:"flex", alignItems:"center", gap:4 }}><I.Edit/> Final URL</div>
+        <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}><I.Edit /> Final URL</div>
         <input className="editable-input" value={finalUrl} onChange={e => onFinalUrlChange(e.target.value)} placeholder="https://yourbrand.com" style={{ color: "var(--cyan)", fontSize: 11 }} />
       </div>
       {!enabled && <DisabledOverlay />}
@@ -675,16 +676,18 @@ function TargetAudienceCard({ location, advantagePlus, enabled, onLocationChange
     <div style={{ ...card(), borderTop: "3px solid var(--green)" }}>
       <div style={sLabel("var(--green)")}><I.Users /> Target Audience</div>
       <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display:"flex", alignItems:"center", gap:4 }}><I.Edit/> Location</div>
+        <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}><I.Edit /> Location</div>
         <input className="editable-input" value={location} onChange={e => onLocationChange(e.target.value)} placeholder="e.g. United States" />
       </div>
       <div
         onClick={onAdvantageToggle}
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700,
+        style={{
+          display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700,
           color: advantagePlus ? "var(--green)" : "var(--t3)",
           background: advantagePlus ? "var(--green-lt)" : "var(--surface2)",
           border: `1px solid ${advantagePlus ? "var(--green-bdr)" : "var(--bdr)"}`,
-          padding: "5px 12px", borderRadius: 20, cursor: "pointer", transition: "all .2s", userSelect: "none" }}>
+          padding: "5px 12px", borderRadius: 20, cursor: "pointer", transition: "all .2s", userSelect: "none"
+        }}>
         {advantagePlus ? "✦" : "○"} Advantage+ {advantagePlus ? "on" : "off"}
         <span style={{ width: 15, height: 15, borderRadius: "50%", border: `1px solid ${advantagePlus ? "var(--green-bdr)" : "var(--bdr)"}`, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 8, cursor: "pointer", color: advantagePlus ? "var(--green)" : "var(--t3)" }}>i</span>
       </div>
@@ -774,7 +777,7 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
 
         {/* Headline */}
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--t2)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8, display:"flex", alignItems:"center", gap:5 }}><I.Edit/> Headline</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--t2)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}><I.Edit /> Headline</div>
           <input className="hd-in" value={heading}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setHeading(e.target.value); onHeadingChange(e.target.value); }}
             style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: 8, padding: "9px 12px", color: "var(--t1)", fontSize: 13, fontWeight: 600, fontFamily: "inherit", transition: "all .15s" }}
@@ -786,7 +789,7 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
 
         {/* Primary Text */}
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--t2)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8, display:"flex", alignItems:"center", gap:5 }}><I.Edit/> Primary Text</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--t2)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}><I.Edit /> Primary Text</div>
           <div style={{ display: "flex", gap: 5, marginBottom: 8, flexWrap: "wrap" }}>
             {adCopy.primaryTexts.map((s, i) => (
               <button key={i} className={`tag-pill${sIdx === i ? " on" : ""}`} onClick={() => pickS(s, i)}
@@ -805,7 +808,7 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
 
         {/* CTA */}
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--t2)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8, display:"flex", alignItems:"center", gap:5 }}><I.Edit/> Call to Action</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--t2)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 8, display: "flex", alignItems: "center", gap: 5 }}><I.Edit /> Call to Action</div>
           <input className="hd-in" value={cta}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCtaChange(e.target.value)}
             style={{ width: "100%", background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: 8, padding: "9px 12px", color: "var(--blue)", fontSize: 13, fontWeight: 700, fontFamily: "inherit", transition: "all .15s" }}
@@ -816,7 +819,7 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
 
         {/* Ad Creative */}
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--t2)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 10, display:"flex", alignItems:"center", gap:5 }}><I.Image/> Ad Creative</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--t2)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 10, display: "flex", alignItems: "center", gap: 5 }}><I.Image /> Ad Creative</div>
 
           {/* Image source tabs */}
           <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
@@ -834,7 +837,7 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
             <>
               {brandAssetImages.length === 0 ? (
                 <div style={{ background: "var(--surface2)", border: "1.5px dashed var(--bdr2)", borderRadius: 10, padding: "20px 14px", textAlign: "center", color: "var(--t3)", fontSize: 11, lineHeight: 1.7 }}>
-                  <I.Image/>
+                  <I.Image />
                   <div style={{ marginTop: 8 }}>{emptyMsg}</div>
                 </div>
               ) : (
@@ -1079,13 +1082,14 @@ export default function AdCampaignDashboard({
   brandDetails,
   promoData,
   campaignId,
-  onBack = () => {},
-  onPublish = () => {},
-  onSaveDraft = () => {},
+  onBack = () => { },
+  onPublish = () => { },
+  onSaveDraft = () => { },
 }: AdCampaignDashboardProps) {
   const brandName = brandDetails?.brand?.name || brandDetails?.name || "Brand";
   const logoUrl = brandDetails?.logoUrl || brandDetails?.assets?.favicon || "";
-
+  const { user } = useSelector((state: any) => state.auth);
+  const userId = user?._id || '';
   // Collect all images from brandDetails.assets — images[], banners[], thumbnails[], or any array of strings
   const collectBrandImages = (): string[] => {
     if (!brandDetails?.assets) return SEED.demoImages;
@@ -1172,14 +1176,45 @@ export default function AdCampaignDashboard({
     onPublish({ success: true }, planId);
     setLoading(null);
   }, [onPublish, showToast]);
+  const campaignTitle = `${brandName}_${promoData?.objective || "OUTCOME_SALES"}_${activePlat.name}_${new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}`;
 
-  const handleDraft = useCallback(async () => {
-    setLoading("draft");
-    await new Promise<void>(r => setTimeout(r, 800));
-    showToast("Draft saved!", "success");
+const handleDraft = useCallback(async () => {
+  setLoading("draft");
+  try {
+    const response = await fetch(`${API_BASE}/campaign/draft`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: campaignTitle,
+        platform: activePid,
+        audienceId: null,       // pass a real Audience ObjectId here if you have one
+        data: {
+          caption: pvCaption,
+          cta: pvCta,
+          image: pvImage,
+          budget: adBudget,
+          event: adEvent,
+          schedule: adSchedule,
+          finalUrl: adFinalUrl,
+          location: adLocation,
+          advantagePlus: adAdvantage,
+        },
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || "Failed to save draft");
+
+    showToast(result.message || "Draft saved!", "success");
     onSaveDraft({ success: true });
+
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : "Failed to save draft", "error");
+    onSaveDraft({ success: false });
+  } finally {
     setLoading(null);
-  }, [onSaveDraft, showToast]);
+  }
+}, [activePid, adEvent, adBudget, adSchedule, adFinalUrl, adLocation, adAdvantage, pvCaption, pvCta, pvImage, campaignTitle, onSaveDraft, showToast]);
 
   const adCopy: AdCopy = {
     headlines: promoData?.headlines?.length ? promoData.headlines : SEED.headlines,
@@ -1187,7 +1222,7 @@ export default function AdCampaignDashboard({
     callToAction: pvCta,
   };
 
-  const campaignTitle = `${brandName}_${promoData?.objective || "OUTCOME_SALES"}_${activePlat.name}_${new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}`;
+
 
   return (
     <>
@@ -1254,7 +1289,7 @@ export default function AdCampaignDashboard({
                   adCopy={adCopy}
                   activePlatformId={activePid}
                   brandAssetImages={brandAssetImages}
-                  onHeadingChange={() => {}}
+                  onHeadingChange={() => { }}
                   onSubheadingChange={setPvCaption}
                   onImageSelect={setPvImage}
                   onCtaChange={setPvCta}

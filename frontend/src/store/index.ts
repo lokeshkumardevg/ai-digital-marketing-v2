@@ -10,6 +10,7 @@ import { contentReducer } from './slices/contentSlice';
 import { socialReducer } from './slices/socialSlice';
 import { rolesReducer } from './slices/rolesSlice';
 import { workflowsReducer } from './slices/workflowsSlice';
+import { fetchBrands } from './slices/workspaceSlice';
 
 export const store = configureStore({
   reducer: {
@@ -25,6 +26,18 @@ export const store = configureStore({
     roles: rolesReducer,
     workflows: workflowsReducer
   },
+});
+
+// ✅ Auto-dispatch fetchBrands when auth state changes (on login)
+store.subscribe(() => {
+  const state = store.getState();
+  const userId = state.auth?.user?._id || state.auth?.user?.id;
+  const fetchStatus = state.workspace?.fetchStatus;
+
+  // Only fetch once when user logs in and brands haven't been fetched yet
+  if (userId && fetchStatus === 'idle') {
+    store.dispatch(fetchBrands(userId));
+  }
 });
 
 export type RootState = ReturnType<typeof store.getState>;

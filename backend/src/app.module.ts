@@ -23,6 +23,7 @@ import { WorkflowsModule } from './workflows/workflows.module';
 import { WalletModule } from './wallet/wallet.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { BrandModule } from './brand/brand.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     ProductsModule,
     MessagingModule,
     NotificationsModule,
+    BrandModule,
   ],
   controllers: [AppController],
   providers: [AppService],

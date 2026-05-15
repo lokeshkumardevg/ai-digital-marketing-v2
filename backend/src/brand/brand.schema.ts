@@ -1,0 +1,65 @@
+// brand.schema.ts
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
+
+export type BrandDocument = Brand & Document;
+
+@Schema({ timestamps: true })
+export class Brand {
+  // ── Identity ─────────────────────────────────────────────
+  @Prop({ required: true, index: true })
+  userId: string;
+
+  @Prop({ required: true })
+  name: string;
+
+  @Prop({ default: '' })
+  url: string;
+
+  @Prop({ default: 'active' })
+  status: 'active' | 'syncing' | 'offline';
+
+  // ── Brand meta (from Campaigns.tsx discover API) ──────────
+  @Prop()
+  industry?: string;
+
+  @Prop()
+  tagline?: string;
+
+  @Prop()
+  overallScore?: number;
+
+  @Prop()
+  campaignId?: string;
+
+  @Prop()
+  brandId?: string;
+
+  // ── Assets (logos, screenshots, colors) ──────────────────
+  @Prop({ type: Object, default: {} })
+  assets?: {
+    logoUrl?:           string;
+    logoPreview?:       string;
+    favicon?:           string;
+    websiteScreenshot?: string;
+    websiteImages?:     string[];
+    brandColors?:       string[];
+  };
+
+  // ── Full brandDetails snapshot from Campaigns.tsx ─────────
+  // Stored so workspaceSlice can reconstruct the full BrandRecord
+  @Prop({ type: Object, default: {} })
+  brandDetails?: Record<string, any>;
+
+  // ── Active brand tracking ─────────────────────────────────
+  @Prop({ default: false })
+  isActiveBrand: boolean;
+
+  @Prop()
+  savedAt?: string;
+}
+
+export const BrandSchema = SchemaFactory.createForClass(Brand);
+
+// One brand per user — enforce at DB level
+BrandSchema.index({ userId: 1 }, { unique: true });

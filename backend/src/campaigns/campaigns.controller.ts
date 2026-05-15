@@ -37,7 +37,7 @@ export class CampaignController {
     return this.service.budgetBreakdown(body);
   }
 
-  @Post('draft')
+  @Post('tempdraft')
   draft(@Body() body: any) {
     return this.service.createDraft(body);
   }
@@ -221,28 +221,16 @@ export class CampaignController {
       website,
     );
   }
-  // ============================================
- // BRAND SAVE API
- // ============================================
 
- @Post('brand-save/:userId')
- async brandSave(
-   @Param('userId') userId: string,
-   @Body() body: any,
- ) {
-   return this.service.brandsave(
-     userId,
-     body,
-     body.forceReplace || false,
-   );
- }
+@Post('draft')
+saveDraft(@Body() body: any) {
+  return this.service.saveDraft(body);
+}
 
- @Get('brand/:userId')
-async getUserBrand(
+@Get('draft/:userId')
+getDrafts(
   @Param('userId') userId: string,
 ) {
-  return this.service.getUserBrand(
-    userId,
-  );
+  return this.service.getDraftsByUser(userId);
 }
 }
