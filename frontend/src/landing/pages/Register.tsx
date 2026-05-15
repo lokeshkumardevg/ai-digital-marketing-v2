@@ -221,7 +221,7 @@ function Register() {
 
   useEffect(() => {
     if (localStorage.getItem("access_token")) {
-      window.location.href = "http://localhost:5173/crm";
+      window.location.href = "http://localhost:5173/campaigns";
     }
     setAuthLoading(false);
   }, []);
@@ -276,7 +276,7 @@ function Register() {
       const { data } = await api.post(endpoint, payload);
       handleAuthSuccess(data);
       setSuccess(mode === "signup" ? "Account created! Redirecting…" : "Signed in! Redirecting…");
-      setTimeout(() => { window.location.href = "http://localhost:5173/crm"; }, 1000);
+      setTimeout(() => { window.location.href = "http://localhost:5173/campaigns"; }, 1000);
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Invalid credentials.");
     } finally { setLoading(false); }
@@ -290,7 +290,7 @@ function Register() {
       const { data } = await api.post("/auth/firebase", { idToken });
       handleAuthSuccess(data);
       setSuccess(`Signed in with ${label}! Redirecting…`);
-      setTimeout(() => { window.location.href = "http://localhost:5173/crm"; }, 1000);
+      setTimeout(() => { window.location.href = "http://localhost:5173/campaigns"; }, 1000);
     } catch (err: any) { setError(getFirebaseError(err.code)); }
     finally { setLoading(false); }
   };

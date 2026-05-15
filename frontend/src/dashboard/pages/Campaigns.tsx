@@ -1756,7 +1756,7 @@ const CSS = `
   .land-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
   .land-particle { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: rgba(56,189,248,0.6); left: calc(var(--i) * 5.8% + 2%); top: calc(100% + 10px); animation: particleRise calc(8s + var(--i) * 0.5s) linear infinite; animation-delay: calc(var(--i) * -0.6s); }
   @keyframes particleRise { 0% { transform: translateY(0) scale(1); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 0.4; } 100% { transform: translateY(-110vh) scale(0.3); opacity: 0; } }
-  .land-content { position: relative; z-index: 10; width: 100%; max-width: 900px; padding: 230px 24px 100px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .land-content { position: relative; z-index: 10; width: 100%; max-width: 900px; padding: 120px 24px 100px; text-align: center; display: flex; flex-direction: column; align-items: center; }
   .land-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px 6px 10px; border-radius: 99px; border: 1px solid rgba(99,102,241,0.35); background: rgba(99,102,241,0.08); color: #a5b4fc; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; margin-bottom: 28px; }
   .land-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; animation: pulseDot 2s ease-in-out infinite; }
   @keyframes pulseDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.7); } }
