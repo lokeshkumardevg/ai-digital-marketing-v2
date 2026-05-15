@@ -9,7 +9,7 @@ export class Campaign {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Audience', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Audience'})
   audience: Audience;
 
   @Prop({ required: true })

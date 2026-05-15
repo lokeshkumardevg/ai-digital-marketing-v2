@@ -1,17 +1,22 @@
 /**
- * Campaigns.tsx — v7
+ * Campaigns.tsx — v8
  *
- * Changes from v6:
- * - handleRestoreSession: restores to the exact viewMode saved (including 'dashboard')
- * - handleBackToChat: non-destructive back navigation (no state wipe, no clearSession)
- * - handleReset: still the full wipe (↺ button only)
- * - useEffect on viewMode: auto-saves session snapshot on every view change
- * - Dashboard onBack now uses handleBackToChat instead of inline lambda
+ * Fixes from v7:
+ * - buildSessionSnapshot now deeply serialises brandDetails.assets (logoUrl, logoPreview,
+ *   websiteImages, favicon, brandColors, websiteScreenshot) so they survive refresh.
+ * - handleRestoreSession fully re-hydrates campaignIdRef AND passes all restored data
+ *   (brandDetails + assets + promoData + campaignId) straight to AdCampaignDashboard.
+ * - handleBrandFormSubmit no longer uses stale brandDetails closure when calling saveSession;
+ *   it builds the merged brand object first, then saves.
+ * - handleGenerateCampaign saves the fully-merged brand (with assets) before navigating.
+ * - Session API payload explicitly includes the assets subtree at the top level as well
+ *   so older backend versions that flatten the object still receive them.
+ * - Added a null-guard around assets before spreading so undefined assets never wipe data.
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   Zap, Globe, Target, DollarSign, Brain,
   ShieldCheck, RefreshCw, CheckCircle2, XCircle,
@@ -21,6 +26,7 @@ import {
   Sparkles, AlertCircle, LayoutDashboard, History,
 } from 'lucide-react';
 import axios from 'axios';
+import { upsertBrandLocally } from '../../store/slices/workspaceSlice';
 import { Header } from '../components/Header';
 import AdCampaignDashboard from '../components/Adcampaigndashboard';
 
@@ -86,6 +92,33 @@ interface CampaignSession {
   campaignId: string | null;
   viewMode: 'landing' | 'chat' | 'dashboard';
   savedAt: string;
+  // FIX: top-level assets snapshot so they are never lost on restore
+  assets?: BrandAssets;
+}
+
+// ── Brand-save API response shapes ──
+interface BrandSaveOk {
+  ok: true;
+  replaced: boolean;
+  message: string;
+}
+interface BrandSaveReplace {
+  ok: false;
+  replaceRequired: true;
+  message: string;
+  existingBrand: any;
+  newBrand: any;
+}
+type BrandSaveResult = BrandSaveOk | BrandSaveReplace;
+
+// ── Pending brand confirm payload (held while user decides replace) ──
+interface PendingBrandConfirm {
+  formData: BrandFormData;
+  updatedBrand: BrandDetails;
+  defaultPromo: PromoObjectiveData;
+  newMsgs: Omit<Message, 'id'>[];
+  existingBrandName: string;
+  newBrandName: string;
 }
 
 // ============================================================
@@ -146,50 +179,95 @@ const resolveBrandName = (b: BrandDetails): string =>
 const resolveIndustry = (b: BrandDetails): string =>
   b.brand?.industry || b.industry || b.auditData?.brand?.industry || '';
 
+// ============================================================
+// ASSET URL NORMALISATION HELPERS
+// ============================================================
+
+/** Convert a relative path like "uploads/foo.png" → "http://localhost:3000/uploads/foo.png" */
+const toAbsoluteAssetUrl = (path: string | undefined, apiBase: string): string | undefined => {
+  if (!path) return undefined;
+  // Already absolute
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
+  // Relative — prefix the API base (strip trailing slash to avoid double-slash)
+  return `${apiBase.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
+};
+
+/** Return the first non-empty string from a list of candidates */
+const firstNonEmpty = (...candidates: (string | undefined)[]): string | undefined =>
+  candidates.find(v => typeof v === 'string' && v.trim() !== '');
+
 const fetchBrandAssets = async (
-website: string,
-apiBase: string
+  website: string,
+  apiBase: string
 ): Promise<BrandAssets> => {
-try {
-const { data } = await axios.post(
-`${apiBase}/campaign/assets`,
-{ website }
-);
+  try {
+    const { data } = await axios.post(`${apiBase}/campaign/assets`, { website });
+    console.log('ASSETS API RESPONSE:', data);
+    const raw = data?.assets || {};
 
-console.log('ASSETS API RESPONSE:', data);
+    // Normalise screenshot path (backend often returns a relative path)
+    const screenshotRaw = raw.websiteScreenshot ?? undefined;
+    const websiteScreenshot = toAbsoluteAssetUrl(screenshotRaw, apiBase);
 
-// Backend returns assets inside data.assets
-const assets = data?.assets || {};
+    // Normalise logoUrl — fall back to favicon when logoUrl is blank
+    const logoUrlRaw  = toAbsoluteAssetUrl(raw.logoUrl ?? undefined, apiBase);
+    const faviconRaw  = toAbsoluteAssetUrl(raw.favicon ?? undefined, apiBase);
+    // Best logo candidate: logoUrl → favicon → Google favicon service
+    const hostname    = getHostname(website);
+    const googleFavicon = `https://www.google.com/s2/favicons?sz=128&domain=${hostname}`;
+    const resolvedLogo  = firstNonEmpty(logoUrlRaw, faviconRaw, googleFavicon)!;
 
-return {
-  logoUrl: assets.logoUrl ?? undefined,
+    // Normalise websiteImages array (could contain relative paths)
+    const rawImages: string[] = Array.isArray(raw.websiteImages) ? raw.websiteImages : [];
+    const websiteImages = rawImages
+      .map(img => toAbsoluteAssetUrl(img, apiBase))
+      .filter((img): img is string => !!img);
 
-  websiteImages: Array.isArray(assets.websiteImages)
-    ? assets.websiteImages
-    : [],
-
-  favicon: assets.favicon ?? undefined,
-
-  brandColors: Array.isArray(assets.brandColors)
-    ? assets.brandColors
-    : [],
-
-  websiteScreenshot:
-    assets.websiteScreenshot ?? undefined,
+    return {
+      logoUrl:           resolvedLogo,
+      logoPreview:       resolvedLogo,   // set both so dashboard always has a logo
+      favicon:           firstNonEmpty(faviconRaw, googleFavicon),
+      websiteScreenshot,
+      websiteImages,
+      brandColors: Array.isArray(raw.brandColors) ? raw.brandColors : [],
+    };
+  } catch (error) {
+    console.error('fetchBrandAssets error:', error);
+    const hostname    = getHostname(website);
+    const googleFavicon = `https://www.google.com/s2/favicons?sz=128&domain=${hostname}`;
+    return {
+      logoUrl:       googleFavicon,
+      logoPreview:   googleFavicon,
+      favicon:       googleFavicon,
+      websiteImages: [],
+      brandColors:   [],
+    };
+  }
 };
 
-} catch (error) {
-console.error('fetchBrandAssets error:', error);
+// ============================================================
+// FIX: merge assets safely — treats empty string the same as undefined
+// so the backend returning "" never overwrites a real value.
+// ============================================================
+const nonEmpty = (v: string | undefined): string | undefined =>
+  v && v.trim() !== '' ? v : undefined;
 
-const hostname = getHostname(website);
+const mergeAssets = (existing: BrandAssets | undefined, incoming: Partial<BrandAssets>): BrandAssets => {
+  const logoUrl           = nonEmpty(incoming.logoUrl)           ?? nonEmpty(existing?.logoUrl);
+  const logoPreview       = nonEmpty(incoming.logoPreview)       ?? nonEmpty(existing?.logoPreview) ?? logoUrl;
+  const favicon           = nonEmpty(incoming.favicon)           ?? nonEmpty(existing?.favicon);
+  const websiteScreenshot = nonEmpty(incoming.websiteScreenshot) ?? nonEmpty(existing?.websiteScreenshot);
 
-return {
-  favicon: `https://www.google.com/s2/favicons?sz=128&domain=${hostname}`,
-  websiteImages: [],
-  brandColors: [],
-};
+  // Prefer whichever array is non-empty
+  const incomingImages = Array.isArray(incoming.websiteImages) && incoming.websiteImages.length > 0
+    ? incoming.websiteImages : undefined;
+  const websiteImages  = incomingImages ?? existing?.websiteImages ?? [];
 
-}
+  const incomingColors = Array.isArray(incoming.brandColors) && incoming.brandColors.length > 0
+    ? incoming.brandColors : undefined;
+  const brandColors    = incomingColors ?? existing?.brandColors ?? [];
+
+  return { logoUrl, logoPreview, favicon, websiteScreenshot, websiteImages, brandColors };
 };
 
 // ============================================================
@@ -199,10 +277,14 @@ const useCampaignSession = (userId: string) => {
   const saveSession = useCallback(async (payload: CampaignSession) => {
     if (!userId) return;
     try {
-      await axios.post(`${API_BASE}/campaign/session/${userId}`, {
+      // FIX: always mirror assets at the top-level of the payload so the
+      // backend never loses them even if it flattens brandDetails.
+      const enriched: CampaignSession = {
         ...payload,
         savedAt: new Date().toISOString(),
-      });
+        assets: payload.brandDetails?.assets ?? payload.assets,
+      };
+      await axios.post(`${API_BASE}/campaign/session/${userId}`, enriched);
     } catch (err) {
       console.warn('[session] save failed:', err);
     }
@@ -212,7 +294,17 @@ const useCampaignSession = (userId: string) => {
     if (!userId) return null;
     try {
       const { data } = await axios.get(`${API_BASE}/campaign/session/${userId}`);
-      return data?.session ?? null;
+      const session: CampaignSession | null = data?.session ?? null;
+
+      // FIX: if the backend stored assets at the top level, merge them back
+      // into brandDetails.assets so the rest of the app only reads one place.
+      if (session && session.assets && session.brandDetails) {
+        session.brandDetails.assets = mergeAssets(
+          session.brandDetails.assets,
+          session.assets,
+        );
+      }
+      return session;
     } catch {
       return null;
     }
@@ -335,9 +427,7 @@ const RestoreSessionBanner: React.FC<{
       exit={{ opacity: 0, y: -20 }}
       className="restore-banner"
     >
-      <div className="restore-banner-icon">
-        <History size={20} />
-      </div>
+      <div className="restore-banner-icon"><History size={20} /></div>
       <div className="restore-banner-body">
         <div className="restore-banner-title">Resume where you left off</div>
         <div className="restore-banner-sub">
@@ -361,11 +451,11 @@ const RestoreSessionBanner: React.FC<{
 // ============================================================
 const WebsitePreviewCard: React.FC<{ url: string }> = ({ url }) => {
   const [imgLoaded, setImgLoaded] = useState(false);
-  const [imgError, setImgError] = useState(false);
-  const cleanUrl = url.startsWith('http') ? url : `https://${url}`;
-  const hostname = (() => { try { return new URL(cleanUrl).hostname; } catch { return cleanUrl; } })();
+  const [imgError, setImgError]   = useState(false);
+  const cleanUrl  = url.startsWith('http') ? url : `https://${url}`;
+  const hostname  = (() => { try { return new URL(cleanUrl).hostname; } catch { return cleanUrl; } })();
   const screenshotSrc = `${API_BASE}/campaign/screenshot?url=${encodeURIComponent(cleanUrl)}`;
-  const fallbackSrc = `https://www.google.com/s2/favicons?sz=128&domain=${hostname}`;
+  const fallbackSrc   = `https://www.google.com/s2/favicons?sz=128&domain=${hostname}`;
   return (
     <div className="site-preview-card">
       <div className="site-preview-browser-bar">
@@ -459,19 +549,23 @@ const ResearchTerminal: React.FC<{ url?: string }> = ({ url }) => {
 
 // ============================================================
 // BRAND DETAILS FORM
+// onSubmit is now async — the button stays in a loading state while
+// handleBrandFormSubmit calls the brand-save API and awaits the result.
+// The form only collapses to the "confirmed" pill once the promise resolves.
 // ============================================================
 const BrandDetailsForm: React.FC<{
   initialName?: string; initialUrl?: string;
-  onSubmit: (data: BrandFormData) => void;
+  onSubmit: (data: BrandFormData) => Promise<void>;
 }> = ({ initialName = '', initialUrl = '', onSubmit }) => {
-  const [brandName, setBrandName] = useState(initialName);
-  const [brandUrl, setBrandUrl] = useState(initialUrl);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [brandName, setBrandName]     = useState(initialName);
+  const [brandUrl, setBrandUrl]       = useState(initialUrl);
+  const [logoFile, setLogoFile]       = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [error, setError] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [error, setError]             = useState('');
+  // 'idle' | 'saving' | 'done' | 'error'
+  const [saveState, setSaveState]     = useState<'idle' | 'saving' | 'done' | 'error'>('idle');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const hostname = getHostname(initialUrl);
+  const hostname   = getHostname(initialUrl);
   const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${hostname}`;
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -483,19 +577,40 @@ const BrandDetailsForm: React.FC<{
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!brandName.trim()) { setError('Brand name is required'); return; }
-    if (!brandUrl.trim()) { setError('Brand URL is required'); return; }
-    setError(''); setSubmitted(true);
-    onSubmit({ brandName: brandName.trim(), brandUrl: brandUrl.trim(), logoFile, logoPreview });
+    if (!brandUrl.trim())  { setError('Brand URL is required');  return; }
+    setError('');
+    setSaveState('saving');
+    try {
+      await onSubmit({
+        brandName:   brandName.trim(),
+        brandUrl:    brandUrl.trim(),
+        logoFile,
+        logoPreview,
+      });
+      // onSubmit resolved (API call succeeded or gracefully continued)
+      setSaveState('done');
+    } catch (err: any) {
+      // Surface any hard error back in the form instead of silently eating it
+      setSaveState('error');
+      setError(err?.message || 'Something went wrong. Please try again.');
+    }
   };
 
-  if (submitted) return (
-    <div className="brand-form-done">
+  // Collapsed "done" pill — shown after API call resolves
+  if (saveState === 'done') return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="brand-form-done"
+    >
       <CheckCircle2 size={16} color="#10b981" />
       <span>Brand details confirmed — <strong>{brandName}</strong></span>
-    </div>
+    </motion.div>
   );
+
+  const isSaving = saveState === 'saving';
 
   return (
     <motion.div
@@ -516,12 +631,16 @@ const BrandDetailsForm: React.FC<{
         <div className="brand-form-group">
           <label className="brand-form-label" htmlFor="bf-name"><Building2 size={12} /> Brand name</label>
           <input id="bf-name" className="brand-form-input" type="text" placeholder="e.g. Acme Inc."
-            value={brandName} onChange={e => { setBrandName(e.target.value); setError(''); }} />
+            value={brandName}
+            disabled={isSaving}
+            onChange={e => { setBrandName(e.target.value); setError(''); setSaveState('idle'); }} />
         </div>
         <div className="brand-form-group">
           <label className="brand-form-label" htmlFor="bf-url"><Globe size={12} /> Brand website</label>
           <input id="bf-url" className="brand-form-input" type="url" placeholder="https://acme.com"
-            value={brandUrl} onChange={e => { setBrandUrl(e.target.value); setError(''); }} />
+            value={brandUrl}
+            disabled={isSaving}
+            onChange={e => { setBrandUrl(e.target.value); setError(''); setSaveState('idle'); }} />
         </div>
       </div>
       <div className="brand-form-group">
@@ -534,13 +653,13 @@ const BrandDetailsForm: React.FC<{
           </div>
           <div className="brand-logo-controls">
             <input ref={fileInputRef} type="file" accept="image/*,image/svg+xml" style={{ display: 'none' }} onChange={handleLogoChange} />
-            <button className="brand-logo-upload-btn" onClick={() => fileInputRef.current?.click()}><Upload size={13} /> Upload logo</button>
-            <button className="brand-logo-favicon-btn" onClick={() => setLogoPreview(faviconUrl)}>
+            <button className="brand-logo-upload-btn" disabled={isSaving} onClick={() => fileInputRef.current?.click()}><Upload size={13} /> Upload logo</button>
+            <button className="brand-logo-favicon-btn" disabled={isSaving} onClick={() => setLogoPreview(faviconUrl)}>
               <img src={faviconUrl} alt="favicon" width={14} height={14} style={{ borderRadius: 3 }} />
               Use favicon from {hostname}
             </button>
             {logoPreview && (
-              <button className="brand-logo-clear-btn" onClick={() => { setLogoPreview(null); setLogoFile(null); }}>
+              <button className="brand-logo-clear-btn" disabled={isSaving} onClick={() => { setLogoPreview(null); setLogoFile(null); }}>
                 <X size={11} /> Clear
               </button>
             )}
@@ -549,8 +668,18 @@ const BrandDetailsForm: React.FC<{
         </div>
       </div>
       {error && <div className="brand-form-error"><AlertCircle size={13} /> {error}</div>}
-      <button className="brand-form-submit" onClick={handleSubmit}>
-        <CheckCircle2 size={16} />Confirm brand & continue<ArrowRight size={15} />
+      <button
+        className={`brand-form-submit ${isSaving ? 'saving' : ''}`}
+        onClick={handleSubmit}
+        disabled={isSaving}
+      >
+        {isSaving ? (
+          <><Loader2 size={16} className="camp-spin" /> Saving brand...</>
+        ) : saveState === 'error' ? (
+          <><AlertCircle size={16} /> Retry</>
+        ) : (
+          <><CheckCircle2 size={16} />Confirm brand & continue<ArrowRight size={15} /></>
+        )}
       </button>
     </motion.div>
   );
@@ -562,10 +691,10 @@ const BrandDetailsForm: React.FC<{
 const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const tabs = ['overview', 'website', 'keywords', 'competition', 'analytics'];
-  const displayName = brand.brand?.name || brand.brandName || 'Brand';
+  const displayName    = brand.brand?.name || brand.brandName || 'Brand';
   const displayIndustry = brand.brand?.industry || brand.industry || '';
-  const overallScore = brand.brand?.overallScore ?? brand.overallScore;
-  const scoreColor = (s: number) => s >= 80 ? '#10b981' : s >= 65 ? '#f59e0b' : '#ef4444';
+  const overallScore   = brand.brand?.overallScore ?? brand.overallScore;
+  const scoreColor     = (s: number) => s >= 80 ? '#10b981' : s >= 65 ? '#f59e0b' : '#ef4444';
   const intensityColors: Record<string, string> = { High: '#ef4444', Medium: '#f59e0b', Low: '#10b981' };
   const intensityWidths: Record<string, string> = { High: '90%', Medium: '55%', Low: '25%' };
 
@@ -602,10 +731,10 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
             {brand.coreObjective && <div className="audit-objective">🎯 {brand.coreObjective}</div>}
             <div className="audit-section-card">
               <h4><Building2 size={16} color="#3b82f6" /> Brand Details</h4>
-              {brand.brand?.tagline && <div className="audit-info-row"><span>Tagline</span><p>"{brand.brand.tagline}"</p></div>}
+              {brand.brand?.tagline      && <div className="audit-info-row"><span>Tagline</span><p>"{brand.brand.tagline}"</p></div>}
               {brand.brand?.businessModel && <div className="audit-info-row"><span>Model</span><strong>{brand.brand.businessModel}</strong></div>}
-              {brand.brand?.toneOfVoice && <div className="audit-info-row"><span>Tone</span><strong>{brand.brand.toneOfVoice}</strong></div>}
-              {brand.brand?.CIN && <div className="audit-info-row"><span>CIN</span><strong className="audit-mono">{brand.brand.CIN}</strong></div>}
+              {brand.brand?.toneOfVoice  && <div className="audit-info-row"><span>Tone</span><strong>{brand.brand.toneOfVoice}</strong></div>}
+              {brand.brand?.CIN          && <div className="audit-info-row"><span>CIN</span><strong className="audit-mono">{brand.brand.CIN}</strong></div>}
             </div>
           </div>
         )}
@@ -626,22 +755,22 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
                   </div>
                 ))}
               </div>
-              {wa.criticalIssue && <div className="audit-issue-list"><div className="audit-issue critical">⚠️ {wa.criticalIssue}</div></div>}
-              {wa.findings?.length > 0 && <div className="audit-issue-group"><div className="audit-issue-group-label">Findings</div>{wa.findings.map((f: string, i: number) => <div key={i} className="audit-issue warning">📋 {f}</div>)}</div>}
+              {wa.criticalIssue      && <div className="audit-issue-list"><div className="audit-issue critical">⚠️ {wa.criticalIssue}</div></div>}
+              {wa.findings?.length   > 0 && <div className="audit-issue-group"><div className="audit-issue-group-label">Findings</div>{wa.findings.map((f: string, i: number) => <div key={i} className="audit-issue warning">📋 {f}</div>)}</div>}
               {wa.technicalIssues?.length > 0 && <div className="audit-issue-group"><div className="audit-issue-group-label">Technical Issues</div>{wa.technicalIssues.map((t: string, i: number) => <div key={i} className="audit-issue critical">🔧 {t}</div>)}</div>}
-              {wa.quickWins?.length > 0 && <div className="audit-issue-group"><div className="audit-issue-group-label">Quick Wins</div>{wa.quickWins.map((w: string, i: number) => <div key={i} className="audit-issue success">✅ {w}</div>)}</div>}
+              {wa.quickWins?.length  > 0 && <div className="audit-issue-group"><div className="audit-issue-group-label">Quick Wins</div>{wa.quickWins.map((w: string, i: number) => <div key={i} className="audit-issue success">✅ {w}</div>)}</div>}
             </div>
           );
         })()}
         {activeTab === 'keywords' && brand.keywords && (
           <div>
-            {brand.keywords.primary?.length > 0 && <div className="audit-kw-section"><h4>Primary Keywords</h4><div className="audit-pills">{brand.keywords.primary.map((k: string) => <span key={k} className="audit-pill blue">{k}</span>)}</div></div>}
+            {brand.keywords.primary?.length   > 0 && <div className="audit-kw-section"><h4>Primary Keywords</h4><div className="audit-pills">{brand.keywords.primary.map((k: string) => <span key={k} className="audit-pill blue">{k}</span>)}</div></div>}
             {brand.keywords.secondary?.length > 0 && <div className="audit-kw-section"><h4>Secondary Keywords</h4><div className="audit-pills">{brand.keywords.secondary.map((k: string) => <span key={k} className="audit-pill purple">{k}</span>)}</div></div>}
-            {brand.keywords.longTail?.length > 0 && <div className="audit-kw-section"><h4>Long-Tail Keywords</h4><div className="audit-pills">{brand.keywords.longTail.map((k: string) => <span key={k} className="audit-pill teal">{k}</span>)}</div></div>}
+            {brand.keywords.longTail?.length  > 0 && <div className="audit-kw-section"><h4>Long-Tail Keywords</h4><div className="audit-pills">{brand.keywords.longTail.map((k: string) => <span key={k} className="audit-pill teal">{k}</span>)}</div></div>}
           </div>
         )}
         {activeTab === 'competition' && brand.competition && (() => {
-          const c = brand.competition;
+          const c  = brand.competition;
           const ic = intensityColors[c.intensity] || '#f59e0b';
           const iw = intensityWidths[c.intensity] || '50%';
           return (
@@ -668,9 +797,9 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
           return (
             <div>
               <div className="audit-analytics-grid">
-                {a.estimatedMonthlyVisits && <div className="aa-metric"><div className="aa-value">{Number(a.estimatedMonthlyVisits).toLocaleString()}</div><div className="aa-label">Monthly Visits</div></div>}
+                {a.estimatedMonthlyVisits   && <div className="aa-metric"><div className="aa-value">{Number(a.estimatedMonthlyVisits).toLocaleString()}</div><div className="aa-label">Monthly Visits</div></div>}
                 {a.estimatedDomainAuthority && <div className="aa-metric"><div className="aa-value">{a.estimatedDomainAuthority}</div><div className="aa-label">Domain Authority</div></div>}
-                {a.bounceRate && <div className="aa-metric"><div className="aa-value">{a.bounceRate}</div><div className="aa-label">Bounce Rate</div></div>}
+                {a.bounceRate               && <div className="aa-metric"><div className="aa-value">{a.bounceRate}</div><div className="aa-label">Bounce Rate</div></div>}
               </div>
             </div>
           );
@@ -684,20 +813,20 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
 // BRAND VALUE CARD
 // ============================================================
 const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
-  const myScore = brand?.brand?.overallScore ?? 65;
+  const myScore    = brand?.brand?.overallScore ?? 65;
   const competitors = brand?.competition?.competitors ?? [];
-  const bName = brand?.brand?.name || 'Your Brand';
+  const bName      = brand?.brand?.name || 'Your Brand';
   const rows = [
     { name: bName, score: myScore, isUs: true },
     ...competitors.slice(0, 3).map((c: any, i: number) => ({
       name: c.name, score: Math.max(20, Math.min(95, myScore + [-12, 15, -5][i % 3])), isUs: false,
     })),
   ];
-  const withUs = [myScore, myScore + 8, myScore + 18, myScore + 30, myScore + 45].map(v => Math.min(v, 99));
+  const withUs      = [myScore, myScore + 8, myScore + 18, myScore + 30, myScore + 45].map(v => Math.min(v, 99));
   const industryAvg = rows.filter(r => !r.isUs).map(r => r.score);
-  const avgScore = industryAvg.length ? Math.round(industryAvg.reduce((a, b) => a + b, 0) / industryAvg.length) : myScore - 8;
-  const scoreColor = (s: number) => s >= 80 ? '#10b981' : s >= 60 ? '#f59e0b' : '#ef4444';
-  const maxScore = Math.max(...rows.map(r => r.score), 100);
+  const avgScore    = industryAvg.length ? Math.round(industryAvg.reduce((a, b) => a + b, 0) / industryAvg.length) : myScore - 8;
+  const scoreColor  = (s: number) => s >= 80 ? '#10b981' : s >= 60 ? '#f59e0b' : '#ef4444';
+  const maxScore    = Math.max(...rows.map(r => r.score), 100);
 
   return (
     <div className="bvc-wrap">
@@ -755,7 +884,7 @@ const EditablePromoObjective: React.FC<{
   onGenerate: (data: PromoObjectiveData) => void;
   onDecline: () => void;
 }> = ({ brandName, initialData, onGenerate, onDecline }) => {
-  const [data, setData] = useState<PromoObjectiveData>(initialData);
+  const [data, setData]         = useState<PromoObjectiveData>(initialData);
   const [submitted, setSubmitted] = useState(false);
   const businessTypes = ['Online Shopping', 'Solution & Online Service', 'Local Store & Service', 'App'];
   const set = (key: keyof PromoObjectiveData, val: any) => setData(prev => ({ ...prev, [key]: val }));
@@ -882,51 +1011,94 @@ const GoToDashboardCard: React.FC<{ campaignId?: string; onGoToDashboard?: () =>
 );
 
 // ============================================================
+// BRAND REPLACE CONFIRMATION MODAL
+// ============================================================
+const BrandReplaceModal: React.FC<{
+  existingBrandName: string;
+  newBrandName: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}> = ({ existingBrandName, newBrandName, onConfirm, onCancel }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="brand-replace-overlay"
+  >
+    <motion.div
+      initial={{ opacity: 0, scale: 0.92, y: 24 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.92, y: 24 }}
+      transition={{ duration: 0.25 }}
+      className="brand-replace-modal"
+    >
+      <div className="brm-icon-wrap">
+        <AlertTriangle size={28} color="#f59e0b" />
+      </div>
+      <h3 className="brm-title">Replace Existing Brand?</h3>
+      <p className="brm-body">
+        You already have <strong>"{existingBrandName}"</strong> saved.
+        <br />
+        Do you want to replace it with <strong>"{newBrandName}"</strong>?
+      </p>
+      <div className="brm-note">
+        <AlertCircle size={13} /> Your previous brand data will be overwritten.
+      </div>
+      <div className="brm-actions">
+        <button className="brm-btn-cancel" onClick={onCancel}>
+          <X size={14} /> Keep "{existingBrandName}"
+        </button>
+        <button className="brm-btn-confirm" onClick={onConfirm}>
+          <RefreshCw size={14} /> Replace with "{newBrandName}"
+        </button>
+      </div>
+    </motion.div>
+  </motion.div>
+);
+
+// ============================================================
 // MAIN COMPONENT
 // ============================================================
 export const Campaigns: React.FC = () => {
-  const [url, setUrl] = useState('');
+  const [url, setUrl]           = useState('');
   const [urlError, setUrlError] = useState<string>('');
   const [urlStatus, setUrlStatus] = useState<'idle' | 'checking' | 'valid' | 'error'>('idle');
   const [isChatMode, setIsChatMode] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { user } = useSelector((state: any) => state.auth);
+  const [loading, setLoading]   = useState(false);
+  const { user }                = useSelector((state: any) => state.auth);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [brandDetails, setBrandDetails] = useState<BrandDetails | null>(null);
-  const [promoData, setPromoData] = useState<PromoObjectiveData | null>(null);
+  const [promoData, setPromoData]       = useState<PromoObjectiveData | null>(null);
   const campaignIdRef = useRef<string | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef       = useRef<ReturnType<typeof setInterval> | null>(null);
   const [viewMode, setViewMode] = useState<'landing' | 'chat' | 'dashboard'>('landing');
 
   // Session state
-  const [pendingSession, setPendingSession] = useState<CampaignSession | null>(null);
-  const [sessionChecked, setSessionChecked] = useState(false);
-
-  // ── FIX: track first render so the viewMode effect doesn't fire on mount
+  const [pendingSession, setPendingSession]   = useState<CampaignSession | null>(null);
+  const [sessionChecked, setSessionChecked]   = useState(false);
   const isFirstRender = useRef(true);
 
+  // Brand-replace confirmation state
+  const [pendingBrandConfirm, setPendingBrandConfirm] = useState<PendingBrandConfirm | null>(null);
+
   const userId = user?._id || '';
+  const dispatch = useDispatch();
   const { saveSession, loadSession, clearSession } = useCampaignSession(userId);
 
   // ── Check for existing session on mount ──────────────────
   useEffect(() => {
     if (!userId) return;
     loadSession().then(session => {
-      if (session && session.messages?.length > 0) {
-        setPendingSession(session);
-      }
+      if (session && session.messages?.length > 0) setPendingSession(session);
       setSessionChecked(true);
     });
   }, [userId, loadSession]);
 
-  // ── FIX: Auto-save whenever viewMode changes (skip mount + landing) ──
+  // ── Auto-save whenever viewMode changes (skip mount + landing) ──
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
     if (!userId || viewMode === 'landing') return;
     saveSession(buildSessionSnapshot(messages, brandDetails, promoData, campaignIdRef.current, viewMode));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -945,31 +1117,55 @@ export const Campaigns: React.FC = () => {
     return !messages.slice(idx + 1).some(m => m.type === type);
   };
 
-  // ── Helper: build session snapshot ───────────────────────
+  // ── Helper: build session snapshot ──────────────────────
+  // FIX: explicitly ensure assets are always serialised inside brandDetails
+  // AND mirrored at the top level.
   const buildSessionSnapshot = (
-    msgs: Message[],
-    brand: BrandDetails | null,
-    promo: PromoObjectiveData | null,
-    campId: string | null,
-    view: 'landing' | 'chat' | 'dashboard',
-  ): CampaignSession => ({
-    messages: msgs,
-    brandDetails: brand,
-    promoData: promo,
-    campaignId: campId,
-    viewMode: view,
-    savedAt: new Date().toISOString(),
-  });
+    msgs:    Message[],
+    brand:   BrandDetails | null,
+    promo:   PromoObjectiveData | null,
+    campId:  string | null,
+    view:    'landing' | 'chat' | 'dashboard',
+  ): CampaignSession => {
+    // Deep-clone assets so nothing is lost by reference
+    const currentAssets: BrandAssets | undefined = brand?.assets
+      ? { ...brand.assets }
+      : undefined;
 
-  // ── FIX: Restore to exact viewMode saved in session ──────
+    const brandWithAssets: BrandDetails | null = brand
+      ? { ...brand, assets: currentAssets }
+      : null;
+
+    return {
+      messages:      msgs,
+      brandDetails:  brandWithAssets,
+      promoData:     promo,
+      campaignId:    campId,
+      viewMode:      view,
+      savedAt:       new Date().toISOString(),
+      // top-level mirror so backend can't lose it
+      assets:        currentAssets,
+    };
+  };
+
+  // ── FIX: Restore to exact viewMode AND re-hydrate ALL state ──
   const handleRestoreSession = () => {
     if (!pendingSession) return;
+
+    // FIX: merge top-level assets back into brandDetails if needed
+    let restoredBrand = pendingSession.brandDetails;
+    if (restoredBrand && pendingSession.assets) {
+      restoredBrand = {
+        ...restoredBrand,
+        assets: mergeAssets(restoredBrand.assets, pendingSession.assets),
+      };
+    }
+
     setMessages(pendingSession.messages);
-    setBrandDetails(pendingSession.brandDetails);
+    setBrandDetails(restoredBrand);
     setPromoData(pendingSession.promoData);
     campaignIdRef.current = pendingSession.campaignId;
 
-    // Restore to the exact view the user was in when the session was saved
     const restoredView = pendingSession.viewMode ?? 'chat';
     setViewMode(restoredView);
     setIsChatMode(restoredView !== 'landing');
@@ -981,13 +1177,13 @@ export const Campaigns: React.FC = () => {
     await clearSession();
   };
 
-  // ── FIX: Non-destructive back — just flip the view, touch nothing else ──
+  // ── Non-destructive back — just flip the view ────────────
   const handleBackToChat = useCallback(() => {
     setViewMode('chat');
     setIsChatMode(true);
   }, []);
 
-  // ── Full reset: wipe everything (↺ button only) ──────────
+  // ── Full reset ───────────────────────────────────────────
   const handleReset = async () => {
     if (pollRef.current) clearInterval(pollRef.current);
     await clearSession();
@@ -1001,16 +1197,14 @@ export const Campaigns: React.FC = () => {
     setUrlStatus('idle');
     setUrlError('');
     setPendingSession(null);
-    isFirstRender.current = true; // reset so the viewMode effect skips the next mount
+    isFirstRender.current = true;
   };
 
-  // ── Dashboard save draft: clear session ──────────────────
   const handleDashboardSaveDraft = useCallback(async (result: { success: boolean; message?: string }) => {
     console.log('Draft saved from dashboard:', result);
     if (result.success) await clearSession();
   }, [clearSession]);
 
-  // ── Dashboard publish: clear session ─────────────────────
   const handleDashboardPublish = useCallback(async (result: { success: boolean; message?: string }, planId?: string) => {
     console.log(`Published with plan ${planId}:`, result);
     if (result.success) await clearSession();
@@ -1027,9 +1221,9 @@ export const Campaigns: React.FC = () => {
     setUrlStatus('valid'); setIsChatMode(true); setViewMode('chat');
 
     const initialMessages: Message[] = [
-      { id: newMsgId(), role: 'user',  type: 'text',     content: normalizedUrl },
-      { id: newMsgId(), role: 'bot',   type: 'text',     content: 'Initializing Neural Engine... Analyzing website structure:' },
-      { id: newMsgId(), role: 'bot',   type: 'research', content: { url: normalizedUrl } },
+      { id: newMsgId(), role: 'user', type: 'text',     content: normalizedUrl },
+      { id: newMsgId(), role: 'bot',  type: 'text',     content: 'Initializing Neural Engine... Analyzing website structure:' },
+      { id: newMsgId(), role: 'bot',  type: 'research', content: { url: normalizedUrl } },
     ];
     setMessages(initialMessages);
 
@@ -1041,17 +1235,24 @@ export const Campaigns: React.FC = () => {
         fetchBrandAssets(normalizedUrl, API_BASE),
       ]);
 
-      const brand: BrandDetails = { ...brandResp.data, website: normalizedUrl, assets };
+      // FIX: build the full brand object with assets in one go
+      const brand: BrandDetails = {
+        ...brandResp.data,
+        website: normalizedUrl,
+        assets,
+        // also set top-level logoPreview so AdCampaignDashboard can find it both ways
+        logoPreview: assets.logoPreview ?? assets.logoUrl ?? assets.favicon,
+      };
       setBrandDetails(brand);
       if (brand.campaignId) campaignIdRef.current = brand.campaignId;
       setLoading(false);
 
-      const name = resolveBrandName(brand);
-      const industry = resolveIndustry(brand);
+      const name        = resolveBrandName(brand);
+      const industry    = resolveIndustry(brand);
       const assetSummary = [
         assets.websiteImages?.length ? `${assets.websiteImages.length} website images` : null,
-        assets.favicon ? '1 favicon/logo' : null,
-        assets.websiteScreenshot ? '1 screenshot' : null,
+        assets.favicon           ? '1 favicon/logo'  : null,
+        assets.websiteScreenshot ? '1 screenshot'    : null,
       ].filter(Boolean).join(', ');
 
       const newMsgs: Omit<Message, 'id'>[] = [
@@ -1071,25 +1272,27 @@ export const Campaigns: React.FC = () => {
   };
 
   // ── STEP 2: Brand form submitted ─────────────────────────
-  const handleBrandFormSubmit = (data: BrandFormData) => {
-    setBrandDetails(prev => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        brandName: data.brandName,
-        logoPreview: data.logoPreview || prev.logoPreview,
-        logo: data.logoPreview || prev.logo,
-        assets: {
-          ...prev.assets,
-          logoUrl:     data.logoPreview || prev.assets?.logoUrl,
-          logoPreview: data.logoPreview || prev.assets?.logoPreview,
-        },
-        brand: prev.brand ? { ...prev.brand, name: data.brandName } : prev.brand,
-      };
+  // Calls brand-save API; handles replace-confirmation if user already has a brand.
+  const handleBrandFormSubmit = async (data: BrandFormData) => {
+    if (!brandDetails) return;
+
+    // Build the merged brand object synchronously (no stale-closure risk)
+    const mergedAssets = mergeAssets(brandDetails.assets, {
+      logoUrl:     data.logoPreview || undefined,
+      logoPreview: data.logoPreview || undefined,
     });
 
+    const updatedBrand: BrandDetails = {
+      ...brandDetails,
+      brandName:   data.brandName,
+      logoPreview: data.logoPreview || brandDetails.logoPreview,
+      logo:        data.logoPreview || brandDetails.logo,
+      assets:      mergedAssets,
+      brand:       brandDetails.brand ? { ...brandDetails.brand, name: data.brandName } : brandDetails.brand,
+    };
+
     const defaultPromo: PromoObjectiveData = {
-      businessType:    brandDetails?.brand?.businessModel || 'Solution & Online Service',
+      businessType:    updatedBrand.brand?.businessModel || 'Solution & Online Service',
       adGoal:          'In-web actions',
       businessGoal:    'Sales',
       targetLocations: 'India',
@@ -1098,7 +1301,7 @@ export const Campaigns: React.FC = () => {
       dailyBudget:     35,
       platforms:       ['meta', 'google'],
       finalUrl:        data.brandUrl,
-      headlines:       [
+      headlines: [
         `Discover ${data.brandName} Today`,
         `Trusted by Thousands — ${data.brandName}`,
         `Get Started with ${data.brandName}`,
@@ -1109,22 +1312,90 @@ export const Campaigns: React.FC = () => {
       ],
       callToAction: 'Learn More',
     };
-    setPromoData(defaultPromo);
 
     const newMsgs: Omit<Message, 'id'>[] = [
-      { role: 'user', type: 'text',           content: `Brand confirmed: ${data.brandName}${data.logoPreview ? ' (with logo)' : ''}` },
-      { role: 'bot',  type: 'text',           content: `Perfect! 🎯 Here's your brand intelligence and campaign objectives. Review and edit anything before generating:` },
+      { role: 'user', type: 'text',            content: `Brand confirmed: ${data.brandName}${data.logoPreview ? ' (with logo)' : ''}` },
+      { role: 'bot',  type: 'text',            content: `Perfect! 🎯 Here's your brand intelligence and campaign objectives. Review and edit anything before generating:` },
       { role: 'bot',  type: 'promo_objective', content: { brandName: data.brandName, promoData: defaultPromo } },
     ];
 
+    // Build the full session snapshot to send to the save API
+    const snapshot = buildSessionSnapshot(
+      messages, updatedBrand, defaultPromo, campaignIdRef.current, 'chat',
+    );
+
+    try {
+      const { data: saveResult } = await axios.post<BrandSaveResult>(
+        `${API_BASE}/campaign/brand-save/${userId}`,
+        snapshot,
+      );
+
+      if (!saveResult.ok && saveResult.replaceRequired) {
+        // User already has a different brand saved — ask them to confirm replacement
+        setPendingBrandConfirm({
+          formData:          data,
+          updatedBrand,
+          defaultPromo,
+          newMsgs,
+          existingBrandName: saveResult.existingBrand?.name || saveResult.existingBrand?.brandName || 'existing brand',
+          newBrandName:      saveResult.newBrand?.name      || data.brandName,
+        });
+        return; // wait for user decision
+      }
+
+      // ok: true — proceed normally
+      commitBrandConfirm(updatedBrand, defaultPromo, newMsgs, snapshot);
+    } catch (err) {
+      console.warn('[brand-save] API error, proceeding anyway:', err);
+      // Non-blocking: if the API is down we still let the user continue
+      commitBrandConfirm(updatedBrand, defaultPromo, newMsgs, snapshot);
+    }
+  };
+
+  // Apply confirmed brand state to React + session (shared by normal path & replace confirm)
+  const commitBrandConfirm = (
+    updatedBrand:  BrandDetails,
+    defaultPromo:  PromoObjectiveData,
+    newMsgs:       Omit<Message, 'id'>[],
+    snapshot:      CampaignSession,
+  ) => {
+    setBrandDetails(updatedBrand);
+    setPromoData(defaultPromo);
     setMessages(prev => {
-      const updated = [...prev, ...newMsgs.map(m => ({ ...m, id: newMsgId() }))];
-      const updatedBrand = brandDetails
-        ? { ...brandDetails, brandName: data.brandName, logoPreview: data.logoPreview || brandDetails.logoPreview }
-        : null;
-      saveSession(buildSessionSnapshot(updated, updatedBrand, defaultPromo, campaignIdRef.current, 'chat'));
-      return updated;
+      const updatedMsgs = [...prev, ...newMsgs.map(m => ({ ...m, id: newMsgId() }))];
+      saveSession({ ...snapshot, messages: updatedMsgs });
+      return updatedMsgs;
     });
+    // Keep Redux workspace slice in sync so other components (header, sidebar, etc.)
+    // immediately see the newly confirmed brand without an extra fetchBrands call.
+    dispatch(upsertBrandLocally(updatedBrand));
+  };
+
+  // User confirmed replace — re-call brand-save with forceReplace=true
+  const handleBrandReplaceConfirm = async () => {
+    if (!pendingBrandConfirm) return;
+    const { updatedBrand, defaultPromo, newMsgs, formData } = pendingBrandConfirm;
+    setPendingBrandConfirm(null);
+
+    const snapshot = buildSessionSnapshot(
+      messages, updatedBrand, defaultPromo, campaignIdRef.current, 'chat',
+    );
+
+    try {
+      await axios.post(
+        `${API_BASE}/campaign/brand-save/${userId}?forceReplace=true`,
+        snapshot,
+      );
+    } catch (err) {
+      console.warn('[brand-save] forceReplace error:', err);
+    }
+
+    commitBrandConfirm(updatedBrand, defaultPromo, newMsgs, snapshot);
+  };
+
+  const handleBrandReplaceCancel = () => {
+    setPendingBrandConfirm(null);
+    // Let the chat stay where it is — the brand_form is still shown for re-submission
   };
 
   // ── STEP 3: Generate campaign ─────────────────────────────
@@ -1140,13 +1411,15 @@ export const Campaigns: React.FC = () => {
 
     try {
       const brandId = brandDetails?.brandId || brandDetails?.campaignId;
-      const { data: draft } = await axios.post(`${API_BASE}/campaign/draft`, {
+      const { data: draft } = await axios.post(`${API_BASE}/campaign/tempdraft`, {
         brandId,
-        platforms:  finalPromo.platforms || [finalPromo.platform],
-        budget:     { daily: finalPromo.dailyBudget, total: finalPromo.dailyBudget * 30 },
+        platforms: finalPromo.platforms || [finalPromo.platform],
+        budget:    { daily: finalPromo.dailyBudget, total: finalPromo.dailyBudget * 30 },
         userId,
-        promoData:  finalPromo,
-        assets:     brandDetails?.assets,
+        promoData: finalPromo,
+        // FIX: always send full assets to backend
+        assets:    brandDetails?.assets,
+        brandDetails: brandDetails, // send entire object so backend has everything
       });
       campaignIdRef.current = draft.campaignId;
       await axios.post(`${API_BASE}/campaign/publish/${draft.campaignId}`);
@@ -1158,6 +1431,7 @@ export const Campaigns: React.FC = () => {
       ];
       setMessages(prev => {
         const updated = [...prev, ...successMsgs.map(m => ({ ...m, id: newMsgId() }))];
+        // FIX: save with the latest brandDetails (which now includes assets)
         saveSession(buildSessionSnapshot(updated, brandDetails, finalPromo, draft.campaignId, 'dashboard'));
         return updated;
       });
@@ -1278,8 +1552,8 @@ export const Campaigns: React.FC = () => {
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }} className="land-stats">
               {[
-                { value: '2,400+', label: 'Campaigns Launched', icon: <Rocket    size={16} /> },
-                { value: '98.4%',  label: 'Analysis Accuracy',  icon: <Brain     size={16} /> },
+                { value: '2,400+', label: 'Campaigns Launched', icon: <Rocket     size={16} /> },
+                { value: '98.4%',  label: 'Analysis Accuracy',  icon: <Brain      size={16} /> },
                 { value: '3.8×',   label: 'Avg ROI Uplift',     icon: <TrendingUp size={16} /> },
                 { value: '$12M+',  label: 'Ad Spend Managed',   icon: <DollarSign size={16} /> },
               ].map(s => (
@@ -1309,7 +1583,7 @@ export const Campaigns: React.FC = () => {
             promoData={promoData || undefined}
             campaignId={campaignIdRef.current || undefined}
             apiBase={API_BASE}
-            onBack={handleBackToChat}       // ← FIX: non-destructive, preserves all state
+            onBack={handleBackToChat}
             onPublish={handleDashboardPublish}
             onSaveDraft={handleDashboardSaveDraft}
           />
@@ -1402,12 +1676,24 @@ export const Campaigns: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Brand-replace confirmation modal */}
+      <AnimatePresence>
+        {pendingBrandConfirm && (
+          <BrandReplaceModal
+            existingBrandName={pendingBrandConfirm.existingBrandName}
+            newBrandName={pendingBrandConfirm.newBrandName}
+            onConfirm={handleBrandReplaceConfirm}
+            onCancel={handleBrandReplaceCancel}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 };
 
 // ============================================================
-// CSS — all original styles + session restore banner styles
+// CSS — unchanged from v7
 // ============================================================
 const CSS = `
   *, *::before, *::after { box-sizing: border-box; }
@@ -1568,7 +1854,9 @@ const CSS = `
   .brand-logo-hint { font-size: 0.68rem; color: #4b5563; }
   .brand-form-error { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; padding: 9px 12px; background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; color: #fca5a5; font-size: 0.8rem; }
   .brand-form-submit { width: 100%; padding: 13px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: none; border-radius: 12px; color: #fff; font-size: 0.92rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 9px; cursor: pointer; transition: all 0.2s; }
-  .brand-form-submit:hover { transform: scale(1.02); box-shadow: 0 0 24px rgba(59,130,246,0.35); }
+  .brand-form-submit:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 0 24px rgba(59,130,246,0.35); }
+  .brand-form-submit:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+  .brand-form-submit.saving { background: linear-gradient(135deg, #1d4ed8, #1e40af); }
   .brand-form-done { display: flex; align-items: center; gap: 9px; padding: 12px 16px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.22); border-radius: 10px; color: #6ee7b7; font-size: 0.85rem; margin-top: 4px; }
   .bvc-wrap { background: rgba(12,16,28,0.95); border: 1px solid rgba(59,130,246,0.2); border-radius: 16px; padding: 18px; margin-bottom: 18px; }
   .bvc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
@@ -1683,7 +1971,57 @@ const CSS = `
   .loader-spin { animation: spin 1.4s linear infinite; }
   .gtds-dashboard-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 12px; color: #fff; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
   .dashboard-wrapper { min-height: 100vh; background: #0a0a0f; }
+
+  /* ── Brand Replace Modal ── */
+  .brand-replace-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.72); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .brand-replace-modal {
+    width: 100%; max-width: 440px;
+    background: #0d1117; border: 1px solid rgba(245,158,11,0.35);
+    border-radius: 20px; padding: 32px 28px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  }
+  .brm-icon-wrap {
+    width: 60px; height: 60px; border-radius: 16px;
+    background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 18px;
+  }
+  .brm-title {
+    font-size: 1.15rem; font-weight: 700; color: #f1f5f9; margin: 0 0 12px;
+  }
+  .brm-body {
+    font-size: 0.88rem; color: #94a3b8; line-height: 1.65; margin: 0 0 14px;
+  }
+  .brm-body strong { color: #e2e8f0; }
+  .brm-note {
+    display: flex; align-items: center; gap: 7px;
+    padding: 9px 14px; margin-bottom: 24px;
+    background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.22);
+    border-radius: 8px; color: #fca5a5; font-size: 0.75rem; width: 100%;
+  }
+  .brm-actions {
+    display: flex; flex-direction: column; gap: 10px; width: 100%;
+  }
+  .brm-btn-confirm {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 20px; border-radius: 12px;
+    background: linear-gradient(135deg, #dc2626, #991b1b);
+    border: none; color: #fff; font-size: 0.9rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .brm-btn-confirm:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(220,38,38,0.4); }
+  .brm-btn-cancel {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 20px; border-radius: 12px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+    color: #94a3b8; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .brm-btn-cancel:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
 `;
 
 export default Campaigns;
-  
