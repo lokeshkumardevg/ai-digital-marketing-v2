@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { SmartTable } from '../components/SmartTable';
 import { Users, RefreshCw, Database, CreditCard, Wallet } from 'lucide-react';
 
+
 const dateRanges = ['Last 7 days', 'Last 14 days', 'Last 30 days', 'Last 90 days', 'Today'];
 
 const ChartLine: React.FC<{ data: number[]; color: string; height: number; width: number }> = ({ data, color, height, width }) => {
@@ -99,12 +100,23 @@ export const Crm: React.FC = () => {
   }, [fetchData]);
 
   useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const googleConnected = url.searchParams.get('googleConnected');
+      if (googleConnected === 'success') toast.success('Google Ads connected successfully');
+      if (googleConnected === 'error') toast.error('Failed to connect Google Ads');
+
+      url.searchParams.delete('googleConnected');
+      window.history.replaceState({}, '', url.toString());
+    } catch {}
+
     import('../../api/axios').then(({ api }) => {
       api.get('/billing/wallet').then(res => {
         setWalletBalance(res.data?.balance ?? 0);
       }).catch(() => {});
     });
   }, []);
+
 
   const handleRazorpayRecharge = async () => {
     try {
@@ -357,43 +369,7 @@ export const Crm: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Wallet Balance ── */}
-        {/* <div style={{
-          background: D.surface, border: `1px solid ${D.border}`, borderRadius: 16,
-          padding: '16px 24px', marginBottom: 20,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: D.purpleSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Wallet size={18} color={D.purpleText} />
-            </div>
-            <div>
-              <div style={{ fontSize: '0.72rem', color: D.textDim, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ad Wallet Balance</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: D.textPrimary }}>${walletBalance.toLocaleString()}</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <input
-              type="number"
-              value={rechargeAmount}
-              onChange={e => setRechargeAmount(Number(e.target.value))}
-              placeholder="Amount ($)"
-              style={{ width: 120, padding: '8px 12px', borderRadius: 8, border: `1px solid ${D.border}`, background: D.inputBg, color: D.textPrimary, fontSize: '0.85rem', outline: 'none' }}
-            />
-            <button
-              type="button"
-              onClick={() => void handleRazorpayRecharge()}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 7,
-                padding: '9px 20px', borderRadius: 10, border: 'none',
-                background: '#2631d6',
-                color: '#fff', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer',
-              }}
-            >
-              <CreditCard size={15} /> Recharge via Razorpay
-            </button>
-          </div>
-        </div> */}
+         
 
         {/* ── KPI Grid ── */}
         <div style={{ background: D.surface, border: `1px solid ${D.border}`, borderRadius: 20, padding: 24, marginBottom: 24, boxShadow: '0 4px 30px rgba(0,0,0,0.3)' }}>

@@ -59,7 +59,14 @@ async googleCallback(
 
   const userId = state;
 
-  return this.authService.handleGoogleCallback(userId, code);
+  // Pass-through redirect target for browser
+  const redirectBase = 'http://localhost:5173/crm';
+  try {
+    await this.authService.handleGoogleCallback(userId, code);
+    return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?googleConnected=success" /></head><body>Redirecting...</body></html>`;
+  } catch (e) {
+    return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?googleConnected=error" /></head><body>Redirecting...</body></html>`;
+  }
 }
 
   // ================= GOOGLE CREDENTIALS =================

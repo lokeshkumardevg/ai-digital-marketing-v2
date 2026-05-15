@@ -144,7 +144,7 @@ return `https://accounts.google.com/o/oauth2/v2/auth?` +
       googleTokenExpiry: Date.now() + tokens.expires_in * 1000,
     });
 
-    return { message: 'Google Ads connected successfully' };
+    return { success: true };
   }
 
   async getGoogleAccessToken(userId: string, refreshToken: string) {
