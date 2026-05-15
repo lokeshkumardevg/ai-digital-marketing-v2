@@ -1181,26 +1181,38 @@ export default function AdCampaignDashboard({
 const handleDraft = useCallback(async () => {
   setLoading("draft");
   try {
-    const response = await fetch(`${API_BASE}/campaign/draft`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: campaignTitle,
-        platform: activePid,
-        audienceId: null,       // pass a real Audience ObjectId here if you have one
-        data: {
-          caption: pvCaption,
-          cta: pvCta,
-          image: pvImage,
-          budget: adBudget,
-          event: adEvent,
-          schedule: adSchedule,
-          finalUrl: adFinalUrl,
-          location: adLocation,
-          advantagePlus: adAdvantage,
-        },
-      }),
-    });
+ const response = await fetch(
+  `${API_BASE}/campaign/draft`,
+  {
+    method: "POST",
+
+    headers: {
+      "Content-Type": "application/json",
+    },
+
+    body: JSON.stringify({
+      userId: userId,
+
+      name: campaignTitle,
+
+      platform: activePid,
+
+      audienceId: null,
+
+      data: {
+        caption: pvCaption,
+        cta: pvCta,
+        image: pvImage,
+        budget: adBudget,
+        event: adEvent,
+        schedule: adSchedule,
+        finalUrl: adFinalUrl,
+        location: adLocation,
+        advantagePlus: adAdvantage,
+      },
+    }),
+  }
+);
 
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || "Failed to save draft");

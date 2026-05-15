@@ -868,20 +868,38 @@ async getUserBrand(userId: string) {
       session.brandDetails || null,
   };
 }
+// SAVE DRAFT
 async saveDraft(body: any) {
   try {
     const draft = await this.campaignModel.create({
+      userId: body.userId,
+
+      campaignId:
+        body.campaignId ||
+        `CMP_${Date.now()}`,
+
       name: body.name,
+
       platform: body.platform,
-      audience: body.audienceId ?? undefined,   // ObjectId string if available, else skip
-      status: 'draft',
-      aiGeneratedContent: {
-        headline: body.data?.caption || '',
-        primaryText: body.data?.caption || '',
-        description: body.data?.caption || '',
-        imageUrl: body.data?.image || '',
+
+      data: {
+        audienceId:
+          body.audienceId ?? null,
+
+        caption: body.data?.caption || '',
+        cta: body.data?.cta || '',
+        image: body.data?.image || '',
+
+        budget: body.data?.budget || 0,
+        event: body.data?.event || '',
+        schedule: body.data?.schedule || '',
+        finalUrl: body.data?.finalUrl || '',
+        location: body.data?.location || '',
+        advantagePlus:
+          body.data?.advantagePlus || false,
       },
-      budgetDaily: parseFloat(body.data?.budget) || 0,
+
+      status: 'DRAFT',
     });
 
     return {
@@ -891,11 +909,15 @@ async saveDraft(body: any) {
     };
   } catch (error) {
     console.error(error);
-    throw new InternalServerErrorException('Failed to save draft');
+
+    throw new InternalServerErrorException(
+      'Failed to save draft',
+    );
   }
 }
 
-  // GET DRAFTS BY USER ID
+
+// GET DRAFTS BY USER ID
 async getDraftsByUser(userId: string) {
   try {
     const drafts = await this.campaignModel

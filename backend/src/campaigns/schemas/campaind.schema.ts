@@ -1,6 +1,6 @@
 import { Schema } from 'mongoose';
 
-export const CampaignSchema = new Schema(
+export const CampaigndSchema = new Schema(
   {
     userId: {
       type: String,
@@ -11,6 +11,11 @@ export const CampaignSchema = new Schema(
       type: String,
       required: true,
       unique: true,
+    },
+
+    name: {
+      type: String,
+      required: true,
     },
 
     platform: {

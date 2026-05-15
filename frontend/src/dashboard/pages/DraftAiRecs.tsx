@@ -6,10 +6,10 @@
  * VIEW 2 (editor): Click any campaign → AdCampaignDashboard opens inline.
  *                  Publish / Save Draft → returns to list.
  *
- * API assumptions (match your existing backend):
- *   GET  /campaigns          → Campaign[]   (uses Bearer token from localStorage)
- *   POST /campaign/draft     → { message }  (save/update a draft)
- *   POST /campaign/publish   → { message }  (publish with planId)
+ * API:
+ *   GET  /campaign/draft/:userId  → { success, message, data: Campaign[] }
+ *   POST /campaign/draft          → { message }  (save/update a draft)
+ *   POST /campaign/publish        → { message }  (publish with planId)
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -42,6 +42,14 @@ interface CampaignDoc {
     budget?: string; event?: string; schedule?: string;
     finalUrl?: string; location?: string; advantagePlus?: boolean;
   };
+  // backend fields from saveDraft
+  aiGeneratedContent?: {
+    headline?: string;
+    primaryText?: string;
+    description?: string;
+    imageUrl?: string;
+  };
+  budgetDaily?: number;
 }
 
 interface DraftCard {
@@ -237,8 +245,6 @@ const PLATFORM_ICONS: Record<PlatformId, React.ReactNode> = {
 
 /* ═══════════════════════════════════════════════════════════
    SECTION A — DASHBOARD EDITOR SUBCOMPONENTS
-   (AdSettingCard, TargetAudienceCard, PlatformPreview,
-    CreativeStudio, Sidebar, TopBar, BottomBar, PublishPlanModal)
    ═══════════════════════════════════════════════════════════ */
 
 /* ─── AD SETTING CARD ────────────────────────────────────── */
@@ -536,7 +542,7 @@ function DashSidebar({ activePid, campaignName, onPlatformSwitch }: DashSidebarP
   const ap = PLATFORM_LIST.find(p => p.id === activePid) || PLATFORM_LIST[0];
   return (
     <aside className="dash-sidebar">
-      <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--bdr)' }}>
+      {/* <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--bdr)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <div style={{ width: 28, height: 28, background: 'var(--blue)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M3 8h7M3 12h9" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" /></svg>
@@ -558,7 +564,7 @@ function DashSidebar({ activePid, campaignName, onPlatformSwitch }: DashSidebarP
             );
           })}
         </div>
-      </div>
+      </div> */}
       <div style={{ padding: '14px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: `${ap.color}12`, border: `1px solid ${ap.color}30`, borderRadius: 10 }}>
           <div style={{ width: 24, height: 24, borderRadius: 6, background: ap.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{PLATFORM_ICONS[ap.id]}</div>
@@ -643,20 +649,17 @@ function BottomBar({ onBack, onPublish, onSaveDraft, loading, activePlatformName
 }
 
 /* ═══════════════════════════════════════════════════════════
-   SECTION B — CAMPAIGN EDITOR (was AdCampaignDashboard)
-   Receives a CampaignDoc, shows the full editor UI
+   SECTION B — CAMPAIGN EDITOR
    ═══════════════════════════════════════════════════════════ */
 interface CampaignEditorProps {
   campaign: CampaignDoc;
   brandDetails?: BrandDetails;
   onBack: () => void;
-  onSaved: () => void;        // called after publish or save → triggers list refresh
+  onSaved: () => void;
   showToast: (msg: string, type: ToastType) => void;
 }
 
 function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: CampaignEditorProps) {
-  const { user } = useSelector((state: any) => state.auth);
-
   const brandName = brandDetails?.brand?.name || brandDetails?.name || campaign.name || 'Brand';
   const logoUrl   = brandDetails?.logoUrl || brandDetails?.assets?.favicon || '';
 
@@ -670,47 +673,53 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
     return out.length > 0 ? out : SEED.demoImages;
   };
 
-  const saved = campaign.data || {};
+  // Pre-fill from both campaign.data (frontend saves) and campaign.aiGeneratedContent (backend saves)
+  const saved        = campaign.data || {};
+  const aiContent    = campaign.aiGeneratedContent || {};
 
-  // Editable state — pre-filled from saved campaign.data
-  const [activePid, setActivePid] = useState<PlatformId>((campaign.platform?.toLowerCase() as PlatformId) || 'meta');
-  const [loading, setLoading]     = useState<LoadingState>(null);
-  const [showPlan, setShowPlan]   = useState(false);
+  const [activePid,   setActivePid]   = useState<PlatformId>((campaign.platform?.toLowerCase() as PlatformId) || 'meta');
+  const [loading,     setLoading]     = useState<LoadingState>(null);
+  const [showPlan,    setShowPlan]    = useState(false);
 
-  const [adEvent,    setAdEvent]    = useState(saved.event    || SEED.event);
-  const [adBudget,   setAdBudget]   = useState(saved.budget   || SEED.budget);
-  const [adSchedule, setAdSchedule] = useState(saved.schedule || SEED.schedule);
-  const [adFinalUrl, setAdFinalUrl] = useState(saved.finalUrl || '');
-  const [adLocation, setAdLocation] = useState(saved.location || SEED.location);
-  const [adAdvantage,setAdAdvantage]= useState<boolean>(saved.advantagePlus ?? SEED.advantagePlus);
+  const [adEvent,     setAdEvent]     = useState(saved.event     || SEED.event);
+  const [adBudget,    setAdBudget]    = useState(saved.budget    || (campaign.budgetDaily ? `${campaign.budgetDaily} USD` : SEED.budget));
+  const [adSchedule,  setAdSchedule]  = useState(saved.schedule  || SEED.schedule);
+  const [adFinalUrl,  setAdFinalUrl]  = useState(saved.finalUrl  || '');
+  const [adLocation,  setAdLocation]  = useState(saved.location  || SEED.location);
+  const [adAdvantage, setAdAdvantage] = useState<boolean>(saved.advantagePlus ?? SEED.advantagePlus);
 
-  const [pvCaption, setPvCaption] = useState(saved.caption || SEED.caption);
-  const [pvImage,   setPvImage]   = useState<string | null>(saved.image || null);
+  // caption: prefer saved.caption → aiGeneratedContent.primaryText → aiGeneratedContent.headline → SEED
+  const [pvCaption, setPvCaption] = useState(
+    saved.caption || aiContent.primaryText || aiContent.headline || SEED.caption
+  );
+  const [pvImage,   setPvImage]   = useState<string | null>(saved.image || aiContent.imageUrl || null);
   const [pvCta,     setPvCta]     = useState(saved.cta || SEED.cta);
 
-  const activePlat = PLATFORM_LIST.find(p => p.id === activePid) || PLATFORM_LIST[0];
+  const activePlat   = PLATFORM_LIST.find(p => p.id === activePid) || PLATFORM_LIST[0];
+  const campaignTitle = `${brandName}_${campaign.name || 'Campaign'}_${activePlat.name}`;
 
   const adCopy: AdCopy = {
-    headlines:    SEED.headlines,
-    primaryTexts: SEED.primaryTexts,
+    headlines:    [aiContent.headline || SEED.headlines[0], ...SEED.headlines.slice(1)],
+    primaryTexts: [aiContent.primaryText || SEED.primaryTexts[0], ...SEED.primaryTexts.slice(1)],
     callToAction: pvCta,
   };
-
-  const campaignTitle = `${brandName}_${campaign.name || 'Campaign'}_${activePlat.name}`;
 
   /* ── Save Draft ── */
   const handleDraft = useCallback(async () => {
     setLoading('draft');
     try {
-      const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_BASE}/campaign/draft`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           campaignId: campaign._id,
           name: campaignTitle,
           platform: activePid,
-          data: { caption: pvCaption, cta: pvCta, image: pvImage, budget: adBudget, event: adEvent, schedule: adSchedule, finalUrl: adFinalUrl, location: adLocation, advantagePlus: adAdvantage },
+          data: {
+            caption: pvCaption, cta: pvCta, image: pvImage,
+            budget: adBudget, event: adEvent, schedule: adSchedule,
+            finalUrl: adFinalUrl, location: adLocation, advantagePlus: adAdvantage,
+          },
         }),
       });
       const result = await res.json();
@@ -727,15 +736,18 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
     setShowPlan(false);
     setLoading('publish');
     try {
-      const token = localStorage.getItem('access_token');
       const res = await fetch(`${API_BASE}/campaign/publish`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           campaignId: campaign._id,
           platform: activePid,
           planId,
-          data: { caption: pvCaption, cta: pvCta, image: pvImage, budget: adBudget, event: adEvent, schedule: adSchedule, finalUrl: adFinalUrl, location: adLocation, advantagePlus: adAdvantage },
+          data: {
+            caption: pvCaption, cta: pvCta, image: pvImage,
+            budget: adBudget, event: adEvent, schedule: adSchedule,
+            finalUrl: adFinalUrl, location: adLocation, advantagePlus: adAdvantage,
+          },
         }),
       });
       const result = await res.json();
@@ -749,7 +761,7 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
 
   return (
     <div className="dash-root" style={{ animation: 'slideInRight .25s ease' }}>
-      {/* TopBar (Meta-style account row) */}
+      {/* TopBar */}
       <div style={{ display: 'flex', gap: 8, padding: '10px 16px', borderBottom: '1px solid var(--bdr)', background: '#fff', alignItems: 'flex-end', flexWrap: 'wrap', flexShrink: 0, position: 'relative', opacity: activePid === 'meta' ? 1 : .35, pointerEvents: activePid === 'meta' ? 'auto' : 'none' }}>
         {['Ad Account', 'Page', 'Instagram', 'Pixel'].map(f => (
           <div key={f} style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1, minWidth: 110 }}>
@@ -765,8 +777,7 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
       </div>
 
       <div className="dash-inner">
-        <DashSidebar activePid={activePid} campaignName={campaignTitle} onPlatformSwitch={setActivePid} />
-
+        {/* <DashSidebar activePid={activePid} campaignName={campaignTitle} onPlatformSwitch={setActivePid} /> */}
         <div className="dash-main">
           <div className="dash-scroll">
             {/* Campaign title bar */}
@@ -782,24 +793,20 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
                 <AdSettingCard event={adEvent} budget={adBudget} schedule={adSchedule} finalUrl={adFinalUrl} enabled={activePid === 'meta'} onEventChange={setAdEvent} onBudgetChange={setAdBudget} onScheduleChange={setAdSchedule} onFinalUrlChange={setAdFinalUrl} />
                 <TargetAudienceCard location={adLocation} advantagePlus={adAdvantage} enabled={activePid === 'meta'} onLocationChange={setAdLocation} onAdvantageToggle={() => setAdAdvantage(p => !p)} />
               </div>
-
               <PlatformPreview platformId={activePid} brandName={brandName} logoUrl={logoUrl} caption={pvCaption} cta={pvCta} imageUrl={pvImage} estimatedAudience={SEED.estimatedAudience} />
-
-              <CreativeStudio brandName={brandName} adCopy={adCopy} activePlatformId={activePid} brandAssetImages={collectBrandImages()} onHeadingChange={() => {}} onSubheadingChange={setPvCaption} onImageSelect={setPvImage} onCtaChange={setPvCta} initialCaption={saved.caption} initialCta={saved.cta} initialImage={saved.image || null} />
+              <CreativeStudio brandName={brandName} adCopy={adCopy} activePlatformId={activePid} brandAssetImages={collectBrandImages()} onHeadingChange={() => {}} onSubheadingChange={setPvCaption} onImageSelect={setPvImage} onCtaChange={setPvCta} initialCaption={saved.caption || aiContent.primaryText} initialCta={saved.cta} initialImage={saved.image || aiContent.imageUrl || null} />
             </div>
           </div>
-
           <BottomBar onBack={onBack} onPublish={() => setShowPlan(true)} onSaveDraft={handleDraft} loading={loading} activePlatformName={activePlat.name} />
         </div>
       </div>
-
       <PublishPlanModal isOpen={showPlan} onClose={() => setShowPlan(false)} onSelectPlan={handleSelectPlan} />
     </div>
   );
 }
 
 /* ═══════════════════════════════════════════════════════════
-   SECTION C — DRAFT LIST VIEW
+   SECTION C — DRAFT LIST HELPERS
    ═══════════════════════════════════════════════════════════ */
 const componentIcons: Record<string, React.ElementType> = {
   Image, Headline: Type, Copy: FileEdit, Video, CTA: Sparkles,
@@ -807,14 +814,14 @@ const componentIcons: Record<string, React.ElementType> = {
 
 function mapToCard(c: CampaignDoc): DraftCard {
   return {
-    id: c._id,
-    name: c.name || 'AI Campaign Concept',
-    platform: c.platform || 'Meta',
-    status: (c.status || 'review').toLowerCase(),
-    score: Math.floor(c.aiStrategy?.performanceScore || (Math.random() * 30 + 60)),
-    rec: c.aiStrategy?.marketingStrategy || 'Add urgency CTA — "Limited time only!" to boost CTR by ~18%',
+    id:         c._id,
+    name:       c.name || 'AI Campaign Concept',
+    platform:   c.platform || 'Meta',
+    status:     (c.status || 'draft').toLowerCase(),
+    score:      Math.floor(c.aiStrategy?.performanceScore ?? (Math.random() * 30 + 60)),
+    rec:        c.aiStrategy?.marketingStrategy || 'Add urgency CTA — "Limited time only!" to boost CTR by ~18%',
     components: ['Image', 'Headline', 'Copy'],
-    raw: c,
+    raw:        c,
   };
 }
 
@@ -822,45 +829,73 @@ function mapToCard(c: CampaignDoc): DraftCard {
    SECTION D — ROOT EXPORT
    ═══════════════════════════════════════════════════════════ */
 export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDetails }) => {
-  const [view, setView]                     = useState<View>('list');
-  const [selectedCampaign, setSelected]     = useState<CampaignDoc | null>(null);
-  const [activePlatform, setActivePlatform] = useState('All');
-  const [expanded, setExpanded]             = useState<string | null>(null);
-  const [drafts, setDrafts]                 = useState<DraftCard[]>([]);
-  const [rawDocs, setRawDocs]               = useState<CampaignDoc[]>([]);
-  const [listLoading, setListLoading]       = useState(true);
-  const [autoPublish, setAutoPublish]       = useState<Record<string, boolean>>({});
-  const [toast, setToast]                   = useState<ToastState | null>(null);
+  // ── Auth ──────────────────────────────────────────────────
+  const { user } = useSelector((state: any) => state.auth);
+
+  // ── View state ────────────────────────────────────────────
+  const [view,             setView]             = useState<View>('list');
+  const [selectedCampaign, setSelected]         = useState<CampaignDoc | null>(null);
+  const [activePlatform,   setActivePlatform]   = useState('All');
+  const [expanded,         setExpanded]         = useState<string | null>(null);
+  const [drafts,           setDrafts]           = useState<DraftCard[]>([]);
+  const [rawDocs,          setRawDocs]          = useState<CampaignDoc[]>([]);
+  const [listLoading,      setListLoading]      = useState(true);
+  const [fetchError,       setFetchError]       = useState<string | null>(null);
+  const [autoPublish,      setAutoPublish]      = useState<Record<string, boolean>>({});
+  const [toast,            setToast]            = useState<ToastState | null>(null);
 
   const showToast = useCallback((msg: string, type: ToastType = 'info') => {
     setToast({ message: msg, type });
     setTimeout(() => setToast(null), 3200);
   }, []);
 
+  // ── Fetch drafts from GET /campaign/draft/:userId ─────────
   const fetchDrafts = useCallback(() => {
+    // Resolve userId — MongoDB uses _id, some backends use id
+    const userId = user?._id || user?.id;
+
+    if (!userId) {
+      setFetchError('User not logged in. Please refresh and try again.');
+      setListLoading(false);
+      return;
+    }
+
     setListLoading(true);
-    const token = localStorage.getItem('access_token');
-    fetch(`${API_BASE}/campaigns`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    })
-      .then(r => r.json())
-      .then((json: CampaignDoc[]) => {
-        const arr = Array.isArray(json) ? json : [];
+    setFetchError(null);
+
+    // No auth token required — direct public endpoint
+    fetch(`${API_BASE}/campaign/draft/${userId}`)
+      .then(async r => {
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.message || `Server error ${r.status}`);
+        }
+        return r.json();
+      })
+      .then((json: { success: boolean; message: string; data: CampaignDoc[] }) => {
+        // Backend returns { success, message, data: [...] }
+        const arr: CampaignDoc[] = Array.isArray(json?.data) ? json.data : [];
         setRawDocs(arr);
         setDrafts(arr.map(mapToCard));
-        if (arr.length > 0 && !expanded) setExpanded(arr[0]._id);
+        // Auto-expand the first card
+        if (arr.length > 0) setExpanded(prev => prev ?? arr[0]._id);
       })
-      .catch(err => { console.error('Drafts fetch failed', err); showToast('Failed to load drafts', 'error'); })
+      .catch((err: Error) => {
+        console.error('Drafts fetch failed:', err);
+        setFetchError(err.message || 'Failed to load drafts');
+        showToast(err.message || 'Failed to load drafts', 'error');
+      })
       .finally(() => setListLoading(false));
-  }, []);                                               // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user, showToast]);
 
   useEffect(() => { fetchDrafts(); }, [fetchDrafts]);
 
+  // ── Filtered list ─────────────────────────────────────────
   const filtered = activePlatform === 'All'
     ? drafts
     : drafts.filter(d => d.platform.toLowerCase() === activePlatform.toLowerCase());
 
-  /* ── Open editor ── */
+  // ── Open editor ───────────────────────────────────────────
   const openEditor = (draftId: string) => {
     const raw = rawDocs.find(r => r._id === draftId);
     if (!raw) return;
@@ -868,17 +903,14 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
     setView('editor');
   };
 
-  /* ── Back from editor → refresh list ── */
+  // ── Back from editor → refresh list ──────────────────────
   const handleBack = () => {
     setView('list');
     setSelected(null);
     fetchDrafts();
   };
 
-  /* ── After publish/save in editor ── */
-  const handleSaved = () => {
-    handleBack();
-  };
+  const handleSaved = () => { handleBack(); };
 
   /* ───────── EDITOR VIEW ───────── */
   if (view === 'editor' && selectedCampaign) {
@@ -897,31 +929,49 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
     );
   }
 
-  /* ───────── LIST VIEW ───────── */
+  /* ───────── LOADING ───────── */
   if (listLoading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
-        <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Analyzing Opportunities…</div>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: 'var(--bg-primary)' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #e2e8f0', borderTopColor: '#2631d6', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
+        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Loading drafts…</div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
+  /* ───────── ERROR STATE ───────── */
+  if (fetchError && drafts.length === 0) {
+    return (
+      <div style={{ height: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+        <div style={{ fontSize: 32 }}>⚠️</div>
+        <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#dc2626' }}>{fetchError}</div>
+        <button onClick={fetchDrafts} style={{ padding: '8px 20px', borderRadius: 8, background: '#2631d6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  /* ───────── LIST VIEW ───────── */
   return (
     <>
       {toast && <Toast message={toast.message} type={toast.type} />}
       <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
+
         {/* Header */}
         <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--glass-border)', padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '3px' }}>AI Optimize</div>
             <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>Draft & AI Recs</h1>
           </div>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg,#2631d6,#1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
+          {/* <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg,#2631d6,#1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
             <Plus size={14} /> New Draft
-          </button>
+          </button> */}
         </div>
 
         <div style={{ padding: '24px 32px' }}>
+
           {/* Platform Tabs */}
           <div style={{ display: 'flex', gap: '2px', background: 'var(--bg-elevated)', borderRadius: '8px', padding: '3px', width: 'fit-content', marginBottom: '20px' }}>
             {PLATFORMS_FILTER.map(p => (
@@ -935,22 +985,27 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
             <span style={{ background: '#2631d6', color: '#fff', borderRadius: '99px', padding: '1px 8px', fontSize: '0.72rem', fontWeight: 700, marginLeft: '6px' }}>{filtered.length}</span>
           </div>
 
+          {/* Empty state */}
           {filtered.length === 0 && (
             <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
               No drafts found. Create your first campaign!
             </div>
           )}
 
+          {/* Draft cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {filtered.map(draft => (
               <div key={draft.id} style={{ background: 'var(--bg-card)', border: `1px solid ${expanded === draft.id ? '#c4b5fd' : '#e8eaf0'}`, borderRadius: '12px', overflow: 'hidden', transition: 'all .2s' }}>
+
                 {/* Card Header */}
                 <div onClick={() => setExpanded(expanded === draft.id ? null : draft.id)}
                   style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
+
                   {/* Platform Icon */}
                   <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f8f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>
                     {PLATFORM_ICONS[(draft.platform.toLowerCase() as PlatformId)] ?? <Image size={18} color="#2631d6" />}
                   </div>
+
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{draft.name}</div>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -969,7 +1024,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
 
                   {/* AI Score */}
                   <div style={{ textAlign: 'center', minWidth: 50, flexShrink: 0 }}>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: draft.score > 75 ? '#16a34a' : draft.score > 55 ? '#d97706' : '#dc2626', fontFamily: 'Outfit' }}>{draft.score}</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: draft.score > 75 ? '#16a34a' : draft.score > 55 ? '#d97706' : '#dc2626' }}>{draft.score}</div>
                     <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600 }}>AI SCORE</div>
                   </div>
 
@@ -979,6 +1034,23 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
                 {/* Expanded Content */}
                 {expanded === draft.id && (
                   <div style={{ borderTop: '1px solid #f1f5f9', padding: '16px 20px' }}>
+
+                    {/* Campaign details from DB */}
+                    <div style={{ marginBottom: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+                      {draft.raw.aiGeneratedContent?.headline && (
+                        <div style={{ background: '#f8faff', border: '1px solid #e2e8f4', borderRadius: 8, padding: '8px 12px' }}>
+                          <div style={{ fontSize: '0.65rem', color: '#8a97b0', fontWeight: 700, textTransform: 'uppercase', marginBottom: 3 }}>Headline</div>
+                          <div style={{ fontSize: '0.8rem', color: '#0f1733', fontWeight: 500, lineHeight: 1.4 }}>{draft.raw.aiGeneratedContent.headline}</div>
+                        </div>
+                      )}
+                      {draft.raw.budgetDaily != null && (
+                        <div style={{ background: '#f0fdf4', border: '1px solid #a7f3d0', borderRadius: 8, padding: '8px 12px' }}>
+                          <div style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 700, textTransform: 'uppercase', marginBottom: 3 }}>Daily Budget</div>
+                          <div style={{ fontSize: '0.8rem', color: '#0f1733', fontWeight: 600 }}>${draft.raw.budgetDaily} USD</div>
+                        </div>
+                      )}
+                    </div>
+
                     {/* Ad Components */}
                     <div style={{ marginBottom: 14 }}>
                       <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Ad Components</div>
@@ -1005,7 +1077,6 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
 
                     {/* Actions */}
                     <div style={{ display: 'flex', gap: 8 }}>
-                      {/* ← MAIN CTA: opens the editor */}
                       <button onClick={() => openEditor(draft.id)}
                         style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 8, background: 'linear-gradient(135deg,#2631d6,#1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}>
                         <Wand2 size={13} /> Edit Campaign
