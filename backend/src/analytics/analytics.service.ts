@@ -567,7 +567,17 @@ export class AnalyticsService {
     const json: any = await res.json();
 
     if (json.error) {
-      throw new Error(`Google Ads API: ${json.error.message || JSON.stringify(json.error)}`);
+      throw new HttpException(
+        `Google Ads API error: ${json.error.message || JSON.stringify(json.error)}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    if (!res.ok) {
+      throw new HttpException(
+        `Google Ads API request failed with status ${res.status}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
     const byDate: Record<string, any> = {};
