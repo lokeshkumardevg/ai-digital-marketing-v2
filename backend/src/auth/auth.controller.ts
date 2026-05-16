@@ -117,7 +117,13 @@ async metaCallback(
   @Query('code') code: string,
   @Query('state') state: string
 ) {
-  return this.authService.handleMetaCallback(state, code);
+  const redirectBase = 'http://localhost:5173/crm';
+  try {
+    await this.authService.handleMetaCallback(state, code);
+    return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?metaConnected=success" /></head><body>Redirecting...</body></html>`;
+  } catch (e) {
+    return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?metaConnected=error" /></head><body>Redirecting...</body></html>`;
+  }
 }
 
   // ================= X (TWITTER) =================

@@ -21,10 +21,14 @@ export class UsersService {
   }
 
   async findAll(): Promise<UserDocument[]> {
-    return this.userModel.find().exec();
+    return this.userModel.find().select('-passwordHash').exec();
   }
 
   async update(id: string, updateDto: any): Promise<UserDocument | null> {
-    return this.userModel.findByIdAndUpdate(id, updateDto, ).exec();
+    return this.userModel.findByIdAndUpdate(id, updateDto, { new: true }).select('-passwordHash').exec();
+  }
+
+  async remove(id: string): Promise<UserDocument | null> {
+    return this.userModel.findByIdAndDelete(id).select('-passwordHash').exec();
   }
 }

@@ -67,7 +67,7 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.status          = 'succeeded';
         state.isAuthenticated = true;
-        state.user            = { ...action.payload, permissions: ['*'] };
+        state.user            = { ...action.payload, permissions: action.payload.permissions || [] };
         syncUserToStorage(action.payload);   // ← save to localStorage
       })
       .addCase(loginUser.rejected, (state, action) => {
@@ -83,7 +83,7 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.status          = 'succeeded';
         state.isAuthenticated = true;
-        state.user            = { ...action.payload, permissions: ['*'] };
+        state.user            = { ...action.payload, permissions: action.payload.permissions || [] };
         syncUserToStorage(action.payload);   // ← save to localStorage
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -98,7 +98,7 @@ const authSlice = createSlice({
       .addCase(hydrateSession.fulfilled, (state, action) => {
         state.status          = 'succeeded';
         state.isAuthenticated = true;
-        state.user            = { ...action.payload, permissions: ['*'] };
+        state.user            = { ...action.payload, permissions: action.payload.permissions || [] };
         syncUserToStorage(action.payload);   // ← save to localStorage
       })
       .addCase(hydrateSession.rejected, (state) => {

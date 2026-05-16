@@ -4,7 +4,6 @@ import logo from '../../assets/fevicon.png';
 import {
   LayoutDashboard,
   Megaphone,
-  Sparkles,
   Images,
   BarChart3,
   Gem,
@@ -14,10 +13,10 @@ import {
   GitBranch,
   CreditCard,
   ShieldAlert,
-  LayoutTemplate,
   Search,
   Bell,
   Presentation as PresentationIcon,
+  UserPlus,
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 
@@ -95,6 +94,7 @@ const BASE_MENU_ITEMS: MenuItem[] = [
     ],
   },
   { path: '/billing', label: 'Billing', icon: CreditCard, permission: 'billing' },
+  { path: '/users', label: 'Users', icon: UserPlus, permission: 'view_users' },
   { path: '/roles', label: 'Roles & Access', icon: ShieldAlert, permission: 'superadmin' },
   { path: '/settings', label: 'Settings', icon: Settings, permission: 'settings' },
 ];
@@ -103,9 +103,10 @@ export const Sidebar: React.FC = () => {
   const { user } = useSelector((state: any) => state.auth);
   const { unreadCount } = useSelector((state: any) => state.notifications);
   const location = useLocation();
-const settingsIndex = BASE_MENU_ITEMS.findIndex(i => i.path === '/settings');
 
-const MENU_ITEMS: MenuItem[] = [
+  const settingsIndex = BASE_MENU_ITEMS.findIndex((i) => i.path === '/settings');
+
+  const MENU_ITEMS: MenuItem[] = [
   ...BASE_MENU_ITEMS.slice(0, settingsIndex),
   {
     icon: Bell,
@@ -132,7 +133,9 @@ const MENU_ITEMS: MenuItem[] = [
 
   const hasAccess = (module: string) => {
     if (!user) return false;
-    if (user.permissions?.includes('*')) return true;
+    if (user.permissions?.includes('*') || user.role === 'superadmin') return true;
+    if (module === 'dashboard') return true;
+    if (module === 'view_users' && user.permissions?.includes('manage_users')) return true;
     return user.permissions?.includes(module);
   };
 
@@ -142,6 +145,8 @@ const MENU_ITEMS: MenuItem[] = [
 
   const isSubActive = (subItems: SubItem[]) =>
     subItems.some((sub) => location.pathname.startsWith(sub.path));
+
+  const visibleMenuItems = MENU_ITEMS.filter((it) => hasAccess(it.permission));
 
   return (
     <div
@@ -198,8 +203,8 @@ const MENU_ITEMS: MenuItem[] = [
       {/* Navigation */}
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
         {MENU_ITEMS.map((item) => {
-          if (!hasAccess(item.permission)) return null;
           const Icon = item.icon;
+          const isAllowed = hasAccess(item.permission);
 
           if (!item.subItems) {
             return (
@@ -213,7 +218,7 @@ const MENU_ITEMS: MenuItem[] = [
                   gap: '10px',
                   padding: '10px 14px',
                   borderRadius: '12px',
-                  color: isActive ? '#fff' : '#a1a1aa',
+                  color: isActive ? '#fff' : isAllowed ? '#a1a1aa' : 'rgba(161,161,170,0.45)',
                   background: isActive ? 'var(--accent-gradient)' : 'transparent',
                   fontWeight: isActive ? 600 : 500,
                   fontSize: '0.875rem',
@@ -221,6 +226,7 @@ const MENU_ITEMS: MenuItem[] = [
                   boxShadow: isActive ? '0 6px 16px rgba(112,51,245,0.18)' : 'none',
                   textDecoration: 'none',
                   marginBottom: '2px',
+                  opacity: isAllowed ? 1 : 0.55,
                 })}
               >
                 <Icon size={17} />
@@ -256,7 +262,7 @@ const MENU_ITEMS: MenuItem[] = [
                   width: '100%',
                   padding: '10px 14px',
                   borderRadius: '12px',
-                  color: isActive ? 'var(--accent-primary)' : '#a1a1aa',
+                  color: isActive ? 'var(--accent-primary)' : isAllowed ? '#a1a1aa' : 'rgba(161,161,170,0.55)',
                   background: isActive && !isOpen ? 'rgba(112,51,245,0.07)' : 'transparent',
                   fontWeight: isActive ? 600 : 500,
                   fontSize: '0.875rem',
@@ -265,6 +271,7 @@ const MENU_ITEMS: MenuItem[] = [
                   transition: 'all 0.18s ease',
                   marginBottom: '2px',
                   textAlign: 'left',
+                  opacity: isAllowed ? 1 : 0.55,
                 }}
               >
                 <Icon size={17} />

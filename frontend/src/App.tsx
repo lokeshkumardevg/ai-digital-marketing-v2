@@ -18,6 +18,7 @@ import { Seo } from './dashboard/pages/Seo';
 import { Social } from './dashboard/pages/Social';
 import { Agents } from './dashboard/pages/Agents';
 import { Roles } from './dashboard/pages/Roles';
+import { Users } from './dashboard/pages/Users';
 import { Workflows } from './dashboard/pages/Workflows';
 import { Messaging } from './dashboard/pages/Messaging';
 import { AdsManager } from './dashboard/pages/AdsManager';
@@ -58,7 +59,8 @@ const ProtectedRoute = ({ children, requiredPermission }: { children: React.Reac
   // RBAC Engine Validation
   if (requiredPermission && user) {
      const perms = user.permissions || [];
-     if (!perms.includes('*') && !perms.includes(requiredPermission)) {
+     const canViewUsers = requiredPermission === 'view_users' && perms.includes('manage_users');
+     if (user.role !== 'superadmin' && !perms.includes('*') && !perms.includes(requiredPermission) && !canViewUsers) {
         return <Navigate to="/crm" replace />;
      }
   }
@@ -199,7 +201,8 @@ const App: React.FC = () => {
         <Route path="/seo/:view" element={<ProtectedRoute><DashboardLayout><Seo /></DashboardLayout></ProtectedRoute>} />
         <Route path="/social" element={<ProtectedRoute><DashboardLayout><Social /></DashboardLayout></ProtectedRoute>} />
         <Route path="/ai-agents" element={<ProtectedRoute><DashboardLayout><Agents /></DashboardLayout></ProtectedRoute>} />
-        <Route path="/roles" element={<ProtectedRoute requiredPermission="settings"><DashboardLayout><Roles /></DashboardLayout></ProtectedRoute>} />
+        <Route path="/roles" element={<ProtectedRoute requiredPermission="superadmin"><DashboardLayout><Roles /></DashboardLayout></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute><DashboardLayout><Users /></DashboardLayout></ProtectedRoute>} />
         <Route path="/workflows" element={<ProtectedRoute><DashboardLayout><Workflows /></DashboardLayout></ProtectedRoute>} />
         <Route path="/messaging" element={<ProtectedRoute><DashboardLayout><Messaging /></DashboardLayout></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><Notifications /></DashboardLayout></ProtectedRoute>} />

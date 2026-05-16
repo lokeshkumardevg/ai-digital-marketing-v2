@@ -87,10 +87,20 @@ return `https://accounts.google.com/o/oauth2/v2/auth?` +
 
   getMetaAuthUrl(userId: string) {
     const appId = this.configService.get('META_APP_ID');
-    const redirectUri = `http://localhost:3000/auth/meta/callback?userId=${userId}`;
-    const scope = 'ads_read,ads_management';
+    const redirectUri = `http://localhost:3000/auth/meta/callback`;
+    const scope = [
+      'ads_read',
+      'ads_management',
+      'business_management',
+      'public_profile',
+      'email',
+    ].join(',');
 
-    return `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&response_type=code&state=${userId}`;
+    return `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&state=${userId}`;
   }
 
   getXAuthUrl(userId: string) {
