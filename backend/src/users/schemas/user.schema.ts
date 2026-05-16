@@ -18,7 +18,10 @@ export class User {
   subscriptionTier: string;
 
   @Prop({ default: 'client' })
-  role: string; // 'admin', 'client', 'agency'
+  role: string; // 'admin', 'client', 'agency', 'superadmin'
+
+  @Prop({ default: true })
+  isActive: boolean;
 
   @Prop({ default: 0 })
   walletBalance: number;

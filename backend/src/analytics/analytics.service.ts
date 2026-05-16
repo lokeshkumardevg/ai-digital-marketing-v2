@@ -237,24 +237,84 @@ export class AnalyticsService {
         return this.getEmptyResponse();
       }
 
-      const response = await fetch(
-        `https://graph.facebook.com/v20.0/me/adaccounts?fields=insights{name,account_name,campaign_name,impressions,clicks,spend,ctr}&access_token=${user.metaAccessToken}`,
-        {
-          headers: { 'Content-Type': 'application/json' },
-        },
+      const accessToken = encodeURIComponent(user.metaAccessToken);
+      const accountRes = await fetch(
+        `https://graph.facebook.com/v20.0/me/adaccounts?fields=account_id,name&access_token=${accessToken}`,
       );
+      const accountJson = await accountRes.json();
 
-      const data = await response.json();
-
-      if (!data || !data.data || data.data.length === 0) {
-        this.logger.warn('Meta API returned empty data');
+      if (!accountRes.ok || accountJson.error) {
+        this.logger.warn('Meta accounts fetch failed', accountJson.error || accountJson);
         return this.getEmptyResponse();
       }
 
+      const accounts = accountJson.data || [];
+      if (!accounts.length) {
+        this.logger.warn('No Meta ad accounts found');
+        return this.getEmptyResponse();
+      }
+
+      const creatives: any[] = [];
+      const pages = await Promise.all(
+        accounts.map(async (account: any) => {
+          const accountId = account.account_id || account.id;
+          const campaignsRes = await fetch(
+            `https://graph.facebook.com/v20.0/act_${accountId}/campaigns?fields=name,status,objective,insights.date_preset(lifetime){impressions,clicks,spend,ctr}&access_token=${accessToken}`,
+          );
+          const campaignsJson = await campaignsRes.json();
+
+          if (!campaignsRes.ok || campaignsJson.error) {
+            this.logger.warn(`Meta campaigns fetch failed for account ${accountId}`, campaignsJson.error || campaignsJson);
+            return {
+              label: account.name || accountId,
+              value: 0,
+              color: '#1877f2',
+            };
+          }
+
+          const accountCampaigns = campaignsJson.data || [];
+          let totalSpend = 0;
+
+          accountCampaigns.forEach((campaign: any) => {
+            const insight = campaign.insights?.data?.[0] || {};
+            const impressions = Number(insight.impressions || 0);
+            const clicks = Number(insight.clicks || 0);
+            const spend = Number(insight.spend || 0);
+            const ctr = Number(insight.ctr || 0);
+            const cpa = clicks > 0 ? parseFloat((spend / clicks).toFixed(2)) : 0;
+            totalSpend += spend;
+
+            creatives.push({
+              name: campaign.name || 'Unnamed campaign',
+              accountName: account.name || accountId,
+              status: campaign.status || 'unknown',
+              objective: campaign.objective || 'unknown',
+              impressions,
+              clicks,
+              spend,
+              ctr,
+              cpa,
+              color: '#1877f2',
+            });
+          });
+
+          return {
+            label: account.name || accountId,
+            value: totalSpend,
+            color: '#1877f2',
+          };
+        }),
+      );
+
+      const totalSpend = pages.reduce((sum, page) => sum + (page.value || 0), 0);
+      const audiences = pages.map((page) => ({ ...page }));
+
       return {
-        audiences: [],
-        pages: [],
-        creatives: [],
+        audiences,
+        pages: pages.length
+          ? pages.map((page) => ({ label: page.label, value: page.value, color: page.color }))
+          : [{ label: 'Meta Ads', value: totalSpend, color: '#1877f2' }],
+        creatives,
       };
     } catch (error) {
       this.logger.error('Meta API error', error);
