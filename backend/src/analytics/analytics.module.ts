@@ -16,7 +16,7 @@ import { AnalyticsSeeder } from './analytics.seeder';
     UsersModule,
     MongooseModule.forFeature([
       { name: Analytics.name, schema: AnalyticsSchema },
-      { name: 'Campaign', schema: CampaignSchema },
+      { name: Campaign, schema: CampaignSchema },
     ]),
     AiModule,
   ],

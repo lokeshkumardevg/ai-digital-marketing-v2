@@ -6,7 +6,7 @@ import Redis from 'ioredis';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { Analytics, AnalyticsDocument } from './schemas/analytics.schema';
-import { CampaignDocument } from '../campaigns/schemas/campaign.schema';
+import { Campaign, CampaignDocument } from '../campaigns/schemas/campaign.schema';
 import { AiService } from '../ai/ai.service';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class AnalyticsService {
 
   constructor(
     @InjectModel(Analytics.name) private analyticsModel: Model<AnalyticsDocument>,
-    @InjectModel('Campaign') private campaignModel: Model<CampaignDocument>,
+    @InjectModel(Campaign) private campaignModel: Model<CampaignDocument>,
     private readonly aiService: AiService,
     private usersService: UsersService,
     private configService: ConfigService,
