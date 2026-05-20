@@ -148,7 +148,7 @@ export const Roles: React.FC = () => {
       <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ fontSize: '2rem', marginBottom: '8px' }}>
-            Roles & <span className="text-gradient">Permissions</span>
+            Roles & Permissions<span className="text-gradient"></span>
           </h1>
           <p style={{ color: '#94a3b8' }}>Module-wise access control and workspace team management.</p>
         </div>

@@ -87,11 +87,10 @@ return `https://accounts.google.com/o/oauth2/v2/auth?` +
 
   getMetaAuthUrl(userId: string) {
     const appId = this.configService.get('META_APP_ID');
-    const redirectUri = `http://localhost:3000/auth/meta/callback`;
+    const redirectUri = this.configService.get('BACKEND_URL')
+      ? `${this.configService.get('BACKEND_URL')}/auth/meta/callback`
+      : `http://localhost:3000/auth/meta/callback`;
     const scope = [
-      'ads_read',
-      'ads_management',
-      'business_management',
       'public_profile',
       'email',
     ].join(',');
@@ -252,35 +251,101 @@ return `https://accounts.google.com/o/oauth2/v2/auth?` +
 
   // ================= META =================
 
-  async handleMetaCallback(userId: string, code: string) {
+async handleMetaCallback(userId: string, code: string) {
+  try {
+    console.log('===== META CALLBACK START =====');
+    console.log('USER ID:', userId);
+    console.log('CODE:', code);
+
     const user = await this.usersService.findById(userId);
-    if (!user) throw new UnauthorizedException('User not found');
 
-    const appId = user.metaAppId || this.configService.get('META_APP_ID');
-    const appSecret = user.metaAppSecret || this.configService.get('META_APP_SECRET');
+    if (!user) {
+      console.log('USER NOT FOUND');
+      throw new UnauthorizedException('User not found');
+    }
 
-    // Short-lived token
-    const shortRes = await fetch(
-      `https://graph.facebook.com/v20.0/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&redirect_uri=http://localhost:3000/auth/meta/callback&code=${code}`
-    );
+    const appId =
+      user.metaAppId || this.configService.get('META_APP_ID');
+
+    const appSecret =
+      user.metaAppSecret || this.configService.get('META_APP_SECRET');
+
+    console.log('APP ID:', appId);
+    console.log('APP SECRET EXISTS:', !!appSecret);
+
+    const redirectUri =
+      'http://localhost:3000/auth/meta/callback';
+
+    console.log('REDIRECT URI:', redirectUri);
+
+    // ================= SHORT TOKEN =================
+
+    const shortUrl =
+      `https://graph.facebook.com/v20.0/oauth/access_token` +
+      `?client_id=${appId}` +
+      `&client_secret=${appSecret}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&code=${code}`;
+
+    console.log('SHORT TOKEN URL:', shortUrl);
+
+    const shortRes = await fetch(shortUrl);
 
     const shortToken = await shortRes.json();
-    if (shortToken.error) throw new UnauthorizedException(shortToken.error.message);
 
-    // Long-lived token
-    const longRes = await fetch(
-      `https://graph.facebook.com/v20.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${shortToken.access_token}`
-    );
+    console.log('SHORT TOKEN RESPONSE:', shortToken);
+
+    if (shortToken.error) {
+      console.log('SHORT TOKEN ERROR');
+      throw new UnauthorizedException(
+        shortToken.error.message,
+      );
+    }
+
+    // ================= LONG TOKEN =================
+
+    const longUrl =
+      `https://graph.facebook.com/v20.0/oauth/access_token` +
+      `?grant_type=fb_exchange_token` +
+      `&client_id=${appId}` +
+      `&client_secret=${appSecret}` +
+      `&fb_exchange_token=${shortToken.access_token}`;
+
+    console.log('LONG TOKEN URL:', longUrl);
+
+    const longRes = await fetch(longUrl);
 
     const longToken = await longRes.json();
-    if (longToken.error) throw new UnauthorizedException(longToken.error.message);
+
+    console.log('LONG TOKEN RESPONSE:', longToken);
+
+    if (longToken.error) {
+      console.log('LONG TOKEN ERROR');
+      throw new UnauthorizedException(
+        longToken.error.message,
+      );
+    }
 
     await this.usersService.update(userId, {
       metaAccessToken: longToken.access_token,
     });
 
+    console.log('META CONNECT SUCCESS');
+
     return { success: true };
+
+  } catch (error) {
+    console.log('===== META CALLBACK ERROR =====');
+
+    console.log(
+      error?.response?.data ||
+      error?.message ||
+      error,
+    );
+
+    throw error;
   }
+}
 
   async getMetaAdsInsights(userId: string, adAccountId: string) {
     const user = await this.usersService.findById(userId);
