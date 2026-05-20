@@ -40,34 +40,37 @@ export class AuthController {
   getGoogleAuthUrl(@Request() req: any) {
     return { url: this.authService.getGoogleAuthUrl(req.user.id) };
   }
-@UseGuards(AuthGuard('jwt'))
-@Get('google/ads')
-async getGoogleAds(
-  @Request() req: any,
-  @Query('customerId') customerId: string
-) {
-  return this.authService.getGoogleAdsInsights(req.user.id, customerId);
-}
-@Get('google/callback')
-async googleCallback(
-  @Query('code') code: string,
-  @Query('state') state: string
-) {
-  if (!code || !state) {
-    throw new UnauthorizedException('Missing code or state');
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('google/ads')
+  async getGoogleAds(
+    @Request() req: any,
+    @Query('customerId') customerId: string,
+  ) {
+    return this.authService.getGoogleAdsInsights(req.user.id, customerId);
   }
 
-  const userId = state;
+  @Get('google/callback')
+  async googleCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+  ) {
+    if (!code || !state) {
+      throw new UnauthorizedException('Missing code or state');
+    }
 
-  // Pass-through redirect target for browser
-  const redirectBase = 'http://localhost:5173/crm';
-  try {
-    await this.authService.handleGoogleCallback(userId, code);
-    return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?googleConnected=success" /></head><body>Redirecting...</body></html>`;
-  } catch (e) {
-    return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?googleConnected=error" /></head><body>Redirecting...</body></html>`;
+    const userId = state;
+    const redirectBase = 'http://localhost:5173/crm';
+
+    try {
+      await this.authService.handleGoogleCallback(userId, code);
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?googleConnected=success" /></head><body>Redirecting...</body></html>`;
+    } catch (e: any) {
+      // eslint-disable-next-line no-console
+      console.log('[AuthController] googleCallback error', e?.message || e);
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?googleConnected=error" /></head><body>Redirecting...</body></html>`;
+    }
   }
-}
 
   // ================= GOOGLE CREDENTIALS =================
 
@@ -80,14 +83,14 @@ async googleCallback(
       clientSecret: string;
       developerToken?: string;
       customerId?: string;
-    }
+    },
   ) {
     return this.authService.updateGoogleCredentials(
       req.user.id,
       body.clientId,
       body.clientSecret,
       body.developerToken,
-      body.customerId
+      body.customerId,
     );
   }
 
@@ -97,12 +100,12 @@ async googleCallback(
   @Post('meta/credentials')
   async updateMetaCredentials(
     @Request() req: any,
-    @Body() body: { appId: string; appSecret: string }
+    @Body() body: { appId: string; appSecret: string },
   ) {
     return this.authService.updateMetaCredentials(
       req.user.id,
       body.appId,
-      body.appSecret
+      body.appSecret,
     );
   }
 
@@ -112,19 +115,42 @@ async googleCallback(
     return { url: this.authService.getMetaAuthUrl(req.user.id) };
   }
 
-@Get('meta/callback')
-async metaCallback(
-  @Query('code') code: string,
-  @Query('state') state: string
-) {
-  const redirectBase = 'http://localhost:5173/crm';
-  try {
-    await this.authService.handleMetaCallback(state, code);
-    return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?metaConnected=success" /></head><body>Redirecting...</body></html>`;
-  } catch (e) {
-    return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?metaConnected=error" /></head><body>Redirecting...</body></html>`;
+  @Get('meta/callback')
+  async metaCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+  ) {
+    const redirectBase = 'http://localhost:5173/crm';
+
+    // eslint-disable-next-line no-console
+    console.log('[AuthController] metaCallback hit', {
+      hasCode: Boolean(code),
+      hasState: Boolean(state),
+      codePreview: code ? String(code).slice(0, 8) + '...' : null,
+      state,
+    });
+
+    if (!code || !state) {
+      // eslint-disable-next-line no-console
+      console.log('[AuthController] metaCallback missing params', { codePresent: Boolean(code), statePresent: Boolean(state) });
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?metaConnected=error&reason=missing_params" /></head><body>Redirecting...</body></html>`;
+    }
+
+    try {
+      await this.authService.handleMetaCallback(state, code);
+      // eslint-disable-next-line no-console
+      console.log('[AuthController] metaCallback success');
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?metaConnected=success" /></head><body>Redirecting...</body></html>`;
+    } catch (e: any) {
+      // eslint-disable-next-line no-console
+      console.log('[AuthController] metaCallback error', {
+        message: e?.message || e,
+        stack: e?.stack,
+      });
+
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?metaConnected=error" /></head><body>Redirecting...</body></html>`;
+    }
   }
-}
 
   // ================= X (TWITTER) =================
 
@@ -134,13 +160,13 @@ async metaCallback(
     return { url: this.authService.getXAuthUrl(req.user.id) };
   }
 
-@Get('x/callback')
-async xCallback(
-  @Query('code') code: string,
-  @Query('state') state: string
-) {
-  return this.authService.handleXCallback(state, code);
-}
+  @Get('x/callback')
+  async xCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+  ) {
+    return this.authService.handleXCallback(state, code);
+  }
 
   // ================= LINKEDIN =================
 
@@ -150,11 +176,12 @@ async xCallback(
     return { url: this.authService.getLinkedInAuthUrl(req.user.id) };
   }
 
-@Get('linkedin/callback')
-async linkedinCallback(
-  @Query('code') code: string,
-  @Query('state') state: string
-) {
-  return this.authService.handleLinkedInCallback(state, code);
+  @Get('linkedin/callback')
+  async linkedinCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+  ) {
+    return this.authService.handleLinkedInCallback(state, code);
+  }
 }
-}
+
