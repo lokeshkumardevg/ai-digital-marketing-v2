@@ -893,35 +893,7 @@ useEffect(() => {
                 marginBottom: '16px',
               }}
             >
-              {/* Aspect ratio */}
-              {/* <div style={{ position: 'relative' }}>
-                <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)} style={selectStyle}>
-                  {ratioOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-                <ChevronDown size={16} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: dk.textMuted }} />
-              </div> */}
-
-              {/* Image count */}
-              {/* <div style={{ position: 'relative' }}>
-                <select value={imageCount} onChange={(e) => setImageCount(e.target.value)} style={selectStyle}>
-                  {imageCountOptions.map((count) => (
-                    <option key={count} value={count}>{count} image{count !== '1' ? 's' : ''}</option>
-                  ))}
-                </select>
-                <ChevronDown size={16} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: dk.textMuted }} />
-              </div> */}
-
-              {/* Model */}
-              {/* <div style={{ position: 'relative' }}>
-                <select value={modelSource} onChange={(e) => setModelSource(e.target.value)} style={selectStyle}>
-                  {modelOptions.map((model) => (
-                    <option key={model} value={model}>{model}</option>
-                  ))}
-                </select>
-                <ChevronDown size={16} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: dk.textMuted }} />
-              </div> */}
+              
             </div>
 
             {/* Submit button */}

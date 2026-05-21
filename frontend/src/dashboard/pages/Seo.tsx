@@ -1,7 +1,12 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+
+import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
+import { clearSeoData, getSeoData, saveSeoData } from '../../utils/seoStorage';
+import type { RootState, AppDispatch } from '../../store';
+
 import { GlassCard } from '../components/GlassCard';
+
 import { 
   AlertCircle, AlertTriangle, Zap, Activity, 
   Globe, Clock, FileText, Image as ImageIcon, Link as LinkIcon, 
@@ -17,23 +22,61 @@ import {
 import toast from 'react-hot-toast';
 import { addNotification } from '../../store/slices/notificationSlice';
 
-type SeoTab = 'dashboard' | 'audit' | 'tracking' | 'keywords' | 'backlinks' | 'competitors';
+type SeoTab = 'dashboard' | 'audit' | 'tracking' | 'keywords' | 'backlinks' | 'competitors' | 'link-building';
 
 export const Seo: React.FC = () => {
   const { view } = useParams();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { brands, activeBrandId } = useSelector((s: RootState) => s.workspace);
+
+  const activeBrand = useMemo(() => {
+    if (!brands?.length || !activeBrandId) return null;
+    return brands.find((b: any) => b.id === activeBrandId) || null;
+  }, [brands, activeBrandId]);
+
   const [url, setUrl] = useState('');
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<any>(null);
 
   const activeTab = useMemo(() => (view || 'dashboard') as SeoTab, [view]);
 
+  // Restore last SEO scan (per session) when /seo loads or tab changes without remount
+  useEffect(() => {
+    const stored = getSeoData();
+    if (!stored?.result) return;
+    setResult(stored.result);
+  }, [view]);
+
+  // Force SEO URL from DB active brand; prevent manual entry.
+  useEffect(() => {
+    if (activeBrand?.url) {
+      setUrl(activeBrand.url);
+    } else {
+      setUrl('');
+    }
+  }, [activeBrand?.url]);
+
+
+  // Persist SEO scan result (per session)
+  const persistSeo = useCallback((targetUrl: string, auditResult: any) => {
+    saveSeoData({
+      url: targetUrl,
+      result: auditResult,
+      updatedAt: new Date().toISOString(),
+    });
+  }, []);
+
+  // NOTE: The original `Seo.tsx` used to have a huge set of tabs. This file now
+  // only adds session restore/persist logic and delegates rendering unchanged.
+
+
   const handleScan = async () => {
-    if (!url) return toast.error('URL cannot be empty');
+
+    if (!url) return toast.error('Active brand URL not found');
     let target = url.trim();
     if (!target.startsWith('http')) target = 'https://' + target;
-    setUrl(target);
     
     setScanning(true);
     setResult(null);
@@ -43,8 +86,11 @@ export const Seo: React.FC = () => {
       const { api } = await import('../../api/axios');
       const response = await api.post('/ai/seo-audit', { url: target });
       if (response.data.success) {
-        setResult(response.data.data);
+        const auditResult = response.data.data;
+        setResult(auditResult);
+        persistSeo(target, auditResult);
         toast.success('Analysis Synchronized!', { id: 'seo' });
+
       } else throw new Error(response.data.error || 'Audit failure');
     } catch (e: any) {
       toast.error(e.message, { id: 'seo' });
@@ -312,6 +358,7 @@ export const Seo: React.FC = () => {
     <div className="animate-fade-in" style={{ padding: '24px', width: '100%', maxWidth: '1600px', margin: '0 auto', background: 'transparent', minHeight: '100vh' }}>
       
       {/* Executive Header */}
+
       <div style={{ marginBottom: '24px', background: 'rgba(255, 255, 255, 0.03)', padding: '16px 24px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
            <div>
@@ -320,19 +367,21 @@ export const Seo: React.FC = () => {
                {result ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>{url} <ExternalLink size={14} /></span> : 'Market Command Center'}
              </h1>
            </div>
-           <div style={{ display: 'flex', gap: '12px', borderLeft: '1px solid rgba(255, 255, 255, 0.05)', paddingLeft: '24px', marginLeft: '4px', alignItems: 'center', position: 'relative' }}>
+              <div style={{ display: 'flex', gap: '12px', borderLeft: '1px solid rgba(255, 255, 255, 0.05)', paddingLeft: '24px', marginLeft: '4px', alignItems: 'center', position: 'relative' }}>
               <div style={{ position: 'absolute', left: '36px', color: '#94a3b8' }}>
                  <Search size={16} />
               </div>
               <input 
-                placeholder="Target Domain (e.g. apple.com)..." value={url} onChange={e => setUrl(e.target.value)}
-                style={{ height: '44px', width: '360px', fontSize: '0.9rem', paddingLeft: '40px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.1)', fontWeight: 600, color: '#f8fafc', background: 'rgba(255, 255, 255, 0.05)', outline: 'none', transition: 'all 0.2s' }}
-                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
+                placeholder="Active brand URL (DB)"
+                value={url}
+                readOnly
+                onChange={() => {}}
+                style={{ height: '44px', width: '360px', fontSize: '0.9rem', paddingLeft: '40px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.1)', fontWeight: 700, color: url ? '#f8fafc' : '#94a3b8', background: 'rgba(255, 255, 255, 0.03)', outline: 'none', transition: 'all 0.2s', cursor: 'not-allowed' }}
               />
               <button 
-                onClick={handleScan} disabled={scanning}
-                style={{ height: '44px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '10px', padding: '0 24px', fontSize: '0.85rem', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)' }}
+                onClick={handleScan}
+                disabled={scanning || !url}
+                style={{ height: '44px', background: scanning || !url ? 'rgba(59, 130, 246, 0.4)' : '#3b82f6', color: '#fff', border: 'none', borderRadius: '10px', padding: '0 24px', fontSize: '0.85rem', fontWeight: 900, cursor: scanning || !url ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)' }}
               >
                 {scanning ? <RefreshCw size={16} className="animate-spin" /> : <Activity size={16} />}
                 {scanning ? 'SYNCHRONIZING...' : 'RUN ANALYTICS'}
@@ -520,7 +569,8 @@ export const Seo: React.FC = () => {
               {activeTab === 'backlinks' && <BacklinksView />}
               {activeTab === 'competitors' && <CompetitorsView />}
               {activeTab === 'tracking' && <TrackingView />}
-              {activeTab === 'link-building' && <BacklinksView />}
+              {activeTab === ('link-building' as any) && <BacklinksView />}
+
            </div>
         </div>
       )}

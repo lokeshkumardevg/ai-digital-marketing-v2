@@ -6,6 +6,8 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../store/slices/authSlice';
+import { clearSeoData } from '../../utils/seoStorage';
+
 import { setActiveWebsite, addWebsite } from '../../store/slices/workspaceSlice';
 import { markAllReadAsync, markOneReadAsync, deleteOneAsync, fetchNotifications } from '../../store/slices/notificationSlice';
 import toast from 'react-hot-toast';
