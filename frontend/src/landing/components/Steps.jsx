@@ -73,7 +73,7 @@ function Steps() {
         {/* Heading */}
         <h2 className="text-center text-[34px] font-bold leading-tight text-white sm:text-[44px]">
           Master Wheedle.ai in{" "}
-          <span style={{ background: "linear-gradient(90deg, #6b8fff, #a78bfa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          <span style={{ background: "linear-gradient(90deg, #0665ff 50%, #22d3ee 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             3 steps
           </span>
         </h2>

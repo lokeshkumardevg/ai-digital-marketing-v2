@@ -10,6 +10,15 @@
  *   GET  /campaign/draft/:userId  → { success, message, data: Campaign[] }
  *   POST /campaign/draft          → { message }  (save/update a draft)
  *   POST /campaign/publish        → { message }  (publish with planId)
+ *
+ * API Response shape (actual):
+ * {
+ *   _id, userId, campaignId, name, platform,
+ *   data: { audienceId, caption, cta, image, budget, event,
+ *           schedule, finalUrl, location, advantagePlus },
+ *   status: "DRAFT" | "PUBLISHED" | ...,
+ *   createdAt, updatedAt, __v
+ * }
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -17,6 +26,8 @@ import { useSelector } from 'react-redux';
 import {
   FileEdit, Sparkles, Plus, Wand2, Copy, Trash2,
   ChevronDown, ToggleLeft, ToggleRight, Image, Type, Video,
+  Calendar, DollarSign, MapPin, Link, Zap, Target, Clock,
+  TrendingUp, Eye, MousePointer, ArrowUpRight,
 } from 'lucide-react';
 
 /* ─── CONSTANTS ──────────────────────────────────────────── */
@@ -31,24 +42,46 @@ type BillingCycle = 'monthly' | 'yearly';
 type PlanId       = 'free' | 'silver' | 'gold';
 type View         = 'list' | 'editor';
 
+/**
+ * CampaignDoc — matches the actual API response shape.
+ * The `data` sub-object holds all editable fields.
+ * `aiGeneratedContent` & `aiStrategy` are optional legacy/future fields.
+ */
 interface CampaignDoc {
   _id: string;
+  userId?: string;
+  campaignId?: string;
   name: string;
   platform: string;
   status: string;
-  aiStrategy?: { performanceScore?: number; marketingStrategy?: string };
+  createdAt?: string;
+  updatedAt?: string;
+  /** Primary editable payload from the API */
   data?: {
-    caption?: string; cta?: string; image?: string | null;
-    budget?: string; event?: string; schedule?: string;
-    finalUrl?: string; location?: string; advantagePlus?: boolean;
+    audienceId?: string | null;
+    caption?: string;
+    cta?: string;
+    image?: string | null;
+    budget?: string;
+    event?: string;
+    schedule?: string;
+    finalUrl?: string;
+    location?: string;
+    advantagePlus?: boolean;
   };
-  // backend fields from saveDraft
+  /** Optional AI-generated content (may not be present) */
   aiGeneratedContent?: {
     headline?: string;
     primaryText?: string;
     description?: string;
     imageUrl?: string;
   };
+  /** Optional AI strategy hints */
+  aiStrategy?: {
+    performanceScore?: number;
+    marketingStrategy?: string;
+  };
+  /** Legacy budget field */
   budgetDaily?: number;
 }
 
@@ -109,7 +142,23 @@ const platformName = (id: string) =>
 const platformColor = (id: string) =>
   PLATFORM_LIST.find(p => p.id === id)?.color ?? '#2563eb';
 
-/* ─── GLOBAL CSS (AdCampaignDashboard styles) ─────────────── */
+/* ─── STATUS UTILITIES ───────────────────────────────────── */
+/** Normalise status to lowercase for display/logic. */
+const normaliseStatus = (raw: string): string => (raw || 'draft').toLowerCase();
+
+const statusStyle = (status: string): React.CSSProperties => {
+  const s = normaliseStatus(status);
+  const map: Record<string, React.CSSProperties> = {
+    draft:     { background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a' },
+    published: { background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' },
+    approved:  { background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' },
+    rejected:  { background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' },
+    pending:   { background: '#f5f3ff', color: '#7c3aed', border: '1px solid #ddd6fe' },
+  };
+  return map[s] || map.draft;
+};
+
+/* ─── GLOBAL CSS ─────────────────────────────────────────── */
 const DASH_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
@@ -124,7 +173,6 @@ const DASH_CSS = `
     width:100%;height:100%;overflow:hidden;
   }
   .dash-inner{display:flex;flex:1 1 0;min-height:0;overflow:hidden;}
-  .dash-sidebar{width:200px;min-width:200px;flex-shrink:0;background:#fff;border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden;height:100%;}
   .dash-main{flex:1 1 0;min-width:0;display:flex;flex-direction:column;overflow:hidden;height:100%;}
   .dash-scroll{flex:1 1 0;min-height:0;overflow-y:auto;padding:14px 16px;background:var(--surface);}
   .dash-root *{box-sizing:border-box;}
@@ -170,6 +218,28 @@ const DASH_CSS = `
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
   @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
   @keyframes slideInRight{from{opacity:0;transform:translateX(32px)}to{opacity:1;transform:none}}
+
+  /* ── Draft card info chips ── */
+  .info-chip {
+    display:flex;align-items:center;gap:5px;padding:5px 10px;
+    border-radius:8px;font-size:0.75rem;font-weight:500;
+    background:var(--surface2);border:1px solid var(--bdr);color:var(--t2);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .info-chip svg{flex-shrink:0;}
+
+  /* ── Campaign name parse ── */
+  .cmp-name-brand{font-weight:800;color:var(--t1);}
+  .cmp-name-rest{font-weight:500;color:var(--t3);}
+
+  /* ── Expand animation ── */
+  @keyframes expandIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  .expanded-body{animation:expandIn .18s ease;}
+
+  /* ── Score ring ── */
+  .score-ring{position:relative;width:48px;height:48px;flex-shrink:0;}
+  .score-ring svg{position:absolute;inset:0;transform:rotate(-90deg);}
+  .score-ring .score-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
 `;
 
 /* ─── SMALL SHARED COMPONENTS ────────────────────────────── */
@@ -247,7 +317,6 @@ const PLATFORM_ICONS: Record<PlatformId, React.ReactNode> = {
    SECTION A — DASHBOARD EDITOR SUBCOMPONENTS
    ═══════════════════════════════════════════════════════════ */
 
-/* ─── AD SETTING CARD ────────────────────────────────────── */
 interface AdSettingCardProps {
   event: string; budget: string; schedule: string; finalUrl: string; enabled: boolean;
   onEventChange: (v: string) => void; onBudgetChange: (v: string) => void;
@@ -281,7 +350,6 @@ function AdSettingCard({ event, budget, schedule, finalUrl, enabled, onEventChan
   );
 }
 
-/* ─── TARGET AUDIENCE CARD ───────────────────────────────── */
 interface TargetAudienceCardProps {
   location: string; advantagePlus: boolean; enabled: boolean;
   onLocationChange: (v: string) => void; onAdvantageToggle: () => void;
@@ -465,14 +533,12 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
         <div style={{ fontSize: 11, color: 'var(--t3)' }}>Edit copy · Choose visuals</div>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {/* Headline */}
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Headline</div>
-          <input className="hd-in" value={heading} onChange={e => { setHeading(e.target.value); }} style={{ width: '100%', background: 'var(--surface)', border: '1px solid var(--bdr)', borderRadius: 8, padding: '9px 12px', color: 'var(--t1)', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', transition: 'all .15s' }} placeholder="Enter headline…" />
+          <input className="hd-in" value={heading} onChange={e => setHeading(e.target.value)} style={{ width: '100%', background: 'var(--surface)', border: '1px solid var(--bdr)', borderRadius: 8, padding: '9px 12px', color: 'var(--t1)', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', transition: 'all .15s' }} placeholder="Enter headline…" />
           <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 3 }}>{heading.length}/125</div>
         </div>
         <div style={{ borderTop: '1px solid var(--bdr)' }} />
-        {/* Primary Text */}
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Primary Text</div>
           <div style={{ display: 'flex', gap: 5, marginBottom: 8, flexWrap: 'wrap' }}>
@@ -481,13 +547,11 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
           <textarea className="pt-ta" value={sub} onChange={e => { setSub(e.target.value); onSubheadingChange(e.target.value); }} rows={3} style={{ width: '100%', background: 'var(--surface)', border: '1px solid var(--bdr)', borderRadius: 8, padding: '9px 12px', color: 'var(--t1)', fontSize: 12, lineHeight: 1.65, resize: 'vertical', fontFamily: 'inherit', transition: 'all .15s' }} placeholder="Enter primary text…" />
         </div>
         <div style={{ borderTop: '1px solid var(--bdr)' }} />
-        {/* CTA */}
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Call to Action</div>
           <input className="hd-in" value={cta} onChange={e => handleCtaChange(e.target.value)} style={{ width: '100%', background: 'var(--surface)', border: '1px solid var(--bdr)', borderRadius: 8, padding: '9px 12px', color: 'var(--blue)', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', transition: 'all .15s' }} placeholder="e.g. Shop Now" />
         </div>
         <div style={{ borderTop: '1px solid var(--bdr)' }} />
-        {/* Ad Creative */}
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>Ad Creative</div>
           <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
@@ -529,60 +593,6 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
         </div>
       )}
     </div>
-  );
-}
-
-/* ─── DASHBOARD SIDEBAR ──────────────────────────────────── */
-interface DashSidebarProps {
-  activePid: PlatformId;
-  campaignName: string;
-  onPlatformSwitch: (id: PlatformId) => void;
-}
-function DashSidebar({ activePid, campaignName, onPlatformSwitch }: DashSidebarProps) {
-  const ap = PLATFORM_LIST.find(p => p.id === activePid) || PLATFORM_LIST[0];
-  return (
-    <aside className="dash-sidebar">
-      {/* <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid var(--bdr)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <div style={{ width: 28, height: 28, background: 'var(--blue)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M3 8h7M3 12h9" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" /></svg>
-          </div>
-          <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Space Grotesk',sans-serif" }}>AdStudio</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-          {PLATFORM_LIST.map(p => {
-            const active = p.id === activePid;
-            return (
-              <div key={p.id} className={`plat-tab${active ? ' nav-active' : ''}`} onClick={() => onPlatformSwitch(p.id)}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '8px 4px', borderRadius: 10, border: `1px solid ${active ? 'var(--blue-bdr)' : 'var(--bdr)'}`, cursor: 'pointer', transition: 'all .15s', background: active ? 'var(--blue-lt)' : 'transparent' }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: active ? p.bg : 'var(--surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {PLATFORM_ICONS[p.id]}
-                </div>
-                <span style={{ fontSize: 10, color: active ? p.color : 'var(--t3)', fontWeight: active ? 700 : 400 }}>{p.name}</span>
-                {active && <span style={{ width: 4, height: 4, borderRadius: '50%', background: p.color }} />}
-              </div>
-            );
-          })}
-        </div>
-      </div> */}
-      <div style={{ padding: '14px 14px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: `${ap.color}12`, border: `1px solid ${ap.color}30`, borderRadius: 10 }}>
-          <div style={{ width: 24, height: 24, borderRadius: 6, background: ap.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{PLATFORM_ICONS[ap.id]}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: ap.color }}>{ap.name}</div>
-            <div style={{ fontSize: 9, color: 'var(--t3)' }}>Active Platform</div>
-          </div>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', animation: 'pulse-dot 2s ease-in-out infinite', flexShrink: 0 }} />
-        </div>
-        <div style={{ marginTop: 14 }}>
-          <div style={{ fontSize: 9, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 600, marginBottom: 8 }}>Campaign</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 8px', borderRadius: 10, background: 'var(--blue-lt)', border: '1px solid var(--blue-bdr)' }}>
-            <div style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--blue-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--blue)' }}><I.Campaign /></div>
-            <span style={{ fontSize: 11, color: 'var(--blue)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{campaignName}</span>
-          </div>
-        </div>
-      </div>
-    </aside>
   );
 }
 
@@ -673,9 +683,14 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
     return out.length > 0 ? out : SEED.demoImages;
   };
 
-  // Pre-fill from both campaign.data (frontend saves) and campaign.aiGeneratedContent (backend saves)
-  const saved        = campaign.data || {};
-  const aiContent    = campaign.aiGeneratedContent || {};
+  /**
+   * Data precedence:
+   *   1. campaign.data  (API response's `data` sub-object — primary source)
+   *   2. campaign.aiGeneratedContent (optional, for AI-enriched fields)
+   *   3. SEED fallbacks
+   */
+  const saved     = campaign.data || {};
+  const aiContent = campaign.aiGeneratedContent || {};
 
   const [activePid,   setActivePid]   = useState<PlatformId>((campaign.platform?.toLowerCase() as PlatformId) || 'meta');
   const [loading,     setLoading]     = useState<LoadingState>(null);
@@ -688,23 +703,25 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
   const [adLocation,  setAdLocation]  = useState(saved.location  || SEED.location);
   const [adAdvantage, setAdAdvantage] = useState<boolean>(saved.advantagePlus ?? SEED.advantagePlus);
 
-  // caption: prefer saved.caption → aiGeneratedContent.primaryText → aiGeneratedContent.headline → SEED
+  // Caption: prefer saved.caption → aiGeneratedContent.primaryText → aiGeneratedContent.headline → SEED
   const [pvCaption, setPvCaption] = useState(
     saved.caption || aiContent.primaryText || aiContent.headline || SEED.caption
   );
-  const [pvImage,   setPvImage]   = useState<string | null>(saved.image || aiContent.imageUrl || null);
-  const [pvCta,     setPvCta]     = useState(saved.cta || SEED.cta);
+  // Image: prefer saved.image (skip empty string) → aiContent.imageUrl → null
+  const [pvImage, setPvImage] = useState<string | null>(
+    (saved.image && saved.image.trim() !== '') ? saved.image : (aiContent.imageUrl || null)
+  );
+  const [pvCta, setPvCta] = useState(saved.cta || SEED.cta);
 
   const activePlat   = PLATFORM_LIST.find(p => p.id === activePid) || PLATFORM_LIST[0];
-  const campaignTitle = `${brandName}_${campaign.name || 'Campaign'}_${activePlat.name}`;
+  const campaignTitle = campaign.name || `${brandName}_Campaign_${activePlat.name}`;
 
   const adCopy: AdCopy = {
     headlines:    [aiContent.headline || SEED.headlines[0], ...SEED.headlines.slice(1)],
-    primaryTexts: [aiContent.primaryText || SEED.primaryTexts[0], ...SEED.primaryTexts.slice(1)],
+    primaryTexts: [pvCaption, ...SEED.primaryTexts.slice(1)],
     callToAction: pvCta,
   };
 
-  /* ── Save Draft ── */
   const handleDraft = useCallback(async () => {
     setLoading('draft');
     try {
@@ -731,7 +748,6 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
     } finally { setLoading(null); }
   }, [campaign._id, campaignTitle, activePid, pvCaption, pvCta, pvImage, adBudget, adEvent, adSchedule, adFinalUrl, adLocation, adAdvantage, showToast, onSaved]);
 
-  /* ── Publish ── */
   const handleSelectPlan = useCallback(async (planId: PlanId) => {
     setShowPlan(false);
     setLoading('publish');
@@ -777,7 +793,6 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
       </div>
 
       <div className="dash-inner">
-        {/* <DashSidebar activePid={activePid} campaignName={campaignTitle} onPlatformSwitch={setActivePid} /> */}
         <div className="dash-main">
           <div className="dash-scroll">
             {/* Campaign title bar */}
@@ -794,7 +809,7 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
                 <TargetAudienceCard location={adLocation} advantagePlus={adAdvantage} enabled={activePid === 'meta'} onLocationChange={setAdLocation} onAdvantageToggle={() => setAdAdvantage(p => !p)} />
               </div>
               <PlatformPreview platformId={activePid} brandName={brandName} logoUrl={logoUrl} caption={pvCaption} cta={pvCta} imageUrl={pvImage} estimatedAudience={SEED.estimatedAudience} />
-              <CreativeStudio brandName={brandName} adCopy={adCopy} activePlatformId={activePid} brandAssetImages={collectBrandImages()} onHeadingChange={() => {}} onSubheadingChange={setPvCaption} onImageSelect={setPvImage} onCtaChange={setPvCta} initialCaption={saved.caption || aiContent.primaryText} initialCta={saved.cta} initialImage={saved.image || aiContent.imageUrl || null} />
+              <CreativeStudio brandName={brandName} adCopy={adCopy} activePlatformId={activePid} brandAssetImages={collectBrandImages()} onHeadingChange={() => {}} onSubheadingChange={setPvCaption} onImageSelect={setPvImage} onCtaChange={setPvCta} initialCaption={saved.caption || aiContent.primaryText} initialCta={saved.cta} initialImage={(saved.image && saved.image.trim() !== '') ? saved.image : (aiContent.imageUrl || null)} />
             </div>
           </div>
           <BottomBar onBack={onBack} onPublish={() => setShowPlan(true)} onSaveDraft={handleDraft} loading={loading} activePlatformName={activePlat.name} />
@@ -812,58 +827,160 @@ const componentIcons: Record<string, React.ElementType> = {
   Image, Headline: Type, Copy: FileEdit, Video, CTA: Sparkles,
 };
 
+/**
+ * mapToCard — reads from campaign.data (the actual API shape).
+ * Falls back gracefully to aiStrategy / budgetDaily for legacy payloads.
+ */
 function mapToCard(c: CampaignDoc): DraftCard {
   return {
     id:         c._id,
     name:       c.name || 'AI Campaign Concept',
-    platform:   c.platform || 'Meta',
-    status:     (c.status || 'draft').toLowerCase(),
+    platform:   (c.platform || 'meta').toLowerCase(),
+    status:     normaliseStatus(c.status),
     score:      Math.floor(c.aiStrategy?.performanceScore ?? (Math.random() * 30 + 60)),
-    rec:        c.aiStrategy?.marketingStrategy || 'Add urgency CTA — "Limited time only!" to boost CTR by ~18%',
-    components: ['Image', 'Headline', 'Copy'],
+    rec:        c.aiStrategy?.marketingStrategy ||
+                'Add urgency CTA — "Limited time only!" to boost CTR by ~18%',
+    components: ['Image', 'Headline', 'Copy', 'CTA'],
     raw:        c,
   };
+}
+
+/* ─── SCORE RING ─────────────────────────────────────────── */
+function ScoreRing({ score }: { score: number }) {
+  const color = score > 75 ? '#16a34a' : score > 55 ? '#d97706' : '#dc2626';
+  const r = 20, cx = 24, cy = 24, circumference = 2 * Math.PI * r;
+  const dash = (score / 100) * circumference;
+  return (
+    <div className="score-ring" style={{ width: 48, height: 48 }}>
+      <svg width="48" height="48" viewBox="0 0 48 48">
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f5f9" strokeWidth="4" />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="4"
+          strokeDasharray={`${dash} ${circumference - dash}`} strokeLinecap="round" />
+      </svg>
+      <div className="score-val" style={{ color }}>{score}</div>
+    </div>
+  );
+}
+
+/* ─── FORMAT DATE ────────────────────────────────────────── */
+const fmtDate = (iso?: string) => {
+  if (!iso) return '—';
+  try {
+    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch { return iso; }
+};
+
+/* ─── CAMPAIGN NAME DISPLAY ──────────────────────────────── */
+function CampaignNameDisplay({ name }: { name: string }) {
+  // e.g. "DENSO_OUTCOME_SALES_Meta_May 18, 2026"
+  const parts = name.split('_');
+  if (parts.length >= 2) {
+    return (
+      <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+        <span className="cmp-name-brand">{parts[0]}</span>
+        <span className="cmp-name-rest"> · {parts.slice(1).join(' · ')}</span>
+      </span>
+    );
+  }
+  return <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{name}</span>;
+}
+
+/* ─── EXPANDED CAMPAIGN DETAILS ──────────────────────────── */
+function CampaignDetails({ campaign }: { campaign: CampaignDoc }) {
+  const d = campaign.data || {};
+  const chips: { icon: React.ReactNode; label: string; value: string; color?: string }[] = [];
+
+  if (d.budget)      chips.push({ icon: <DollarSign size={12} />, label: 'Budget', value: d.budget, color: '#059669' });
+  if (d.event)       chips.push({ icon: <Zap size={12} />,         label: 'Event',  value: d.event  });
+  if (d.schedule)    chips.push({ icon: <Calendar size={12} />,    label: 'Start',  value: d.schedule });
+  if (d.location)    chips.push({ icon: <MapPin size={12} />,      label: 'Location', value: d.location });
+  if (d.finalUrl)    chips.push({ icon: <Link size={12} />,        label: 'URL',    value: d.finalUrl, color: '#0891b2' });
+  if (d.cta)         chips.push({ icon: <MousePointer size={12} />,label: 'CTA',    value: d.cta    });
+
+  return (
+    <div style={{ marginBottom: 14 }}>
+      {/* Caption row */}
+      {d.caption && (
+        <div style={{ background: '#f8faff', border: '1px solid #e2e8f4', borderRadius: 10, padding: '10px 14px', marginBottom: 10 }}>
+          <div style={{ fontSize: '0.65rem', color: '#8a97b0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Ad Caption</div>
+          <div style={{ fontSize: '0.85rem', color: '#0f1733', lineHeight: 1.6 }}>{d.caption}</div>
+        </div>
+      )}
+
+      {/* Info chips grid */}
+      {chips.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 6, marginBottom: 10 }}>
+          {chips.map((chip, i) => (
+            <div key={i} className="info-chip" style={{ color: chip.color || 'var(--t2)' }}>
+              <span style={{ color: chip.color || '#8a97b0', flexShrink: 0 }}>{chip.icon}</span>
+              <span style={{ color: '#8a97b0', fontSize: '0.68rem', fontWeight: 600, marginRight: 2, flexShrink: 0 }}>{chip.label}:</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600, fontSize: '0.78rem' }}>{chip.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Advantage+ badge */}
+      {d.advantagePlus && (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 20, padding: '3px 10px', fontSize: '0.72rem', fontWeight: 700, color: '#16a34a' }}>
+          <Target size={11} /> Advantage+ Enabled
+        </div>
+      )}
+
+      {/* Campaign meta: createdAt / updatedAt */}
+      <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
+        {campaign.createdAt && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.7rem', color: '#8a97b0' }}>
+            <Clock size={11} /> Created {fmtDate(campaign.createdAt)}
+          </div>
+        )}
+        {campaign.updatedAt && campaign.updatedAt !== campaign.createdAt && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.7rem', color: '#8a97b0' }}>
+            <Clock size={11} /> Updated {fmtDate(campaign.updatedAt)}
+          </div>
+        )}
+        {campaign.campaignId && (
+          <div style={{ fontSize: '0.7rem', color: '#8a97b0', fontFamily: 'monospace' }}>
+            CID: {campaign.campaignId}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════
    SECTION D — ROOT EXPORT
    ═══════════════════════════════════════════════════════════ */
 export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDetails }) => {
-  // ── Auth ──────────────────────────────────────────────────
   const { user } = useSelector((state: any) => state.auth);
 
-  // ── View state ────────────────────────────────────────────
-  const [view,             setView]             = useState<View>('list');
-  const [selectedCampaign, setSelected]         = useState<CampaignDoc | null>(null);
-  const [activePlatform,   setActivePlatform]   = useState('All');
-  const [expanded,         setExpanded]         = useState<string | null>(null);
-  const [drafts,           setDrafts]           = useState<DraftCard[]>([]);
-  const [rawDocs,          setRawDocs]          = useState<CampaignDoc[]>([]);
-  const [listLoading,      setListLoading]      = useState(true);
-  const [fetchError,       setFetchError]       = useState<string | null>(null);
-  const [autoPublish,      setAutoPublish]      = useState<Record<string, boolean>>({});
-  const [toast,            setToast]            = useState<ToastState | null>(null);
+  const [view,             setView]           = useState<View>('list');
+  const [selectedCampaign, setSelected]       = useState<CampaignDoc | null>(null);
+  const [activePlatform,   setActivePlatform] = useState('All');
+  const [expanded,         setExpanded]       = useState<string | null>(null);
+  const [drafts,           setDrafts]         = useState<DraftCard[]>([]);
+  const [rawDocs,          setRawDocs]        = useState<CampaignDoc[]>([]);
+  const [listLoading,      setListLoading]    = useState(true);
+  const [fetchError,       setFetchError]     = useState<string | null>(null);
+  const [autoPublish,      setAutoPublish]    = useState<Record<string, boolean>>({});
+  const [toast,            setToast]          = useState<ToastState | null>(null);
 
   const showToast = useCallback((msg: string, type: ToastType = 'info') => {
     setToast({ message: msg, type });
     setTimeout(() => setToast(null), 3200);
   }, []);
 
-  // ── Fetch drafts from GET /campaign/draft/:userId ─────────
   const fetchDrafts = useCallback(() => {
-    // Resolve userId — MongoDB uses _id, some backends use id
     const userId = user?._id || user?.id;
-
     if (!userId) {
       setFetchError('User not logged in. Please refresh and try again.');
       setListLoading(false);
       return;
     }
-
     setListLoading(true);
     setFetchError(null);
 
-    // No auth token required — direct public endpoint
     fetch(`${API_BASE}/campaign/draft/${userId}`)
       .then(async r => {
         if (!r.ok) {
@@ -873,11 +990,9 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
         return r.json();
       })
       .then((json: { success: boolean; message: string; data: CampaignDoc[] }) => {
-        // Backend returns { success, message, data: [...] }
         const arr: CampaignDoc[] = Array.isArray(json?.data) ? json.data : [];
         setRawDocs(arr);
         setDrafts(arr.map(mapToCard));
-        // Auto-expand the first card
         if (arr.length > 0) setExpanded(prev => prev ?? arr[0]._id);
       })
       .catch((err: Error) => {
@@ -890,12 +1005,10 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
 
   useEffect(() => { fetchDrafts(); }, [fetchDrafts]);
 
-  // ── Filtered list ─────────────────────────────────────────
   const filtered = activePlatform === 'All'
     ? drafts
-    : drafts.filter(d => d.platform.toLowerCase() === activePlatform.toLowerCase());
+    : drafts.filter(d => d.platform === activePlatform.toLowerCase());
 
-  // ── Open editor ───────────────────────────────────────────
   const openEditor = (draftId: string) => {
     const raw = rawDocs.find(r => r._id === draftId);
     if (!raw) return;
@@ -903,14 +1016,11 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
     setView('editor');
   };
 
-  // ── Back from editor → refresh list ──────────────────────
   const handleBack = () => {
     setView('list');
     setSelected(null);
     fetchDrafts();
   };
-
-  const handleSaved = () => { handleBack(); };
 
   /* ───────── EDITOR VIEW ───────── */
   if (view === 'editor' && selectedCampaign) {
@@ -921,7 +1031,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
           campaign={selectedCampaign}
           brandDetails={brandDetails}
           onBack={handleBack}
-          onSaved={handleSaved}
+          onSaved={handleBack}
           showToast={showToast}
         />
         {toast && <Toast message={toast.message} type={toast.type} />}
@@ -956,6 +1066,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
   /* ───────── LIST VIEW ───────── */
   return (
     <>
+      <style>{DASH_CSS}</style>
       {toast && <Toast message={toast.message} type={toast.type} />}
       <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
 
@@ -965,9 +1076,6 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
             <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '3px' }}>AI Optimize</div>
             <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>Draft & AI Recs</h1>
           </div>
-          {/* <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg,#2631d6,#1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
-            <Plus size={14} /> New Draft
-          </button> */}
         </div>
 
         <div style={{ padding: '24px 32px' }}>
@@ -988,110 +1096,139 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
           {/* Empty state */}
           {filtered.length === 0 && (
             <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
-              No drafts found. Create your first campaign!
+              No drafts found for this platform.
             </div>
           )}
 
           {/* Draft cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {filtered.map(draft => (
-              <div key={draft.id} style={{ background: 'var(--bg-card)', border: `1px solid ${expanded === draft.id ? '#c4b5fd' : '#e8eaf0'}`, borderRadius: '12px', overflow: 'hidden', transition: 'all .2s' }}>
+            {filtered.map(draft => {
+              const platConfig = PLATFORM_LIST.find(p => p.id === draft.platform) || PLATFORM_LIST[0];
+              const isExpanded = expanded === draft.id;
 
-                {/* Card Header */}
-                <div onClick={() => setExpanded(expanded === draft.id ? null : draft.id)}
-                  style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
+              return (
+                <div key={draft.id} style={{
+                  background: 'var(--bg-card)',
+                  border: `1px solid ${isExpanded ? platConfig.color + '44' : '#e8eaf0'}`,
+                  borderRadius: '14px',
+                  overflow: 'hidden',
+                  transition: 'all .2s',
+                  boxShadow: isExpanded ? `0 4px 24px ${platConfig.color}14` : 'none',
+                }}>
 
-                  {/* Platform Icon */}
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: '#f8f4ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>
-                    {PLATFORM_ICONS[(draft.platform.toLowerCase() as PlatformId)] ?? <Image size={18} color="#2631d6" />}
-                  </div>
+                  {/* Card Header */}
+                  <div onClick={() => setExpanded(isExpanded ? null : draft.id)}
+                    style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{draft.name}</div>
-                    <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span style={{ padding: '2px 8px', borderRadius: 5, background: 'var(--bg-elevated)', color: 'var(--text-secondary)', fontSize: '0.72rem', fontWeight: 600 }}>{draft.platform}</span>
-                      <span style={{ padding: '2px 8px', borderRadius: 5, background: draft.status === 'approved' ? '#f0fdf4' : '#fffbeb', color: draft.status === 'approved' ? '#16a34a' : '#d97706', fontSize: '0.72rem', fontWeight: 600, textTransform: 'capitalize' }}>{draft.status}</span>
+                    {/* Platform Icon bubble */}
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12,
+                      background: platConfig.bg,
+                      border: `1.5px solid ${platConfig.color}22`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0, fontSize: 20,
+                    }}>
+                      {PLATFORM_ICONS[draft.platform as PlatformId] ?? <Image size={18} color={platConfig.color} />}
                     </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <CampaignNameDisplay name={draft.name} />
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                        {/* Platform badge */}
+                        <span style={{
+                          padding: '2px 8px', borderRadius: 5,
+                          background: platConfig.bg,
+                          color: platConfig.color,
+                          fontSize: '0.72rem', fontWeight: 700,
+                          border: `1px solid ${platConfig.color}30`,
+                        }}>{platConfig.name}</span>
+                        {/* Status badge */}
+                        <span style={{
+                          padding: '2px 8px', borderRadius: 5,
+                          fontSize: '0.72rem', fontWeight: 600, textTransform: 'capitalize',
+                          ...statusStyle(draft.status),
+                        }}>{draft.status}</span>
+                        {/* Budget quick-view from data */}
+                        {draft.raw.data?.budget && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: '0.72rem', color: '#059669', fontWeight: 600 }}>
+                            <DollarSign size={10} /> {draft.raw.data.budget}
+                          </span>
+                        )}
+                        {/* Location quick-view */}
+                        {draft.raw.data?.location && (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
+                            <MapPin size={10} /> {draft.raw.data.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Auto-publish Toggle */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={e => e.stopPropagation()}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Auto-publish</span>
+                      <button onClick={() => setAutoPublish(prev => ({ ...prev, [draft.id]: !prev[draft.id] }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: autoPublish[draft.id] ? '#2631d6' : '#cbd5e1', padding: 0 }}>
+                        {autoPublish[draft.id] ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
+                      </button>
+                    </div>
+
+                    {/* AI Score ring */}
+                    {/* <ScoreRing score={draft.score} /> */}
+
+                    <ChevronDown size={16} color="#94a3b8" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform .2s', flexShrink: 0 }} />
                   </div>
 
-                  {/* Auto-publish Toggle */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={e => e.stopPropagation()}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Auto-publish</span>
-                    <button onClick={() => setAutoPublish(prev => ({ ...prev, [draft.id]: !prev[draft.id] }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: autoPublish[draft.id] ? '#2631d6' : '#cbd5e1', padding: 0 }}>
-                      {autoPublish[draft.id] ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
-                    </button>
-                  </div>
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                    <div className="expanded-body" style={{ borderTop: `1px solid ${platConfig.color}22`, padding: '16px 20px', background: '#fdfdff' }}>
 
-                  {/* AI Score */}
-                  <div style={{ textAlign: 'center', minWidth: 50, flexShrink: 0 }}>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: draft.score > 75 ? '#16a34a' : draft.score > 55 ? '#d97706' : '#dc2626' }}>{draft.score}</div>
-                    <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600 }}>AI SCORE</div>
-                  </div>
+                      {/* Campaign data details from API */}
+                      <CampaignDetails campaign={draft.raw} />
 
-                  <ChevronDown size={16} color="#94a3b8" style={{ transform: expanded === draft.id ? 'rotate(180deg)' : 'none', transition: 'transform .2s', flexShrink: 0 }} />
+                      {/* Ad Components */}
+                      <div style={{ marginBottom: 14 }}>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Ad Components</div>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {draft.components.map((comp: string) => {
+                            const Icon = componentIcons[comp] || FileEdit;
+                            return (
+                              <div key={comp} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, background: platConfig.bg, border: `1px solid ${platConfig.color}22`, color: platConfig.color, fontSize: '0.78rem', fontWeight: 600 }}>
+                                <Icon size={12} /> {comp}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* AI Recommendation */}
+                      <div style={{ background: 'linear-gradient(135deg,#faf5ff,#f3e8ff)', border: '1px solid #e9d5ff', borderRadius: 10, padding: '12px 16px', marginBottom: 14, display: 'flex', gap: 10 }}>
+                        <Sparkles size={16} color="#7c3aed" style={{ flexShrink: 0, marginTop: 1 }} />
+                        <div>
+                          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#7c3aed', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Recommendation</div>
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, lineHeight: 1.5 }}>{draft.rec}</div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => openEditor(draft.id)}
+                          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px', borderRadius: 9, background: `linear-gradient(135deg,${platConfig.color},${platConfig.color}cc)`, color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', boxShadow: `0 2px 12px ${platConfig.color}33` }}>
+                          <Wand2 size={13} /> Edit Campaign
+                        </button>
+                        <button style={{ padding: '10px 16px', borderRadius: 9, border: '1px solid var(--glass-border)', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.82rem', fontWeight: 600 }}>
+                          <Copy size={13} /> Duplicate
+                        </button>
+                        <button style={{ padding: '10px 14px', borderRadius: 9, border: '1px solid #fee2e2', background: '#fff5f5', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.82rem', fontWeight: 600 }}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-
-                {/* Expanded Content */}
-                {expanded === draft.id && (
-                  <div style={{ borderTop: '1px solid #f1f5f9', padding: '16px 20px' }}>
-
-                    {/* Campaign details from DB */}
-                    <div style={{ marginBottom: 14, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
-                      {draft.raw.aiGeneratedContent?.headline && (
-                        <div style={{ background: '#f8faff', border: '1px solid #e2e8f4', borderRadius: 8, padding: '8px 12px' }}>
-                          <div style={{ fontSize: '0.65rem', color: '#8a97b0', fontWeight: 700, textTransform: 'uppercase', marginBottom: 3 }}>Headline</div>
-                          <div style={{ fontSize: '0.8rem', color: '#0f1733', fontWeight: 500, lineHeight: 1.4 }}>{draft.raw.aiGeneratedContent.headline}</div>
-                        </div>
-                      )}
-                      {draft.raw.budgetDaily != null && (
-                        <div style={{ background: '#f0fdf4', border: '1px solid #a7f3d0', borderRadius: 8, padding: '8px 12px' }}>
-                          <div style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 700, textTransform: 'uppercase', marginBottom: 3 }}>Daily Budget</div>
-                          <div style={{ fontSize: '0.8rem', color: '#0f1733', fontWeight: 600 }}>${draft.raw.budgetDaily} USD</div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Ad Components */}
-                    <div style={{ marginBottom: 14 }}>
-                      <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Ad Components</div>
-                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                        {draft.components.map((comp: string) => {
-                          const Icon = componentIcons[comp] || FileEdit;
-                          return (
-                            <div key={comp} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, background: '#f8f4ff', border: '1px solid #ede9fe', color: '#1e27a8', fontSize: '0.78rem', fontWeight: 600 }}>
-                              <Icon size={12} /> {comp}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* AI Recommendation */}
-                    <div style={{ background: 'linear-gradient(135deg,#faf5ff,#f3e8ff)', border: '1px solid #e9d5ff', borderRadius: 10, padding: '12px 16px', marginBottom: 14, display: 'flex', gap: 10 }}>
-                      <Sparkles size={16} color="#2631d6" style={{ flexShrink: 0, marginTop: 1 }} />
-                      <div>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#2631d6', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Recommendation</div>
-                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, lineHeight: 1.5 }}>{draft.rec}</div>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => openEditor(draft.id)}
-                        style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', borderRadius: 8, background: 'linear-gradient(135deg,#2631d6,#1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}>
-                        <Wand2 size={13} /> Edit Campaign
-                      </button>
-                      <button style={{ padding: '9px 16px', borderRadius: 8, border: '1px solid var(--glass-border)', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.82rem', fontWeight: 600 }}>
-                        <Copy size={13} /> Duplicate
-                      </button>
-                      <button style={{ padding: '9px 14px', borderRadius: 8, border: '1px solid #fee2e2', background: 'var(--bg-card)', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.82rem', fontWeight: 600 }}>
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

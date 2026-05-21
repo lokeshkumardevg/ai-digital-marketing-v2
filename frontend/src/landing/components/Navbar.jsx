@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Button from "./Button";
-import logo from "../assets/images/logo.png";
+import logo from "../../assets/fevicon.png";
 import { Menu, X } from "lucide-react";
 
 const navItems = ["Features", "Tutorial", "Pricing", "Resources", "Careers"];
@@ -10,120 +10,261 @@ function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Detect scroll
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // lock body scroll when sidebar open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  const hrefFor = (item) => "#" + item.toLowerCase();
+
+  const navLinkClass = isScrolled
+    ? "font-medium text-white/60 hover:text-white transition duration-300 relative group text-[13px]"
+    : "font-medium text-white/60 hover:text-white transition duration-300 relative group text-[15px]";
+
+const btnClass = isScrolled
+  ? "group relative flex items-center justify-center overflow-hidden rounded-full font-medium text-white shadow-[0_0_0_3px_rgba(7,10,24,0.9)] active:scale-95 h-[34px] w-[110px] text-[12px] bg-gradient-to-r from-[#0665ff] via-[#1468e8] to-[#1abfdf]"
+  : "group relative flex items-center justify-center overflow-hidden rounded-full font-medium text-white shadow-[0_0_0_3px_rgba(7,10,24,0.9)] active:scale-95 h-[40px] w-[125px] text-[14px] bg-gradient-to-r from-[#0665ff] via-[#1468e8] to-[#1abfdf]";
+  const capsuleClass =
+    "relative flex items-center rounded-[60px] border w-full justify-between bg-black/30 backdrop-blur-xl border-white/10 mx-auto";
+
+  const capsuleStyle = {
+    transition: "max-width 0.5s ease, height 0.5s ease, padding 0.5s ease, box-shadow 0.5s ease",
+    maxWidth: isScrolled ? "860px" : "1200px",
+    height: isScrolled ? "48px" : "62px",
+    paddingLeft: isScrolled ? "16px" : "28px",
+    paddingRight: isScrolled ? "16px" : "28px",
+    boxShadow: isScrolled
+      ? "0 8px 30px rgba(0,0,0,0.8)"
+      : "0 0 40px rgba(0,0,0,0.7)",
+  };
+
+  const headerClass = isScrolled
+    ? "fixed left-0 z-50 w-full flex justify-center px-4 transition-all duration-300 top-2"
+    : "fixed left-0 z-50 w-full flex justify-center px-4 transition-all duration-300 top-4";
+
   return (
-    <header
-      className={`fixed left-0 z-50 w-full flex justify-center px-4 transition-all duration-300 ${
-        isScrolled ? "top-2" : "top-4"
-      }`}
-    >
-      {/* Main Container */}
-      <div className="flex items-center justify-between w-full max-w-[1200px]">
+    <>
+      <header className={headerClass}>
+        <div className="flex items-center justify-center w-full px-4">
+          <div className={capsuleClass} style={capsuleStyle}>
 
-        {/* Capsule Navbar */}
-<div
-  className={`relative flex items-center rounded-[60px] border transition-all duration-300
-  ${
-    isScrolled
-      ? "h-[42px] px-6 bg-black/80 backdrop-blur-2xl border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.8)]"
-      : "h-[50px] px-10 bg-black/60 backdrop-blur-xl border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.7)]"
-  }`}
->
+            {/* Logo */}
+            <Link to="/" className="flex items-center relative z-10 shrink-0">
+              <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <div style={{
+                  width: 44, height: 36, borderRadius: 10,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  overflow: "hidden", flexShrink: 0,
+                }}>
+                  <img
+                    src={logo}
+                    alt="heedle logo"
+                    style={{ width: "100%", height: "150%", objectFit: "contain" }}
+                  />
+                </div>
+                <span style={{
+                  fontFamily: "'Figtree', sans-serif",
+                  fontSize: isScrolled ? 17 : 20,
+                  fontWeight: 800,
+                  letterSpacing: "-0.3px",
+                  background: "linear-gradient(90deg, #fff, rgba(255,255,255,0.7))",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  transition: "font-size 0.5s ease",
+                }}>
+                  heedle.Ai
+                </span>
+              </div>
+            </Link>
 
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 rounded-[60px] pointer-events-none overflow-hidden">
-            {/* <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/[0.03] to-transparent"></div> */}
+            {/* Desktop Nav */}
+            <nav className="hidden lg:flex items-center gap-6 relative z-10 whitespace-nowrap">
+              {navItems.map((item) => {
+                return (
+                  <a key={item} href={hrefFor(item)} className={navLinkClass}>
+                    {item}
+                    <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-blue-500 transition-all duration-300 group-hover:w-full" />
+                  </a>
+                );
+              })}
+            </nav>
+
+            {/* Desktop CTA Button */}
+            <div className="hidden lg:flex items-center shrink-0 z-10">
+              <Link to="/login" className={btnClass} style={{ transition: "all 0.5s ease" }}>
+                <span className="absolute inset-0 flex items-center justify-center transition-transform duration-[350ms] ease-in-out group-hover:-translate-y-full">
+                  Free Trial
+                </span>
+                <span className="absolute inset-0 flex items-center justify-center translate-y-full transition-transform duration-[350ms] ease-in-out group-hover:translate-y-0">
+                  Login / Register
+                </span>
+              </Link>
+            </div>
+
+            {/* Mobile/Tablet Hamburger */}
+            <button
+              className="lg:hidden text-white z-10 p-1"
+              onClick={() => setIsOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={26} />
+            </button>
+
           </div>
+        </div>
+      </header>
 
-          {/* Logo */}
-          <Link to="/" className="flex items-center relative z-10 shrink-0">
-            <img
-              src={logo}
-              alt="Wheedle.ai"
-              className="h-[22px] w-auto object-contain"
-            />
+      {/* Backdrop overlay */}
+      <div
+        onClick={() => setIsOpen(false)}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 90,
+          background: "rgba(0,0,0,0.6)",
+          backdropFilter: "blur(4px)",
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? "auto" : "none",
+          transition: "opacity 0.4s ease",
+        }}
+      />
+
+      {/* Slide-in Sidebar */}
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          height: "100vh",
+          width: "min(320px, 85vw)",
+          zIndex: 100,
+          background: "rgba(4, 8, 22, 0.97)",
+          borderLeft: "1px solid rgba(255,255,255,0.08)",
+          backdropFilter: "blur(24px)",
+          transform: isOpen ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+          display: "flex",
+          flexDirection: "column",
+          padding: "0",
+          overflowY: "auto",
+        }}
+      >
+        {/* Sidebar Header */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "20px 24px",
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
+        }}>
+          <Link to="/" onClick={() => setIsOpen(false)} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <div style={{
+              width: 36, height: 30, borderRadius: 8,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              overflow: "hidden",
+            }}>
+              <img src={logo} alt="heedle logo" style={{ width: "100%", height: "150%", objectFit: "contain" }} />
+            </div>
+            <span style={{
+              fontFamily: "'Figtree', sans-serif",
+              fontSize: 18, fontWeight: 800,
+              letterSpacing: "-0.3px",
+              background: "linear-gradient(90deg, #fff, rgba(255,255,255,0.7))",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}>
+              heedle.Ai
+            </span>
           </Link>
-
-          {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-6 ml-8 relative z-10 whitespace-nowrap">
-            {navItems.map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                className="text-[15px] font-medium text-white/60 hover:text-white transition duration-300 relative group"
-              >
-                {item}
-                <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
-              </a>
-            ))}
-          </nav>
+          <button
+            onClick={() => setIsOpen(false)}
+            aria-label="Close menu"
+            style={{
+              color: "rgba(255,255,255,0.6)",
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: "50%",
+              width: 34, height: 34,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        {/* Right Buttons (Desktop) */}
-        <div className="hidden lg:flex items-center gap-6 ml-4">
-<Link
-  to="/login"
-  className="flex h-[42px] w-[100px] items-center justify-center rounded-[14px] border bg-[#1630b7] text-[16px] font-medium text-white shadow-[0_0_0_3px_rgba(7,10,24,0.9)] transition hover:bg-[#1c39d3]"
->
-  Login
-</Link>
-
-<Link
-  to="/register"
-  className="flex h-[42px] w-[120px] items-center justify-center rounded-[14px] border border-[#1d2747] bg-[#1630b7] text-[16px] font-medium text-white shadow-[0_0_0_3px_rgba(7,10,24,0.9)] transition hover:bg-[#1c39d3]">
-  <Button variant="primary" size="md" className="!h-full !w-full !rounded-[14px] !bg-[#1630b7] !hover:bg-[#1c39d3] !border-none !shadow-none text-[12px]">
-    Sign up
-  </Button>
-</Link>
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          className="lg:hidden text-white"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? <X size={36} /> : <Menu size={36} />}
-        </button>
-
-        {/* Mobile Dropdown */}
-        {isOpen && (
-          <div className="absolute top-[70px] left-4 right-4 rounded-2xl bg-[#040816]/95 border border-white/10 backdrop-blur-xl p-6 flex flex-col gap-5 lg:hidden shadow-xl">
-
-            {navItems.map((item) => (
+        {/* Nav Links */}
+        <nav style={{ padding: "24px 24px 0" }}>
+          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", color: "rgba(255,255,255,0.3)", textTransform: "uppercase", marginBottom: 12 }}>
+            Menu
+          </p>
+          {navItems.map((item, i) => {
+            return (
               <a
                 key={item}
-                href={`#${item.toLowerCase()}`}
-                className="text-white/80 hover:text-white text-base"
+                href={hrefFor(item)}
                 onClick={() => setIsOpen(false)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "13px 0",
+                  borderBottom: "1px solid rgba(255,255,255,0.05)",
+                  color: "rgba(255,255,255,0.75)",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  textDecoration: "none",
+                  transition: "color 0.2s ease",
+                  animationDelay: i * 50 + "ms",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.75)"; }}
               >
                 {item}
+                <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 18 }}>›</span>
               </a>
-            ))}
+            );
+          })}
+        </nav>
 
-            <Link to="/login" onClick={() => setIsOpen(false)} className="block">
-              <Button variant="secondary" size="sm" className="h-[44px] w-full !rounded-lg !bg-[#0f1a3a]">
-                Login
-              </Button>
-            </Link>
+        {/* Sidebar Buttons */}
+        <div style={{ padding: "28px 24px", marginTop: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
+          <Link
+            to="/login"
+            onClick={() => setIsOpen(false)}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              height: 46, borderRadius: 12,
+              background: "#1630b7",
+              color: "#fff", fontWeight: 600, fontSize: 15,
+              textDecoration: "none",
+              transition: "background 0.2s ease",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#1c39d3"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#1630b7"; }}
+          >
+            Free Trial
+          </Link>
+        </div>
 
-            <Link to="/register" onClick={() => setIsOpen(false)} className="block">
-              <Button variant="primary" size="sm" className="h-[44px] w-full !rounded-lg !bg-blue-600 font-medium">
-                Sign up
-              </Button>
-            </Link>
-          </div>
-        )}
       </div>
-    </header>
+    </>
   );
 }
 
