@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import ReplaceBrandModal from './content/ReplaceBrandModal';
 import {
   Bell, Search as SearchIcon, LogOut, CheckCircle2,
   X, Sparkles, Wallet, RefreshCw, Globe, PlusCircle, ChevronDown
@@ -6,13 +7,18 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../store/slices/authSlice';
-import { clearSeoData } from '../../utils/seoStorage';
+import { clearSeoData } from '../../utils/seoStorage';  
 
-import { setActiveWebsite, addWebsite } from '../../store/slices/workspaceSlice';
+import {
+  setActiveWebsite,
+  upsertBrandLocally,
+} from '../../store/slices/workspaceSlice';
+
 import { markAllReadAsync, markOneReadAsync, deleteOneAsync, fetchNotifications } from '../../store/slices/notificationSlice';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import './Header.css';
+
 
 const API_BASE = 'http://localhost:3000';
 
@@ -53,6 +59,13 @@ export const Header: React.FC = () => {
   const [newSiteUrl, setNewSiteUrl] = useState('');
   const [walletBalance, setWalletBalance] = useState(0);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [showReplaceModal, setShowReplaceModal] = useState(false);
+
+const [pendingBrand, setPendingBrand] = useState<any>(null);
+
+const [existingBrandName, setExistingBrandName] = useState('');
+
+const [isReplacing, setIsReplacing] = useState(false);
 
   // ── Payment gateway state ──
   const [payStep, setPayStep] = useState<PayStep>('select');
@@ -177,14 +190,158 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
   };
 
   // ── Existing handlers ──
-  const handleAddWebsite = () => {
-    if (!newSiteName || !newSiteUrl) { toast.error('Both Name and URL are required!'); return; }
-    dispatch(addWebsite({ name: newSiteName, url: newSiteUrl }));
-    toast.success('Website added system-wide!');
+  const handleAddWebsite = async () => {
+
+  if (!user?.id) {
+    toast.error('Not authenticated');
+    return;
+  }
+
+  console.log('[brand-save] handleAddWebsite start', { userId: user?.id, newSiteName, newSiteUrl, websites });
+
+  if (!newSiteName || !newSiteUrl) {
+    toast.error('Both Name and URL are required!');
+    return;
+  }
+
+  try {
+
+    const payload = {
+      brandDetails: {
+        name: newSiteName,
+        url: newSiteUrl,
+        brandName: newSiteName,
+      },
+      website: newSiteUrl,
+    };
+
+    toast.loading('Saving brand...', {
+      id: 'brand-save',
+    });
+
+    // IMPORTANT
+    // NO forceReplace here
+    const res = await axios.post(
+      `${API_BASE}/campaign/brand-save/${user.id}`,
+      payload,
+    );
+
+    const saved = res?.data;
+
+    dispatch(
+      upsertBrandLocally({
+        id: saved?.brand?.id || Date.now().toString(),
+        name: newSiteName,
+        url: newSiteUrl,
+      }) as any,
+    );
+
+    toast.success('Brand synced', {
+      id: 'brand-save',
+    });
+
     setShowAddWebsite(false);
+
     setNewSiteName('');
     setNewSiteUrl('');
-  };
+
+  } catch (e: any) {
+
+    const res = e?.response;
+    const data = res?.data;
+    const status = res?.status;
+
+    console.log('[brand-save] handleAddWebsite error', { status, data, err: e });
+
+    // OPEN REPLACE MODAL (must be triggered by HTTP 409 + replaceRequired=true)
+    if (status === 409 && data?.replaceRequired === true) {
+      toast.dismiss('brand-save');
+
+      setPendingBrand({
+        name: newSiteName,
+        url: newSiteUrl,
+      });
+
+      // Prefer backend-provided existingBrand if available
+      const backendExistingName = data?.existingBrand?.name || data?.existingBrand?.brand?.name;
+      const existingBrandFromState = websites?.[0]?.name;
+
+      setExistingBrandName(backendExistingName || existingBrandFromState || 'Current Brand');
+
+      setShowReplaceModal(true);
+      return;
+    }
+
+    toast.error(data?.message || 'Failed to save brand');
+  }
+};
+const handleConfirmReplace = async () => {
+
+  if (!pendingBrand || !user?.id) return;
+
+  try {
+
+    setIsReplacing(true);
+
+    toast.loading('Replacing brand...', {
+      id: 'replace-brand',
+    });
+
+    const payload = {
+      brandDetails: {
+        name: pendingBrand.name,
+        url: pendingBrand.url,
+        brandName: pendingBrand.name,
+      },
+      website: pendingBrand.url,
+    };
+
+    // NOW force replace
+    const res = await axios.post(
+      `${API_BASE}/campaign/brand-save/${user.id}?forceReplace=true`,
+      payload,
+    );
+
+    const saved = res?.data;
+
+    dispatch(
+      upsertBrandLocally({
+        id: saved?.brand?.id || Date.now().toString(),
+        name: pendingBrand.name,
+        url: pendingBrand.url,
+      }) as any,
+    );
+
+    toast.success('Brand replaced successfully', {
+      id: 'replace-brand',
+    });
+
+    setShowReplaceModal(false);
+
+    setPendingBrand(null);
+
+    setShowAddWebsite(false);
+
+    setNewSiteName('');
+    setNewSiteUrl('');
+
+  } catch (e: any) {
+
+    toast.error(
+      e?.response?.data?.message || 'Replace failed',
+      {
+        id: 'replace-brand',
+      }
+    );
+
+  } finally {
+    setIsReplacing(false);
+  }
+};
+const handleCancelReplace = () => {
+  setShowReplaceModal(false);
+  setPendingBrand(null);
+};
 
   const handleLogout = () => {
     dispatch(logout());
@@ -825,6 +982,15 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
           </div>
         </div>
       )}
+
+      <ReplaceBrandModal
+  open={showReplaceModal}
+  existingBrand={existingBrandName}
+  newBrand={pendingBrand?.name || ''}
+  loading={isReplacing}
+  onCancel={handleCancelReplace}
+  onConfirm={handleConfirmReplace}
+/>
     </>
   );
 };

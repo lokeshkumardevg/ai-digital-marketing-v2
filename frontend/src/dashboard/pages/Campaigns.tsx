@@ -1337,8 +1337,13 @@ export const Campaigns: React.FC = () => {
           updatedBrand,
           defaultPromo,
           newMsgs,
-          existingBrandName: saveResult.existingBrand?.name || saveResult.existingBrand?.brandName || 'existing brand',
-          newBrandName:      saveResult.newBrand?.name      || data.brandName,
+          existingBrandName:
+            (saveResult as any).existingBrand?.name ||
+            (saveResult as any).existingBrand?.brandName ||
+            'existing brand',
+          newBrandName:
+            (saveResult as any).newBrand?.name ||
+            data.brandName,
         });
         return; // wait for user decision
       }
@@ -1390,6 +1395,7 @@ export const Campaigns: React.FC = () => {
       console.warn('[brand-save] forceReplace error:', err);
     }
 
+    // Commit confirmed brand state into UI + Redux
     commitBrandConfirm(updatedBrand, defaultPromo, newMsgs, snapshot);
   };
 
@@ -1471,6 +1477,7 @@ export const Campaigns: React.FC = () => {
         <style>{CSS}</style>
         <div style={{ background: '#0f172a', color: '#f1f5f9', position: 'fixed', zIndex: 9999, width: '80%' }}><Header /></div>
         <div className="land-root">
+
           <div className="land-grid" aria-hidden="true" />
           <div className="land-orb land-orb-1" aria-hidden="true" />
           <div className="land-orb land-orb-2" aria-hidden="true" />
