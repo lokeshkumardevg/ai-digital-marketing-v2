@@ -11,7 +11,7 @@ import { clearSeoData } from '../../utils/seoStorage';
 
 import {
   setActiveWebsite,
-  upsertBrandLocally,
+  upsertBrandLocally,addWebsite
 } from '../../store/slices/workspaceSlice';
 
 import { markAllReadAsync, markOneReadAsync, deleteOneAsync, fetchNotifications } from '../../store/slices/notificationSlice';
