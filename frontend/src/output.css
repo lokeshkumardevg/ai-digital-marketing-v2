@@ -2946,7 +2946,7 @@ body {
   --text-secondary: #64748b;
   --accent-primary: #080648;
   --accent-secondary: #060754;
-  --accent-gradient: linear-gradient(90deg, #190b43 0%, #6366f1 100%);
+  --accent-gradient: linear-gradient(135deg, #0665ff 50%, #22d3ee 100%);
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;

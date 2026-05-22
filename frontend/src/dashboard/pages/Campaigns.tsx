@@ -1795,7 +1795,7 @@ const CSS = `
   .land-headline { font-size: clamp(2.6rem, 6vw, 4.2rem); font-weight: 700; line-height: 1.08; letter-spacing: -0.03em; color: #f1f5f9; margin: 0 0 6px; }
   .land-headline-line2 { display: block; margin-top: 4px; }
   .land-hl-static { background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .land-hl-machine { background: linear-gradient(135deg, #2835fa, #50a7f8, #2835fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .land-hl-machine { background: linear-gradient(135deg, #0665ff 50%, #22d3ee 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   .land-sub { font-size: 1.05rem; line-height: 1.7; color: #64748b; margin: 20px 0 36px; max-width: 600px; }
   .land-input-section { width: 100%; max-width: 680px; margin-bottom: 24px; }
   .land-input-shell { display: flex; align-items: center; background: rgba(15,23,42,0.95); border: 1px solid rgba(99,102,241,0.3); border-radius: 14px; padding: 6px 6px 6px 16px; transition: border-color 0.2s, box-shadow 0.2s; }
@@ -1806,7 +1806,7 @@ const CSS = `
   .land-input-prefix { display: flex; align-items: center; flex-shrink: 0; margin-right: 10px; }
   .land-url-input { flex: 1; background: transparent; border: none; outline: none; font-size: 0.95rem; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; padding: 12px 0; min-width: 0; }
   .land-url-input::placeholder { color: #334155; font-family: 'Space Grotesk', sans-serif; }
-  .land-cta-btn { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 13px 24px; border-radius: 10px; background: linear-gradient(135deg, #2836ff 0%, #000a9d 100%); border: none; color: #fff; font-size: 0.88rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.2s; box-shadow: 0 4px 16px rgba(99,102,241,0.35); }
+  .land-cta-btn { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 13px 24px; border-radius: 10px; background: linear-gradient(135deg, #0665ff 50%, #22d3ee 100%); border: none; color: #fff; font-size: 0.88rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all 0.2s; box-shadow: 0 4px 16px rgba(99,102,241,0.35); }
   .land-cta-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,102,241,0.5); }
   .land-cta-btn:disabled { opacity: 0.45; cursor: not-allowed; }
   .land-url-error { display: flex; align-items: center; gap: 7px; margin-top: 10px; padding: 9px 14px; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.22); border-radius: 8px; color: #fca5a5; font-size: 0.8rem; text-align: left; }
