@@ -1,9 +1,10 @@
 /**
  * AdCampaignDashboard — White & Blue Theme
  * Updated: Brand asset images shown in Creative Studio image selection panel
+ *          generateSocialMediaImages called in useEffect with loading state
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 
 type PlatformId = "meta" | "google" | "x" | "linkedin";
@@ -18,9 +19,10 @@ interface BrandDetails {
   logoUrl?: string;
   assets?: {
     favicon?: string;
-    images?: string[];       // ← brand asset images shown in Creative Studio
+    images?: string[];
     banners?: string[];
     thumbnails?: string[];
+    websiteImages?: string[];
     [key: string]: any;
   };
 }
@@ -73,7 +75,9 @@ interface Plan {
   color: string;
   popular?: boolean;
 }
-const API_BASE = 'http://localhost:3000';
+
+const API_BASE = "http://localhost:3000";
+
 /* ─── GLOBAL STYLES ─────────────────────────────────────── */
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
@@ -108,7 +112,6 @@ const GLOBAL_CSS = `
     color: var(--t1);
     font-size: 13px;
     -webkit-font-smoothing: antialiased;
-
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -222,6 +225,7 @@ const GLOBAL_CSS = `
 
   @keyframes spin { to { transform: rotate(360deg) } }
   .spinner { width: 13px; height: 13px; border: 2px solid #2563eb44; border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+  .spinner-white { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
 
   @keyframes pulse-dot { 0%,100% { opacity:1 } 50% { opacity:.4 } }
 
@@ -237,7 +241,81 @@ const GLOBAL_CSS = `
   @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
 
   .nav-active { background: var(--blue-lt) !important; border-color: var(--blue-bdr) !important; }
+
+  /* ── Generated images loading skeleton ── */
+  .gen-img-skeleton {
+    aspect-ratio: 1;
+    border-radius: 7px;
+    border: 2px solid var(--bdr);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--surface2);
+  }
+  .gen-img-skeleton .skel-bar {
+    height: 6px;
+    border-radius: 4px;
+    background: linear-gradient(90deg,#E2E8F4 25%,#BFDBFE 50%,#E2E8F4 75%);
+    background-size: 800px 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  /* ── Full-panel loading overlay ── */
+  .gen-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(248,250,255,.92);
+    border-radius: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    z-index: 8;
+    backdrop-filter: blur(3px);
+  }
+  .gen-loading-overlay .gen-loading-label {
+    font-size: 11px;
+    color: var(--blue);
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.6;
+  }
+  .gen-loading-bar-wrap {
+    width: 100px;
+    height: 4px;
+    background: var(--blue-mid);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  @keyframes loadbar { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
+  .gen-loading-bar {
+    height: 100%;
+    width: 50%;
+    background: var(--blue);
+    border-radius: 4px;
+    animation: loadbar 1.2s ease-in-out infinite;
+  }
 `;
+
+/* ─── API ────────────────────────────────────────────────── */
+const generateSocialMediaImages = async (campaignData: any) => {
+  const response = await fetch(`${API_BASE}/platformposts/generate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(campaignData),
+  });
+  if (!response.ok) throw new Error("Failed to generate images");
+  const data = await response.json();
+  return data.images.map((item: any) => ({
+    ...item,
+    preview: item.image, // base64 image
+  }));
+};
 
 /* ─── PLATFORM PREVIEWS ──────────────────────────────────── */
 interface PreviewProps {
@@ -424,7 +502,7 @@ function PlatformPreview({ platformId, brandName, logoUrl, caption, cta, estimat
 
 /* ─── PLATFORM ICONS ─────────────────────────────────────── */
 const MetaIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" style={{ flex: 'none', lineHeight: 1 }}>
+  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" style={{ flex: "none", lineHeight: 1 }}>
     <title>Meta</title>
     <path d="M6.897 4h-.024l-.031 2.615h.022c1.715 0 3.046 1.357 5.94 6.246l.175.297.012.02 1.62-2.438-.012-.019a48.763 48.763 0 0 0-1.098-1.716 28.01 28.01 0 0 0-1.175-1.629C10.413 4.932 8.812 4 6.896 4z" fill="url(#meta-0)" />
     <path d="M6.873 4C4.95 4.01 3.247 5.258 2.02 7.17a4.352 4.352 0 0 0-.01.017l2.254 1.231.011-.017c.718-1.083 1.61-1.774 2.568-1.785h.021L6.896 4h-.023z" fill="url(#meta-1)" />
@@ -540,7 +618,6 @@ function Sidebar({ platforms, campaigns, activePlatformId, activeCampaignId, onP
           </div>
           <span style={{ fontSize: 14, fontWeight: 700, color: "var(--t1)", fontFamily: "'Space Grotesk', sans-serif" }}>AdStudio</span>
         </div>
-
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
           {platforms.map(p => {
             const active = p.id === activePlatformId;
@@ -627,7 +704,7 @@ function TopBar({ activePlatformId }: TopBarProps) {
   );
 }
 
-/* ─── AD SETTING CARD (fully editable) ───────────────────── */
+/* ─── AD SETTING CARD ─────────────────────────────────────── */
 interface AdSettingCardProps {
   event: string; budget: string; schedule: string; finalUrl: string; enabled: boolean;
   onEventChange: (v: string) => void;
@@ -664,7 +741,7 @@ function AdSettingCard({ event, budget, schedule, finalUrl, enabled, onEventChan
   );
 }
 
-/* ─── TARGET AUDIENCE CARD (fully editable) ──────────────── */
+/* ─── TARGET AUDIENCE CARD ───────────────────────────────── */
 interface TargetAudienceCardProps {
   location: string; advantagePlus: boolean; enabled: boolean;
   onLocationChange: (v: string) => void;
@@ -705,12 +782,37 @@ function DisabledOverlay() {
   );
 }
 
+/* ─── BRAND IMAGE LOADING SKELETONS ──────────────────────── */
+function BrandImageSkeletons({ count = 4 }: { count?: number }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="gen-img-skeleton">
+          {/* animated shimmer fill */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg,#F1F5FE 25%,#E8EFFA 50%,#F1F5FE 75%)", backgroundSize: "800px 100%", animation: "shimmer 1.4s infinite" }} />
+          {/* subtle icon placeholder */}
+          <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" opacity={0.3}>
+              <rect x="3" y="3" width="18" height="18" rx="3" stroke="#2563EB" strokeWidth="1.5" strokeDasharray="3 2" />
+              <path d="M3 16l5-6 4 4 3-3 6 5" stroke="#2563EB" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="8" cy="9" r="1.5" stroke="#2563EB" strokeWidth="1.3" />
+            </svg>
+            <div className="skel-bar" style={{ width: "55%" }} />
+            <div className="skel-bar" style={{ width: "35%" }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ─── CREATIVE STUDIO ─────────────────────────────────────── */
 interface CreativeStudioProps {
   brandName: string;
   adCopy: AdCopy;
   activePlatformId: PlatformId;
-  brandAssetImages: string[];   // ← images from brandDetails.assets
+  brandAssetImages: string[];
+  generatingImages: boolean;       // ← NEW: true while API is in-flight
   onHeadingChange: (val: string) => void;
   onSubheadingChange: (val: string) => void;
   onImageSelect: (url: string) => void;
@@ -719,7 +821,7 @@ interface CreativeStudioProps {
 
 type ImageTab = "brand" | "ai" | "upload";
 
-function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages, onHeadingChange, onSubheadingChange, onImageSelect, onCtaChange }: CreativeStudioProps) {
+function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages, generatingImages, onHeadingChange, onSubheadingChange, onImageSelect, onCtaChange }: CreativeStudioProps) {
   const [heading, setHeading] = useState<string>(adCopy.headlines[0] || "");
   const [sub, setSub] = useState<string>(adCopy.primaryTexts[0] || "");
   const [cta, setCta] = useState<string>(adCopy.callToAction || "Shop Now");
@@ -765,7 +867,11 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
   const handleCtaChange = (v: string) => { setCta(v); onCtaChange(v); };
 
   const currentImgs: string[] = imgTab === "brand" ? brandAssetImages : imgTab === "ai" ? aiImgs : uploadedImgs;
-  const emptyMsg: string = imgTab === "brand" ? "No brand assets found. Add images to brandDetails.assets.images" : imgTab === "ai" ? "Generate an image above to see it here." : "Upload an image using the button above.";
+  const emptyMsg: string = imgTab === "brand"
+    ? "No brand assets found. Add images to brandDetails.assets.images"
+    : imgTab === "ai"
+      ? "Generate an image above to see it here."
+      : "Upload an image using the button above.";
 
   return (
     <div style={{ ...card({ padding: 0 }), borderTop: "3px solid var(--purple)", display: "flex", flexDirection: "column" }}>
@@ -822,20 +928,35 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
           <div style={{ fontSize: 10, fontWeight: 700, color: "var(--t2)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 10, display: "flex", alignItems: "center", gap: 5 }}><I.Image /> Ad Creative</div>
 
           {/* Image source tabs */}
-          <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 12, alignItems: "center" }}>
             {([
-              { id: "brand" as ImageTab, label: `Brand (${brandAssetImages.length})` },
+              { id: "brand" as ImageTab, label: generatingImages ? "Brand (loading…)" : `Brand (${brandAssetImages.length})` },
               { id: "ai" as ImageTab, label: "AI Gen" },
               { id: "upload" as ImageTab, label: "Uploaded" },
             ]).map(t => (
-              <button key={t.id} className={`section-tab${imgTab === t.id ? " active" : ""}`} onClick={() => setImgTab(t.id)}>{t.label}</button>
+              <button key={t.id} className={`section-tab${imgTab === t.id ? " active" : ""}`} onClick={() => setImgTab(t.id)}
+                style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                {t.id === "brand" && generatingImages && (
+                  <span style={{ width: 8, height: 8, border: "1.5px solid var(--blue-bdr)", borderTopColor: "var(--blue)", borderRadius: "50%", animation: "spin .7s linear infinite", display: "inline-block", flexShrink: 0 }} />
+                )}
+                {t.label}
+              </button>
             ))}
           </div>
 
           {/* Brand Assets Grid */}
           {imgTab === "brand" && (
             <>
-              {brandAssetImages.length === 0 ? (
+              {/* Show skeletons while loading, then images or empty state */}
+              {generatingImages ? (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, background: "var(--blue-lt)", border: "1px solid var(--blue-bdr)", borderRadius: 8, padding: "7px 10px" }}>
+                    <span style={{ width: 8, height: 8, border: "1.5px solid var(--blue-bdr)", borderTopColor: "var(--blue)", borderRadius: "50%", animation: "spin .7s linear infinite", display: "inline-block", flexShrink: 0 }} />
+                    <span style={{ fontSize: 10, color: "var(--blue)", fontWeight: 600 }}>Generating images from your brand assets…</span>
+                  </div>
+                  <BrandImageSkeletons count={4} />
+                </div>
+              ) : brandAssetImages.length === 0 ? (
                 <div style={{ background: "var(--surface2)", border: "1.5px dashed var(--bdr2)", borderRadius: 10, padding: "20px 14px", textAlign: "center", color: "var(--t3)", fontSize: 11, lineHeight: 1.7 }}>
                   <I.Image />
                   <div style={{ marginTop: 8 }}>{emptyMsg}</div>
@@ -913,9 +1034,9 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
               {uploadedImgs.length === 0 && <div style={{ fontSize: 11, color: "var(--t3)", textAlign: "center", paddingTop: 4 }}>{emptyMsg}</div>}
             </div>
           )}
-
         </div>
       </div>
+
       {!enabled && (
         <div style={{ position: "absolute", inset: 0, background: "rgba(248,250,255,.93)", borderRadius: "inherit", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, zIndex: 10, backdropFilter: "blur(4px)" }}>
           <I.Lock />
@@ -960,12 +1081,10 @@ function PublishPlanModal({ isOpen, onClose, onSelectPlan }: PublishPlanModalPro
     <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,51,.45)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, animation: "fadeIn .2s ease" }} onClick={onClose}>
       <div style={{ background: "#fff", border: "1px solid var(--bdr)", borderRadius: 20, maxWidth: 860, width: "92%", maxHeight: "88vh", overflow: "auto", padding: 28, position: "relative", animation: "slideUp .25s ease", boxShadow: "0 20px 60px rgba(37,99,235,.12)" }} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "var(--surface2)", border: "1px solid var(--bdr)", color: "var(--t3)", width: 28, height: 28, borderRadius: 8, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
-
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--t1)", marginBottom: 6, fontFamily: "'Space Grotesk', sans-serif" }}>Choose Publishing Plan</h2>
           <p style={{ fontSize: 13, color: "var(--t2)" }}>Select the plan that fits your campaign needs</p>
         </div>
-
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
           <div style={{ display: "flex", background: "var(--surface2)", borderRadius: 40, padding: 4, border: "1px solid var(--bdr)" }}>
             {(["monthly", "yearly"] as BillingCycle[]).map(b => (
@@ -977,7 +1096,6 @@ function PublishPlanModal({ isOpen, onClose, onSelectPlan }: PublishPlanModalPro
             ))}
           </div>
         </div>
-
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 24 }}>
           {plans.map(plan => (
             <div key={plan.id} className="plan-card" onClick={() => onSelectPlan(plan.id)}
@@ -1028,12 +1146,12 @@ function BottomBar({ onBack, onPublish, onSaveDraft, loading, activePlatformName
       <div style={{ fontSize: 11, color: "var(--t3)" }}>Publishing to <span style={{ color: "var(--blue)", fontWeight: 600 }}>{activePlatformName}</span></div>
       <div style={{ display: "flex", gap: 8 }}>
         <button className="btn-pub" onClick={onPublish} disabled={!!loading}
-          style={{ background: "var(--blue)", color: "#fff", border: "none", padding: "8px 26px", borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "all .15s", opacity: loading ? .7 : 1 }}>
-          {loading === "publish" ? "Publishing…" : "Publish"}
+          style={{ background: "var(--blue)", color: "#fff", border: "none", padding: "8px 26px", borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "all .15s", opacity: loading ? .7 : 1, display: "flex", alignItems: "center", gap: 6 }}>
+          {loading === "publish" ? <><span className="spinner-white" />Publishing…</> : "Publish"}
         </button>
         <button className="btn-draft" onClick={onSaveDraft} disabled={!!loading}
-          style={{ background: "var(--surface)", border: "1px solid var(--bdr)", color: "var(--t2)", padding: "8px 16px", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "all .12s", opacity: loading ? .7 : 1 }}>
-          {loading === "draft" ? "Saving…" : "Save Draft"}
+          style={{ background: "var(--surface)", border: "1px solid var(--bdr)", color: "var(--t2)", padding: "8px 16px", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", transition: "all .12s", opacity: loading ? .7 : 1, display: "flex", alignItems: "center", gap: 6 }}>
+          {loading === "draft" ? <><span className="spinner" />Saving…</> : "Save Draft"}
         </button>
       </div>
     </div>
@@ -1056,15 +1174,9 @@ const SEED = {
   cta: "Shop Now",
   estimatedAudience: "394,400,000 – 464,000,000+",
   headlines: ["Powerful Solutions for Every Business", "Grow Your Brand Today", "Results That Matter"],
-  primaryTexts: ["Discover our latest campaign — built for results.", "Affordable and eco-friendly solutions for homes and businesses."],
-  // Demo placeholder images for brand assets when none provided
-  demoImages: [
-    "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=400&q=80",
-    "https://images.unsplash.com/photo-1607082349566-187342175e2f?w=400&q=80",
-    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80",
-    "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&q=80",
-    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80",
-    "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=400&q=80",
+  primaryTexts: [
+    "Discover our latest campaign — built for results.",
+    "Affordable and eco-friendly solutions for homes and businesses.",
   ],
 };
 
@@ -1082,72 +1194,102 @@ export default function AdCampaignDashboard({
   brandDetails,
   promoData,
   campaignId,
-  onBack = () => { },
-  onPublish = () => { },
-  onSaveDraft = () => { },
+  onBack = () => {},
+  onPublish = () => {},
+  onSaveDraft = () => {},
 }: AdCampaignDashboardProps) {
+
   const brandName = brandDetails?.brand?.name || brandDetails?.name || "Brand";
-  const logoUrl = brandDetails?.logoUrl || brandDetails?.assets?.favicon || "";
+  const logoUrl =
+    brandDetails?.logoUrl ||
+    brandDetails?.assets?.logoUrl ||
+    brandDetails?.assets?.logoPreview ||
+    brandDetails?.assets?.favicon || "";
+
   const { user } = useSelector((state: any) => state.auth);
-  const userId = user?._id || '';
-  // Collect all images from brandDetails.assets — images[], banners[], thumbnails[], or any array of strings
+  const userId = user?._id || "";
+
+  /* ── Collect static brand images from brandDetails.assets ── */
   const collectBrandImages = (): string[] => {
-    if (!brandDetails?.assets) return SEED.demoImages;
+    if (!brandDetails?.assets) return [];
     const assets = brandDetails.assets;
     const collected: string[] = [];
 
-    // Explicit image arrays
-    if (Array.isArray(assets.images)) collected.push(...assets.images.filter(Boolean));
-    if (Array.isArray(assets.banners)) collected.push(...assets.banners.filter(Boolean));
-    if (Array.isArray(assets.thumbnails)) collected.push(...assets.thumbnails.filter(Boolean));
+    if (Array.isArray(assets.websiteImages)) collected.push(...assets.websiteImages.filter(Boolean));
+    if (Array.isArray(assets.images))        collected.push(...assets.images.filter(Boolean));
+    if (Array.isArray(assets.banners))       collected.push(...assets.banners.filter(Boolean));
+    if (Array.isArray(assets.thumbnails))    collected.push(...assets.thumbnails.filter(Boolean));
 
-    // Any other array keys that look like image URLs
     Object.entries(assets).forEach(([key, val]) => {
-      if (key !== "favicon" && Array.isArray(val)) {
+      if (key !== "favicon" && key !== "websiteImages" && Array.isArray(val)) {
         val.forEach(v => {
-          if (typeof v === "string" && (v.startsWith("http") || v.startsWith("data:")) && !collected.includes(v)) {
+          if (typeof v === "string" && (v.startsWith("http") || v.startsWith("data:")) && !collected.includes(v))
             collected.push(v);
-          }
         });
       }
-      // Single string URL value
-      if (typeof val === "string" && key !== "favicon" && (val.startsWith("http") || val.startsWith("data:"))) {
-        if (!collected.includes(val)) collected.push(val);
-      }
+      if (typeof val === "string" && key !== "favicon" &&
+          (val.startsWith("http") || val.startsWith("data:")) && !collected.includes(val))
+        collected.push(val);
     });
 
-    return collected.length > 0 ? collected : SEED.demoImages;
+    return collected;
   };
 
-  const brandAssetImages = collectBrandImages();
+  /* ── State ── */
+  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const [generatingImages, setGeneratingImages] = useState<boolean>(false);
 
-  // Editable ad setting state
-  const [adEvent, setAdEvent] = useState<string>(promoData?.event || SEED.event);
-  const [adBudget, setAdBudget] = useState<string>(
-    promoData?.budget ? `${promoData.budget} ${promoData?.currency || "USD"}` : SEED.budget
-  );
+  const [adEvent,    setAdEvent]    = useState<string>(promoData?.event || SEED.event);
+  const [adBudget,   setAdBudget]   = useState<string>(promoData?.budget ? `${promoData.budget} ${promoData?.currency || "USD"}` : SEED.budget);
   const [adSchedule, setAdSchedule] = useState<string>(promoData?.schedule || SEED.schedule);
   const [adFinalUrl, setAdFinalUrl] = useState<string>(promoData?.finalUrl || "");
   const [adLocation, setAdLocation] = useState<string>(promoData?.targetLocation || SEED.location);
   const [adAdvantage, setAdAdvantage] = useState<boolean>(promoData?.advantagePlus ?? SEED.advantagePlus);
   const [adEstimated] = useState<string>(promoData?.estimatedAudience || SEED.estimatedAudience);
 
-  const [activePid, setActivePid] = useState<PlatformId>("meta");
-  const [loading, setLoading] = useState<LoadingState>(null);
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const [activePid,    setActivePid]    = useState<PlatformId>("meta");
+  const [loading,      setLoading]      = useState<LoadingState>(null);
+  const [toast,        setToast]        = useState<ToastState | null>(null);
   const [showPlanModal, setShowPlanModal] = useState<boolean>(false);
-  const [pvCaption, setPvCaption] = useState<string>(promoData?.primaryTexts?.[0] || SEED.caption);
-  const [pvImage, setPvImage] = useState<string | null>(null);
-  const [pvCta, setPvCta] = useState<string>(promoData?.callToAction || SEED.cta);
+  const [pvCaption,    setPvCaption]    = useState<string>(promoData?.primaryTexts?.[0] || SEED.caption);
+  const [pvImage,      setPvImage]      = useState<string | null>(null);
+  const [pvCta,        setPvCta]        = useState<string>(promoData?.callToAction || SEED.cta);
 
   const sid = campaignId || "cam_01";
-  const [campaigns, setCampaigns] = useState<Campaign[]>([{ id: sid, name: `${brandName}_Campaign_01`, platformId: "meta" }]);
-  const [activeCid, setActiveCid] = useState<string>(sid);
+  const [campaigns,   setCampaigns]   = useState<Campaign[]>([{ id: sid, name: `${brandName}_Campaign_01`, platformId: "meta" }]);
+  const [activeCid,   setActiveCid]   = useState<string>(sid);
 
   const activePlat = PLATFORMS.find(p => p.id === activePid) || PLATFORMS[0];
 
+  /* ── Merge static + API-generated images for brand tab ── */
+  const brandAssetImages = [...collectBrandImages(), ...generatedImages];
+
+  /* ── Fetch generated images on mount ── */
+  useEffect(() => {
+    if (!brandDetails) return;
+
+    setGeneratingImages(true);
+    generateSocialMediaImages(brandDetails)
+      .then((formatted: any[]) => {
+        const urls = formatted
+          .map((item: any) => item.preview || item.image)
+          .filter((u: any): u is string => typeof u === "string" && u.length > 0);
+        setGeneratedImages(urls);
+      })
+      .catch((err: unknown) => {
+        console.error("Image generation failed:", err);
+        // fail silently — brand tab still shows static assets
+      })
+      .finally(() => {
+        setGeneratingImages(false);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // run once on mount
+
+  /* ── Helpers ── */
   const showToast = useCallback((msg: string, type: ToastType = "info") => {
-    setToast({ message: msg, type }); setTimeout(() => setToast(null), 3200);
+    setToast({ message: msg, type });
+    setTimeout(() => setToast(null), 3200);
   }, []);
 
   const switchPlat = useCallback((pid: PlatformId) => {
@@ -1158,11 +1300,12 @@ export default function AdCampaignDashboard({
   }, [campaigns, showToast]);
 
   const addCampaign = useCallback((pid: PlatformId) => {
-    const p = PLATFORMS.find(x => x.id === pid);
-    const n = campaigns.filter(c => c.platformId === pid).length + 1;
-    const id = `${pid}_${Date.now()}`;
+    const p   = PLATFORMS.find(x => x.id === pid);
+    const n   = campaigns.filter(c => c.platformId === pid).length + 1;
+    const id  = `${pid}_${Date.now()}`;
     setCampaigns(prev => [...prev, { id, name: `${p?.name || pid} Campaign ${String(n).padStart(2, "0")}`, platformId: pid }]);
-    setActivePid(pid); setActiveCid(id);
+    setActivePid(pid);
+    setActiveCid(id);
     showToast(`Campaign added to ${p?.name || pid}`, "success");
   }, [campaigns, showToast]);
 
@@ -1176,66 +1319,52 @@ export default function AdCampaignDashboard({
     onPublish({ success: true }, planId);
     setLoading(null);
   }, [onPublish, showToast]);
+
   const campaignTitle = `${brandName}_${promoData?.objective || "OUTCOME_SALES"}_${activePlat.name}_${new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}`;
 
-const handleDraft = useCallback(async () => {
-  setLoading("draft");
-  try {
- const response = await fetch(
-  `${API_BASE}/campaign/draft`,
-  {
-    method: "POST",
-
-    headers: {
-      "Content-Type": "application/json",
-    },
-
-    body: JSON.stringify({
-      userId: userId,
-
-      name: campaignTitle,
-
-      platform: activePid,
-
-      audienceId: null,
-
-      data: {
-        caption: pvCaption,
-        cta: pvCta,
-        image: pvImage,
-        budget: adBudget,
-        event: adEvent,
-        schedule: adSchedule,
-        finalUrl: adFinalUrl,
-        location: adLocation,
-        advantagePlus: adAdvantage,
-      },
-    }),
-  }
-);
-
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.message || "Failed to save draft");
-
-    showToast(result.message || "Draft saved!", "success");
-    onSaveDraft({ success: true });
-
-  } catch (error) {
-    showToast(error instanceof Error ? error.message : "Failed to save draft", "error");
-    onSaveDraft({ success: false });
-  } finally {
-    setLoading(null);
-  }
-}, [activePid, adEvent, adBudget, adSchedule, adFinalUrl, adLocation, adAdvantage, pvCaption, pvCta, pvImage, campaignTitle, onSaveDraft, showToast]);
+  const handleDraft = useCallback(async () => {
+    setLoading("draft");
+    try {
+      const response = await fetch(`${API_BASE}/campaign/draft`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          name: campaignTitle,
+          platform: activePid,
+          audienceId: null,
+          data: {
+            caption: pvCaption,
+            cta: pvCta,
+            image: pvImage,
+            budget: adBudget,
+            event: adEvent,
+            schedule: adSchedule,
+            finalUrl: adFinalUrl,
+            location: adLocation,
+            advantagePlus: adAdvantage,
+          },
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Failed to save draft");
+      showToast(result.message || "Draft saved!", "success");
+      onSaveDraft({ success: true });
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Failed to save draft", "error");
+      onSaveDraft({ success: false });
+    } finally {
+      setLoading(null);
+    }
+  }, [activePid, adEvent, adBudget, adSchedule, adFinalUrl, adLocation, adAdvantage, pvCaption, pvCta, pvImage, campaignTitle, userId, onSaveDraft, showToast]);
 
   const adCopy: AdCopy = {
-    headlines: promoData?.headlines?.length ? promoData.headlines : SEED.headlines,
+    headlines:    promoData?.headlines?.length    ? promoData.headlines    : SEED.headlines,
     primaryTexts: promoData?.primaryTexts?.length ? promoData.primaryTexts : SEED.primaryTexts,
     callToAction: pvCta,
   };
 
-
-
+  /* ─── RENDER ─────────────────────────────────────────── */
   return (
     <>
       <style>{GLOBAL_CSS}</style>
@@ -1258,6 +1387,12 @@ const handleDraft = useCallback(async () => {
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M8 2l6 6-6 6" stroke={activePlat.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 <span style={{ fontSize: 12, fontWeight: 600, color: "var(--t2)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{campaignTitle}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  {generatingImages && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, background: "var(--blue-lt)", border: "1px solid var(--blue-bdr)", borderRadius: 20, padding: "3px 10px" }}>
+                      <span style={{ width: 8, height: 8, border: "1.5px solid var(--blue-bdr)", borderTopColor: "var(--blue)", borderRadius: "50%", animation: "spin .7s linear infinite", display: "inline-block" }} />
+                      <span style={{ fontSize: 10, color: "var(--blue)", fontWeight: 600 }}>Generating brand images…</span>
+                    </div>
+                  )}
                   <span style={{ fontSize: 10, background: `${activePlat.color}14`, color: activePlat.color, padding: "2px 10px", borderRadius: 20, fontWeight: 700, border: `1px solid ${activePlat.color}28` }}>{activePlat.name}</span>
                   <span style={{ fontSize: 10, color: "var(--t3)", fontFamily: "monospace" }}>ID: {activeCid}</span>
                 </div>
@@ -1267,19 +1402,13 @@ const handleDraft = useCallback(async () => {
               <div style={{ display: "grid", gridTemplateColumns: "minmax(200px,1fr) minmax(260px,1.1fr) minmax(200px,1fr)", gap: 14, alignItems: "start" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <AdSettingCard
-                    event={adEvent}
-                    budget={adBudget}
-                    schedule={adSchedule}
-                    finalUrl={adFinalUrl}
+                    event={adEvent} budget={adBudget} schedule={adSchedule} finalUrl={adFinalUrl}
                     enabled={activePid === "meta"}
-                    onEventChange={setAdEvent}
-                    onBudgetChange={setAdBudget}
-                    onScheduleChange={setAdSchedule}
-                    onFinalUrlChange={setAdFinalUrl}
+                    onEventChange={setAdEvent} onBudgetChange={setAdBudget}
+                    onScheduleChange={setAdSchedule} onFinalUrlChange={setAdFinalUrl}
                   />
                   <TargetAudienceCard
-                    location={adLocation}
-                    advantagePlus={adAdvantage}
+                    location={adLocation} advantagePlus={adAdvantage}
                     enabled={activePid === "meta"}
                     onLocationChange={setAdLocation}
                     onAdvantageToggle={() => setAdAdvantage(p => !p)}
@@ -1287,21 +1416,16 @@ const handleDraft = useCallback(async () => {
                 </div>
 
                 <PlatformPreview
-                  platformId={activePid}
-                  brandName={brandName}
-                  logoUrl={logoUrl}
-                  caption={pvCaption}
-                  cta={pvCta}
-                  estimatedAudience={adEstimated}
-                  imageUrl={pvImage}
+                  platformId={activePid} brandName={brandName} logoUrl={logoUrl}
+                  caption={pvCaption} cta={pvCta} estimatedAudience={adEstimated} imageUrl={pvImage}
                 />
 
                 <CreativeStudio
-                  brandName={brandName}
-                  adCopy={adCopy}
+                  brandName={brandName} adCopy={adCopy}
                   activePlatformId={activePid}
                   brandAssetImages={brandAssetImages}
-                  onHeadingChange={() => { }}
+                  generatingImages={generatingImages}
+                  onHeadingChange={() => {}}
                   onSubheadingChange={setPvCaption}
                   onImageSelect={setPvImage}
                   onCtaChange={setPvCta}

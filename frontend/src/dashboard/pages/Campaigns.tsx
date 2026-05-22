@@ -1330,7 +1330,9 @@ export const Campaigns: React.FC = () => {
         snapshot,
       );
 
-      if (!saveResult.ok && saveResult.replaceRequired) {
+      if (!saveResult.ok && saveResult.replaceRequired &&
+          (saveResult.existingBrand?.name || saveResult.existingBrand?.brandName || '').trim().toLowerCase() !==
+          (saveResult.newBrand?.name || data.brandName || '').trim().toLowerCase()) {
         // User already has a different brand saved — ask them to confirm replacement
         setPendingBrandConfirm({
           formData:          data,

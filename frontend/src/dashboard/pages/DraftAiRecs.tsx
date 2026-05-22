@@ -1109,7 +1109,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
               return (
                 <div key={draft.id} style={{
                   background: 'var(--bg-card)',
-                  border: `1px solid ${isExpanded ? platConfig.color + '44' : '#e8eaf0'}`,
+                  border: `1px solid ${isExpanded ? platConfig.color + '44' : platConfig.color + '44'}`,
                   borderRadius: '14px',
                   overflow: 'hidden',
                   transition: 'all .2s',
@@ -1216,9 +1216,6 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
                           onClick={() => openEditor(draft.id)}
                           style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px', borderRadius: 9, background: `linear-gradient(135deg,${platConfig.color},${platConfig.color}cc)`, color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', boxShadow: `0 2px 12px ${platConfig.color}33` }}>
                           <Wand2 size={13} /> Edit Campaign
-                        </button>
-                        <button style={{ padding: '10px 16px', borderRadius: 9, border: '1px solid var(--glass-border)', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.82rem', fontWeight: 600 }}>
-                          <Copy size={13} /> Duplicate
                         </button>
                         <button style={{ padding: '10px 14px', borderRadius: 9, border: '1px solid #fee2e2', background: '#fff5f5', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.82rem', fontWeight: 600 }}>
                           <Trash2 size={13} />
