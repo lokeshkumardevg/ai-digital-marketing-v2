@@ -1,5 +1,5 @@
 // brand.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Brand, BrandDocument } from './brand.schema';
@@ -113,26 +113,15 @@ export class BrandService {
     // ── Step 4: Conflict check ────────────────────────────────
     const existing = await this.brandModel.findOne({ userId });
 
+    // IMPORTANT: do NOT overwrite unless forceReplace=true
     if (existing && !forceReplace) {
-      // Use campaignId or name as identity key
-      const existingKey = existing.campaignId || existing.name;
-      const incomingKey =
-        incoming?.campaignId ||
-        body?.campaignId     ||
-        incoming?.brandId    ||
-        brandName;
-
-      const isDifferentBrand = existingKey !== incomingKey;
-
-      if (isDifferentBrand) {
-        return {
-          ok:              false,
-          replaceRequired: true,
-          message: `You already have "${existing.name}" saved. Replace it with "${brandName}"?`,
-          existingBrand:   this.normaliseBrandRecord(existing),
-          newBrand:        { name: brandName, assets },
-        };
-      }
+      // Any existing brand counts as a conflict for this workflow
+      // (frontend will show ReplaceBrandModal and re-call with forceReplace=true)
+      throw new (await import('@nestjs/common')).ConflictException({
+        ok: false,
+        replaceRequired: true,
+        message: 'Brand already exists',
+      });
     }
 
     // ── Step 5: Upsert into brands collection ─────────────────
