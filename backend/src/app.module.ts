@@ -24,6 +24,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { MessagingModule } from './messaging/messaging.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { BrandModule } from './brand/brand.module';
+import { PlatformPostsModule } from './platformposts/platformposts.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { BrandModule } from './brand/brand.module';
     MessagingModule,
     NotificationsModule,
     BrandModule,
+    PlatformPostsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

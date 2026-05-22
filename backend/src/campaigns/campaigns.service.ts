@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import OpenAI from 'openai';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
@@ -9,6 +14,7 @@ import ColorThief from 'color-thief-node';
 import { chromium } from 'playwright';
 @Injectable()
 export class CampaignService {
+  private readonly logger = new Logger(CampaignService.name);
 constructor(
   @InjectModel('Session')
   private sessionModel: Model<any>,
@@ -542,123 +548,87 @@ Return ONLY JSON.
   // EXTRACT BRAND ASSETS
   // =====================================================
 
-  async extractAssets(website: string) {
+async extractAssets(website: string) {
+  try {
+    const { data } = await axios.get(website);
+    const $ = cheerio.load(data);
+
+    // -------------------------------------------------
+    // FAVICON
+    // -------------------------------------------------
+    const favicon =
+      $('link[rel="icon"]').attr('href') ||
+      $('link[rel="shortcut icon"]').attr('href') ||
+      '/favicon.ico';
+
+    const faviconUrl = this.resolveUrl(website, favicon);
+
+    // -------------------------------------------------
+    // LOGO DETECTION
+    // -------------------------------------------------
+    let logoUrl = '';
+
+    const possibleLogo = $('img')
+      .filter((_, el) => {
+        const alt = ($(el).attr('alt') || '').toLowerCase();
+        const cls = ($(el).attr('class') || '').toLowerCase();
+        const src = ($(el).attr('src') || '').toLowerCase();
+        return (
+          alt.includes('logo') ||
+          cls.includes('logo') ||
+          src.includes('logo')
+        );
+      })
+      .first();
+
+    if (possibleLogo.length) {
+      logoUrl = this.resolveUrl(website, possibleLogo.attr('src') || '');
+    }
+
+    // -------------------------------------------------
+    // WEBSITE IMAGES — via Playwright (replaces cheerio img scrape)
+    // -------------------------------------------------
+    let websiteImages: string[] = [];
+
     try {
-      const { data } = await axios.get(website);
+      const { images } = await this.fetchUrlImages(website);
+      websiteImages = images;
+    } catch (err) {
+      this.logger.warn('fetchUrlImages failed, falling back to cheerio', err);
 
-      const $ = cheerio.load(data);
-
-      // -------------------------------------------------
-      // WEBSITE IMAGES
-      // -------------------------------------------------
-
-      const websiteImages: string[] = [];
-
+      // Fallback: basic cheerio scrape if Playwright fails
       $('img').each((_, el) => {
         const src = $(el).attr('src');
-
         if (!src) return;
-
-        const imageUrl = this.resolveUrl(
-          website,
-          src,
-        );
-
-        websiteImages.push(imageUrl);
+        websiteImages.push(this.resolveUrl(website, src));
       });
-
-      // -------------------------------------------------
-      // FAVICON
-      // -------------------------------------------------
-
-      const favicon =
-        $('link[rel="icon"]').attr('href') ||
-        $('link[rel="shortcut icon"]').attr(
-          'href',
-        ) ||
-        '/favicon.ico';
-
-      const faviconUrl = this.resolveUrl(
-        website,
-        favicon,
-      );
-
-      // -------------------------------------------------
-      // LOGO DETECTION
-      // -------------------------------------------------
-
-      let logoUrl = '';
-
-      const possibleLogo = $('img')
-        .filter((_, el) => {
-          const alt = (
-            $(el).attr('alt') || ''
-          ).toLowerCase();
-
-          const cls = (
-            $(el).attr('class') || ''
-          ).toLowerCase();
-
-          const src = (
-            $(el).attr('src') || ''
-          ).toLowerCase();
-
-          return (
-            alt.includes('logo') ||
-            cls.includes('logo') ||
-            src.includes('logo')
-          );
-        })
-        .first();
-
-      if (possibleLogo.length) {
-        logoUrl = this.resolveUrl(
-          website,
-          possibleLogo.attr('src') || '',
-        );
-      }
-
-      // -------------------------------------------------
-      // WEBSITE SCREENSHOT
-      // -------------------------------------------------
-
-      const websiteScreenshot =
-        await this.captureScreenshot(website);
-
-      // -------------------------------------------------
-      // BRAND COLORS
-      // -------------------------------------------------
-
-      const brandColors =
-        await this.extractColors(
-          logoUrl || faviconUrl,
-        );
-
-      return {
-        success: true,
-
-        assets: {
-          logoUrl,
-
-          favicon: faviconUrl,
-
-          websiteScreenshot,
-
-          websiteImages: [
-            ...new Set(websiteImages),
-          ].slice(0, 20),
-
-          brandColors,
-        },
-      };
-    } catch (error) {
-      console.error(error);
-
-      throw new InternalServerErrorException(
-        'Failed to extract assets',
-      );
     }
+
+    // -------------------------------------------------
+    // WEBSITE SCREENSHOT
+    // -------------------------------------------------
+    const websiteScreenshot = await this.captureScreenshot(website);
+
+    // -------------------------------------------------
+    // BRAND COLORS
+    // -------------------------------------------------
+    const brandColors = await this.extractColors(logoUrl || faviconUrl);
+
+    return {
+      success: true,
+      assets: {
+        logoUrl,
+        favicon: faviconUrl,
+        websiteScreenshot,
+        websiteImages: [...new Set(websiteImages)].slice(0, 20),
+        brandColors,
+      },
+    };
+  } catch (error) {
+    console.error(error);
+    throw new InternalServerErrorException('Failed to extract assets');
   }
+}
   private resolveUrl(
     base: string,
     path: string,
@@ -843,6 +813,270 @@ public async brandsave(
         ? 'Brand replaced successfully'
         : 'Brand saved successfully',
   };
+}
+
+async fetchUrlImages(url: string) {
+  if (!url?.trim()) {
+    throw new BadRequestException('URL is required');
+  }
+
+  let normalizedUrl: string;
+  try {
+    normalizedUrl = new URL(url).href;
+  } catch {
+    throw new BadRequestException('Please enter a valid URL');
+  }
+
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
+
+  try {
+    browser = await chromium.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 2200 },
+      userAgent:
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      locale: 'en-US',
+      javaScriptEnabled: true,
+    });
+
+    const page = await context.newPage();
+
+    const networkImageSet = new Set<string>();
+
+    // Intercept network responses to catch lazy-loaded images
+    page.on('response', async (response) => {
+      try {
+        const headers = response.headers();
+        const contentType = String(headers['content-type'] || '').toLowerCase();
+        const responseUrl = response.url();
+
+        if (
+          contentType.startsWith('image/') ||
+          /\.(jpg|jpeg|png|webp)(\?|$)/i.test(responseUrl) // removed gif/svg — not social media worthy
+        ) {
+          networkImageSet.add(responseUrl);
+        }
+      } catch {
+        // ignore
+      }
+    });
+
+    await page.goto(normalizedUrl, {
+      waitUntil: 'domcontentloaded',
+      timeout: 45000,
+    });
+
+    try {
+      await page.waitForLoadState('networkidle', { timeout: 10000 });
+    } catch {
+      // some sites never become fully idle
+    }
+
+    await page.waitForTimeout(3000);
+
+    // Scroll to trigger lazy loading
+    await page.evaluate(async () => {
+      const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+      const step = 700;
+      const maxScroll = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight,
+      );
+
+      let current = 0;
+      while (current < maxScroll) {
+        window.scrollTo({ top: current, behavior: 'auto' });
+        current += step;
+        await wait(300);
+      }
+
+      await wait(1200);
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    });
+
+    await page.waitForTimeout(2000);
+
+    const domImages = await page.evaluate(() => {
+      const results: { url: string; width: number; height: number; area: number }[] = [];
+
+      const toAbsolute = (src?: string | null): string | null => {
+        if (!src) return null;
+        const cleaned = src.trim();
+        if (!cleaned) return null;
+        if (
+          cleaned.startsWith('data:') ||
+          cleaned.startsWith('blob:') ||
+          cleaned.startsWith('javascript:')
+        ) {
+          return null;
+        }
+        try {
+          return new URL(cleaned, window.location.href).href;
+        } catch {
+          return null;
+        }
+      };
+
+      // ── Priority 1: OG / Twitter meta images (always social-media ready) ──
+      document
+        .querySelectorAll('meta[property="og:image"], meta[name="twitter:image"]')
+        .forEach((el) => {
+          const url = toAbsolute(el.getAttribute('content'));
+          if (url) results.push({ url, width: 1200, height: 630, area: 1200 * 630 }); // assume full size
+        });
+
+      // ── Priority 2: <img> elements — only render-visible and large enough ──
+      document.querySelectorAll('img').forEach((img) => {
+        // Use rendered size, not attribute size
+        const rect = img.getBoundingClientRect();
+        const renderedW = img.naturalWidth || rect.width;
+        const renderedH = img.naturalHeight || rect.height;
+
+        // Skip tiny images (icons, thumbnails, spacers)
+        if (renderedW < 300 || renderedH < 200) return;
+
+        // Skip images with bad aspect ratios (too thin = banners/UI, too tall = nav icons)
+        const ratio = renderedW / renderedH;
+        if (ratio < 0.5 || ratio > 3.5) return;
+
+        const candidates = [
+          img.getAttribute('src'),
+          img.getAttribute('data-src'),
+          img.getAttribute('data-lazy-src'),
+          img.getAttribute('data-original'),
+        ];
+
+        // Pick best srcset URL (largest width descriptor)
+        const srcset =
+          img.getAttribute('srcset') ||
+          img.getAttribute('data-srcset') ||
+          img.getAttribute('data-lazy-srcset');
+
+        if (srcset) {
+          let bestUrl = '';
+          let bestW = 0;
+          srcset.split(',').forEach((entry) => {
+            const parts = entry.trim().split(/\s+/);
+            const entryUrl = parts[0];
+            const w = parts[1] ? parseInt(parts[1]) : 0;
+            if (w > bestW) {
+              bestW = w;
+              bestUrl = entryUrl;
+            }
+          });
+          if (bestUrl) candidates.push(bestUrl);
+        }
+
+        for (const src of candidates) {
+          const url = toAbsolute(src);
+          if (url) {
+            results.push({ url, width: renderedW, height: renderedH, area: renderedW * renderedH });
+            break; // one URL per <img> element is enough
+          }
+        }
+      });
+
+      return results;
+    });
+
+    // ── URL-based filter: drop anything that looks like an icon/UI asset ──
+    const isJunkUrl = (src: string): boolean => {
+      const lower = src.toLowerCase();
+      const junkPatterns = [
+        'favicon',
+        'sprite',
+        '/icons/',
+        'icon-',
+        'logo-small',
+        '/logo.',
+        '-logo.',
+        'thumbnail',
+        'thumb/',
+        '/thumb.',
+        'avatar',
+        'profile-pic',
+        'placeholder',
+        'blank.',
+        'spacer.',
+        'pixel.',
+        '1x1',
+        'tracking',
+        'analytics',
+        '.gif',   // GIFs rarely used for social media posts
+        '.svg',   // SVGs are UI assets, not social content
+      ];
+      return junkPatterns.some((p) => lower.includes(p));
+    };
+
+    // ── Merge DOM images + network-intercepted images ──
+    // DOM images already have size metadata; network images are filtered by URL only
+    const seenUrls = new Set<string>();
+    const mergedImages: { url: string; area: number }[] = [];
+
+    // Add DOM images first (they have real size data — most reliable)
+    for (const img of domImages) {
+      if (!seenUrls.has(img.url) && !isJunkUrl(img.url)) {
+        seenUrls.add(img.url);
+        mergedImages.push({ url: img.url, area: img.area });
+      }
+    }
+
+    // Add network images that weren't already captured by DOM scan
+    for (const imgUrl of networkImageSet) {
+      if (!seenUrls.has(imgUrl) && !isJunkUrl(imgUrl)) {
+        seenUrls.add(imgUrl);
+        mergedImages.push({ url: imgUrl, area: 0 }); // no size info from network
+      }
+    }
+
+    // ── Sort: OG/meta images first (area = 756000), then by rendered area desc ──
+    mergedImages.sort((a, b) => b.area - a.area);
+
+    const finalImages = mergedImages.map((i) => i.url).slice(0, 20);
+
+    this.logger.log(`Scraped ${finalImages.length} social-media images from ${normalizedUrl}`);
+
+    return {
+      success: true,
+      url: normalizedUrl,
+      total: finalImages.length,
+      images: finalImages,
+    };
+  } catch (error: any) {
+    this.logger.error('fetchUrlImages failed', {
+      message: error?.message,
+      code: error?.code,
+      url: normalizedUrl,
+    });
+
+    if (error?.message?.includes('ERR_NAME_NOT_RESOLVED')) {
+      throw new BadRequestException('Website domain not found. Please check the URL.');
+    }
+
+    if (error?.message?.includes('net::ERR_CERT')) {
+      throw new BadRequestException('Website SSL certificate is invalid.');
+    }
+
+    if (error?.message?.includes('Timeout')) {
+      throw new BadRequestException('Website request timed out.');
+    }
+
+    if (error instanceof BadRequestException) {
+      throw error;
+    }
+
+    throw new InternalServerErrorException(
+      error?.message || 'Failed to fetch website images.',
+    );
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
 }
 // ============================================
 // GET USER BRAND
