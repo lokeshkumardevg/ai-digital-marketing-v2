@@ -1,40 +1,17 @@
-/**
- * DraftAiRecs — unified module
- *
- * VIEW 1 (list):  Fetch all draft campaigns for the logged-in user,
- *                 show them as expandable cards with AI recs.
- * VIEW 2 (editor): Click any campaign → AdCampaignDashboard opens inline.
- *                  Publish / Save Draft → returns to list.
- *
- * API:
- *   GET  /campaign/draft/:userId  → { success, message, data: Campaign[] }
- *   POST /campaign/draft          → { message }  (save/update a draft)
- *   POST /campaign/publish        → { message }  (publish with planId)
- *
- * API Response shape (actual):
- * {
- *   _id, userId, campaignId, name, platform,
- *   data: { audienceId, caption, cta, image, budget, event,
- *           schedule, finalUrl, location, advantagePlus },
- *   status: "DRAFT" | "PUBLISHED" | ...,
- *   createdAt, updatedAt, __v
- * }
- */
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import {
   FileEdit, Sparkles, Plus, Wand2, Copy, Trash2,
   ChevronDown, ToggleLeft, ToggleRight, Image, Type, Video,
   Calendar, DollarSign, MapPin, Link, Zap, Target, Clock,
-  TrendingUp, Eye, MousePointer, ArrowUpRight,
+  TrendingUp, Eye, MousePointer, ArrowUpRight, PauseCircle, Send, CheckCircle2, AlertCircle, Loader2,
 } from 'lucide-react';
 
 /* ─── CONSTANTS ──────────────────────────────────────────── */
 const API_BASE = 'http://localhost:3000';
 const PLATFORMS_FILTER = ['All', 'Meta', 'Google', 'X', 'LinkedIn'];
 
-/* ─── TYPES (shared) ─────────────────────────────────────── */
+/* ─── TYPES ──────────────────────────────────────────────── */
 type PlatformId   = 'meta' | 'google' | 'x' | 'linkedin';
 type LoadingState = 'publish' | 'draft' | null;
 type ToastType    = 'success' | 'error' | 'info';
@@ -42,11 +19,6 @@ type BillingCycle = 'monthly' | 'yearly';
 type PlanId       = 'free' | 'silver' | 'gold';
 type View         = 'list' | 'editor';
 
-/**
- * CampaignDoc — matches the actual API response shape.
- * The `data` sub-object holds all editable fields.
- * `aiGeneratedContent` & `aiStrategy` are optional legacy/future fields.
- */
 interface CampaignDoc {
   _id: string;
   userId?: string;
@@ -56,7 +28,7 @@ interface CampaignDoc {
   status: string;
   createdAt?: string;
   updatedAt?: string;
-  /** Primary editable payload from the API */
+  autoPublish?: boolean;
   data?: {
     audienceId?: string | null;
     caption?: string;
@@ -69,19 +41,16 @@ interface CampaignDoc {
     location?: string;
     advantagePlus?: boolean;
   };
-  /** Optional AI-generated content (may not be present) */
   aiGeneratedContent?: {
     headline?: string;
     primaryText?: string;
     description?: string;
     imageUrl?: string;
   };
-  /** Optional AI strategy hints */
   aiStrategy?: {
     performanceScore?: number;
     marketingStrategy?: string;
   };
-  /** Legacy budget field */
   budgetDaily?: number;
 }
 
@@ -143,7 +112,6 @@ const platformColor = (id: string) =>
   PLATFORM_LIST.find(p => p.id === id)?.color ?? '#2563eb';
 
 /* ─── STATUS UTILITIES ───────────────────────────────────── */
-/** Normalise status to lowercase for display/logic. */
 const normaliseStatus = (raw: string): string => (raw || 'draft').toLowerCase();
 
 const statusStyle = (status: string): React.CSSProperties => {
@@ -158,7 +126,7 @@ const statusStyle = (status: string): React.CSSProperties => {
   return map[s] || map.draft;
 };
 
-/* ─── GLOBAL CSS ─────────────────────────────────────────── */
+/* ─── GLOBAL CSS WITH ENHANCED EFFECTS ───────────────────── */
 const DASH_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
@@ -168,78 +136,157 @@ const DASH_CSS = `
     --t1:#0F1733;--t2:#4A5878;--t3:#8A97B0;--green:#059669;--green-lt:#ECFDF5;--green-bdr:#A7F3D0;
     --purple:#7C3AED;--purple-lt:#F5F3FF;--purple-bdr:#DDD6FE;--amber:#D97706;--amber-lt:#FFFBEB;
     --red:#DC2626;--cyan:#0891B2;
-    font-family:'DM Sans',system-ui,sans-serif;background:var(--surface);color:var(--t1);
+    font-family:'DM Sans',system-ui,sans-serif;background:#f5f6fa;color:var(--t1);
     font-size:13px;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
     width:100%;height:100%;overflow:hidden;
   }
   .dash-inner{display:flex;flex:1 1 0;min-height:0;overflow:hidden;}
   .dash-main{flex:1 1 0;min-width:0;display:flex;flex-direction:column;overflow:hidden;height:100%;}
-  .dash-scroll{flex:1 1 0;min-height:0;overflow-y:auto;padding:14px 16px;background:var(--surface);}
+  .dash-scroll{flex:1 1 0;min-height:0;overflow-y:auto;padding:0;background:#f5f6fa;}
   .dash-root *{box-sizing:border-box;}
   .dash-root ::-webkit-scrollbar{width:4px;height:4px;}
   .dash-root ::-webkit-scrollbar-track{background:transparent;}
   .dash-root ::-webkit-scrollbar-thumb{background:var(--blue-bdr);border-radius:4px;}
-  .sid-cam{cursor:pointer;transition:all .15s;}.sid-cam:hover{background:var(--blue-lt)!important;}
-  .btn-back:hover{background:var(--surface2)!important;}
-  .btn-pub:hover:not(:disabled){background:var(--blue-dark)!important;box-shadow:0 4px 14px #2563eb33;}
-  .btn-draft:hover:not(:disabled){background:var(--surface2)!important;}
-  .gen-btn:hover:not(:disabled){background:#6D28D9!important;}
+  
+  /* Enhanced Button Effects */
+  .btn-back:hover{background:var(--surface2)!important;transform:translateX(-2px);}
+  .btn-pub:hover:not(:disabled){background:var(--blue-dark)!important;box-shadow:0 4px 14px rgba(37,99,235,0.4);transform:translateY(-2px);}
+  .btn-pub:active:not(:disabled){transform:translateY(0);}
+  .btn-draft:hover:not(:disabled){background:var(--surface2)!important;transform:translateY(-1px);}
+  .gen-btn:hover:not(:disabled){background:#6D28D9!important;transform:scale(1.02);box-shadow:0 4px 12px rgba(124,58,237,0.3);}
   .gen-btn:disabled{opacity:.45;cursor:not-allowed;}
-  .tag-pill{cursor:pointer;transition:all .12s;}.tag-pill:hover{background:var(--blue-lt)!important;border-color:var(--blue-bdr)!important;}
-  .tag-pill.on{background:var(--blue-lt)!important;border-color:var(--blue)!important;color:var(--blue)!important;}
-  .img-th{cursor:pointer;transition:all .15s;}.img-th:hover{border-color:var(--blue)!important;transform:scale(1.04);}
-  .img-th.sel{border-color:var(--blue)!important;box-shadow:0 0 0 3px #2563eb18;}
-  .hd-in:focus,.pt-ta:focus,.editable-input:focus{outline:none;border-color:var(--blue)!important;box-shadow:0 0 0 3px #2563eb14;}
-  .add-btn:hover{background:var(--blue-lt)!important;border-color:var(--blue-bdr)!important;}
-  .tb-sel:hover{border-color:var(--blue-bdr)!important;}
-  .plat-tab:hover{background:var(--blue-lt)!important;}
-  .brand-asset-img{cursor:pointer;transition:all .15s;border-radius:7px;overflow:hidden;border:2px solid var(--bdr);}
-  .brand-asset-img:hover{border-color:var(--blue)!important;transform:scale(1.04);}
-  .brand-asset-img.sel{border-color:var(--blue)!important;box-shadow:0 0 0 3px #2563eb18;}
-  .section-tab{cursor:pointer;padding:5px 12px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid var(--bdr);background:var(--surface2);color:var(--t3);transition:all .15s;font-family:inherit;}
-  .section-tab:hover{background:var(--blue-lt)!important;border-color:var(--blue-bdr)!important;color:var(--blue)!important;}
-  .section-tab.active{background:var(--blue-lt)!important;border-color:var(--blue)!important;color:var(--blue)!important;}
-  .editable-input{background:var(--surface);border:1px solid var(--bdr);border-radius:7px;padding:6px 10px;color:var(--t1);font-size:12px;font-family:inherit;transition:all .15s;width:100%;}
-  .acd-toast{position:fixed;bottom:24px;right:24px;z-index:99999;background:#059668;color:#FFF;padding:10px 18px;border:1.5px solid #00c788cc;border-radius:12px;font-size:12px;font-weight:600;box-shadow:0 8px 32px rgba(37,99,235,.35);animation:acd-fi .2s ease;display:flex;align-items:center;gap:8px;}
+  
+  /* Enhanced Tag Effects */
+  .tag-pill{cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);}
+  .tag-pill:hover{background:var(--blue-lt)!important;border-color:var(--blue-bdr)!important;transform:translateY(-1px);}
+  .tag-pill.on{background:var(--blue-lt)!important;border-color:var(--blue)!important;color:var(--blue)!important;box-shadow:0 0 0 3px rgba(37,99,235,0.1);}
+  
+  /* Enhanced Image Effects */
+  .img-th{cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);}
+  .img-th:hover{border-color:var(--blue)!important;transform:scale(1.06);box-shadow:0 8px 20px rgba(0,0,0,0.12);}
+  .img-th.sel{border-color:var(--blue)!important;box-shadow:0 0 0 3px rgba(37,99,235,0.2);}
+  
+  .hd-in:focus,.pt-ta:focus,.editable-input:focus{outline:none;border-color:var(--blue)!important;box-shadow:0 0 0 3px rgba(37,99,235,0.15);}
+  .add-btn:hover{background:var(--blue-lt)!important;border-color:var(--blue-bdr)!important;transform:scale(1.02);}
+  .tb-sel:hover{border-color:var(--blue-bdr)!important;background:var(--blue-lt)!important;}
+  
+  .brand-asset-img{cursor:pointer;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);border-radius:7px;overflow:hidden;border:2px solid var(--bdr);}
+  .brand-asset-img:hover{border-color:var(--blue)!important;transform:scale(1.04);box-shadow:0 8px 20px rgba(0,0,0,0.1);}
+  .brand-asset-img.sel{border-color:var(--blue)!important;box-shadow:0 0 0 3px rgba(37,99,235,0.2);}
+  
+  .section-tab{cursor:pointer;padding:5px 12px;border-radius:20px;font-size:10px;font-weight:700;border:1px solid var(--bdr);background:var(--surface2);color:var(--t3);transition:all 0.2s cubic-bezier(0.4,0,0.2,1);font-family:inherit;}
+  .section-tab:hover{background:var(--blue-lt)!important;border-color:var(--blue-bdr)!important;color:var(--blue)!important;transform:translateY(-1px);}
+  .section-tab.active{background:var(--blue-lt)!important;border-color:var(--blue)!important;color:var(--blue)!important;box-shadow:0 0 0 2px rgba(37,99,235,0.1);}
+  
+  .editable-input{background:var(--surface);border:1px solid var(--bdr);border-radius:7px;padding:6px 10px;color:var(--t1);font-size:12px;font-family:inherit;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);width:100%;}
+  .editable-input:hover{border-color:var(--blue-bdr);}
+  
+  /* Enhanced Toast Animation */
+  .acd-toast{position:fixed;bottom:24px;right:24px;z-index:99999;background:#059668;color:#FFF;padding:12px 20px;border:1.5px solid #00c788cc;border-radius:12px;font-size:12px;font-weight:600;box-shadow:0 8px 32px rgba(37,99,235,0.35);animation:slideInUp 0.3s cubic-bezier(0.68,-0.55,0.265,1.55);display:flex;align-items:center;gap:10px;}
   .acd-toast.error{background:var(--red);border-color:#FCA5A5;}
   .acd-toast.info{background:var(--blue);border-color:var(--blue-bdr);}
-  @keyframes acd-fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  
+  /* Keyframe Animations */
+  @keyframes slideInUp{from{opacity:0;transform:translateY(30px) scale(0.9);}to{opacity:1;transform:translateY(0) scale(1);}}
+  @keyframes slideOutDown{to{opacity:0;transform:translateY(30px) scale(0.9);}}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .spinner{width:13px;height:13px;border:2px solid #2563eb44;border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
-  @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
   @keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+  @keyframes slideInRight{from{opacity:0;transform:translateX(32px);}to{opacity:1;transform:none;}}
+  @keyframes expandIn{from{opacity:0;transform:translateY(-6px) scale(0.98);}to{opacity:1;transform:none;}}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.5;}}
+  @keyframes glow{0%,100%{box-shadow:0 0 5px rgba(37,99,235,0.2);}50%{box-shadow:0 0 20px rgba(37,99,235,0.4);}}
+  
+  .expanded-body{animation:expandIn 0.2s cubic-bezier(0.4,0,0.2,1);}
+  .spinner{width:13px;height:13px;border:2px solid #2563eb44;border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;}
   .shimmer{background:linear-gradient(90deg,#F1F5FE 25%,#E8EFFA 50%,#F1F5FE 75%);background-size:800px 100%;animation:shimmer 1.4s infinite;}
-  .fb-post{background:#fff;border:1px solid #E4E6EB;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);}
-  .google-ad{background:#fff;border:1px solid #E4E6EB;border-radius:10px;overflow:hidden;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
-  .x-post{background:#fff;border:1px solid #E4E6EB;border-radius:10px;overflow:hidden;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
-  .li-post{background:#fff;border:1px solid #E4E6EB;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);}
-  .nav-active{background:var(--blue-lt)!important;border-color:var(--blue-bdr)!important;}
-  .plan-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(37,99,235,.10);}
-  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-  @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-  @keyframes slideInRight{from{opacity:0;transform:translateX(32px)}to{opacity:1;transform:none}}
-
-  /* ── Draft card info chips ── */
-  .info-chip {
-    display:flex;align-items:center;gap:5px;padding:5px 10px;
-    border-radius:8px;font-size:0.75rem;font-weight:500;
-    background:var(--surface2);border:1px solid var(--bdr);color:var(--t2);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
+  
+  /* Enhanced Card Effects */
+  .fb-post,.google-ad,.x-post,.li-post{transition:all 0.2s cubic-bezier(0.4,0,0.2,1);}
+  .fb-post:hover,.google-ad:hover,.x-post:hover,.li-post:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.08);}
+  
+  .plan-card{transition:all 0.3s cubic-bezier(0.4,0,0.2,1);cursor:pointer;}
+  .plan-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(37,99,235,0.15);}
+  
+  /* Enhanced Table UI */
+  .platform-tab-btn {display:flex;align-items:center;gap:7px;padding:10px 20px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:500;color:#64748b;border-bottom:2px solid transparent;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);font-family:inherit;white-space:nowrap;position:relative;}
+  .platform-tab-btn:hover{color:#0f172a;background:#f8fafc;}
+  .platform-tab-btn.active{color:#0f172a;border-bottom-color:#0f172a;font-weight:600;}
+  .platform-tab-btn.active::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:#0f172a;animation:expandIn 0.2s ease;}
+  .platform-tab-btn .tab-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;}
+  
+  .rec-section{background:#fff;border:1px solid #e8eaf0;border-radius:12px;margin:16px 24px 0;overflow:hidden;transition:all 0.2s ease;}
+  .rec-header{display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid #f1f3f8;}
+  .rec-header-left{flex:1;}
+  .rec-header-left h2{margin:0 0 2px;font-size:15px;font-weight:700;color:#0f172a;}
+  .rec-header-left p{margin:0;font-size:12px;color:#94a3b8;}
+  .rec-stats{display:flex;align-items:center;gap:0;}
+  .rec-stat-box{display:flex;align-items:center;gap:10px;padding:6px 20px;border-left:1px solid #e8eaf0;transition:all 0.2s ease;}
+  .rec-stat-box:hover{background:#f8fafc;}
+  .rec-stat-box .stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+  .rec-stat-box .stat-num{font-size:20px;font-weight:700;color:#0f172a;line-height:1;}
+  .rec-stat-box .stat-label{font-size:11px;color:#94a3b8;font-weight:500;}
+  
+  .auto-pub-btn{display:flex;align-items:center;gap:7px;padding:7px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;font-weight:600;color:#0f172a;font-family:inherit;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);}
+  .auto-pub-btn:hover{background:#f8fafc;transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+  .auto-pub-btn:active{transform:translateY(0);}
+  .pause-btn{display:flex;align-items:center;gap:5px;padding:7px 14px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-size:12px;font-weight:600;color:#64748b;font-family:inherit;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);margin-left:8px;}
+  .pause-btn:hover{background:#fef2f2;color:#dc2626;border-color:#fecaca;transform:translateY(-1px);}
+  
+  .rec-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;}
+  .rec-empty-icons{display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap;justify-content:center;}
+  .rec-empty-icon-item{display:flex;flex-direction:column;align-items:center;gap:6px;transition:all 0.2s ease;}
+  .rec-empty-icon-item:hover{transform:translateY(-2px);}
+  .rec-empty-icon-circle{width:48px;height:48px;border-radius:50%;border:1.5px solid #e2e8f0;display:flex;align-items:center;justify-content:center;background:#fff;transition:all 0.2s ease;}
+  .rec-empty-icon-item:hover .rec-empty-icon-circle{border-color:#2563eb;background:#eff6ff;transform:scale(1.05);}
+  .rec-empty-icon-label{font-size:11px;color:#94a3b8;font-weight:500;}
+  .rec-empty-text{text-align:center;font-size:13px;color:#64748b;line-height:1.7;max-width:480px;}
+  .rec-empty-text strong{color:#0f172a;}
+  
+  .drafts-section{background:#fff;border:1px solid #e8eaf0;border-radius:12px;margin:16px 24px 24px;overflow:hidden;}
+  .drafts-header{padding:16px 20px;border-bottom:1px solid #f1f3f8;}
+  .drafts-header h2{margin:0;font-size:15px;font-weight:700;color:#0f172a;}
+  
+  .drafts-table{width:100%;border-collapse:collapse;}
+  .drafts-table th{padding:10px 16px;text-align:left;font-size:11.5px;font-weight:600;color:#94a3b8;background:#fafbfc;border-bottom:1px solid #f1f3f8;white-space:nowrap;}
+  .drafts-table td{padding:14px 16px;font-size:13px;color:#0f172a;border-bottom:1px solid #f8f9fc;vertical-align:middle;transition:all 0.2s ease;}
+  .drafts-table tr:last-child td{border-bottom:none;}
+  .drafts-table tr:hover td{background:#fafbfc;transform:scale(1.01);}
+  
+  .queue-plus-btn{width:28px;height:28px;border-radius:6px;border:1.5px dashed #cbd5e1;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#94a3b8;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);}
+  .queue-plus-btn:hover{border-color:#2563eb;color:#2563eb;background:#eff6ff;transform:scale(1.05);}
+  .queue-plus-btn:active{transform:scale(0.95);}
+  
+  .campaign-name-cell{font-size:12.5px;font-weight:600;color:#0f172a;line-height:1.4;max-width:220px;}
+  .campaign-name-cell span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  
+  .creative-thumb{width:44px;height:36px;border-radius:6px;object-fit:cover;border:1px solid #e2e8f0;transition:all 0.2s ease;}
+  .creative-thumb:hover{transform:scale(1.1);z-index:10;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+  .creative-thumb-stack{display:flex;align-items:center;}
+  .creative-thumb-stack .creative-thumb:not(:first-child){margin-left:-10px;border:2px solid #fff;}
+  
+  .action-btn{width:30px;height:30px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#94a3b8;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);}
+  .action-btn:hover{background:#f8fafc;color:#0f172a;border-color:#cbd5e1;transform:translateY(-1px);}
+  .action-btn:active{transform:translateY(0);}
+  .action-btn.danger:hover{background:#fef2f2;color:#dc2626;border-color:#fecaca;transform:translateY(-1px);}
+  .action-btn.primary:hover{background:#eff6ff;color:#2563eb;border-color:#bfdbfe;transform:translateY(-1px);}
+  
+  .audience-cell{font-size:12px;color:#475569;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .budget-cell{font-size:13px;font-weight:600;color:#0f172a;}
+  .product-cell{font-size:12px;color:#2563eb;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;display:block;transition:all 0.2s ease;}
+  .product-cell:hover{color:#1d4ed8;text-decoration:underline;}
+  .time-cell{font-size:11.5px;color:#94a3b8;white-space:nowrap;}
+  
+  .info-chip{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;font-size:0.75rem;font-weight:500;background:var(--surface2);border:1px solid var(--bdr);color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .info-chip svg{flex-shrink:0;}
-
-  /* ── Campaign name parse ── */
-  .cmp-name-brand{font-weight:800;color:var(--t1);}
-  .cmp-name-rest{font-weight:500;color:var(--t3);}
-
-  /* ── Expand animation ── */
-  @keyframes expandIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-  .expanded-body{animation:expandIn .18s ease;}
-
-  /* ── Score ring ── */
+  
   .score-ring{position:relative;width:48px;height:48px;flex-shrink:0;}
   .score-ring svg{position:absolute;inset:0;transform:rotate(-90deg);}
   .score-ring .score-val{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
+  
+  /* Loading Animation */
+  .loading-shimmer{background:linear-gradient(110deg, #ececec 8%, #f5f5f5 18%, #ececec 33%);background-size:200% 100%;animation:shimmer 1.5s linear infinite;}
 `;
 
 /* ─── SMALL SHARED COMPONENTS ────────────────────────────── */
@@ -248,28 +295,30 @@ const I = {
   Users:    () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.4"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>,
   Sparkle:  () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M3.8 3.8l2 2M10.2 10.2l2 2M10.2 3.8l-2 2M5.8 10.2l-2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   Upload:   () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 10V4M5.5 6.5L8 4l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><rect x="2" y="12" width="12" height="1.5" rx=".75" fill="currentColor"/></svg>,
-  Plus:     () => <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
   Back:     () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   Check:    () => <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   Lock:     () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M5 7V5.5a3 3 0 016 0V7" stroke="currentColor" strokeWidth="1.4"/></svg>,
-  Campaign: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 5h12M2 8h8M2 11h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>,
-  Image:    () => <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M2 11l4-4 3 3 2-2 3 3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/><circle cx="5.5" cy="5.5" r="1" fill="currentColor"/></svg>,
-  Edit:     () => <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
 };
 
 const card = (ex: React.CSSProperties = {}): React.CSSProperties => ({
-  background: '#fff', border: '1px solid var(--bdr)', borderRadius: 14, padding: 16, position: 'relative', ...ex,
+  background: '#fff', border: '1px solid var(--bdr)', borderRadius: 14, padding: 16, position: 'relative', transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)', ...ex,
 });
 const sLabel = (color = 'var(--t2)'): React.CSSProperties => ({
   fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '.7px',
   marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6,
 });
 
-function Toast({ message, type }: { message: string; type: ToastType }) {
-  const dot = type === 'success' ? 'var(--green)' : type === 'error' ? 'var(--red)' : 'var(--blue)';
+function Toast({ message, type, onClose }: { message: string; type: ToastType; onClose: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3200);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
   return (
-    <div className={`acd-toast ${type}`}>
-      <span style={{ width: 7, height: 7, borderRadius: '50%', background: dot, display: 'inline-block' }} />
+    <div className={`acd-toast ${type}`} role="alert">
+      {type === 'success' && <CheckCircle2 size={16} />}
+      {type === 'error' && <AlertCircle size={16} />}
+      {type === 'info' && <Sparkles size={16} />}
       {message}
     </div>
   );
@@ -277,7 +326,7 @@ function Toast({ message, type }: { message: string; type: ToastType }) {
 
 function DisabledOverlay() {
   return (
-    <div style={{ position: 'absolute', inset: 0, background: 'rgba(248,250,255,.92)', borderRadius: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, zIndex: 5, backdropFilter: 'blur(3px)' }}>
+    <div style={{ position: 'absolute', inset: 0, background: 'rgba(248,250,255,.92)', borderRadius: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, zIndex: 5, backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s ease' }}>
       <span style={{ color: 'var(--t3)' }}><I.Lock /></span>
       <span style={{ fontSize: 11, color: 'var(--t3)', fontWeight: 500, textAlign: 'center', lineHeight: 1.6, padding: '0 16px' }}>Switch to Meta<br />to enable</span>
     </div>
@@ -285,8 +334,8 @@ function DisabledOverlay() {
 }
 
 /* ─── PLATFORM ICONS ─────────────────────────────────────── */
-const MetaIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none">
+const MetaIcon = ({ size = 18 }: { size?: number }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none">
     <path d="M6.897 4h-.024l-.031 2.615h.022c1.715 0 3.046 1.357 5.94 6.246l.175.297.012.02 1.62-2.438-.012-.019a48.763 48.763 0 0 0-1.098-1.716 28.01 28.01 0 0 0-1.175-1.629C10.413 4.932 8.812 4 6.896 4z" fill="url(#mi0)"/>
     <path d="M6.873 4C4.95 4.01 3.247 5.258 2.02 7.17l2.254 1.231.011-.017c.718-1.083 1.61-1.774 2.568-1.785h.021L6.896 4h-.023z" fill="url(#mi1)"/>
     <path d="M2.019 7.17l-.011.017C1.2 8.447.598 9.995.274 11.664l2.534.6.004-.022c.27-1.467.786-2.828 1.456-3.845l.011-.017L2.02 7.17z" fill="url(#mi2)"/>
@@ -305,16 +354,24 @@ const MetaIcon = () => (
     </defs>
   </svg>
 );
-const GoogleIcon = () => (<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.6h12.4c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-3.9 6.9-9.7 6.9-16.5z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.3-5.6c-2.1 1.4-4.7 2.2-8.6 2.2-6.6 0-12.2-4.5-14.2-10.5H2.3v5.8C6.3 42.6 14.6 48 24 48z"/><path fill="#FBBC05" d="M9.8 28.3c-.5-1.4-.8-2.9-.8-4.3s.3-2.9.8-4.3v-5.8H2.3C.8 17.1 0 20.5 0 24s.8 6.9 2.3 10.1l7.5-5.8z"/><path fill="#EA4335" d="M24 9.5c3.7 0 7 1.3 9.6 3.8l7.2-7.2C36.9 2.1 31.5 0 24 0 14.6 0 6.3 5.4 2.3 13.9l7.5 5.8C11.8 14 17.4 9.5 24 9.5z"/></svg>);
-const XIcon = () => (<svg width="16" height="16" viewBox="0 0 24 24" fill="#0F1733"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>);
-const LinkedInIcon = () => (<svg width="18" height="18" viewBox="0 0 24 24" fill="#0a66c2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>);
+const GoogleIcon = ({ size = 18 }: { size?: number }) => (<svg width={size} height={size} viewBox="0 0 48 48"><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.6h12.4c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-3.9 6.9-9.7 6.9-16.5z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.3-5.6c-2.1 1.4-4.7 2.2-8.6 2.2-6.6 0-12.2-4.5-14.2-10.5H2.3v5.8C6.3 42.6 14.6 48 24 48z"/><path fill="#FBBC05" d="M9.8 28.3c-.5-1.4-.8-2.9-.8-4.3s.3-2.9.8-4.3v-5.8H2.3C.8 17.1 0 20.5 0 24s.8 6.9 2.3 10.1l7.5-5.8z"/><path fill="#EA4335" d="M24 9.5c3.7 0 7 1.3 9.6 3.8l7.2-7.2C36.9 2.1 31.5 0 24 0 14.6 0 6.3 5.4 2.3 13.9l7.5 5.8C11.8 14 17.4 9.5 24 9.5z"/></svg>);
+const XIcon = ({ size = 16 }: { size?: number }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="#0F1733"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>);
+const LinkedInIcon = ({ size = 18 }: { size?: number }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="#0a66c2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>);
 
 const PLATFORM_ICONS: Record<PlatformId, React.ReactNode> = {
   meta: <MetaIcon />, google: <GoogleIcon />, x: <XIcon />, linkedin: <LinkedInIcon />,
 };
 
+const PLATFORM_TAB_ICONS: Record<string, React.ReactNode> = {
+  All: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="#94a3b8"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="#94a3b8"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="#94a3b8"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="#94a3b8"/></svg>,
+  Meta: <MetaIcon size={16} />,
+  Google: <GoogleIcon size={16} />,
+  X: <XIcon size={14} />,
+  LinkedIn: <LinkedInIcon size={16} />,
+};
+
 /* ═══════════════════════════════════════════════════════════
-   SECTION A — DASHBOARD EDITOR SUBCOMPONENTS
+   EDITOR SUBCOMPONENTS
    ═══════════════════════════════════════════════════════════ */
 
 interface AdSettingCardProps {
@@ -362,7 +419,7 @@ function TargetAudienceCard({ location, advantagePlus, enabled, onLocationChange
         <div style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 4, fontWeight: 500 }}>Location</div>
         <input className="editable-input" value={location} onChange={e => onLocationChange(e.target.value)} placeholder="e.g. United States" />
       </div>
-      <div onClick={onAdvantageToggle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: advantagePlus ? 'var(--green)' : 'var(--t3)', background: advantagePlus ? 'var(--green-lt)' : 'var(--surface2)', border: `1px solid ${advantagePlus ? 'var(--green-bdr)' : 'var(--bdr)'}`, padding: '5px 12px', borderRadius: 20, cursor: 'pointer', transition: 'all .2s', userSelect: 'none' }}>
+      <div onClick={onAdvantageToggle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: advantagePlus ? 'var(--green)' : 'var(--t3)', background: advantagePlus ? 'var(--green-lt)' : 'var(--surface2)', border: `1px solid ${advantagePlus ? 'var(--green-bdr)' : 'var(--bdr)'}`, padding: '5px 12px', borderRadius: 20, cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)', userSelect: 'none' }}>
         {advantagePlus ? '✦' : '○'} Advantage+ {advantagePlus ? 'on' : 'off'}
       </div>
       {!enabled && <DisabledOverlay />}
@@ -524,7 +581,7 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
   };
 
   const currentImgs = imgTab === 'brand' ? brandAssetImages : imgTab === 'ai' ? aiImgs : uploadedImgs;
-  const emptyMsg = imgTab === 'brand' ? 'No brand assets. Add to brandDetails.assets.images' : imgTab === 'ai' ? 'Generate an image above.' : 'Upload an image above.';
+  const emptyMsg = imgTab === 'brand' ? 'No brand assets.' : imgTab === 'ai' ? 'Generate an image above.' : 'Upload an image above.';
 
   return (
     <div style={{ ...card({ padding: 0 }), borderTop: '3px solid var(--purple)', display: 'flex', flexDirection: 'column' }}>
@@ -570,7 +627,7 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
                 <textarea className="pt-ta" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder='e.g. "Eco-friendly solar panels at golden hour"' rows={2} style={{ width: '100%', background: '#fff', border: '1px solid var(--purple-bdr)', borderRadius: 7, padding: '8px 10px', color: 'var(--t1)', fontSize: 11, lineHeight: 1.5, resize: 'vertical', fontFamily: 'inherit' }} />
                 {aiErr && <div style={{ fontSize: 10, color: 'var(--red)', marginTop: 5, background: '#FEF2F2', padding: '5px 8px', borderRadius: 6 }}>{aiErr}</div>}
                 <button className="gen-btn" onClick={generate} disabled={loading || !aiPrompt.trim()} style={{ marginTop: 8, width: '100%', background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                  {loading ? <><span className="spinner" /><span>Generating…</span></> : <><I.Sparkle /><span>Generate Image</span></>}
+                  {loading ? <><Loader2 size={14} className="spinner" /><span>Generating…</span></> : <><I.Sparkle /><span>Generate Image</span></>}
                 </button>
               </div>
               {aiImgs.length > 0 && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>{aiImgs.map((url, i) => <div key={i} className={`img-th${selImg === url ? ' sel' : ''}`} onClick={() => pickImg(url)} style={{ aspectRatio: '1', borderRadius: 7, overflow: 'hidden', border: `2px solid ${selImg === url ? 'var(--blue)' : 'var(--bdr)'}`, position: 'relative' }}><img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />{selImg === url && <div style={{ position: 'absolute', top: 4, right: 4, width: 16, height: 16, borderRadius: '50%', background: 'var(--blue)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><I.Check /></div>}</div>)}</div>}
@@ -580,7 +637,7 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
           {imgTab === 'upload' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={upload} />
-              <button onClick={() => fileRef.current?.click()} style={{ width: '100%', background: 'var(--surface)', border: '1.5px dashed var(--bdr2)', borderRadius: 9, padding: '14px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, cursor: 'pointer', color: 'var(--t2)', fontSize: 12, fontWeight: 600, fontFamily: 'inherit' }}><I.Upload /> Upload from folder</button>
+              <button onClick={() => fileRef.current?.click()} style={{ width: '100%', background: 'var(--surface)', border: '1.5px dashed var(--bdr2)', borderRadius: 9, padding: '14px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, cursor: 'pointer', color: 'var(--t2)', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', transition: 'all 0.2s ease' }}><I.Upload /> Upload from folder</button>
               {uploadedImgs.length > 0 && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>{uploadedImgs.map((url, i) => <div key={i} className={`img-th${selImg === url ? ' sel' : ''}`} onClick={() => pickImg(url)} style={{ aspectRatio: '1', borderRadius: 7, overflow: 'hidden', border: `2px solid ${selImg === url ? 'var(--blue)' : 'var(--bdr)'}`, position: 'relative' }}><img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>)}</div>}
             </div>
           )}
@@ -608,28 +665,28 @@ function PublishPlanModal({ isOpen, onClose, onSelectPlan }: { isOpen: boolean; 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,51,.45)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, animation: 'fadeIn .2s ease' }} onClick={onClose}>
       <div style={{ background: '#fff', border: '1px solid var(--bdr)', borderRadius: 20, maxWidth: 780, width: '92%', maxHeight: '88vh', overflow: 'auto', padding: 28, position: 'relative', animation: 'slideUp .25s ease' }} onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, background: 'var(--surface2)', border: '1px solid var(--bdr)', color: 'var(--t3)', width: 28, height: 28, borderRadius: 8, cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+        <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, background: 'var(--surface2)', border: '1px solid var(--bdr)', color: 'var(--t3)', width: 28, height: 28, borderRadius: 8, cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s ease' }}>✕</button>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4, fontFamily: "'Space Grotesk',sans-serif" }}>Choose Publishing Plan</h2>
           <p style={{ fontSize: 13, color: 'var(--t2)' }}>Select the plan that fits your campaign needs</p>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
           <div style={{ display: 'flex', background: 'var(--surface2)', borderRadius: 40, padding: 4, border: '1px solid var(--bdr)' }}>
-            {(['monthly', 'yearly'] as BillingCycle[]).map(b => <button key={b} onClick={() => setBilling(b)} style={{ padding: '7px 22px', borderRadius: 32, border: 'none', background: billing === b ? 'var(--blue)' : 'transparent', color: billing === b ? '#fff' : 'var(--t2)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>{b.charAt(0).toUpperCase() + b.slice(1)}</button>)}
+            {(['monthly', 'yearly'] as BillingCycle[]).map(b => <button key={b} onClick={() => setBilling(b)} style={{ padding: '7px 22px', borderRadius: 32, border: 'none', background: billing === b ? 'var(--blue)' : 'transparent', color: billing === b ? '#fff' : 'var(--t2)', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease' }}>{b.charAt(0).toUpperCase() + b.slice(1)}</button>)}
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 20 }}>
           {plans.map(plan => (
-            <div key={plan.id} className="plan-card" onClick={() => onSelectPlan(plan.id)} style={{ border: `${(plan as any).popular ? '2px' : '1px'} solid ${(plan as any).popular ? plan.color + '44' : 'var(--bdr)'}`, borderRadius: 16, padding: 20, background: (plan as any).popular ? `${plan.color}08` : 'var(--surface)', cursor: 'pointer', transition: 'all .2s', position: 'relative' }}>
+            <div key={plan.id} className="plan-card" onClick={() => onSelectPlan(plan.id)} style={{ border: `${(plan as any).popular ? '2px' : '1px'} solid ${(plan as any).popular ? plan.color + '44' : 'var(--bdr)'}`, borderRadius: 16, padding: 20, background: (plan as any).popular ? `${plan.color}08` : 'var(--surface)', position: 'relative' }}>
               {(plan as any).popular && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: plan.color, color: '#fff', padding: '3px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>Most Popular</div>}
               <div style={{ textAlign: 'center', marginBottom: 14 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4, fontFamily: "'Space Grotesk',sans-serif" }}>{plan.name}</div>
+                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{plan.name}</div>
                 <div><span style={{ fontSize: 30, fontWeight: 800, color: plan.color }}>{plan.price}</span><span style={{ fontSize: 12, color: 'var(--t3)' }}>/{billing === 'monthly' ? 'mo' : 'yr'}</span></div>
               </div>
               <ul style={{ listStyle: 'none', margin: '0 0 16px', borderTop: '1px solid var(--bdr)', paddingTop: 12 }}>
-                {plan.features.map((f, i) => <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--t2)', marginBottom: 8 }}><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke={plan.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>{f}</li>)}
+                {plan.features.map((f, i) => <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--t2)', marginBottom: 8 }}><CheckCircle2 size={13} color={plan.color} />{f}</li>)}
               </ul>
-              <button style={{ width: '100%', padding: '8px', borderRadius: 8, border: `1.5px solid ${plan.color}`, background: (plan as any).popular ? plan.color : 'transparent', color: (plan as any).popular ? '#fff' : plan.color, fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Select {plan.name}</button>
+              <button style={{ width: '100%', padding: '8px', borderRadius: 8, border: `1.5px solid ${plan.color}`, background: (plan as any).popular ? plan.color : 'transparent', color: (plan as any).popular ? '#fff' : plan.color, fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease' }}>Select {plan.name}</button>
             </div>
           ))}
         </div>
@@ -642,16 +699,16 @@ function PublishPlanModal({ isOpen, onClose, onSelectPlan }: { isOpen: boolean; 
 function BottomBar({ onBack, onPublish, onSaveDraft, loading, activePlatformName }: { onBack: () => void; onPublish: () => void; onSaveDraft: () => void; loading: LoadingState; activePlatformName: string }) {
   return (
     <div style={{ background: '#fff', borderTop: '1px solid var(--bdr)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-      <button className="btn-back" onClick={onBack} style={{ background: 'var(--surface)', border: '1px solid var(--bdr)', color: 'var(--t2)', padding: '8px 16px', borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <button className="btn-back" onClick={onBack} style={{ background: 'var(--surface)', border: '1px solid var(--bdr)', color: 'var(--t2)', padding: '8px 16px', borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s ease' }}>
         <I.Back /> Back to Drafts
       </button>
       <div style={{ fontSize: 11, color: 'var(--t3)' }}>Publishing to <span style={{ color: 'var(--blue)', fontWeight: 600 }}>{activePlatformName}</span></div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <button className="btn-pub" onClick={onPublish} disabled={!!loading} style={{ background: 'var(--blue)', color: '#fff', border: 'none', padding: '8px 26px', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'all .15s', opacity: loading ? .7 : 1 }}>
-          {loading === 'publish' ? 'Publishing…' : 'Publish'}
+        <button className="btn-pub" onClick={onPublish} disabled={!!loading} style={{ background: 'var(--blue)', color: '#fff', border: 'none', padding: '8px 26px', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease', opacity: loading ? .7 : 1 }}>
+          {loading === 'publish' ? 'Publishing...' : 'Publish'}
         </button>
-        <button className="btn-draft" onClick={onSaveDraft} disabled={!!loading} style={{ background: 'var(--surface)', border: '1px solid var(--bdr)', color: 'var(--t2)', padding: '8px 16px', borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'all .12s', opacity: loading ? .7 : 1 }}>
-          {loading === 'draft' ? 'Saving…' : 'Save Draft'}
+        <button className="btn-draft" onClick={onSaveDraft} disabled={!!loading} style={{ background: 'var(--surface)', border: '1px solid var(--bdr)', color: 'var(--t2)', padding: '8px 16px', borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease', opacity: loading ? .7 : 1 }}>
+          {loading === 'draft' ? 'Saving...' : 'Save Draft'}
         </button>
       </div>
     </div>
@@ -659,7 +716,7 @@ function BottomBar({ onBack, onPublish, onSaveDraft, loading, activePlatformName
 }
 
 /* ═══════════════════════════════════════════════════════════
-   SECTION B — CAMPAIGN EDITOR
+   CAMPAIGN EDITOR
    ═══════════════════════════════════════════════════════════ */
 interface CampaignEditorProps {
   campaign: CampaignDoc;
@@ -683,12 +740,6 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
     return out.length > 0 ? out : SEED.demoImages;
   };
 
-  /**
-   * Data precedence:
-   *   1. campaign.data  (API response's `data` sub-object — primary source)
-   *   2. campaign.aiGeneratedContent (optional, for AI-enriched fields)
-   *   3. SEED fallbacks
-   */
   const saved     = campaign.data || {};
   const aiContent = campaign.aiGeneratedContent || {};
 
@@ -703,11 +754,9 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
   const [adLocation,  setAdLocation]  = useState(saved.location  || SEED.location);
   const [adAdvantage, setAdAdvantage] = useState<boolean>(saved.advantagePlus ?? SEED.advantagePlus);
 
-  // Caption: prefer saved.caption → aiGeneratedContent.primaryText → aiGeneratedContent.headline → SEED
   const [pvCaption, setPvCaption] = useState(
     saved.caption || aiContent.primaryText || aiContent.headline || SEED.caption
   );
-  // Image: prefer saved.image (skip empty string) → aiContent.imageUrl → null
   const [pvImage, setPvImage] = useState<string | null>(
     (saved.image && saved.image.trim() !== '') ? saved.image : (aiContent.imageUrl || null)
   );
@@ -729,14 +778,8 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          campaignId: campaign._id,
-          name: campaignTitle,
-          platform: activePid,
-          data: {
-            caption: pvCaption, cta: pvCta, image: pvImage,
-            budget: adBudget, event: adEvent, schedule: adSchedule,
-            finalUrl: adFinalUrl, location: adLocation, advantagePlus: adAdvantage,
-          },
+          campaignId: campaign._id, name: campaignTitle, platform: activePid,
+          data: { caption: pvCaption, cta: pvCta, image: pvImage, budget: adBudget, event: adEvent, schedule: adSchedule, finalUrl: adFinalUrl, location: adLocation, advantagePlus: adAdvantage },
         }),
       });
       const result = await res.json();
@@ -756,14 +799,8 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          campaignId: campaign._id,
-          platform: activePid,
-          planId,
-          data: {
-            caption: pvCaption, cta: pvCta, image: pvImage,
-            budget: adBudget, event: adEvent, schedule: adSchedule,
-            finalUrl: adFinalUrl, location: adLocation, advantagePlus: adAdvantage,
-          },
+          campaignId: campaign._id, platform: activePid, planId,
+          data: { caption: pvCaption, cta: pvCta, image: pvImage, budget: adBudget, event: adEvent, schedule: adSchedule, finalUrl: adFinalUrl, location: adLocation, advantagePlus: adAdvantage },
         }),
       });
       const result = await res.json();
@@ -777,7 +814,6 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
 
   return (
     <div className="dash-root" style={{ animation: 'slideInRight .25s ease' }}>
-      {/* TopBar */}
       <div style={{ display: 'flex', gap: 8, padding: '10px 16px', borderBottom: '1px solid var(--bdr)', background: '#fff', alignItems: 'flex-end', flexWrap: 'wrap', flexShrink: 0, position: 'relative', opacity: activePid === 'meta' ? 1 : .35, pointerEvents: activePid === 'meta' ? 'auto' : 'none' }}>
         {['Ad Account', 'Page', 'Instagram', 'Pixel'].map(f => (
           <div key={f} style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1, minWidth: 110 }}>
@@ -791,19 +827,15 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
           </div>
         )}
       </div>
-
       <div className="dash-inner">
         <div className="dash-main">
           <div className="dash-scroll">
-            {/* Campaign title bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, padding: '9px 14px', background: '#fff', border: '1px solid var(--bdr)', borderRadius: 10, borderLeft: `4px solid ${activePlat.color}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '14px 16px', padding: '9px 14px', background: '#fff', border: '1px solid var(--bdr)', borderRadius: 10, borderLeft: `4px solid ${activePlat.color}` }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--t2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{campaignTitle}</span>
               <span style={{ fontSize: 10, background: `${activePlat.color}14`, color: activePlat.color, padding: '2px 10px', borderRadius: 20, fontWeight: 700 }}>{activePlat.name}</span>
               <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: 'monospace' }}>ID: {campaign._id}</span>
             </div>
-
-            {/* 3-col layout */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px,1fr) minmax(260px,1.1fr) minmax(200px,1fr)', gap: 14, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px,1fr) minmax(260px,1.1fr) minmax(200px,1fr)', gap: 14, padding: '0 16px 16px', alignItems: 'start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <AdSettingCard event={adEvent} budget={adBudget} schedule={adSchedule} finalUrl={adFinalUrl} enabled={activePid === 'meta'} onEventChange={setAdEvent} onBudgetChange={setAdBudget} onScheduleChange={setAdSchedule} onFinalUrlChange={setAdFinalUrl} />
                 <TargetAudienceCard location={adLocation} advantagePlus={adAdvantage} enabled={activePid === 'meta'} onLocationChange={setAdLocation} onAdvantageToggle={() => setAdAdvantage(p => !p)} />
@@ -821,16 +853,8 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
 }
 
 /* ═══════════════════════════════════════════════════════════
-   SECTION C — DRAFT LIST HELPERS
+   DRAFT LIST HELPERS
    ═══════════════════════════════════════════════════════════ */
-const componentIcons: Record<string, React.ElementType> = {
-  Image, Headline: Type, Copy: FileEdit, Video, CTA: Sparkles,
-};
-
-/**
- * mapToCard — reads from campaign.data (the actual API shape).
- * Falls back gracefully to aiStrategy / budgetDaily for legacy payloads.
- */
 function mapToCard(c: CampaignDoc): DraftCard {
   return {
     id:         c._id,
@@ -838,119 +862,21 @@ function mapToCard(c: CampaignDoc): DraftCard {
     platform:   (c.platform || 'meta').toLowerCase(),
     status:     normaliseStatus(c.status),
     score:      Math.floor(c.aiStrategy?.performanceScore ?? (Math.random() * 30 + 60)),
-    rec:        c.aiStrategy?.marketingStrategy ||
-                'Add urgency CTA — "Limited time only!" to boost CTR by ~18%',
+    rec:        c.aiStrategy?.marketingStrategy || 'Add urgency CTA — "Limited time only!" to boost CTR by ~18%',
     components: ['Image', 'Headline', 'Copy', 'CTA'],
     raw:        c,
   };
 }
 
-/* ─── SCORE RING ─────────────────────────────────────────── */
-function ScoreRing({ score }: { score: number }) {
-  const color = score > 75 ? '#16a34a' : score > 55 ? '#d97706' : '#dc2626';
-  const r = 20, cx = 24, cy = 24, circumference = 2 * Math.PI * r;
-  const dash = (score / 100) * circumference;
-  return (
-    <div className="score-ring" style={{ width: 48, height: 48 }}>
-      <svg width="48" height="48" viewBox="0 0 48 48">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f1f5f9" strokeWidth="4" />
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth="4"
-          strokeDasharray={`${dash} ${circumference - dash}`} strokeLinecap="round" />
-      </svg>
-      <div className="score-val" style={{ color }}>{score}</div>
-    </div>
-  );
-}
-
-/* ─── FORMAT DATE ────────────────────────────────────────── */
 const fmtDate = (iso?: string) => {
   if (!iso) return '—';
   try {
-    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   } catch { return iso; }
 };
 
-/* ─── CAMPAIGN NAME DISPLAY ──────────────────────────────── */
-function CampaignNameDisplay({ name }: { name: string }) {
-  // e.g. "DENSO_OUTCOME_SALES_Meta_May 18, 2026"
-  const parts = name.split('_');
-  if (parts.length >= 2) {
-    return (
-      <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-        <span className="cmp-name-brand">{parts[0]}</span>
-        <span className="cmp-name-rest"> · {parts.slice(1).join(' · ')}</span>
-      </span>
-    );
-  }
-  return <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{name}</span>;
-}
-
-/* ─── EXPANDED CAMPAIGN DETAILS ──────────────────────────── */
-function CampaignDetails({ campaign }: { campaign: CampaignDoc }) {
-  const d = campaign.data || {};
-  const chips: { icon: React.ReactNode; label: string; value: string; color?: string }[] = [];
-
-  if (d.budget)      chips.push({ icon: <DollarSign size={12} />, label: 'Budget', value: d.budget, color: '#059669' });
-  if (d.event)       chips.push({ icon: <Zap size={12} />,         label: 'Event',  value: d.event  });
-  if (d.schedule)    chips.push({ icon: <Calendar size={12} />,    label: 'Start',  value: d.schedule });
-  if (d.location)    chips.push({ icon: <MapPin size={12} />,      label: 'Location', value: d.location });
-  if (d.finalUrl)    chips.push({ icon: <Link size={12} />,        label: 'URL',    value: d.finalUrl, color: '#0891b2' });
-  if (d.cta)         chips.push({ icon: <MousePointer size={12} />,label: 'CTA',    value: d.cta    });
-
-  return (
-    <div style={{ marginBottom: 14 }}>
-      {/* Caption row */}
-      {d.caption && (
-        <div style={{ background: '#f8faff', border: '1px solid #e2e8f4', borderRadius: 10, padding: '10px 14px', marginBottom: 10 }}>
-          <div style={{ fontSize: '0.65rem', color: '#8a97b0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Ad Caption</div>
-          <div style={{ fontSize: '0.85rem', color: '#0f1733', lineHeight: 1.6 }}>{d.caption}</div>
-        </div>
-      )}
-
-      {/* Info chips grid */}
-      {chips.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 6, marginBottom: 10 }}>
-          {chips.map((chip, i) => (
-            <div key={i} className="info-chip" style={{ color: chip.color || 'var(--t2)' }}>
-              <span style={{ color: chip.color || '#8a97b0', flexShrink: 0 }}>{chip.icon}</span>
-              <span style={{ color: '#8a97b0', fontSize: '0.68rem', fontWeight: 600, marginRight: 2, flexShrink: 0 }}>{chip.label}:</span>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 600, fontSize: '0.78rem' }}>{chip.value}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Advantage+ badge */}
-      {d.advantagePlus && (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 20, padding: '3px 10px', fontSize: '0.72rem', fontWeight: 700, color: '#16a34a' }}>
-          <Target size={11} /> Advantage+ Enabled
-        </div>
-      )}
-
-      {/* Campaign meta: createdAt / updatedAt */}
-      <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
-        {campaign.createdAt && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.7rem', color: '#8a97b0' }}>
-            <Clock size={11} /> Created {fmtDate(campaign.createdAt)}
-          </div>
-        )}
-        {campaign.updatedAt && campaign.updatedAt !== campaign.createdAt && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.7rem', color: '#8a97b0' }}>
-            <Clock size={11} /> Updated {fmtDate(campaign.updatedAt)}
-          </div>
-        )}
-        {campaign.campaignId && (
-          <div style={{ fontSize: '0.7rem', color: '#8a97b0', fontFamily: 'monospace' }}>
-            CID: {campaign.campaignId}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 /* ═══════════════════════════════════════════════════════════
-   SECTION D — ROOT EXPORT
+   ROOT EXPORT
    ═══════════════════════════════════════════════════════════ */
 export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDetails }) => {
   const { user } = useSelector((state: any) => state.auth);
@@ -958,17 +884,20 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
   const [view,             setView]           = useState<View>('list');
   const [selectedCampaign, setSelected]       = useState<CampaignDoc | null>(null);
   const [activePlatform,   setActivePlatform] = useState('All');
-  const [expanded,         setExpanded]       = useState<string | null>(null);
   const [drafts,           setDrafts]         = useState<DraftCard[]>([]);
   const [rawDocs,          setRawDocs]        = useState<CampaignDoc[]>([]);
   const [listLoading,      setListLoading]    = useState(true);
   const [fetchError,       setFetchError]     = useState<string | null>(null);
   const [autoPublish,      setAutoPublish]    = useState<Record<string, boolean>>({});
+  const [globalAutoPublish, setGlobalAutoPublish] = useState(false);
   const [toast,            setToast]          = useState<ToastState | null>(null);
 
   const showToast = useCallback((msg: string, type: ToastType = 'info') => {
     setToast({ message: msg, type });
-    setTimeout(() => setToast(null), 3200);
+  }, []);
+
+  const clearToast = useCallback(() => {
+    setToast(null);
   }, []);
 
   const fetchDrafts = useCallback(() => {
@@ -993,10 +922,8 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
         const arr: CampaignDoc[] = Array.isArray(json?.data) ? json.data : [];
         setRawDocs(arr);
         setDrafts(arr.map(mapToCard));
-        if (arr.length > 0) setExpanded(prev => prev ?? arr[0]._id);
       })
       .catch((err: Error) => {
-        console.error('Drafts fetch failed:', err);
         setFetchError(err.message || 'Failed to load drafts');
         showToast(err.message || 'Failed to load drafts', 'error');
       })
@@ -1004,6 +931,24 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
   }, [user, showToast]);
 
   useEffect(() => { fetchDrafts(); }, [fetchDrafts]);
+
+  const handleToggleAutoPublish = useCallback((campaignId: string) => {
+    setDrafts(prev =>
+      prev.map(draft =>
+        draft.id === campaignId
+          ? {
+              ...draft,
+              raw: {
+                ...draft.raw,
+                autoPublish: !draft.raw?.autoPublish,
+              },
+            }
+          : draft
+      )
+    );
+    setAutoPublish(prev => ({ ...prev, [campaignId]: !prev[campaignId] }));
+    showToast(`Auto-publish ${autoPublish[campaignId] ? 'disabled' : 'enabled'}`, 'success');
+  }, [autoPublish, showToast]);
 
   const filtered = activePlatform === 'All'
     ? drafts
@@ -1022,215 +967,304 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
     fetchDrafts();
   };
 
-  /* ───────── EDITOR VIEW ───────── */
+  /* ── EDITOR VIEW ── */
   if (view === 'editor' && selectedCampaign) {
     return (
       <>
         <style>{DASH_CSS}</style>
-        <CampaignEditor
-          campaign={selectedCampaign}
-          brandDetails={brandDetails}
-          onBack={handleBack}
-          onSaved={handleBack}
-          showToast={showToast}
-        />
-        {toast && <Toast message={toast.message} type={toast.type} />}
+        <CampaignEditor campaign={selectedCampaign} brandDetails={brandDetails} onBack={handleBack} onSaved={handleBack} showToast={showToast} />
+        {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
       </>
     );
   }
 
-  /* ───────── LOADING ───────── */
+  /* ── LOADING ── */
   if (listLoading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: 'var(--bg-primary)' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid #e2e8f0', borderTopColor: '#2631d6', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
-        <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Loading drafts…</div>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: '#f5f6fa' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #e2e8f0', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />
+        <div style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>Loading drafts…</div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  /* ───────── ERROR STATE ───────── */
+  /* ── ERROR STATE ── */
   if (fetchError && drafts.length === 0) {
     return (
       <div style={{ height: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
         <div style={{ fontSize: 32 }}>⚠️</div>
         <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#dc2626' }}>{fetchError}</div>
-        <button onClick={fetchDrafts} style={{ padding: '8px 20px', borderRadius: 8, background: '#2631d6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>
-          Retry
-        </button>
+        <button onClick={fetchDrafts} style={{ padding: '8px 20px', borderRadius: 8, background: '#2563eb', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', transition: 'all 0.2s ease' }}>Retry</button>
       </div>
     );
   }
 
-  /* ───────── LIST VIEW ───────── */
+  /* ── LIST VIEW ── */
+  const publishedCount = drafts.filter(d => d.status === 'published').length;
+
+  /* Empty-state icon items matching the screenshot */
+  const emptyIcons = [
+    { label: 'Interest', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#94a3b8" strokeWidth="1.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M16.9 16.9l2.1 2.1M4.9 19.1l2.1-2.1M16.9 7.1l2.1-2.1" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/></svg> },
+    { label: 'Creatives', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#94a3b8" strokeWidth="1.5"/><path d="M3 15l5-5 4 4 3-3 6 5" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="8.5" cy="8.5" r="1.5" fill="#94a3b8"/></svg> },
+    { label: 'Ad Copy', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 10h10M4 14h12M4 18h8" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/></svg> },
+    { label: 'Age', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#94a3b8" strokeWidth="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/></svg> },
+    { label: 'Gender', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="5" stroke="#94a3b8" strokeWidth="1.5"/><path d="M16 6l5-5M21 6V1h-5" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11 16v6M8 19h6" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round"/></svg> },
+    { label: 'Locations', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.7 2 6 4.7 6 8c0 5 6 14 6 14s6-9 6-14c0-3.3-2.7-6-6-6z" stroke="#94a3b8" strokeWidth="1.5"/><circle cx="12" cy="8" r="2" stroke="#94a3b8" strokeWidth="1.5"/></svg> },
+    { label: 'Products', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 6h18M16 10a4 4 0 01-8 0" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+    { label: 'CTA', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4l8 8-8 8" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+  ];
+
   return (
     <>
       <style>{DASH_CSS}</style>
-      {toast && <Toast message={toast.message} type={toast.type} />}
-      <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
 
-        {/* Header */}
-        <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--glass-border)', padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '3px' }}>AI Optimize</div>
-            <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>Draft & AI Recs</h1>
-          </div>
+      <div style={{ minHeight: '100%', background: '#f5f6fa', fontFamily: "'DM Sans',system-ui,sans-serif" }}>
+
+        {/* ── Platform Tabs ── */}
+        <div style={{ background: '#fff', borderBottom: '1px solid #e8eaf0', padding: '0 24px', display: 'flex', alignItems: 'center', overflowX: 'auto' }}>
+          {PLATFORMS_FILTER.map(p => (
+            <button
+              key={p}
+              className={`platform-tab-btn${activePlatform === p ? ' active' : ''}`}
+              onClick={() => setActivePlatform(p)}
+            >
+              <span className="tab-icon">{PLATFORM_TAB_ICONS[p]}</span>
+              {p}
+            </button>
+          ))}
         </div>
 
-        <div style={{ padding: '24px 32px' }}>
-
-          {/* Platform Tabs */}
-          <div style={{ display: 'flex', gap: '2px', background: 'var(--bg-elevated)', borderRadius: '8px', padding: '3px', width: 'fit-content', marginBottom: '20px' }}>
-            {PLATFORMS_FILTER.map(p => (
-              <button key={p} onClick={() => setActivePlatform(p)} style={{ padding: '6px 18px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, background: activePlatform === p ? '#fff' : 'transparent', color: activePlatform === p ? '#0f172a' : '#64748b', boxShadow: activePlatform === p ? '0 1px 4px rgba(0,0,0,.08)' : 'none', transition: 'all .15s' }}>{p}</button>
-            ))}
-          </div>
-
-          {/* Count */}
-          <div style={{ marginBottom: '10px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Recommended Ads{' '}
-            <span style={{ background: '#2631d6', color: '#fff', borderRadius: '99px', padding: '1px 8px', fontSize: '0.72rem', fontWeight: 700, marginLeft: '6px' }}>{filtered.length}</span>
+        {/* ── Recommended Ads Section ── */}
+        <div className="rec-section">
+          {/* Header */}
+          <div className="rec-header">
+            <div className="rec-header-left">
+              <h2>Recommended Ads</h2>
+              <p>Top campaigns recommended. Select one to view structure.</p>
+            </div>
+            <div className="rec-stats">
+              {/* Recommendations stat */}
+              <div className="rec-stat-box">
+                <div className="rec-stat-box" style={{ border: 'none', padding: '0 12px 0 0', gap: 8 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  <div>
+                    <div className="stat-num">0</div>
+                    <div className="stat-label">Recommendations</div>
+                  </div>
+                </div>
+              </div>
+              {/* Published stat */}
+              <div className="rec-stat-box">
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Send size={15} color="#16a34a" />
+                </div>
+                <div>
+                  <div className="stat-num">{publishedCount}</div>
+                  <div className="stat-label">Published</div>
+                </div>
+              </div>
+              {/* Auto-Publish & Pause */}
+              <div style={{ paddingLeft: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  className="auto-pub-btn"
+                  onClick={() => {
+                    const campaignsToPublish = drafts.filter(draft => draft.raw?.autoPublish);
+                    if (campaignsToPublish.length === 0) {
+                      showToast('Select at least one campaign for auto publish', 'info');
+                      return;
+                    }
+                    setGlobalAutoPublish(p => !p);
+                    showToast(`Auto-publish ${!globalAutoPublish ? 'enabled' : 'disabled'}`, 'success');
+                    // publish api logic here
+                  }}
+                  style={{ color: globalAutoPublish ? '#2563eb' : '#0f172a' }}
+                >
+                  {globalAutoPublish ? <ToggleRight size={18} color="#2563eb" /> : <ToggleLeft size={18} color="#94a3b8" />}
+                  Auto-Publish
+                </button>
+                <button className="pause-btn">
+                  <PauseCircle size={15} />
+                  Pause
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Empty state */}
-          {filtered.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-dim)', fontSize: '0.9rem' }}>
-              No drafts found for this platform.
-            </div>
-          )}
-
-          {/* Draft cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {filtered.map(draft => {
-              const platConfig = PLATFORM_LIST.find(p => p.id === draft.platform) || PLATFORM_LIST[0];
-              const isExpanded = expanded === draft.id;
-
-              return (
-                <div key={draft.id} style={{
-                  background: 'var(--bg-card)',
-                  border: `1px solid ${isExpanded ? platConfig.color + '44' : '#e8eaf0'}`,
-                  borderRadius: '14px',
-                  overflow: 'hidden',
-                  transition: 'all .2s',
-                  boxShadow: isExpanded ? `0 4px 24px ${platConfig.color}14` : 'none',
-                }}>
-
-                  {/* Card Header */}
-                  <div onClick={() => setExpanded(isExpanded ? null : draft.id)}
-                    style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
-
-                    {/* Platform Icon bubble */}
-                    <div style={{
-                      width: 44, height: 44, borderRadius: 12,
-                      background: platConfig.bg,
-                      border: `1.5px solid ${platConfig.color}22`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0, fontSize: 20,
-                    }}>
-                      {PLATFORM_ICONS[draft.platform as PlatformId] ?? <Image size={18} color={platConfig.color} />}
-                    </div>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <CampaignNameDisplay name={draft.name} />
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                        {/* Platform badge */}
-                        <span style={{
-                          padding: '2px 8px', borderRadius: 5,
-                          background: platConfig.bg,
-                          color: platConfig.color,
-                          fontSize: '0.72rem', fontWeight: 700,
-                          border: `1px solid ${platConfig.color}30`,
-                        }}>{platConfig.name}</span>
-                        {/* Status badge */}
-                        <span style={{
-                          padding: '2px 8px', borderRadius: 5,
-                          fontSize: '0.72rem', fontWeight: 600, textTransform: 'capitalize',
-                          ...statusStyle(draft.status),
-                        }}>{draft.status}</span>
-                        {/* Budget quick-view from data */}
-                        {draft.raw.data?.budget && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: '0.72rem', color: '#059669', fontWeight: 600 }}>
-                            <DollarSign size={10} /> {draft.raw.data.budget}
-                          </span>
-                        )}
-                        {/* Location quick-view */}
-                        {draft.raw.data?.location && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: '0.72rem', color: '#64748b', fontWeight: 500 }}>
-                            <MapPin size={10} /> {draft.raw.data.location}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Auto-publish Toggle */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} onClick={e => e.stopPropagation()}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Auto-publish</span>
-                      <button onClick={() => setAutoPublish(prev => ({ ...prev, [draft.id]: !prev[draft.id] }))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: autoPublish[draft.id] ? '#2631d6' : '#cbd5e1', padding: 0 }}>
-                        {autoPublish[draft.id] ? <ToggleRight size={22} /> : <ToggleLeft size={22} />}
-                      </button>
-                    </div>
-
-                    {/* AI Score ring */}
-                    {/* <ScoreRing score={draft.score} /> */}
-
-                    <ChevronDown size={16} color="#94a3b8" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform .2s', flexShrink: 0 }} />
-                  </div>
-
-                  {/* Expanded Content */}
-                  {isExpanded && (
-                    <div className="expanded-body" style={{ borderTop: `1px solid ${platConfig.color}22`, padding: '16px 20px', background: '#fdfdff' }}>
-
-                      {/* Campaign data details from API */}
-                      <CampaignDetails campaign={draft.raw} />
-
-                      {/* Ad Components */}
-                      <div style={{ marginBottom: 14 }}>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Ad Components</div>
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          {draft.components.map((comp: string) => {
-                            const Icon = componentIcons[comp] || FileEdit;
-                            return (
-                              <div key={comp} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: 8, background: platConfig.bg, border: `1px solid ${platConfig.color}22`, color: platConfig.color, fontSize: '0.78rem', fontWeight: 600 }}>
-                                <Icon size={12} /> {comp}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* AI Recommendation */}
-                      <div style={{ background: 'linear-gradient(135deg,#faf5ff,#f3e8ff)', border: '1px solid #e9d5ff', borderRadius: 10, padding: '12px 16px', marginBottom: 14, display: 'flex', gap: 10 }}>
-                        <Sparkles size={16} color="#7c3aed" style={{ flexShrink: 0, marginTop: 1 }} />
-                        <div>
-                          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#7c3aed', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Recommendation</div>
-                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, lineHeight: 1.5 }}>{draft.rec}</div>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button
-                          onClick={() => openEditor(draft.id)}
-                          style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px', borderRadius: 9, background: `linear-gradient(135deg,${platConfig.color},${platConfig.color}cc)`, color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.82rem', boxShadow: `0 2px 12px ${platConfig.color}33` }}>
-                          <Wand2 size={13} /> Edit Campaign
-                        </button>
-                        <button style={{ padding: '10px 16px', borderRadius: 9, border: '1px solid var(--glass-border)', background: 'var(--bg-card)', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.82rem', fontWeight: 600 }}>
-                          <Copy size={13} /> Duplicate
-                        </button>
-                        <button style={{ padding: '10px 14px', borderRadius: 9, border: '1px solid #fee2e2', background: '#fff5f5', cursor: 'pointer', color: '#dc2626', display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.82rem', fontWeight: 600 }}>
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  )}
+          <div className="rec-empty">
+            <div className="rec-empty-icons">
+              {emptyIcons.map(item => (
+                <div key={item.label} className="rec-empty-icon-item">
+                  <div className="rec-empty-icon-circle">{item.icon}</div>
+                  <span className="rec-empty-icon-label">{item.label}</span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+            <p className="rec-empty-text">
+              <strong>Wheedle.AI,</strong> monitors your first campaign for 24 hours, then uses AI-powered insights to recommend your next best campaigns.
+Switch on<strong>Auto-publish ↗</strong> to launch them automatically for maximum impact.
+            </p>
           </div>
         </div>
+
+        {/* ── Unpublished Drafts Section ── */}
+        <div className="drafts-section">
+          <div className="drafts-header">
+            <h2>Unpublished Drafts</h2>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 0', color: '#94a3b8', fontSize: 13 }}>
+              No drafts found for this platform.
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="drafts-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: 48 }}>Queues ⓘ</th>
+                    <th>Campaign</th>
+                    <th>Daily budget</th>
+                    <th>Audience</th>
+                    <th>Creatives</th>
+                    <th>Product</th>
+                    <th>Update time</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(draft => {
+                    const platConfig = PLATFORM_LIST.find(p => p.id === draft.platform) || PLATFORM_LIST[0];
+                    const d = draft.raw.data || {};
+                    const audience = d.advantagePlus
+                      ? 'Advantage+'
+                      : d.location || '—';
+                    const images = [
+                      ...(brandDetails?.assets?.images || []),
+                      ...(brandDetails?.assets?.banners || []),
+                    ].filter(Boolean).slice(0, 3);
+                    if (images.length === 0) images.push(...SEED.demoImages.slice(0, 2));
+
+                    return (
+                      <tr key={draft.id}>
+                        {/* Queue + */}
+                        <td style={{ textAlign: 'center' }}>
+                          <button className="queue-plus-btn" title="Add to queue">
+                            <Plus size={13} />
+                          </button>
+                        </td>
+
+                        {/* Campaign name */}
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{
+                              width: 28, height: 28, borderRadius: 6,
+                              background: platConfig.bg,
+                              border: `1px solid ${platConfig.color}22`,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              flexShrink: 0, fontSize: 16,
+                            }}>
+                              {PLATFORM_ICONS[draft.platform as PlatformId] ?? <Image size={14} color={platConfig.color} />}
+                            </div>
+                            <div className="campaign-name-cell">
+                              <span title={draft.name}>{draft.name}</span>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Daily budget */}
+                        <td>
+                          <span className="budget-cell">{d.budget || (draft.raw.budgetDaily ? `$${draft.raw.budgetDaily}` : '—')}</span>
+                        </td>
+
+                        {/* Audience */}
+                        <td>
+                          <span className="audience-cell" title={audience}>{audience}</span>
+                        </td>
+
+                        {/* Creatives thumbnails */}
+                        <td>
+                          <div className="creative-thumb-stack">
+                            {images.slice(0, 3).map((url, i) => (
+                              <img key={i} src={url} alt="" className="creative-thumb" />
+                            ))}
+                          </div>
+                        </td>
+
+                        {/* Product URL */}
+                        <td>
+                          {d.finalUrl
+                            ? <a href={d.finalUrl} target="_blank" rel="noopener noreferrer" className="product-cell">{d.finalUrl}</a>
+                            : <span style={{ color: '#94a3b8', fontSize: 12 }}>—</span>
+                          }
+                        </td>
+
+                        {/* Update time */}
+                        <td>
+                          <span className="time-cell">
+                            {draft.raw.updatedAt
+                              ? new Date(draft.raw.updatedAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + new Date(draft.raw.updatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+                              : '—'
+                            }
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td>
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                            {/* Auto Publish Toggle */}
+                            <button
+                              className={`action-btn ${draft.raw?.autoPublish ? 'primary' : ''}`}
+                              title={draft.raw?.autoPublish ? 'Auto Publish Enabled' : 'Enable Auto Publish'}
+                              onClick={() => handleToggleAutoPublish(draft.id)}
+                              style={{
+                                width: 'auto',
+                                padding: '0 10px',
+                                gap: '6px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                minWidth: '92px',
+                              }}
+                            >
+                              {draft.raw?.autoPublish ? (
+                                <>
+                                  <ToggleRight size={16} />
+                                  <span style={{ fontSize: '11px', fontWeight: 600 }}>Auto</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ToggleLeft size={16} />
+                                  <span style={{ fontSize: '11px', fontWeight: 600 }}>Manual</span>
+                                </>
+                              )}
+                            </button>
+                            <button className="action-btn primary" title="Edit campaign" onClick={() => openEditor(draft.id)}>
+                              <FileEdit size={13} />
+                            </button>
+                            {/* Publish / Send */}
+                            <button className="action-btn primary" title="Publish" onClick={() => openEditor(draft.id)}>
+                              <Send size={13} />
+                            </button>
+                            {/* Delete */}
+                            <button className="action-btn danger" title="Delete">
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
       </div>
     </>
   );
