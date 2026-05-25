@@ -74,7 +74,7 @@ export const AdsManager: React.FC = () => {
           <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginBottom: '3px' }}>AI Optimize</div>
           <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>Ads Manager</h1>
         </div>
-        <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #2631d6, #1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
+        <button style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', borderRadius: '8px', background: 'linear-gradient(135deg, #0665ff, #1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 12px rgba(124,58,237,0.3)' }}>
           <Zap size={14} /> Optimize All
         </button>
       </div>
@@ -83,10 +83,10 @@ export const AdsManager: React.FC = () => {
         {/* Insight Briefing */}
         <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--glass-border)', padding: '20px 24px', marginBottom: '20px', display: 'flex', gap: '32px' }}>
           {[
-            { label: 'Total Spend', value: '$4,790', sub: 'This month', icon: BarChart2, color: '#2631d6' },
+            { label: 'Total Spend', value: '$4,790', sub: 'This month', icon: BarChart2, color: '#0665ff' },
             { label: 'Avg ROAS', value: '3.4x', sub: '+0.6x vs last week', icon: TrendingUp, color: '#16a34a' },
             { label: 'Active Ads', value: '3', sub: '2 paused, 1 draft', icon: Zap, color: '#d97706' },
-            { label: 'AI Score', value: '74/100', sub: 'Good performance', icon: BrainCircuit, color: '#2631d6' },
+            { label: 'AI Score', value: '74/100', sub: 'Good performance', icon: BrainCircuit, color: '#0665ff' },
           ].map((stat, i) => (
             <div key={i} style={{ flex: 1, borderRight: i < 3 ? '1px solid rgba(255,255,255,0.08)' : 'none', paddingRight: i < 3 ? '32px' : '0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
@@ -102,13 +102,13 @@ export const AdsManager: React.FC = () => {
         {/* Optimization Hub */}
         <div style={{ background: 'rgba(38, 49, 214, 0.05)', border: '1px solid rgba(38, 49, 214, 0.2)', borderRadius: '12px', padding: '16px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <BrainCircuit size={18} color="#2631d6" />
+            <BrainCircuit size={18} color="#0665ff" />
             <div>
               <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Optimization Hub</div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>AI detected 3 opportunities to improve your campaign performance</div>
             </div>
           </div>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px', borderRadius: '8px', background: '#2631d6', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px', borderRadius: '8px', background: '#0665ff', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem' }}>
             View Recommendations <ArrowUpRight size={13} />
           </button>
         </div>
@@ -119,7 +119,7 @@ export const AdsManager: React.FC = () => {
             {platforms.map(p => (
               <button key={p} onClick={() => setActivePlatform(p)} style={{
                 padding: '6px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
-                background: activePlatform === p ? '#2631d6' : 'transparent',
+                background: activePlatform === p ? '#0665ff' : 'transparent',
                 color: activePlatform === p ? '#fff' : '#64748b',
                 boxShadow: activePlatform === p ? '0 4px 12px rgba(38, 49, 214, 0.3)' : 'none',
                 transition: 'all 0.15s'

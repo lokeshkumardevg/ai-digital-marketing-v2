@@ -4,7 +4,7 @@
 
 :root {
   --header-height: 68px;
-  --accent-primary: #2631d6;
+  --accent-primary: #0665ff;
   --accent-gradient: linear-gradient(135deg, #0665ff 50%, #22d3ee 100%);
   --glass-border: #0a0f1e;
   --radius-pill: 999px;
@@ -333,7 +333,7 @@
 .site-switcher__select {
   background: transparent;
   border: none;
-  color: #2631d6;
+  color: #0665ff;
   outline: none;
   cursor: pointer;
   font-size: 0.85rem;

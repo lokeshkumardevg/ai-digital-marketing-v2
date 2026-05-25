@@ -16,7 +16,7 @@
 }
 
 .presentation-root {
-  --primary-gradient: linear-gradient(135deg, #2836ff 0%, #2631d6 100%);
+  --primary-gradient: linear-gradient(135deg, #2836ff 0%, #0665ff 100%);
   --secondary-gradient: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
   --accent-glow: 0 0 24px rgba(40, 54, 255, 0.4);
   --dark-bg: #050a18;
@@ -399,7 +399,7 @@
   }
 
   .text-gradient { 
-    background: linear-gradient(135deg, #2836ff 0%, #2631d6 100%) !important;
+    background: linear-gradient(135deg, #2836ff 0%, #0665ff 100%) !important;
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     color: #2836ff !important;

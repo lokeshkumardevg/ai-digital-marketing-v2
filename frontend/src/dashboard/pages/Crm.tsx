@@ -38,7 +38,7 @@ const D = {
   surfaceAlt: '#141d35',          // slightly lighter card
   border:     'rgba(99,102,241,0.18)',
   borderGlow: 'rgba(112,51,245,0.35)',
-  purple:     '#2631d6',
+  purple:     '#0665ff',
   purpleSoft: 'rgba(124,58,237,0.15)',
   purpleText: '#a78bfa',
   green:      '#10b981',
@@ -150,7 +150,7 @@ export const Crm: React.FC = () => {
           }
         },
         prefill: { name: 'Wheedle User', email: 'user@wheedle.ai' },
-       theme: { color: '#2631d6' },
+       theme: { color: '#0665ff' },
       };
 
       if (!(window as unknown as { Razorpay?: unknown }).Razorpay) {
@@ -407,7 +407,7 @@ export const Crm: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 800, color: D.textPrimary }}>Node Performance History</h3>
             <div style={{ display: 'flex', gap: 24 }}>
-              {[['#2631d6', 'Spend'], ['#10b981', 'ROAS']].map(([color, label]) => (
+              {[['#0665ff', 'Spend'], ['#10b981', 'ROAS']].map(([color, label]) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 12, height: 12, borderRadius: 3, background: color }} />
                   <span style={{ fontSize: '0.8rem', fontWeight: 700, color: D.textMuted }}>{label}</span>
@@ -418,7 +418,7 @@ export const Crm: React.FC = () => {
 
           <div style={{ position: 'relative', height: 220, width: '100%' }}>
             <div style={{ position: 'absolute', inset: 0 }}>
-              <ChartLine data={activeSpend} color="#2631d6" height={220} width={1200} />
+              <ChartLine data={activeSpend} color="#0665ff" height={220} width={1200} />
             </div>
             <div style={{ position: 'absolute', inset: 0 }}>
               <ChartLine data={activeRoas.map((v: number) => v * 10)} color="#10b981" height={220} width={1200} />

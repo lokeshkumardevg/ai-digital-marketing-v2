@@ -190,7 +190,7 @@ export const Users: React.FC = () => {
         <button
           onClick={openCreate}
           className="btn btn-primary"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: canManage ? '#2631d6' : 'rgba(148,163,184,0.15)', color: canManage ? '#fff' : '#94a3b8', border: 'none', padding: '12px 18px', borderRadius: 12, cursor: canManage ? 'pointer' : 'not-allowed' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: canManage ? '#0665ff' : 'rgba(148,163,184,0.15)', color: canManage ? '#fff' : '#94a3b8', border: 'none', padding: '12px 18px', borderRadius: 12, cursor: canManage ? 'pointer' : 'not-allowed' }}
           disabled={!canManage}
         >
           <Plus size={16} /> Add User
@@ -370,7 +370,7 @@ export const Users: React.FC = () => {
                 <button onClick={() => setShowModal(false)} className="btn btn-secondary" style={{ border: '1px solid rgba(148,163,184,0.25)', color: '#cbd5e1', background: 'transparent' }}>
                   Cancel
                 </button>
-                <button onClick={submitUser} className="btn btn-primary" style={{ background: '#2631d6', border: 'none', color: '#fff' }} disabled={saving}>
+                <button onClick={submitUser} className="btn btn-primary" style={{ background: '#0665ff', border: 'none', color: '#fff' }} disabled={saving}>
                   {saving ? 'Saving...' : editingUser ? 'Save Changes' : 'Create User'}
                 </button>
               </div>

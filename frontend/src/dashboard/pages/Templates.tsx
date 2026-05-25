@@ -31,8 +31,8 @@ const ALL_TEMPLATES: CampaignTemplate[] = [
     name: 'E-Commerce Sales Boost',
     category: 'E-Commerce',
     icon: ShoppingBag,
-    color: '#2631d6',
-    gradient: 'linear-gradient(135deg, #2631d6, #1e27a8)',
+    color: '#0665ff',
+    gradient: 'linear-gradient(135deg, #0665ff, #1e27a8)',
     description: 'High-converting product ads for online stores. Designed to drive purchases with urgency and social proof.',
     tags: ['shopify', 'online store', 'products', 'shop', 'buy', 'ecommerce', 'woocommerce', 'cart'],
     platforms: ['Meta Ads', 'Google Shopping', 'Instagram', 'X Ads'],
@@ -108,7 +108,7 @@ const ALL_TEMPLATES: CampaignTemplate[] = [
     category: 'Education',
     icon: GraduationCap,
     color: '#8b5cf6',
-    gradient: 'linear-gradient(135deg, #8b5cf6, #2631d6)',
+    gradient: 'linear-gradient(135deg, #8b5cf6, #0665ff)',
     description: 'Fill your courses, coaching programs, or training sessions with qualified students.',
     tags: ['course', 'education', 'training', 'coaching', 'learn', 'class', 'institute', 'tutor', 'skill'],
     platforms: ['Meta Ads', 'Google Search', 'YouTube', 'LinkedIn Ads'],
@@ -307,7 +307,7 @@ const TemplateDetail: React.FC<{ template: CampaignTemplate; onBack: () => void 
 
   return (
     <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}>
-      <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', color: '#2631d6', fontWeight: 600, cursor: 'pointer', marginBottom: '28px', fontSize: '0.95rem' }}>
+      <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', color: '#0665ff', fontWeight: 600, cursor: 'pointer', marginBottom: '28px', fontSize: '0.95rem' }}>
         ← Back to Templates
       </button>
 
@@ -327,7 +327,7 @@ const TemplateDetail: React.FC<{ template: CampaignTemplate; onBack: () => void 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
         {/* Ad Copy Preview */}
         <div style={{ gridColumn: '1 / -1', background: 'var(--bg-elevated)', borderRadius: '20px', padding: '24px', border: '1.5px solid #e2e8f0' }}>
-          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#2631d6', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0665ff', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <Sparkles size={14} /> AI-Generated Ad Copy
           </div>
           <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '8px' }}>{template.adCopy.headline}</div>
@@ -335,7 +335,7 @@ const TemplateDetail: React.FC<{ template: CampaignTemplate; onBack: () => void 
         </div>
 
         {[
-          { label: 'Campaign Goal', icon: Target, val: template.goal, color: '#2631d6' },
+          { label: 'Campaign Goal', icon: Target, val: template.goal, color: '#0665ff' },
           { label: 'Recommended Budget', icon: DollarSign, val: template.dailyBudget, color: '#10b981' },
           { label: 'Target Audience', icon: Users, val: template.audience, color: '#3b82f6' },
           { label: 'Expected ROAS', icon: TrendingUp, val: '3.5x – 6x', color: '#f59e0b' },
@@ -422,7 +422,7 @@ export const Templates: React.FC = () => {
       {/* Page Header */}
       <div style={{ marginBottom: '36px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, #2631d6, #1e27a8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'linear-gradient(135deg, #0665ff, #1e27a8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <LayoutTemplate size={20} color="#fff" />
           </div>
           <div>
@@ -453,7 +453,7 @@ export const Templates: React.FC = () => {
                     fontSize: '0.98rem', color: 'var(--text-primary)', outline: 'none',
                     background: 'var(--bg-elevated)', boxSizing: 'border-box', transition: 'border-color 0.2s'
                   }}
-                  onFocus={e => (e.target.style.borderColor = '#2631d6')}
+                  onFocus={e => (e.target.style.borderColor = '#0665ff')}
                   onBlur={e => (e.target.style.borderColor = '#e2e8f0')}
                 />
               </div>
@@ -464,7 +464,7 @@ export const Templates: React.FC = () => {
                 disabled={loading || !query.trim()}
                 style={{
                   padding: '16px 32px', borderRadius: '14px', border: 'none',
-                  background: 'linear-gradient(135deg, #2631d6, #1e27a8)',
+                  background: 'linear-gradient(135deg, #0665ff, #1e27a8)',
                   color: '#fff', fontWeight: 700, fontSize: '0.98rem', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: '8px',
                   opacity: loading || !query.trim() ? 0.65 : 1, whiteSpace: 'nowrap',
@@ -484,7 +484,7 @@ export const Templates: React.FC = () => {
                   key={tag}
                   onClick={() => { setQuery(tag); }}
                   style={{ padding: '5px 12px', borderRadius: '99px', border: '1px solid var(--glass-border)', background: 'var(--bg-elevated)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', cursor: 'pointer', transition: 'all 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#2631d6'; (e.currentTarget as HTMLElement).style.color = '#2631d6'; }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#0665ff'; (e.currentTarget as HTMLElement).style.color = '#0665ff'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#e2e8f0'; (e.currentTarget as HTMLElement).style.color = '#475569'; }}
                 >
                   {tag}
@@ -497,7 +497,7 @@ export const Templates: React.FC = () => {
           {loading && (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
               <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} style={{ display: 'inline-block', marginBottom: '16px' }}>
-                <Sparkles size={36} color="#2631d6" />
+                <Sparkles size={36} color="#0665ff" />
               </motion.div>
               <p style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>AI aapki requirements analyze kar raha hai...</p>
             </div>
@@ -510,7 +510,7 @@ export const Templates: React.FC = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
                   <CheckCircle size={18} color="#10b981" />
                   <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1rem' }}>
-                    {results.length} matching templates found for: <em style={{ color: '#2631d6' }}>"{query}"</em>
+                    {results.length} matching templates found for: <em style={{ color: '#0665ff' }}>"{query}"</em>
                   </span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>

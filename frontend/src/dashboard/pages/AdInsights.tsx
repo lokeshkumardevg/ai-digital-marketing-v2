@@ -105,7 +105,7 @@ export const AdInsights: React.FC = () => {
           <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>Live Data from {activePlatform}</span>
           <button 
             onClick={handleRefresh}
-            style={{ fontSize: '0.78rem', color: '#2631d6', background: 'none', border: '1px solid #c4b5fd', padding: '4px 12px', borderRadius: '5px', fontWeight: 500, cursor: 'pointer' }}
+            style={{ fontSize: '0.78rem', color: '#0665ff', background: 'none', border: '1px solid #c4b5fd', padding: '4px 12px', borderRadius: '5px', fontWeight: 500, cursor: 'pointer' }}
           >
             🔄 Refresh
           </button>
@@ -126,7 +126,7 @@ export const AdInsights: React.FC = () => {
               padding: '14px 24px', border: 'none', background: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', fontWeight: 600,
               color: activePlatform === p ? '#eaecf3' : '#94a3b8',
-              borderBottom: activePlatform === p ? '2px solid #2631d6' : '2px solid transparent',
+              borderBottom: activePlatform === p ? '2px solid #0665ff' : '2px solid transparent',
             }}>
               <span style={{ fontSize: '1rem' }}>
                 {p === 'Meta' ? '𝕄' : p === 'Google' ? 'G' : p === 'X' ? '𝕏' : p === 'LinkedIn' ? '💼' : 'Ꞵ'}
@@ -140,7 +140,7 @@ export const AdInsights: React.FC = () => {
           {/* Left: Audience Insight */}
           <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ width: '3px', height: '18px', background: '#2631d6', borderRadius: '2px' }} />
+              <div style={{ width: '3px', height: '18px', background: '#0665ff', borderRadius: '2px' }} />
               <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>Audience Insight</span>
             </div>
 
@@ -166,7 +166,7 @@ export const AdInsights: React.FC = () => {
                     {aud.tags.map(tag => <span key={tag} style={{ padding: '2px 8px', borderRadius: '5px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{tag}</span>)}
                   </div>
                   <div style={{ fontSize: '0.75rem', display: 'flex', gap: '12px' }}>
-                    <span style={{ color: '#2631d6', fontWeight: 700 }}>{aud.cpa}</span>
+                    <span style={{ color: '#0665ff', fontWeight: 700 }}>{aud.cpa}</span>
                     <span style={{ color: 'var(--text-dim)' }}>{aud.spend}</span>
                   </div>
                 </div>
@@ -200,7 +200,7 @@ export const AdInsights: React.FC = () => {
                 <div key={i} style={{ padding: '12px 0', borderBottom: i < topPagesMock.length - 1 ? '1px dashed #f1f5f9' : 'none' }}>
                   <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)', marginBottom: '4px', wordBreak: 'break-all' }}>{page.url}</div>
                   <div style={{ fontSize: '0.75rem', display: 'flex', gap: '12px' }}>
-                    <span style={{ color: '#2631d6', fontWeight: 700 }}>{page.cvr}</span>
+                    <span style={{ color: '#0665ff', fontWeight: 700 }}>{page.cvr}</span>
                     <span style={{ color: 'var(--text-dim)' }}>{page.spend}</span>
                   </div>
                 </div>

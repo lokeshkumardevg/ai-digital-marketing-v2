@@ -49,7 +49,7 @@ export const Products: React.FC = () => {
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by product name"
               style={{ padding: '8px 14px 8px 32px', borderRadius: '8px', border: '1px solid var(--glass-border)', fontSize: '0.82rem', color: 'var(--text-secondary)', outline: 'none', width: '220px', background: 'var(--bg-elevated)' }} />
           </div>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px', borderRadius: '8px', background: 'linear-gradient(135deg, #2631d6, #1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', boxShadow: '0 4px 10px rgba(124,58,237,0.25)' }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px', borderRadius: '8px', background: 'linear-gradient(135deg, #0665ff, #1e27a8)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', boxShadow: '0 4px 10px rgba(124,58,237,0.25)' }}>
             <Plus size={14} /> Add Product
           </button>
         </div>
