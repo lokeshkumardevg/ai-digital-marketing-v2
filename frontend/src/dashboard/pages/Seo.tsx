@@ -486,7 +486,7 @@ export const Seo: React.FC = () => {
                             </div>
                          </div>
                       </GlassCard>
-                      <GlassCard style={{ padding: '20px', background: 'linear-gradient(135deg, #3b82f6 0%, #2631d6 100%)', color: '#fff' }}>
+                      <GlassCard style={{ padding: '20px', background: 'linear-gradient(135deg, #3b82f6 0%, #0665ff 100%)', color: '#fff' }}>
                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><Zap size={20} /> <h4 style={{ margin: 0, fontSize: '0.85rem' }}>AI Strategy Agent</h4></div>
                          <p style={{ margin: '8px 0', fontSize: '0.7rem', opacity: 0.9 }}>Crawl complete. 12 content optimization paths detected.</p>
                          <button style={{ width: '100%', height: '32px', background: 'var(--accent-gradient)', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 900 }}>VIEW RECOMMENDATIONS</button>
@@ -547,14 +547,14 @@ export const Seo: React.FC = () => {
                    </div>
 
                    {/* Relocated AI Strategy (Internal Dashboard View Only) */}
-                   <GlassCard style={{ padding: '32px', border: 'none', borderLeft: '6px solid #2631d6', boxShadow: '0 10px 40px rgba(38, 49, 214, 0.15)' }}>
+                   <GlassCard style={{ padding: '32px', border: 'none', borderLeft: '6px solid #0665ff', boxShadow: '0 10px 40px rgba(38, 49, 214, 0.15)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
                          <div style={{ width: '40px', height: '40px', background: 'rgba(124, 58, 237, 0.1)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Zap size={24} color="#2631d6" fill="#2631d6" />
+                            <Zap size={24} color="#0665ff" fill="#0665ff" />
                          </div>
                          <div>
                             <h3 style={{ fontSize: '1.2rem', fontWeight: 950, margin: 0, color: '#f8fafc' }}>Executive AI Strategy</h3>
-                            <p style={{ fontSize: '0.75rem', color: '#2631d6', fontWeight: 900, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>QUANTUM MARKET INTELLIGENCE OVERVIEW</p>
+                            <p style={{ fontSize: '0.75rem', color: '#0665ff', fontWeight: 900, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>QUANTUM MARKET INTELLIGENCE OVERVIEW</p>
                          </div>
                       </div>
                       <p style={{ fontSize: '1rem', color: '#cbd5e1', lineHeight: 1.8, margin: 0, fontWeight: 500, whiteSpace: 'pre-wrap' }}>

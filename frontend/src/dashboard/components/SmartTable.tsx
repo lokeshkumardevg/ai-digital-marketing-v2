@@ -36,7 +36,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({
     surfaceAlt:  '#0a1128',
     border:      'rgba(255, 255, 255, 0.08)',
     borderHover: 'rgba(255, 255, 255, 0.15)',
-    purple:      '#2631d6',
+    purple:      '#0665ff',
     purpleSoft:  'rgba(38, 49, 214, 0.12)',
     purpleText:  '#3b82f6',
     textPrimary: '#f8fafc',

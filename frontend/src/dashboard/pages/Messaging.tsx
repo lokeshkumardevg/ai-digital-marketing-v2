@@ -15,7 +15,7 @@ const D = {
   surfaceAlt:  '#141d35',
   border:      'rgba(99,102,241,0.18)',
   borderGlow:  'rgba(124,58,237,0.35)',
-  purple:      '#2631d6',
+  purple:      '#0665ff',
   purpleSoft:  'rgba(124,58,237,0.12)',
   purpleText:  '#a78bfa',
   green:       '#10b981',

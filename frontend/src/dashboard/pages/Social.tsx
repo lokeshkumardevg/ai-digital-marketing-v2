@@ -281,7 +281,7 @@ export const Social: React.FC = () => {
           <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'fit-content' }}>
             <div>
               <h3 style={{ fontSize: '1.2rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Share2 size={20} color="#2631d6" />
+                <Share2 size={20} color="#0665ff" />
                  Post Composer
               </h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -431,7 +431,7 @@ export const Social: React.FC = () => {
                   label: 'Platforms',
                   sortable: false,
                   render: (row) => (
-                    <span style={{ fontWeight: 600, color: '#2631d6' }}>
+                    <span style={{ fontWeight: 600, color: '#0665ff' }}>
                       {(row.platforms || []).join(', ') || 'none'}
                     </span>
                   ),

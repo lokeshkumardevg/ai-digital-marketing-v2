@@ -218,7 +218,7 @@ export const Settings: React.FC = () => {
                       transition: 'all 0.2s', width: '100%', textAlign: 'left', fontWeight: activeTab === tab.id ? 500 : 400
                     }}
                   >
-                    <tab.icon size={18} color={activeTab === tab.id ? '#2631d6' : 'currentColor'} />
+                    <tab.icon size={18} color={activeTab === tab.id ? '#0665ff' : 'currentColor'} />
                     {tab.label}
                   </button>
                 ))}

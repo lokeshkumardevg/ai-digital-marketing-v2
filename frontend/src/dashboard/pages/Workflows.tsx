@@ -76,14 +76,14 @@ export const Workflows: React.FC = () => {
             <button 
               className={`btn ${viewMode === 'canvas' ? 'btn-primary' : ''}`} 
               onClick={() => setViewMode('canvas')}
-              style={{ padding: '8px 16px', background: viewMode === 'canvas' ? '#2631d6' : 'transparent', border: 'none', color: '#fff', fontSize: '0.8rem', borderRadius: '8px' }}
+              style={{ padding: '8px 16px', background: viewMode === 'canvas' ? '#0665ff' : 'transparent', border: 'none', color: '#fff', fontSize: '0.8rem', borderRadius: '8px' }}
             >
               Canvas View
             </button>
             <button 
               className={`btn ${viewMode === 'table' ? 'btn-primary' : ''}`} 
               onClick={() => setViewMode('table')}
-              style={{ padding: '8px 16px', background: viewMode === 'table' ? '#2631d6' : 'transparent', border: 'none', color: '#fff', fontSize: '0.8rem', borderRadius: '8px' }}
+              style={{ padding: '8px 16px', background: viewMode === 'table' ? '#0665ff' : 'transparent', border: 'none', color: '#fff', fontSize: '0.8rem', borderRadius: '8px' }}
             >
               Performance
             </button>
@@ -139,7 +139,7 @@ export const Workflows: React.FC = () => {
                    render: (row) => (
                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', width: '60px' }}>
-                           <div style={{ width: `${row.successRate}%`, height: '100%', background: '#2631d6', borderRadius: '2px' }} />
+                           <div style={{ width: `${row.successRate}%`, height: '100%', background: '#0665ff', borderRadius: '2px' }} />
                         </div>
                         <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{row.successRate}%</div>
                      </div>
@@ -177,7 +177,7 @@ export const Workflows: React.FC = () => {
                   <Activity size={14} color="var(--success)" className="animate-pulse" /> Live Analysis
                </div>
                <div style={{ background: 'var(--bg-card)', padding: '10px 20px', borderRadius: '30px', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 600, boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-                  <Globe size={14} color="#2631d6" /> Project Hub
+                  <Globe size={14} color="#0665ff" /> Project Hub
                </div>
             </div>
 
@@ -276,7 +276,7 @@ export const Workflows: React.FC = () => {
                      style={{ 
                        padding: '16px 20px', cursor: 'pointer', transition: '0.2s',
                        background: selectedWorkflow?._id === wf._id ? 'rgba(38, 49, 214, 0.08)' : 'transparent',
-                       borderLeft: `4px solid ${selectedWorkflow?._id === wf._id ? '#2631d6' : 'transparent'}`
+                       borderLeft: `4px solid ${selectedWorkflow?._id === wf._id ? '#0665ff' : 'transparent'}`
                      }}
                    >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

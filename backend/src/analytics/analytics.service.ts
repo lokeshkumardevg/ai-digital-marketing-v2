@@ -162,13 +162,13 @@ export class AnalyticsService {
           cpa: conversions > 0 ? parseFloat((spend / conversions).toFixed(2)) : 0,
           ctr,
           spend,
-          color: '#2631d6',
+          color: '#0665ff',
         };
       });
 
       return {
-        audiences: creatives.map((item: any) => ({ label: item.name, value: item.impressions, color: '#2631d6' })),
-        pages: [{ label: 'Google Ads', value: creatives.reduce((sum: number, item: any) => sum + item.impressions, 0), color: '#2631d6' }],
+        audiences: creatives.map((item: any) => ({ label: item.name, value: item.impressions, color: '#0665ff' })),
+        pages: [{ label: 'Google Ads', value: creatives.reduce((sum: number, item: any) => sum + item.impressions, 0), color: '#0665ff' }],
         creatives,
       };
     } catch (error: any) {
@@ -851,7 +851,7 @@ export class AnalyticsService {
 
   private getMockData(platform: string): any {
     return {
-      audiences: [{ label: `${platform} Default`, value: 100, color: '#2631d6' }],
+      audiences: [{ label: `${platform} Default`, value: 100, color: '#0665ff' }],
       pages: [{ label: 'default', value: 100, color: '#3b82f6' }],
       creatives: [
         {

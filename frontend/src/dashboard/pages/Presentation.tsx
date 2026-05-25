@@ -355,7 +355,7 @@ export const Presentation: React.FC = () => {
             height: Math.random() * 300 + 100 + 'px',
             top: Math.random() * 100 + '%',
             left: Math.random() * 100 + '%',
-            background: i % 2 === 0 ? 'var(--primary-gradient)' : '#2631d6',
+            background: i % 2 === 0 ? 'var(--primary-gradient)' : '#0665ff',
             filter: 'blur(100px)',
             opacity: 0.05,
             animation: `float ${Math.random() * 20 + 20}s infinite alternate ease-in-out`

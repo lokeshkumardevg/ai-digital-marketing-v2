@@ -143,7 +143,7 @@ export const ChatbotBuilder: React.FC = () => {
         {/* Column 2: Agent Configuration */}
         <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'fit-content' }}>
            <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-             <Settings size={20} color="#2631d6" /> Chatbot Settings
+             <Settings size={20} color="#0665ff" /> Chatbot Settings
            </h3>
 
            <div className="input-group">

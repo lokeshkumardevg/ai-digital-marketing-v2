@@ -62,14 +62,14 @@
   --text-dim:      #64748b;
   --accent-gradient: linear-gradient(135deg, #0665ff 50%, #22d3ee 100%);
 
-  --accent-primary:   #09114a;
+  --accent-primary:   #0665ff;
   --accent-secondary: #060631;
   --accent-glow:      0 0 24px rgba(22, 13, 109, 0.4);
 
   --success: #10b981;
   --warning: #f59e0b;
   --error:   #ef4444;
-  --info:    #2631d6;
+  --info:    #0665ff;
 
   --glass-bg:     rgba(15, 22, 41, 0.85);
   --glass-border: rgba(99, 102, 241, 0.18);

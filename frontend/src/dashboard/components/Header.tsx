@@ -33,7 +33,7 @@ export const Header: React.FC = () => {
   const { items, unreadCount, total } = useSelector((state: any) => state.notifications);
 
   const CATEGORY_COLORS: Record<string, string> = {
-    campaign: '#2631d6',
+    campaign: '#0665ff',
     social: '#1da1f2',
     ai: '#10b981',
     billing: '#f59e0b',
@@ -47,7 +47,7 @@ export const Header: React.FC = () => {
     success: '#10b981',
     error: '#ef4444',
     warning: '#f59e0b',
-    info: '#2631d6',
+    info: '#0665ff',
   };
 
   // ── Existing state ──

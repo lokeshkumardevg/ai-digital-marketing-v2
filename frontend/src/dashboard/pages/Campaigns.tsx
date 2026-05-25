@@ -1325,52 +1325,30 @@ export const Campaigns: React.FC = () => {
     );
 
     try {
-      const res = await axios.post<BrandSaveResult>(
+      const { data: saveResult } = await axios.post<BrandSaveResult>(
         `${API_BASE}/campaign/brand-save/${userId}`,
         snapshot,
       );
 
-      const saveResult = res.data;
-
-      // Backend contract: status 409 + { replaceRequired: true }
-      // OR a payload with replaceRequired.
-      if (!saveResult.ok && saveResult.replaceRequired) {
+      if (!saveResult.ok && saveResult.replaceRequired &&
+          (saveResult.existingBrand?.name || saveResult.existingBrand?.brandName || '').trim().toLowerCase() !==
+          (saveResult.newBrand?.name || data.brandName || '').trim().toLowerCase()) {
+        // User already has a different brand saved — ask them to confirm replacement
         setPendingBrandConfirm({
-          formData: data,
+          formData:          data,
           updatedBrand,
           defaultPromo,
           newMsgs,
-          existingBrandName:
-            (saveResult as any).existingBrand?.name ||
-            (saveResult as any).existingBrand?.brandName ||
-            'existing brand',
-          newBrandName:
-            (saveResult as any).newBrand?.name ||
-            data.brandName,
+          existingBrandName: saveResult.existingBrand?.name || saveResult.existingBrand?.brandName || 'existing brand',
+          newBrandName:      saveResult.newBrand?.name      || data.brandName,
         });
         return; // wait for user decision
       }
 
       // ok: true — proceed normally
       commitBrandConfirm(updatedBrand, defaultPromo, newMsgs, snapshot);
-    } catch (err: any) {
-      // If backend returns 409 replaceRequired, open confirmation.
-      const status = err?.response?.status;
-      const payload = err?.response?.data;
-      if (status === 409 && payload?.replaceRequired) {
-        setPendingBrandConfirm({
-          formData: data,
-          updatedBrand,
-          defaultPromo,
-          newMsgs,
-          existingBrandName:
-            payload?.existingBrand?.name || payload?.existingBrand?.brandName || 'existing brand',
-          newBrandName: payload?.newBrand?.name || data.brandName,
-        });
-        return;
-      }
-
-      console.warn('[brand-save] API error:', err);
+    } catch (err) {
+      console.warn('[brand-save] API error, proceeding anyway:', err);
       // Non-blocking: if the API is down we still let the user continue
       commitBrandConfirm(updatedBrand, defaultPromo, newMsgs, snapshot);
     }
@@ -1398,18 +1376,11 @@ export const Campaigns: React.FC = () => {
   // User confirmed replace — re-call brand-save with forceReplace=true
   const handleBrandReplaceConfirm = async () => {
     if (!pendingBrandConfirm) return;
-    const { updatedBrand, defaultPromo, newMsgs } = pendingBrandConfirm;
-
-    // Close modal immediately, keep UX snappy
+    const { updatedBrand, defaultPromo, newMsgs, formData } = pendingBrandConfirm;
     setPendingBrandConfirm(null);
 
-    // Build snapshot using latest component state
     const snapshot = buildSessionSnapshot(
-      messages,
-      updatedBrand,
-      defaultPromo,
-      campaignIdRef.current,
-      'chat',
+      messages, updatedBrand, defaultPromo, campaignIdRef.current, 'chat',
     );
 
     try {
@@ -1421,7 +1392,6 @@ export const Campaigns: React.FC = () => {
       console.warn('[brand-save] forceReplace error:', err);
     }
 
-    // Commit confirmed brand state into UI + Redux
     commitBrandConfirm(updatedBrand, defaultPromo, newMsgs, snapshot);
   };
 
@@ -1503,7 +1473,6 @@ export const Campaigns: React.FC = () => {
         <style>{CSS}</style>
         <div style={{ background: '#0f172a', color: '#f1f5f9', position: 'fixed', zIndex: 9999, width: '80%' }}><Header /></div>
         <div className="land-root">
-
           <div className="land-grid" aria-hidden="true" />
           <div className="land-orb land-orb-1" aria-hidden="true" />
           <div className="land-orb land-orb-2" aria-hidden="true" />
@@ -1615,6 +1584,7 @@ export const Campaigns: React.FC = () => {
             brandDetails={brandDetails || undefined}
             promoData={promoData || undefined}
             campaignId={campaignIdRef.current || undefined}
+            apiBase={API_BASE}
             onBack={handleBackToChat}
             onPublish={handleDashboardPublish}
             onSaveDraft={handleDashboardSaveDraft}
