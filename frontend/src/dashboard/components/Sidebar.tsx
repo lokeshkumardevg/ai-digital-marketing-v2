@@ -17,6 +17,7 @@ import {
   Bell,
   Presentation as PresentationIcon,
   UserPlus,
+  Briefcase,
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 
@@ -94,6 +95,7 @@ const BASE_MENU_ITEMS: MenuItem[] = [
     ],
   },
   { path: '/billing', label: 'Billing', icon: CreditCard, permission: 'billing' },
+  { path: '/linkedin-crm', label: 'LinkedIn CRM', icon: Briefcase, permission: 'dashboard' },
   { path: '/users', label: 'Users', icon: UserPlus, permission: 'view_users' },
   { path: '/roles', label: 'Roles & Access', icon: ShieldAlert, permission: 'superadmin' },
   { path: '/settings', label: 'Settings', icon: Settings, permission: 'settings' },

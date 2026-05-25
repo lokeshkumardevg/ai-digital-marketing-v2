@@ -17,12 +17,12 @@ const slides = [
   },
   {
     type: 'problem',
-    title: 'The Growth <span class="text-gradient">Paradox</span>',
-    content: 'Scaling a business today requires more manual effort than ever. Traditional marketing is a friction point, not a fuel.',
+    title: 'Improvement in <span class="text-gradient">Organic Reach</span>',
+    content: 'Scaling your business through organic growth, driven by AI-optimized visibility and reach.',
     points: [
-      { icon: <Target size={28} />, title: 'Skyrocketing CAC', desc: 'Customer acquisition is getting more expensive every minute.' },
-      { icon: <Zap size={28} />, title: 'Operational Drag', desc: 'Human teams spend 70% of their time on repetitive tasks.' },
-      { icon: <BarChart3 size={28} />, title: 'Insight Gap', desc: 'Millions of data points, zero actionable strategies.' }
+      { icon: <Target size={28} />, title: 'Enhanced Discoverability', desc: 'AI-driven content strategies that put your brand in front of the right audience organically.' },
+      { icon: <Zap size={28} />, title: 'Accelerated Momentum', desc: 'Build lasting organic traffic that compounds over time without exponential effort.' },
+      { icon: <BarChart3 size={28} />, title: 'Actionable Insights', desc: 'Turn organic interaction data into powerful strategies for sustainable growth.' }
     ],
     bgImage: '/assets/presentation/solution.png' // Using solution as backdrop for paradox
   },
@@ -40,11 +40,11 @@ const slides = [
   {
     type: 'module',
     title: 'AI <span class="text-gradient">Optimize</span>',
-    content: 'Our autonomous campaign engine leverages multi-channel data to orchestrate high-performance ad strategies without manual intervention.',
+    content: 'Our autonomous campaign engine leverages multi-channel data to orchestrate high-performance strategies without manual intervention.',
     points: [
-      { icon: <Target size={24} />, title: 'Multi-Channel Bidding', desc: 'Real-time optimization across Meta, Google, and TikTok. Our AI analyzes global auction data to secure the lowest possible CPC while maximizing high-intent conversions.' },
-      { icon: <Zap size={24} />, title: 'Predictive Allocation', desc: 'Autonomous budget shifting that dynamically moves investment to winning creatives and audiences, ensuring every dollar is spent where it generates the most impact.' },
-      { icon: <Shield size={24} />, title: 'Fraud & Safety Guard', desc: 'Continuous monitoring of traffic quality to protect your budget from bot activity and ensure your brand is always displayed in brand-safe, high-converting environments.' }
+      { icon: <Target size={24} />, title: 'Multi-Channel Optimization', desc: 'Real-time optimization across Meta, Google, and TikTok. Our AI analyzes global data to maximize high-intent conversions.' },
+      { icon: <Zap size={24} />, title: 'Predictive Allocation', desc: 'Autonomous strategy shifting that dynamically moves focus to winning creatives and audiences, ensuring maximum impact.' },
+      { icon: <Shield size={24} />, title: 'Fraud & Safety Guard', desc: 'Continuous monitoring of traffic quality to ensure your brand is always displayed in brand-safe, high-converting environments.' }
     ],
     bgImage: '/assets/presentation/hero.png'
   },
@@ -62,9 +62,9 @@ const slides = [
   {
     type: 'module',
     title: 'SEO <span class="text-gradient">Intelligence</span>',
-    content: 'Dominate search results with a data-driven, autonomous SEO architect that manages everything from technical infrastructure to content authority.',
+    content: 'Dominate search and chat engine results. We optimize your brand not just for traditional search, but for the new wave of AI platforms.',
     points: [
-      { icon: <Search size={24} />, title: 'Technical Supremacy', desc: 'Automated crawling and instant resolution of over 200 ranking factors. We ensure your site remains lightning-fast, secure, and perfectly indexed 24/7.' },
+      { icon: <Search size={24} />, title: 'Chat Engine Visibility', desc: 'Improved visibility through chat engines (ChatGPT, Claude, Gemini) by compiling and structuring data specifically for AI platforms.' },
       { icon: <Globe size={24} />, title: 'Contextual Research', desc: 'AI-powered keyword discovery that identifies high-converting, untapped opportunities before your competitors. We map user intent to your content strategy perfectly.' },
       { icon: <BarChart3 size={24} />, title: 'Authority Builder', desc: 'Scale your domain authority with AI-assisted backlink analysis and outreach. We identify high-trust sources to boost your site\'s credibility in the eyes of search engines.' }
     ],
@@ -116,7 +116,7 @@ const slides = [
   },
   {
     type: 'module',
-    title: 'Lead <span class="text-gradient">Conversion AI</span>',
+    title: 'Lead <span class="text-gradient">Convertability With AI</span>',
     content: 'Turn passive web traffic into qualified leads. Our dynamic chatbot ecosystem engages, qualifies, and schedules sales meetings on autopilot.',
     points: [
       { icon: <Bot size={24} />, title: 'Intent Intelligence', desc: 'Advanced NLP that understands complex user queries and intent. Provide personalized, high-value assistance to every visitor based on their unique journey.' },
@@ -137,17 +137,6 @@ const slides = [
     bgImage: '/assets/presentation/solution.png'
   },
   {
-    type: 'module',
-    title: 'Data <span class="text-gradient">Security & Trust</span>',
-    content: 'We treat your business data as a critical asset. Our infrastructure is built with advanced security protocols to ensure complete privacy and operational integrity.',
-    points: [
-      { icon: <Lock size={24} />, title: 'Advanced Encryption', desc: 'Enterprise-grade AES-256 encryption at rest and TLS 1.3 in transit. Your sensitive data is shielded by the highest security standards in the industry.' },
-      { icon: <ShieldCheck size={24} />, title: 'Model Isolation', desc: 'Strict data sovereignty protocols. We never use your proprietary business data or creative assets to train public models. Your intellectual property stays yours.' },
-      { icon: <Shield size={24} />, title: 'Compliance Excellence', desc: 'Fully architected for GDPR, CCPA, and SOC2 readiness. Our automated compliance monitoring ensures you stay protected across global jurisdictions.' }
-    ],
-    bgImage: '/assets/presentation/hero.png'
-  },
-  {
     type: 'orchestration',
     title: 'Autonomous <span class="text-gradient">Agents</span>',
     content: 'The next generation of workers. Specialized agents for specialized tasks.',
@@ -156,6 +145,19 @@ const slides = [
       { icon: <Cpu size={24} />, title: 'One-Click Deployment', desc: 'Instantly launch SEO Architects, Social Managers, and Sales Bots specialized for your niche.' },
       { icon: <Shield size={24} />, title: 'Role-Based Access', desc: 'Fine-grained permission management for both your AI agents and human team members.' }
     ],
+    bgImage: '/assets/presentation/solution.png'
+  },
+  {
+    type: 'module',
+    title: 'Customer-Driven <span class="text-gradient">Success</span>',
+    content: 'Real examples of how our AI services are driving unprecedented growth for our clients.',
+    points: [
+      { icon: <TrendingUp size={24} />, title: 'E-commerce Growth', desc: 'A leading retail brand saw a 150% increase in organic reach and a 3x boost in lead convertability within 3 months.' },
+      { icon: <BarChart3 size={24} />, title: 'B2B Lead Generation', desc: 'A SaaS company compiled data for AI platforms, resulting in a 200% increase in visibility through chat engines.' },
+      { icon: <Users size={24} />, title: 'Customer Retention', desc: 'By utilizing our unified AI workforce, a healthcare provider improved patient engagement by 85%.' }
+    ],
+    stats: '300%',
+    statLabel: 'Average Growth Rate',
     bgImage: '/assets/presentation/solution.png'
   },
   {
@@ -474,7 +476,7 @@ export const Presentation: React.FC = () => {
       </div>
 
       <div className="nav-controls">
-        <button className="nav-btn" onClick={() => window.print()} title="Download as PDF">
+        {/* <button className="nav-btn" onClick={() => window.print()} title="Download as PDF">
           <Printer size={20} />
           <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>DOWNLOAD PDF</span>
         </button>
@@ -484,7 +486,7 @@ export const Presentation: React.FC = () => {
         <button className="nav-btn" onClick={downloadPPT} title="Download as PPTX">
           <Download size={20} />
           <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>DOWNLOAD PPTX</span>
-        </button>
+        </button> */}
 
         <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 10px' }} />
 

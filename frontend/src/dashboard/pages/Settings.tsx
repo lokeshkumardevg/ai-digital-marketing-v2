@@ -22,7 +22,7 @@ export const Settings: React.FC = () => {
   const [googleCustomerId, setGoogleCustomerId] = useState(user?.googleCustomerId || '');
   const [metaAppId, setMetaAppId] = useState(user?.metaAppId || '');
   const [metaAppSecret, setMetaAppSecret] = useState(user?.metaAppSecret || '');
-
+  
   React.useEffect(() => {
     if (user) {
       setName(user.name || '');
@@ -36,6 +36,25 @@ export const Settings: React.FC = () => {
       setMetaAppSecret(user.metaAppSecret || '');
     }
   }, [user]);
+
+  React.useEffect(() => {
+    try {
+      const url = new URL(window.location.href);
+      const linkedinConnected = url.searchParams.get('linkedinConnected');
+      if (linkedinConnected === 'success') {
+        toast.success('LinkedIn account connected successfully!');
+      } else if (linkedinConnected === 'error') {
+        const reason = url.searchParams.get('reason');
+        toast.error(`Failed to connect LinkedIn: ${reason || 'Unknown error'}`);
+      }
+
+      if (linkedinConnected) {
+        url.searchParams.delete('linkedinConnected');
+        url.searchParams.delete('reason');
+        window.history.replaceState({}, '', url.toString());
+      }
+    } catch {}
+  }, []);
 
   const handleSave = async () => {
     try {
@@ -162,7 +181,7 @@ export const Settings: React.FC = () => {
   const connectLinkedIn = async () => {
     try {
       const { api } = await import('../../api/axios');
-      const response = await api.get('/auth/linkedin');
+      const response = await api.get('/linkedin-crm/oauth/url');
       window.location.href = response.data.url;
     } catch (error) {
       toast.error('Failed to initiate LinkedIn connection');

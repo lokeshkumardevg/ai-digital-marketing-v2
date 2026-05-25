@@ -30,6 +30,7 @@ import { BrandProfile } from './dashboard/pages/BrandProfile';
 import { Products } from './dashboard/pages/Products';
 import { ChatEmbed } from './dashboard/pages/ChatEmbed';
 import { Presentation } from './dashboard/pages/Presentation';
+import { LinkedInCrm } from './dashboard/pages/LinkedInCrm';
 
 import { Templates } from './dashboard/pages/Templates';
 import { hydrateSession } from './store/slices/authSlice';
@@ -87,9 +88,9 @@ const DashboardLayoutFull = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="app-container">
       <Sidebar />
-      <div className="main-content">
+      <div className="main-content" style={{ minWidth: 0 }}>
         <Header />
-        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0, minWidth: 0 }}>
           {children}
         </div>
       </div>
@@ -102,9 +103,9 @@ const DarkDashboardLayoutFull = ({ children }: { children: React.ReactNode }) =>
   return (
     <div className="app-container dark-theme">
       <Sidebar />
-      <div className="main-content">
+      <div className="main-content" style={{ minWidth: 0 }}>
         <Header />
-        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0, minWidth: 0 }}>
           {children}
         </div>
       </div>
@@ -117,8 +118,8 @@ const CampaignLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="app-container">
       <Sidebar />
-      <div className="main-content">
-        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+      <div className="main-content" style={{ minWidth: 0 }}>
+        <div style={{ flex: 1, overflow: 'auto', minHeight: 0, minWidth: 0 }}>
           {children}
         </div>
       </div>
@@ -219,8 +220,9 @@ const App: React.FC = () => {
         <Route path="/brand/goal" element={<ProtectedRoute requiredPermission="settings"><DashboardLayoutFull><OptimizeGoal /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/brand/profile" element={<ProtectedRoute requiredPermission="settings"><DashboardLayoutFull><BrandProfile /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/brand/products" element={<ProtectedRoute requiredPermission="settings"><DashboardLayoutFull><Products /></DashboardLayoutFull></ProtectedRoute>} />
-        
-        
+
+        {/* LinkedIn AI CRM */}
+        <Route path="/linkedin-crm" element={<ProtectedRoute><DarkDashboardLayoutFull><LinkedInCrm /></DarkDashboardLayoutFull></ProtectedRoute>} />
       </Routes>
     </Router>
   );

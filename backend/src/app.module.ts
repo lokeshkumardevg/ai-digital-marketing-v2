@@ -25,6 +25,8 @@ import { MessagingModule } from './messaging/messaging.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { BrandModule } from './brand/brand.module';
 import { PlatformPostsModule } from './platformposts/platformposts.module';
+import { LinkedInCrmModule } from './linkedin-crm/linkedin-crm.module';
+import { LinkedinScraperModule } from './linkedin-scraper/linkedin-scraper.module';
 
 @Module({
   imports: [
@@ -73,6 +75,8 @@ import { PlatformPostsModule } from './platformposts/platformposts.module';
     NotificationsModule,
     BrandModule,
     PlatformPostsModule,
+    LinkedInCrmModule,
+    LinkedinScraperModule,
   ],
   controllers: [AppController],
   providers: [AppService],
