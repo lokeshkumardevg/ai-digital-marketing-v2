@@ -132,7 +132,7 @@ const DASH_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
   .dash-root {
-    --grad: linear-gradient(135deg, #0665ff 50%, #22d3ee 100%);
+    --grad: linear-gradient(135deg, #0665ff 50%, #0665ff 100%);
     --blue: #0665ff;
     --blue-lt: #071c4a;
     --blue-mid: #0a2460;
@@ -1290,6 +1290,76 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
     { label: 'Products', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 6h18M16 10a4 4 0 01-8 0" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
     { label: 'CTA', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4l8 8-8 8" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
   ];
+  // Animation variants
+const containerVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut",
+      staggerChildren: 0.1,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: "easeOut" }
+  }
+};
+
+const statsBoxVariants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.3, ease: "easeOut" }
+  },
+  hover: {
+    scale: 1.02,
+    transition: { duration: 0.2, ease: "easeInOut" }
+  },
+  tap: {
+    scale: 0.98
+  }
+};
+
+const iconItemVariants = {
+  hidden: { opacity: 0, y: 30, rotate: -10 },
+  visible: (custom) => ({
+    opacity: 1,
+    y: 0,
+    rotate: 0,
+    transition: {
+      duration: 0.5,
+      delay: custom * 0.1,
+      type: "spring",
+      stiffness: 200,
+      damping: 15
+    }
+  }),
+  hover: {
+    y: -5,
+    rotate: 5,
+    transition: { duration: 0.2 }
+  }
+};
+
+const pulseAnimation = {
+  scale: [1, 1.05, 1],
+  transition: {
+    duration: 2,
+    repeat: Infinity,
+    ease: "easeInOut"
+  }
+};
+
 
   return (
     <>
@@ -1313,73 +1383,187 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
         </div>
 
         {/* ── Recommended Ads Section ── */}
-        <div className="rec-section">
-          <div className="rec-header">
-            <div className="rec-header-left">
-              <h2>Recommended Ads</h2>
-              <p>Top campaigns recommended. Select one to view structure.</p>
-            </div>
-            <div className="rec-stats">
-              <div className="rec-stat-box">
-                <div style={{ border: 'none', padding: '0 12px 0 0', gap: 8, display: 'flex', alignItems: 'center' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: '#071c4a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #1a3a7a', transition: 'all 0.2s ease' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="#60a5fa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </div>
-                  <div>
-                    <div className="stat-num">0</div>
-                    <div className="stat-label">Recommendations</div>
-                  </div>
-                </div>
-              </div>
-              <div className="rec-stat-box">
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: '#05201a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #065f46' }}>
-                  <Send size={15} color="#34d399" />
-                </div>
-                <div>
-                  <div className="stat-num">{publishedCount}</div>
-                  <div className="stat-label">Published</div>
-                </div>
-              </div>
-              <div style={{ paddingLeft: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <button
-                  className="auto-pub-btn"
-                  onClick={() => {
-                    const campaignsToPublish = drafts.filter(draft => draft.raw?.autoPublish);
-                    if (campaignsToPublish.length === 0) {
-                      showToast('Select at least one campaign for auto publish', 'info');
-                      return;
-                    }
-                    setGlobalAutoPublish(p => !p);
-                    showToast(`Auto-publish ${!globalAutoPublish ? 'enabled' : 'disabled'}`, 'success');
-                  }}
-                  style={{ color: globalAutoPublish ? '#22d3ee' : '#e2eaff' }}
-                >
-                  {globalAutoPublish ? <ToggleRight size={18} color="#0665ff" /> : <ToggleLeft size={18} color="#4a6090" />}
-                  Auto-Publish
-                </button>
-                <button className="pause-btn">
-                  <PauseCircle size={15} />
-                  Pause
-                </button>
-              </div>
-            </div>
-          </div>
+  <div className="rec-section">
+  <motion.div
+    className="rec-header"
+    variants={containerVariants}
+    initial="hidden"
+    animate="visible"
+  >
+    <motion.div className="rec-header-left" variants={itemVariants}>
+      <motion.h2
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.4 }}
+      >
+        Recommended Ads
+      </motion.h2>
+      <motion.p
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.4 }}
+      >
+        Top campaigns recommended. Select one to view structure.
+      </motion.p>
+    </motion.div>
 
-          <div className="rec-empty">
-            <div className="rec-empty-icons">
-              {emptyIcons.map(item => (
-                <div key={item.label} className="rec-empty-icon-item">
-                  <div className="rec-empty-icon-circle">{item.icon}</div>
-                  <span className="rec-empty-icon-label">{item.label}</span>
-                </div>
-              ))}
-            </div>
-            <p className="rec-empty-text">
-              <strong>Wheedle.AI</strong> monitors your first campaign for 24 hours, then uses AI-powered insights to recommend your next best campaigns.
-              Switch on <strong>Auto-publish ↗</strong> to launch them automatically for maximum impact.
-            </p>
+    <motion.div className="rec-stats" variants={itemVariants}>
+      <motion.div
+        className="rec-stat-box"
+        variants={statsBoxVariants}
+        whileHover="hover"
+        whileTap="tap"
+      >
+        <div style={{ border: 'none', padding: '0 12px 0 0', gap: 8, display: 'flex', alignItems: 'center' }}>
+          <motion.div
+            style={{ width: 32, height: 32, borderRadius: 8, background: '#071c4a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #1a3a7a' }}
+            whileHover={{ scale: 1.1, rotate: 15 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="#60a5fa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </motion.div>
+          <div>
+            <motion.div
+              className="stat-num"
+              animate={pulseAnimation}
+            >
+              0
+            </motion.div>
+            <div className="stat-label">Recommendations</div>
           </div>
         </div>
+      </motion.div>
+
+      <motion.div
+        className="rec-stat-box"
+        variants={statsBoxVariants}
+        whileHover="hover"
+        whileTap="tap"
+      >
+        <motion.div
+          style={{ width: 32, height: 32, borderRadius: 8, background: '#05201a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #065f46' }}
+          whileHover={{ scale: 1.1, rotate: -15 }}
+        >
+          <Send size={15} color="#34d399" />
+        </motion.div>
+        <div>
+          <motion.div
+            className="stat-num"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300, delay: 0.5 }}
+          >
+            {publishedCount}
+          </motion.div>
+          <div className="stat-label">Published</div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        style={{ paddingLeft: 16, display: 'flex', alignItems: 'center', gap: 8 }}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.6, duration: 0.4 }}
+      >
+        <motion.button
+          className="auto-pub-btn"
+          onClick={() => {
+            const campaignsToPublish = drafts.filter(draft => draft.raw?.autoPublish);
+            if (campaignsToPublish.length === 0) {
+              showToast('Select at least one campaign for auto publish', 'info');
+              return;
+            }
+            setGlobalAutoPublish(p => !p);
+            showToast(`Auto-publish ${!globalAutoPublish ? 'enabled' : 'disabled'}`, 'success');
+          }}
+          style={{ color: globalAutoPublish ? '#22d3ee' : '#e2eaff' }}
+          whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <motion.div
+            animate={{ rotate: globalAutoPublish ? 0 : 180 }}
+            transition={{ duration: 0.3 }}
+          >
+            {globalAutoPublish ? <ToggleRight size={18} color="#0665ff" /> : <ToggleLeft size={18} color="#4a6090" />}
+          </motion.div>
+          Auto-Publish
+        </motion.button>
+
+        <motion.button
+          className="pause-btn"
+          whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' }}
+          whileTap={{ scale: 0.95 }}
+          animate={{ x: [0, -2, 2, -2, 0] }}
+          transition={{ duration: 0.5, delay: 1 }}
+        >
+          <PauseCircle size={15} />
+          Pause
+        </motion.button>
+      </motion.div>
+    </motion.div>
+  </motion.div>
+
+  <motion.div
+    className="rec-empty"
+    initial={{ opacity: 0, y: 30 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+  >
+    <motion.div
+      className="rec-empty-icons"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {emptyIcons.map((item, index) => (
+        <motion.div
+          key={item.label}
+          className="rec-empty-icon-item"
+          custom={index}
+          variants={iconItemVariants}
+          whileHover="hover"
+        >
+          <motion.div
+            className="rec-empty-icon-circle"
+            whileHover={{ scale: 1.2, rotate: 10 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            {item.icon}
+          </motion.div>
+          <motion.span
+            className="rec-empty-icon-label"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 + index * 0.1 }}
+          >
+            {item.label}
+          </motion.span>
+        </motion.div>
+      ))}
+    </motion.div>
+
+    <motion.p
+      className="rec-empty-text"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.8, duration: 0.5 }}
+    >
+      <motion.strong
+        animate={{ color: ['#60a5fa', '#a78bfa', '#60a5fa'] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        Wheedle.AI
+      </motion.strong> monitors your first campaign for 24 hours, then uses AI-powered insights to recommend your next best campaigns.
+      Switch on <motion.strong
+        whileHover={{ scale: 1.05, display: 'inline-block' }}
+      >
+        Auto-publish ↗
+      </motion.strong> to launch them automatically for maximum impact.
+    </motion.p>
+  </motion.div>
+</div>
 
         {/* ── Unpublished Drafts Section ── */}
         <div className="drafts-section">
