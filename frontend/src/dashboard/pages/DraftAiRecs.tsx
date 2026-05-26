@@ -132,7 +132,7 @@ const DASH_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
   .dash-root {
-    --grad: linear-gradient(135deg, #0665ff 50%, #22d3ee 100%);
+    --grad: linear-gradient(135deg, #0665ff 50%, #0665ff 100%);
     --blue: #0665ff;
     --blue-lt: #071c4a;
     --blue-mid: #0a2460;

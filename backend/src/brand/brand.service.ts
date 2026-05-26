@@ -111,18 +111,28 @@ export class BrandService {
     const assets = this.mergeAssets(incoming, body);
 
     // ── Step 4: Conflict check ────────────────────────────────
-    const existing = await this.brandModel.findOne({ userId });
+// ── Step 4: Conflict check ────────────────────────────────
+const existing = await this.brandModel.findOne({ userId });
 
-    // IMPORTANT: do NOT overwrite unless forceReplace=true
-    if (existing && !forceReplace) {
-      // Any existing brand counts as a conflict for this workflow
-      // (frontend will show ReplaceBrandModal and re-call with forceReplace=true)
-      throw new (await import('@nestjs/common')).ConflictException({
-        ok: false,
-        replaceRequired: true,
-        message: 'Brand already exists',
-      });
-    }
+if (existing && !forceReplace) {
+  throw new (await import('@nestjs/common')).ConflictException({
+    ok: false,
+    replaceRequired: true,
+    message: 'Brand already exists',
+
+    existingBrand: {
+      id: existing._id,
+      name:
+        existing.name ||
+        existing.brandDetails?.brand?.name ||
+        '',
+    },
+
+    newBrand: {
+      name: brandName,
+    },
+  });
+}
 
     // ── Step 5: Upsert into brands collection ─────────────────
     const payload = {
