@@ -23,10 +23,8 @@ api.interceptors.response.use(
     // If Unauthorized, force global logout via localstorage purge if token implicitly expired
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('access_token');
-      // Redirect handled by React Router in App.tsx typically
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
-        window.location.href = 'http://localhost:5173/';
-      }
+      // Avoid hard page navigation (causes full refresh). Let app/router handle logout.
+      // (No window.location.href)
     }
     return Promise.reject(error);
   }

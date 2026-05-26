@@ -24,6 +24,21 @@ export class AnalyticsController {
     return this.analyticsService.getDashboardMetrics(dateRange);
   }
 
+  @Post('disconnect/meta')
+  @UseGuards(AuthGuard('jwt'))
+  async disconnectMeta(@Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.analyticsService.disconnectMeta(userId);
+  }
+
+  @Post('disconnect/google')
+  @UseGuards(AuthGuard('jwt'))
+  async disconnectGoogle(@Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.analyticsService.disconnectGoogle(userId);
+  }
+
+
   @Post('sync/meta')
   @UseGuards(AuthGuard('jwt'))
   async syncMeta(@Req() req: any) {

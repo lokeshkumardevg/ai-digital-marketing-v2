@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { SmartTable } from '../components/SmartTable';
 import { Users, RefreshCw, Database, CreditCard, Wallet } from 'lucide-react';
 
-
 const dateRanges = ['Last 7 days', 'Last 14 days', 'Last 30 days', 'Last 90 days', 'Today'];
 
 const ChartLine: React.FC<{ data: number[]; color: string; height: number; width: number }> = ({ data, color, height, width }) => {
@@ -333,17 +332,64 @@ export const Crm: React.FC = () => {
 
       <div style={{ padding: '24px 32px' }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-          {[
-            { label: 'Meta', connected: !!user?.metaAccessToken },
-            { label: 'Google', connected: !!(user?.googleRefreshToken || user?.googleAccessToken) },
-            { label: 'X', connected: !!user?.twitterAccessToken },
-            { label: 'LinkedIn', connected: !!user?.linkedinAccessToken },
+          {[ 
+            { label: 'Meta', connected: !!user?.metaAccessToken, disconnectable: true },
+            { label: 'Google', connected: !!(user?.googleRefreshToken || user?.googleAccessToken), disconnectable: true },
+            { label: 'X', connected: !!user?.twitterAccessToken, disconnectable: false },
+            { label: 'LinkedIn', connected: !!user?.linkedinAccessToken, disconnectable: false },
           ].map((item) => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 999, border: `1px solid ${D.border}`, background: item.connected ? D.surfaceAlt : D.white005, color: item.connected ? D.textPrimary : D.textDim, fontSize: '0.78rem', fontWeight: 700 }}>
+            <div
+              key={item.label}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 14px',
+                borderRadius: 999,
+                border: `1px solid ${D.border}`,
+                background: item.connected ? D.surfaceAlt : D.white005,
+                color: item.connected ? D.textPrimary : D.textDim,
+                fontSize: '0.78rem',
+                fontWeight: 700,
+              }}
+            >
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: item.connected ? D.greenText : D.textDim }} />
               {item.label} {item.connected ? 'Connected' : 'Not connected'}
+
+              {item.disconnectable && item.connected && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const { api } = await import('../../api/axios');
+                      const endpoint = item.label === 'Meta' ? '/analytics/disconnect/meta' : '/analytics/disconnect/google';
+                      await api.post(endpoint);
+                      toast.success(`${item.label} disconnected.`);
+                      void fetchData();
+                    } catch (e: unknown) {
+                      const ax = e as { response?: { data?: { message?: string } } };
+                      toast.error(ax?.response?.data?.message || `Failed to disconnect ${item.label}`);
+                    }
+                  }}
+                  style={{
+                    marginLeft: 6,
+                    padding: '4px 10px',
+                    borderRadius: 999,
+                    border: `1px solid rgba(239,68,68,0.3)`,
+                    background: 'rgba(239,68,68,0.10)',
+                    color: '#ef4444',
+                    cursor: 'pointer',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                  }}
+                  title="Disconnect"
+                >
+                  Disconnect
+                </button>
+              )}
             </div>
           ))}
+
         </div>
         {audiences.length === 0 && (
           <div style={{ marginBottom: 18, padding: 16, borderRadius: 16, background: D.surfaceAlt, border: `1px solid ${D.border}`, color: D.textMuted }}>
