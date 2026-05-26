@@ -11,6 +11,7 @@ import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class AnalyticsService {
+
   private readonly logger = new Logger(AnalyticsService.name);
   private readonly CACHE_TTL = 1800; // 30 min
 
@@ -864,4 +865,36 @@ export class AnalyticsService {
       ],
     };
   }
+
+  async disconnectMeta(userId: string): Promise<{ success: true }> {
+    await this.usersService.update(userId, {
+      metaAccessToken: null,
+    });
+
+    // also clear any cached insights so UI/Sync won't use old data
+    try {
+      await this.redis.del(`ad_insights:${userId}:meta:*`);
+    } catch {
+      // ignore (redis may not support wildcard del)
+    }
+
+    return { success: true };
+  }
+
+  async disconnectGoogle(userId: string): Promise<{ success: true }> {
+    await this.usersService.update(userId, {
+      googleRefreshToken: null,
+      googleAccessToken: null,
+      googleTokenExpiry: null,
+    });
+
+    try {
+      await this.redis.del(`ad_insights:${userId}:google:*`);
+    } catch {
+      // ignore
+    }
+
+    return { success: true };
+  }
 }
+
