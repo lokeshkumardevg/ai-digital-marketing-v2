@@ -1386,11 +1386,11 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
         <div className="rec-section">
           <motion.div
             className="rec-header"
-            variants={containerVariants}
+            variants={containerVariants as any}
             initial="hidden"
             animate="visible"
           >
-            <motion.div className="rec-header-left" variants={itemVariants}>
+            <motion.div className="rec-header-left" variants={itemVariants as any}>
               <motion.h2
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
@@ -1407,10 +1407,10 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
               </motion.p>
             </motion.div>
 
-            <motion.div className="rec-stats" variants={itemVariants}>
+            <motion.div className="rec-stats" variants={itemVariants as any}>
               <motion.div
                 className="rec-stat-box"
-                variants={statsBoxVariants}
+                variants={statsBoxVariants as any}
                 whileHover="hover"
                 whileTap="tap"
               >
@@ -1438,7 +1438,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
 
               <motion.div
                 className="rec-stat-box"
-                variants={statsBoxVariants}
+                variants={statsBoxVariants as any}
                 whileHover="hover"
                 whileTap="tap"
               >
@@ -1513,7 +1513,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
           >
             <motion.div
               className="rec-empty-icons"
-              variants={containerVariants}
+              variants={containerVariants as any}
               initial="hidden"
               animate="visible"
             >
@@ -1522,7 +1522,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
                   key={item.label}
                   className="rec-empty-icon-item"
                   custom={index}
-                  variants={iconItemVariants}
+                  variants={iconItemVariants as any}
                   whileHover="hover"
                 >
                   <motion.div
