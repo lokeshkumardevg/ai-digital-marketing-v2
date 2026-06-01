@@ -709,7 +709,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
     if (!selectedPlat) return;
     setStep('connecting'); setConnectStatus('waiting');
     try {
-      const res = await fetch(`http://localhost:3000/auth/oauth-url/${selectedPlat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')||''}` } });
+      const res = await fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/auth/oauth-url/${selectedPlat}`, { headers: { Authorization: `Bearer ${localStorage.getItem('access_token')||''}` } });
       if (!res.ok) throw new Error('Could not get OAuth URL from server');
       const { url } = await res.json();
       const popup = window.open(url, `connect_${selectedPlat}`, 'width=520,height=640,scrollbars=yes,resizable=yes');
@@ -732,7 +732,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
     if (!selectedPlat || !manualId.trim() || !manualToken.trim()) return;
     setConnectStatus('waiting');
     try {
-      const res = await fetch('http://localhost:3000/auth/connect-platform', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/auth/connect-platform`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('access_token')||''}` },
         body: JSON.stringify({ platformId: selectedPlat, accountId: manualId.trim(), accessToken: manualToken.trim(), accountName: manualName.trim()||manualId.trim() }),

@@ -59,6 +59,12 @@ export class LinkedInAccount {
   @Prop({ default: 'connected' })
   status: string; // 'connected', 'expired', 'disconnected'
 
+  @Prop()
+  connectedOrganizationUrn?: string;
+
+  @Prop()
+  connectedOrganizationName?: string;
+
   @Prop({ type: Object, default: {} })
   rawProfile: Record<string, any>; // Store the full raw LinkedIn API response
 

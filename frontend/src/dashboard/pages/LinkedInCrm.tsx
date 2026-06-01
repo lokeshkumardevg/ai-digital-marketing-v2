@@ -190,7 +190,7 @@ export const LinkedInCrm: React.FC = () => {
     setIsGeneratingAi(true);
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/ai/generate`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/ai/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

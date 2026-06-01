@@ -23,7 +23,7 @@ export const Dashboard: React.FC = () => {
   const [data, setData] = useState<{ daily: any[], summary: any } | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:3000/analytics/dashboard')
+    fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/analytics/dashboard`)
       .then(res => res.json())
       .then(d => setData(d))
       .catch(console.error);

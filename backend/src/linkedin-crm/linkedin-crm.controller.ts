@@ -249,4 +249,49 @@ export class LinkedInCrmController {
   async getAds(@Request() req: any) {
     return this.linkedinCrmService.getAdCampaigns(req.user.id);
   }
+
+  // ===================== COMPANY PAGES (ORGANIZATIONS) =====================
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('organizations')
+  async getOrganizations(@Request() req: any) {
+    return this.linkedinCrmService.getOrganizations(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('organizations/connect')
+  async connectOrganization(@Request() req: any, @Body() body: { orgUrn: string; orgName: string }) {
+    if (!body.orgUrn || !body.orgName) {
+      throw new Error('orgUrn and orgName are required');
+    }
+    return this.linkedinCrmService.connectOrganization(req.user.id, body.orgUrn, body.orgName);
+  }
+
+  // ===================== EVENT MANAGEMENT =====================
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('events')
+  async getEvents(@Request() req: any) {
+    return this.linkedinCrmService.getEvents(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('events')
+  async createEvent(@Request() req: any, @Body() body: any) {
+    return this.linkedinCrmService.createEvent(req.user.id, body);
+  }
+
+  // ===================== ONBOARDING & PROFILE =====================
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('profile/sync')
+  async syncProfile(@Request() req: any) {
+    return this.linkedinCrmService.syncProfile(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('onboarding/status')
+  async getOnboardingStatus(@Request() req: any) {
+    return this.linkedinCrmService.getOnboardingStatus(req.user.id);
+  }
 }

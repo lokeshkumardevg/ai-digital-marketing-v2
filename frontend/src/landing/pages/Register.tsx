@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FaFacebookF } from "react-icons/fa";
-import { auth, googleProvider, facebookProvider } from "../lib/firebase";
+import { auth, facebookProvider } from "../lib/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { api } from "../../api/axios";
 import { saveAuthUser } from "../lib/auth";
 import logo from "../../assets/fevicon.png";
 import BotSVG from "../components/Bot";
+import { useGoogleLogin } from '@react-oauth/google';
+
 
 function modeFromPath(pathname: string) {
   return pathname === "/login" ? "signin" : "signup";
@@ -583,6 +585,27 @@ function Register() {
     } finally { setLoading(false); }
   };
 
+  const handleGoogleAuth = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setLoading(true);
+        resetMessages();
+        const { data } = await api.post("/auth/google/login", { access_token: tokenResponse.access_token });
+        handleAuthSuccess(data);
+        setSuccess("Signed in with Google! Redirecting…");
+        setTimeout(() => { window.location.href = "http://localhost:5173/campaigns"; }, 1000);
+      } catch (err: any) {
+        setError(err?.response?.data?.message || err?.message || "Google login failed.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: (error) => {
+      console.error('Google login failed', error);
+      setError('Google login was closed or failed.');
+    }
+  });
+
   const socialAuth = async (provider: any, label: string) => {
     try {
       setLoading(true); resetMessages();
@@ -780,7 +803,7 @@ function Register() {
 
                 {/* Social buttons */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 18 }}>
-                  <button className="btn-social" onClick={() => socialAuth(googleProvider, "Google")} disabled={loading}>
+                  <button className="btn-social" onClick={() => handleGoogleAuth()} disabled={loading}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
                       <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
                       <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>

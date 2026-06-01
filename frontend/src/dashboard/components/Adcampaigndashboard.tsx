@@ -87,7 +87,7 @@ interface Plan {
   popular?: boolean;
 }
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 /* ─── GLOBAL STYLES ─────────────────────────────────────── */
 const GLOBAL_CSS = `
@@ -546,14 +546,55 @@ function TopBar({ activePlatformId, isEnabled }: { activePlatformId: PlatformId;
   const fields = PLATFORM_FIELDS[activePlatformId] || [];
   return (
     <div style={{ display: "flex", gap: 8, padding: "10px 16px", borderBottom: "1px solid var(--bdr)", background: "#fff", alignItems: "flex-end", flexWrap: "wrap", flexShrink: 0, position: "relative" }}>
-      {fields.map(f => (
-        <div key={f.label} style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1, minWidth: 130, opacity: isEnabled ? 1 : .35, pointerEvents: isEnabled ? "auto" : "none", transition: "opacity .2s" }}>
-          <span style={{ fontSize: 9, color: "var(--blue)", fontWeight: 700, letterSpacing: ".5px", textTransform: "uppercase" }}>{f.label}</span>
-          <div className="tb-sel" style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: 8, padding: "7px 10px", color: "var(--t3)", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "border-color .15s" }}>
-            <span>{f.placeholder}</span><span style={{ fontSize: 10 }}>▾</span>
+      {fields.map(f => {
+        const isNotConnected = (
+          (activePlatformId === 'meta' && !user?.metaAccessToken) ||
+          (activePlatformId === 'google' && !user?.googleAccessToken) ||
+          (activePlatformId === 'linkedin' && !user?.linkedinAccessToken) ||
+          ((activePlatformId === 'x' || activePlatformId === 'twitter') && !user?.twitterAccessToken)
+        );
+
+        const getPlatformName = () => {
+          if (activePlatformId === 'meta') return 'Meta Ads';
+          if (activePlatformId === 'google') return 'Google Ads';
+          if (activePlatformId === 'linkedin') return 'LinkedIn Ads';
+          if (activePlatformId === 'x' || activePlatformId === 'twitter') return 'X Ads';
+          return 'Ads';
+        };
+
+        const handleConnect = async () => {
+          try {
+            const { api } = await import('../../api/axios');
+            let endpoint = '';
+            if (activePlatformId === 'meta') endpoint = '/auth/meta';
+            else if (activePlatformId === 'google') endpoint = '/auth/google';
+            else if (activePlatformId === 'x' || activePlatformId === 'twitter') endpoint = '/auth/x';
+            else if (activePlatformId === 'linkedin') endpoint = '/linkedin-crm/oauth/url';
+            
+            if (endpoint) {
+              const response = await api.get(endpoint);
+              window.location.href = response.data.url;
+            }
+          } catch (error) {
+            console.error('Failed to initiate connection', error);
+          }
+        };
+
+        return (
+          <div key={f.label} style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1, minWidth: 130, opacity: isEnabled ? 1 : .35, pointerEvents: isEnabled ? "auto" : "none", transition: "opacity .2s" }}>
+            <span style={{ fontSize: 9, color: "var(--blue)", fontWeight: 700, letterSpacing: ".5px", textTransform: "uppercase" }}>{f.label}</span>
+            {isNotConnected ? (
+              <div onClick={handleConnect} className="tb-sel" style={{ background: "linear-gradient(135deg, #1877f2, #0e5a8a)", border: "none", borderRadius: 8, padding: "7px 10px", color: "white", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 600 }}>
+                Connect {getPlatformName()}
+              </div>
+            ) : (
+              <div className="tb-sel" style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: 8, padding: "7px 10px", color: "var(--t3)", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "border-color .15s" }}>
+                <span>{f.placeholder}</span><span style={{ fontSize: 10 }}>▾</span>
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
       {!isEnabled && (
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 11, color: "var(--t3)", background: "rgba(248,250,255,.85)", backdropFilter: "blur(2px)", zIndex: 2 }}>
           <I.Lock /> This platform is not included in your campaign

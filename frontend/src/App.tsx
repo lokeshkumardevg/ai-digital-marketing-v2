@@ -142,7 +142,7 @@ const App: React.FC = () => {
   // Connect Real-Time Matrix Socket.IO
   useEffect(() => {
     if (isAuthenticated) {
-      const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000', {
+      const socket = io(import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000', {
         auth: { token: localStorage.getItem('access_token') }
       });
 

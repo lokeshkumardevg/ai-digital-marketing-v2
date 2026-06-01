@@ -4,6 +4,8 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
@@ -64,35 +66,106 @@ export class AuthService {
 
   // ================= GOOGLE =================
 
-getGoogleAuthUrl(userId: string) {
-  const clientId = this.configService.get('GOOGLE_CLIENT_ID');
+  async loginWithGoogleIdToken(token: string) {
+    const clientId = this.configService.get('GOOGLE_CLIENT_ID');
+    if (!clientId) {
+      throw new UnauthorizedException('GOOGLE_CLIENT_ID not configured');
+    }
 
-  const redirectUri = `http://localhost:3000/auth/google/callback`;
+    let email = '';
+    let name = '';
 
-  const scope = [
-    'https://www.googleapis.com/auth/adwords',
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile',
-  ].join(' ');
+    try {
+      // First try to verify as an ID Token
+      const client = new OAuth2Client(clientId);
+      const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: clientId,
+      });
+      const payload = ticket.getPayload();
+      
+      if (!payload || !payload.email) {
+        throw new Error('Invalid Google token payload');
+      }
 
-return `https://accounts.google.com/o/oauth2/v2/auth?` +
-  `client_id=${clientId}` +
-  `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-  `&response_type=code` +
-  `&scope=${encodeURIComponent(scope)}` +
-  `&access_type=offline` +
-  `&prompt=consent` +
-  `&state=${userId}`;
+      email = payload.email;
+      name = payload.name || email.split('@')[0];
+    } catch (e: any) {
+      // If verification fails, it might be an access token from the implicit flow
+      try {
+        const userInfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!userInfoRes.data || !userInfoRes.data.email) {
+          throw new Error('Invalid Google userinfo response');
+        }
+        email = userInfoRes.data.email;
+        name = userInfoRes.data.name || email.split('@')[0];
+      } catch (err: any) {
+        console.error('Google token verification failed (both ID and Access token formats)', err.message);
+        throw new UnauthorizedException('Invalid Google token');
+      }
+    }
+
+    try {
+      let user = await this.usersService.findByEmail(email);
+      
+      if (!user) {
+        // Create user with a random placeholder password
+        const randomPass = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(randomPass, salt);
+        
+        user = await this.usersService.create({
+          name: name,
+          email: email,
+          passwordHash: hash
+        });
+      }
+
+      return this.login(user);
+    } catch (e: any) {
+      console.error('Failed to create or login Google user', e);
+      throw new UnauthorizedException('Login failed');
+    }
+  }
+
+  async getGoogleAuthUrl(userId: string) {
+    const user = await this.usersService.findById(userId);
+    const clientId = user?.googleClientId || this.configService.get('GOOGLE_CLIENT_ID');
+
+    if (!clientId) {
+      throw new Error('Google Client ID not configured');
+    }
+
+    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const redirectUri = `${backendUrl}/auth/google/callback`;
+
+    const scope = [
+      'https://www.googleapis.com/auth/adwords',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+    ].join(' ');
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${clientId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&access_type=offline` +
+      `&prompt=consent` +
+      `&state=${userId}`;
 }
 
   getMetaAuthUrl(userId: string) {
     const appId = this.configService.get('META_APP_ID');
-    const redirectUri = this.configService.get('BACKEND_URL')
-      ? `${this.configService.get('BACKEND_URL')}/auth/meta/callback`
-      : `http://localhost:3000/auth/meta/callback`;
+    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const redirectUri = `${backendUrl}/auth/meta/callback`;
     const scope = [
       'public_profile',
       'email',
+      'ads_management',
+      'ads_read',
     ].join(',');
 
     return `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}` +
@@ -104,7 +177,8 @@ return `https://accounts.google.com/o/oauth2/v2/auth?` +
 
   getXAuthUrl(userId: string) {
     const clientId = this.configService.get('X_CLIENT_ID');
-    const redirectUri = `http://localhost:3000/auth/x/callback?userId=${userId}`;
+    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const redirectUri = `${backendUrl}/auth/x/callback`;
     const scope = 'tweet.read%20users.read%20ads.read';
     const codeChallenge = 'challenge'; // In production, generate proper PKCE challenge
 
@@ -113,7 +187,8 @@ return `https://accounts.google.com/o/oauth2/v2/auth?` +
 
   getLinkedInAuthUrl(userId: string) {
     const clientId = this.configService.get('LINKEDIN_CLIENT_ID');
-    const redirectUri = `http://localhost:3000/auth/linkedin/callback?userId=${userId}`;
+    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const redirectUri = `${backendUrl}/auth/linkedin/callback`;
     const scope = 'r_ads%20r_organization_social';
 
     return `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${userId}`;
@@ -130,11 +205,13 @@ return `https://accounts.google.com/o/oauth2/v2/auth?` +
       throw new UnauthorizedException('Google credentials not configured');
     }
 
+    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+
     const params = new URLSearchParams({
       code,
       client_id: clientId,
       client_secret: clientSecret,
-      redirect_uri: 'http://localhost:3000/auth/google/callback',
+      redirect_uri: `${backendUrl}/auth/google/callback`,
       grant_type: 'authorization_code',
     });
 
@@ -147,10 +224,33 @@ return `https://accounts.google.com/o/oauth2/v2/auth?` +
     const tokens = await res.json();
     if (tokens.error) throw new UnauthorizedException(tokens.error_description);
 
+    let customerId = user.googleCustomerId;
+
+    try {
+      const developerToken = user.googleDeveloperToken || this.configService.get('GOOGLE_DEVELOPER_TOKEN');
+      if (developerToken && tokens.access_token) {
+        const customerRes = await fetch('https://googleads.googleapis.com/v16/customers:listAccessibleCustomers', {
+          headers: {
+            'Authorization': `Bearer ${tokens.access_token}`,
+            'developer-token': developerToken,
+          }
+        });
+        const customerData = await customerRes.json();
+        
+        if (customerData.resourceNames && customerData.resourceNames.length > 0) {
+          // Format is "customers/1234567890"
+          customerId = customerData.resourceNames[0].split('/')[1];
+        }
+      }
+    } catch (e) {
+      console.error('Failed to auto-fetch Google Ads customer ID', e);
+    }
+
     await this.usersService.update(userId, {
       googleRefreshToken: tokens.refresh_token,
       googleAccessToken: tokens.access_token,
       googleTokenExpiry: Date.now() + tokens.expires_in * 1000,
+      ...(customerId && { googleCustomerId: customerId }),
     });
 
     return { success: true };
@@ -273,8 +373,8 @@ async handleMetaCallback(userId: string, code: string) {
     console.log('APP ID:', appId);
     console.log('APP SECRET EXISTS:', !!appSecret);
 
-    const redirectUri =
-      'http://localhost:3000/auth/meta/callback';
+    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const redirectUri = `${backendUrl}/auth/meta/callback`;
 
     console.log('REDIRECT URI:', redirectUri);
 
@@ -326,8 +426,34 @@ async handleMetaCallback(userId: string, code: string) {
       );
     }
 
+    let metaAdAccountId = user.metaAdAccountId;
+    let metaAdAccountName = user.metaAdAccountName;
+
+    try {
+      const accessToken = encodeURIComponent(longToken.access_token);
+      const accountRes = await fetch(
+        `https://graph.facebook.com/v20.0/me/adaccounts?fields=account_id,name&access_token=${accessToken}`
+      );
+      const accountJson = await accountRes.json();
+      
+      if (accountRes.ok && !accountJson.error && accountJson.data && accountJson.data.length > 0) {
+        // Automatically save the first ad account found
+        const firstAccount = accountJson.data[0];
+        // Facebook requires the 'act_' prefix for ad account IDs in most API calls
+        metaAdAccountId = firstAccount.account_id.startsWith('act_') ? firstAccount.account_id : `act_${firstAccount.account_id}`;
+        metaAdAccountName = firstAccount.name;
+        console.log(`Automatically fetched and saved Meta Ad Account: ${metaAdAccountName} (${metaAdAccountId})`);
+      } else {
+        console.warn('Could not fetch Meta ad accounts automatically:', accountJson.error || 'No accounts found');
+      }
+    } catch (e) {
+      console.error('Failed to auto-fetch Meta Ad Account', e);
+    }
+
     await this.usersService.update(userId, {
       metaAccessToken: longToken.access_token,
+      metaAdAccountId,
+      metaAdAccountName,
     });
 
     console.log('META CONNECT SUCCESS');
@@ -347,6 +473,33 @@ async handleMetaCallback(userId: string, code: string) {
   }
 }
 
+  async getMetaPages(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.metaAccessToken) throw new UnauthorizedException('No Meta token');
+    try {
+      const res = await axios.get(`https://graph.facebook.com/v20.0/me/accounts`, {
+        params: { access_token: user.metaAccessToken, fields: 'id,name,access_token,picture' }
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new UnauthorizedException(e.response?.data?.error?.message || 'Failed to fetch pages');
+    }
+  }
+
+  async getMetaPixels(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.metaAccessToken || !user.metaAdAccountId) throw new UnauthorizedException('No Meta token or Ad Account');
+    try {
+      // metaAdAccountId has 'act_' prefix, so we use it directly
+      const res = await axios.get(`https://graph.facebook.com/v20.0/${user.metaAdAccountId}/adspixels`, {
+        params: { access_token: user.metaAccessToken, fields: 'id,name' }
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new UnauthorizedException(e.response?.data?.error?.message || 'Failed to fetch pixels');
+    }
+  }
+
   async getMetaAdsInsights(userId: string, adAccountId: string) {
     const user = await this.usersService.findById(userId);
     if (!user?.metaAccessToken) {
@@ -354,7 +507,7 @@ async handleMetaCallback(userId: string, code: string) {
     }
 
     const res = await fetch(
-      `https://graph.facebook.com/v20.0/act_${adAccountId}/insights?fields=campaign_name,impressions,clicks,spend`,
+      `https://graph.facebook.com/v20.0/${adAccountId}/insights?fields=campaign_name,impressions,clicks,spend`,
       {
         headers: {
           Authorization: `Bearer ${user.metaAccessToken}`,
@@ -377,11 +530,13 @@ async handleMetaCallback(userId: string, code: string) {
       throw new UnauthorizedException('X credentials not configured');
     }
 
+    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+
     const params = new URLSearchParams({
       code,
       grant_type: 'authorization_code',
       client_id: clientId,
-      redirect_uri: 'http://localhost:3000/auth/x/callback',
+      redirect_uri: `${backendUrl}/auth/x/callback`,
       code_verifier: 'challenge', // In production, this should be stored and retrieved
     });
 
@@ -426,10 +581,12 @@ async handleMetaCallback(userId: string, code: string) {
       throw new UnauthorizedException('LinkedIn credentials not configured');
     }
 
+    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      redirect_uri: 'http://localhost:3000/auth/linkedin/callback',
+      redirect_uri: `${backendUrl}/auth/linkedin/callback`,
       client_id: clientId,
       client_secret: clientSecret,
     });
@@ -469,10 +626,10 @@ async handleMetaCallback(userId: string, code: string) {
     return { success: true };
   }
 
-  async updateGoogleCredentials(userId: string, clientId: string, clientSecret: string, developerToken?: string, customerId?: string) {
+  async updateGoogleCredentials(userId: string, clientId?: string, clientSecret?: string, developerToken?: string, customerId?: string) {
     await this.usersService.update(userId, {
-      googleClientId: clientId,
-      googleClientSecret: clientSecret,
+      ...(clientId && { googleClientId: clientId }),
+      ...(clientSecret && { googleClientSecret: clientSecret }),
       ...(developerToken && { googleDeveloperToken: developerToken }),
       ...(customerId && { googleCustomerId: customerId }),
     });

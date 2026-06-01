@@ -118,7 +118,7 @@ interface PendingBrandConfirm {
 // ============================================================
 // HELPERS
 // ============================================================
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000';
 let msgCounter = 0;
 const newMsgId = () => `msg-${++msgCounter}`;
 type UrlValidationResult =
@@ -864,8 +864,7 @@ const EditablePromoObjective: React.FC<{
       value: 'meta',
       label: 'Meta',
       icon: <FacebookIcon />,
-      // connected: !!user?.metaAccessToken,
-      connected: false,
+      connected: !!user?.metaAccessToken,
 
     },
     {
@@ -940,19 +939,14 @@ const EditablePromoObjective: React.FC<{
 
           <div className="promo-platform-row">
   {PLATFORM_OPTIONS.map(p => {
-    const isDisabled = !p.connected;
-    const isActive = data.platforms?.includes(p.value) && p.connected;
+    const isActive = data.platforms?.includes(p.value);
 
     return (
       <div key={p.value} className="platform-wrapper">
         <button
           type="button"
-          disabled={isDisabled}
-          className={`promo-plat-btn 
-            ${isActive ? 'active' : ''} 
-            ${isDisabled ? 'disabled' : ''}`}
+          className={`promo-plat-btn ${isActive ? 'active' : ''}`}
           onClick={() => {
-            if (isDisabled) return;
 
             const current = data.platforms || [];
 
@@ -968,9 +962,9 @@ const EditablePromoObjective: React.FC<{
         </button>
 
         {/* 👇 Tooltip */}
-        {isDisabled && (
+        {!p.connected && (
           <div className="platform-tooltip">
-            Connect {p.label} first to select it
+            Please connect {p.label} account in AdStudio first
           </div>
         )}
       </div>
@@ -1004,13 +998,9 @@ const EditablePromoObjective: React.FC<{
 <button
   className="promo-generate-btn"
   onClick={() => {
-    const connectedPlatforms = (data.platforms || []).filter(pv =>
-      PLATFORM_OPTIONS.find(p => p.value === pv)?.connected
-    );
-
     const cleanedData: PromoObjectiveData = {
       ...data,
-      platforms: connectedPlatforms,
+      platforms: data.platforms || [],
     };
 
     setSubmitted(true);
