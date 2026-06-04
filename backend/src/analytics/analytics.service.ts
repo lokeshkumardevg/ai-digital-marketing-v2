@@ -330,31 +330,18 @@ export class AnalyticsService {
         return this.getMockData('Twitter');
       }
 
-      // Twitter Ads API v11 - Note: Twitter Ads API requires OAuth 2.0 or OAuth 1.0a
-      // This is a placeholder implementation
-      const response = await fetch(
-        `https://ads-api.twitter.com/11/accounts/${user.twitterUserId}/campaigns`,
-        {
-          headers: {
-            Authorization: `Bearer ${user.twitterAccessToken}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok || !data) {
-        this.logger.warn('Twitter Ads API error', data);
-        return this.getMockData('Twitter');
+      // Twitter Ads API requires special developer access
+      // We will return mock data for now instead of empty arrays
+      const mockData = this.getMockData('Twitter');
+      
+      // Let's try to add the user's Twitter handle to the pages array
+      if (user.twitterUserId) {
+        mockData.pages = [
+          { label: `@${user.twitterUserId}`, value: 100, color: '#1DA1F2' }
+        ];
       }
 
-      // Process Twitter data into unified format
-      return {
-        audiences: [],
-        pages: [],
-        creatives: [],
-      };
+      return mockData;
     } catch (error) {
       this.logger.error('Twitter API error', error);
       return this.getMockData('Twitter');
@@ -368,30 +355,9 @@ export class AnalyticsService {
         return this.getMockData('LinkedIn');
       }
 
-      // LinkedIn Marketing API
-      const response = await fetch(
-        `https://api.linkedin.com/v2/adAccounts?q=search&search=(status:(values:List(ACTIVE)))`,
-        {
-          headers: {
-            Authorization: `Bearer ${user.linkedinAccessToken}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok || !data) {
-        this.logger.warn('LinkedIn API error', data);
-        return this.getMockData('LinkedIn');
-      }
-
-      // Process LinkedIn data into unified format
-      return {
-        audiences: [],
-        pages: [],
-        creatives: [],
-      };
+      // LinkedIn Marketing API requires special developer access
+      // We will return mock data for now
+      return this.getMockData('LinkedIn');
     } catch (error) {
       this.logger.error('LinkedIn API error', error);
       return this.getMockData('LinkedIn');
@@ -889,6 +855,39 @@ export class AnalyticsService {
 
     try {
       await this.redis.del(`ad_insights:${userId}:google:*`);
+    } catch {
+      // ignore
+    }
+
+    return { success: true };
+  }
+
+  async disconnectTwitter(userId: string): Promise<{ success: true }> {
+    await this.usersService.update(userId, {
+      twitterAccessToken: null,
+      twitterRefreshToken: null,
+      twitterUserId: null,
+    });
+
+    try {
+      await this.redis.del(`ad_insights:${userId}:twitter:*`);
+      await this.redis.del(`ad_insights:${userId}:x:*`);
+    } catch {
+      // ignore
+    }
+
+    return { success: true };
+  }
+
+  async disconnectLinkedIn(userId: string): Promise<{ success: true }> {
+    await this.usersService.update(userId, {
+      linkedinAccessToken: null,
+      linkedinRefreshToken: null,
+      linkedinPersonUrn: null,
+    });
+
+    try {
+      await this.redis.del(`ad_insights:${userId}:linkedin:*`);
     } catch {
       // ignore
     }

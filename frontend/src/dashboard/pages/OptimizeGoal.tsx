@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MapPin, DollarSign, Monitor, Zap, ChevronDown, ChevronRight, X, Plus, Edit2, Trash2, Save, Info, ToggleLeft, ToggleRight } from 'lucide-react';
+import { MapPin, DollarSign, Monitor, Zap, ChevronDown, ChevronRight, Plus, Edit2, Trash2, Save, Info } from 'lucide-react';
 
 // ─── Dark Theme Tokens ────────────────────────────────────────────────────────
 const D = {
@@ -68,13 +68,6 @@ const AD_PLATFORMS = [
   { id: 'google', label: 'Google', icon: 'G',  color: '#ea4335' },
   { id: 'twitter', label: 'X', icon: '𝕏', color: '#000000' },
   { id: 'linkedin', label: 'LinkedIn', icon: '💼', color: '#0a66c2' },
-];
-const PROMOTE_OBJECTIVES = [
-  { value: 'Lead',       label: 'Lead' },
-  { value: 'Purchase',   label: 'Purchase' },
-  { value: 'Awareness',  label: 'Awareness' },
-  { value: 'Traffic',    label: 'Traffic' },
-  { value: 'Engagement', label: 'Engagement' },
 ];
 const KPI_TYPES = ['CPA', 'ROAS', 'CPC', 'CPM', 'CTR'];
 const DEFAULT_SKILLS: OptimizeSkill[] = [
@@ -266,7 +259,7 @@ export const OptimizeGoal: React.FC = () => {
 
   const totalBudget  = strategies.reduce((sum, s) => sum + (parseFloat(s.dailyBudget) || 0), 0);
   const allPlatforms = [...new Set(strategies.flatMap(s => s.adPlatforms))];
-  const allEvents    = [...new Set(strategies.map(s => s.promoteObjective))];
+  const allEvents    = [...new Set(strategies.flatMap(s => s.promoteObjective))];
   const sidebarItems: SidebarItem[] = [
     { icon: <MapPin size={14}/>,     label: 'Target locations',  value: String(strategies.reduce((n,s) => n+s.locations.length,0)), sub: `${strategies.reduce((n,s)=>n+s.locations.length,0)} locations` },
     { icon: <DollarSign size={14}/>, label: 'Total Daily Budget', value: `$${totalBudget.toLocaleString('en-US',{minimumFractionDigits:0})}`, sub: 'Sum of all groups' },

@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { api } from '../../api/axios';
 import { fetchBotById } from '../../store/slices/chatbotSlice';
 import type { AppDispatch } from '../../store';
-import { Bot, Send, User, Loader2 } from 'lucide-react';
+import { Bot, Send, Loader2 } from 'lucide-react';
 
 export const ChatEmbed: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();
-  const { bots } = useSelector((state: any) => state.chatbot);
+  // const { bots } = useSelector((state: any) => state.chatbot);
   const [bot, setBot] = useState<any>(null);
   
   const [messages, setMessages] = useState<{ role: 'user' | 'bot'; text: string }[]>([]);

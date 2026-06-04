@@ -10,9 +10,11 @@ import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import ColorThief from 'color-thief-node';
 import { chromium } from 'playwright';
+import { ConfigService } from '@nestjs/config';
+
 @Injectable()
 export class CampaignService {
   private readonly logger = new Logger(CampaignService.name);
@@ -23,6 +25,7 @@ export class CampaignService {
 
     @InjectModel('Campaign')
     private campaignModel: Model<any>,
+    private configService: ConfigService,
   ) { }
   private openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -159,37 +162,212 @@ export class CampaignService {
   // 6. PUBLISH
   // ============================================
   async publish(campaignId: string, updateData?: any) {
-    let campaign = this.campaigns.get(campaignId);
-    if (!campaign) {
-      campaign = await this.campaignModel.findById(campaignId);
-      if (!campaign) throw new Error('Campaign not found');
+    // Strip platform suffix if present (e.g. 8f7b..._x -> 8f7b...)
+    let baseCampaignId = campaignId;
+    let platformFromSuffix = '';
+    const platformsList = ['meta', 'google', 'x', 'linkedin'];
+    for (const p of platformsList) {
+      if (campaignId && campaignId.endsWith(`_${p}`)) {
+        baseCampaignId = campaignId.substring(0, campaignId.length - p.length - 1);
+        platformFromSuffix = p;
+        break;
+      }
     }
 
-    if (campaign.save) {
+    let campaign = null;
+    let isBaseCampaign = false;
+
+    // 1. Try to find the exact platform-specific campaign in MongoDB first
+    if (campaignId) {
+      if (Types.ObjectId.isValid(campaignId)) {
+        campaign = await this.campaignModel.findById(campaignId);
+      } else {
+        campaign = await this.campaignModel.findOne({ campaignId });
+      }
+    }
+
+    // 2. Try to find the exact platform-specific campaign in memory
+    if (!campaign && campaignId) {
+      campaign = this.campaigns.get(campaignId);
+    }
+
+    // 3. Try to find the base campaign in MongoDB
+    if (!campaign && baseCampaignId && baseCampaignId !== campaignId) {
+      if (Types.ObjectId.isValid(baseCampaignId)) {
+        campaign = await this.campaignModel.findById(baseCampaignId);
+      } else {
+        campaign = await this.campaignModel.findOne({ campaignId: baseCampaignId });
+      }
+      if (campaign) {
+        isBaseCampaign = true;
+      }
+    }
+
+    // 4. Try to find the base campaign in memory
+    if (!campaign && baseCampaignId) {
+      campaign = this.campaigns.get(baseCampaignId);
+      if (campaign) {
+        if (baseCampaignId !== campaignId) {
+          isBaseCampaign = true;
+        }
+      }
+    }
+
+    if (!campaign) {
+      // Gracefully create a campaign if it's not found (e.g. direct publish from dashboard for X/LinkedIn)
+      if (updateData && updateData.userId) {
+        const plat = updateData.platform || platformFromSuffix || 'x';
+        const platLabel = plat.charAt(0).toUpperCase() + plat.slice(1);
+        const name = updateData.campaignName || updateData.name || `${platLabel} Campaign`;
+
+        const newCampaignId = campaignId || `CMP_${Date.now()}`;
+        const platData = updateData.data || {
+          headline: updateData.headline || '',
+          caption: updateData.caption || '',
+          imageUrl: updateData.imageUrl || '',
+          budget: updateData.dailyBudget || 10,
+          objective: updateData.objective || 'OUTCOME_SALES',
+          finalUrl: updateData.finalUrl || '',
+          location: updateData.location || '',
+        };
+
+        // Use upsert to avoid E11000 duplicate key on re-publish
+        campaign = await this.campaignModel.findOneAndUpdate(
+          { campaignId: newCampaignId },
+          {
+            $set: {
+              userId: updateData.userId,
+              campaignId: newCampaignId,
+              name: name,
+              platform: plat,
+              data: platData,
+              status: 'PROCESSING',
+              aiGeneratedContent: updateData.promoContext || {},
+            },
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true },
+        );
+
+        // simulate activation after 15s
+        const cRef = campaign;
+        setTimeout(async () => {
+          try {
+            await this.campaignModel.findOneAndUpdate(
+              { campaignId: newCampaignId },
+              { $set: { status: 'ACTIVE', activatedAt: new Date().toISOString() } },
+            );
+          } catch (e) { this.logger.error('Activation error:', e); }
+        }, 15000);
+
+        return {
+          message: `Campaign published to ${platLabel} successfully!`,
+          campaignId: newCampaignId,
+          status: 'PROCESSING',
+        };
+      } else {
+        throw new Error('Campaign not found');
+      }
+    }
+
+    const targetPlat = platformFromSuffix || updateData?.platform || campaign.platform || 'All';
+
+    if (!campaign.save || (isBaseCampaign && campaign.platform !== targetPlat)) {
+      // It's a raw in-memory campaign or a base campaign where we want to publish to a specific platform.
+      // Create and save a new Mongoose document for this platform.
+      const plat = targetPlat;
+
+      let platData = campaign.data || {};
+      if (campaign.data && campaign.data[plat]) {
+        platData = campaign.data[plat];
+      } else if (updateData?.data) {
+        platData = updateData.data;
+      } else if (updateData?.caption || updateData?.headline || updateData?.imageUrl) {
+        platData = {
+          headline: updateData.headline || '',
+          caption: updateData.caption || '',
+          imageUrl: updateData.imageUrl || '',
+          budget: updateData.dailyBudget || 10,
+          objective: updateData.objective || 'OUTCOME_SALES',
+          finalUrl: updateData.finalUrl || '',
+          location: updateData.location || '',
+        };
+      }
+
+      let platName = campaign.name || 'AI Campaign';
+      if (plat !== 'All') {
+        const platLabel = plat.charAt(0).toUpperCase() + plat.slice(1);
+        if (!platName.toLowerCase().includes(plat.toLowerCase())) {
+          platName = `${platName} - ${platLabel}`;
+        }
+      }
+
+      let targetCampaignId = campaignId;
+      if (isBaseCampaign && !targetCampaignId.endsWith(`_${plat}`)) {
+        targetCampaignId = `${baseCampaignId}_${plat}`;
+      }
+
+      const campaignDataToSave = campaign.toObject ? campaign.toObject() : campaign;
+
+      // Use upsert to avoid E11000 duplicate key on re-publish
+      campaign = await this.campaignModel.findOneAndUpdate(
+        { campaignId: targetCampaignId },
+        {
+          $set: {
+            userId: campaignDataToSave.userId,
+            campaignId: targetCampaignId,
+            name: platName,
+            platform: plat,
+            data: platData,
+            status: 'PROCESSING',
+            aiGeneratedContent: campaignDataToSave.promoData || campaignDataToSave.aiGeneratedContent || {},
+          },
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true },
+      );
+
+      // simulate activation after 15s
+      const cRef2 = campaign;
+      const tid = targetCampaignId;
+      setTimeout(async () => {
+        try {
+          await this.campaignModel.findOneAndUpdate(
+            { campaignId: tid },
+            { $set: { status: 'ACTIVE', activatedAt: new Date().toISOString() } },
+          );
+        } catch (e) { this.logger.error('Activation error (plat clone):', e); }
+      }, 15000);
+    } else {
       campaign.status = 'PROCESSING';
       if (updateData?.platform) campaign.platform = updateData.platform;
       if (updateData?.data) {
         campaign.data = { ...campaign.data, ...updateData.data };
         campaign.markModified('data');
+      } else if (updateData?.caption || updateData?.headline || updateData?.imageUrl) {
+        campaign.data = {
+          ...campaign.data,
+          headline: updateData.headline || '',
+          caption: updateData.caption || '',
+          imageUrl: updateData.imageUrl || '',
+          budget: updateData.dailyBudget || 10,
+          objective: updateData.objective || 'OUTCOME_SALES',
+          finalUrl: updateData.finalUrl || '',
+          location: updateData.location || '',
+        };
+        campaign.markModified('data');
       }
       await campaign.save();
+
       // simulate activation
+      const cRef = campaign;
       setTimeout(async () => {
-        campaign.status = 'ACTIVE';
-        campaign.activatedAt = new Date().toISOString();
-        await campaign.save();
-      }, 15000);
-    } else {
-      campaign.status = 'PROCESSING';
-      campaign.createdAt = Date.now();
-      // simulate activation
-      setTimeout(() => {
-        campaign.status = 'ACTIVE';
-        campaign.activatedAt = new Date().toISOString();
+        cRef.status = 'ACTIVE';
+        cRef.activatedAt = new Date().toISOString();
+        await cRef.save();
       }, 15000);
     }
 
     return {
+      message: 'Campaign published successfully!',
       campaignId,
       status: 'PROCESSING',
     };
@@ -210,13 +388,40 @@ export class CampaignService {
   // ============================================
   // 8. LIVE DASHBOARD
   // ============================================
-  getLiveDashboard(campaignId: string) {
-    const campaign = this.campaigns.get(campaignId);
+  async getLiveDashboard(campaignId: string) {
+    let campaign = this.campaigns.get(campaignId);
+    if (!campaign) {
+      if (Types.ObjectId.isValid(campaignId)) {
+        campaign = await this.campaignModel.findById(campaignId);
+      } else {
+        campaign = await this.campaignModel.findOne({ campaignId });
+      }
+    }
+
+    if (!campaign) {
+      // Strip platform suffix if present (e.g. 8f7b..._x -> 8f7b...)
+      let baseCampaignId = campaignId;
+      const platformsList = ['meta', 'google', 'x', 'linkedin'];
+      for (const p of platformsList) {
+        if (campaignId.endsWith(`_${p}`)) {
+          baseCampaignId = campaignId.substring(0, campaignId.length - p.length - 1);
+          break;
+        }
+      }
+      if (baseCampaignId !== campaignId) {
+        if (Types.ObjectId.isValid(baseCampaignId)) {
+          campaign = await this.campaignModel.findById(baseCampaignId);
+        } else {
+          campaign = await this.campaignModel.findOne({ campaignId: baseCampaignId });
+        }
+      }
+    }
+
     if (!campaign) throw new Error('Campaign not found');
 
     const isActive = campaign.status === 'ACTIVE';
 
-    const platforms = ['google', 'meta'].map((p) => {
+    const platforms = ['google', 'meta', 'x', 'linkedin'].map((p) => {
       const impressions = isActive ? Math.floor(Math.random() * 10000) : 0;
       const clicks = Math.floor(impressions * 0.04);
 
@@ -1200,43 +1405,106 @@ Return ONLY JSON.
   // SAVE DRAFT
   async saveDraft(body: any) {
     try {
-      let draft;
-      const platformToSave = body.platform || (body.platforms && body.platforms.length > 0 ? body.platforms.join(',') : 'All');
-      const dataToSave = body.data || {};
+      const userId = body.userId;
+      const name = body.name;
+      const promoContext = body.promoContext;
 
-      // If campaignId is a valid Mongo ObjectId, try to update it
-      if (body.campaignId && body.campaignId.length === 24) {
-        draft = await this.campaignModel.findByIdAndUpdate(
-          body.campaignId,
-          {
-            $set: {
-              name: body.name,
-              platform: platformToSave,
-              data: dataToSave,
-              status: 'DRAFT',
-              ...(body.promoContext ? { aiGeneratedContent: body.promoContext } : {}),
-            }
-          },
-          { new: true }
-        );
+      let platforms: string[] = [];
+      if (Array.isArray(body.platforms) && body.platforms.length > 0) {
+        platforms = body.platforms;
+      } else if (typeof body.platform === 'string' && body.platform.trim() !== '') {
+        platforms = body.platform.split(',').map((p: string) => p.trim());
+      } else {
+        platforms = ['All'];
       }
 
-      if (!draft) {
-        draft = await this.campaignModel.create({
-          userId: body.userId,
-          campaignId: body.campaignId || `CMP_${Date.now()}`,
-          name: body.name,
-          platform: platformToSave,
-          data: dataToSave,
-          status: 'DRAFT',
-          ...(body.promoContext ? { aiGeneratedContent: body.promoContext } : {}),
-        });
+      // Fetch the existing campaign if a valid ObjectId is provided
+      let existingCampaign = null;
+      if (body.campaignId && Types.ObjectId.isValid(body.campaignId)) {
+        existingCampaign = await this.campaignModel.findById(body.campaignId);
+      }
+
+      const results = [];
+
+      for (const platform of platforms) {
+        let platformData = {};
+        if (body.data && body.data[platform]) {
+          platformData = body.data[platform];
+        } else if (body.data) {
+          platformData = body.data;
+        }
+
+        let platformCampaignId = body.campaignId || `CMP_${Date.now()}`;
+        let queryObj: any = {};
+
+        if (existingCampaign) {
+          if (existingCampaign.platform === platform) {
+            // Updating the same platform's document
+            queryObj = { _id: existingCampaign._id };
+            platformCampaignId = existingCampaign.campaignId;
+          } else {
+            // Creating a new platform's document from an existing campaign base
+            let baseId = existingCampaign.campaignId || `CMP_${Date.now()}`;
+            const suffix = `_${platform}`;
+            if (!baseId.endsWith(suffix)) {
+              baseId = `${baseId}${suffix}`;
+            }
+            platformCampaignId = baseId;
+            queryObj = { campaignId: platformCampaignId };
+          }
+        } else {
+          // New drafts
+          const suffix = `_${platform}`;
+          if (platform !== 'All' && !platformCampaignId.endsWith(suffix)) {
+            platformCampaignId = `${platformCampaignId}${suffix}`;
+          }
+          queryObj = { campaignId: platformCampaignId };
+        }
+
+        let platformName = name;
+        if (platform !== 'All') {
+          const platLabel = platform.charAt(0).toUpperCase() + platform.slice(1);
+          // If the name has another platform's label (e.g. "_Meta_"), replace it to be accurate.
+          const platformsList = ['meta', 'google', 'x', 'linkedin'];
+          let cleanName = name;
+          platformsList.forEach((p) => {
+            if (p !== platform) {
+              const pLabel = p.charAt(0).toUpperCase() + p.slice(1);
+              const regex = new RegExp(`\\b${pLabel}\\b`, 'gi');
+              cleanName = cleanName.replace(regex, platLabel);
+            }
+          });
+
+          if (!cleanName.toLowerCase().includes(platform.toLowerCase())) {
+            cleanName = `${cleanName} - ${platLabel}`;
+          }
+          platformName = cleanName;
+        }
+
+        const draft = await this.campaignModel.findOneAndUpdate(
+          queryObj,
+          {
+            $set: {
+              userId,
+              name: platformName,
+              platform,
+              data: platformData,
+              status: 'DRAFT',
+              ...(promoContext ? { aiGeneratedContent: promoContext } : {}),
+            },
+            $setOnInsert: {
+              campaignId: platformCampaignId,
+            }
+          },
+          { new: true, upsert: true }
+        );
+        results.push(draft);
       }
 
       return {
         success: true,
-        message: 'Draft saved successfully',
-        data: draft,
+        message: 'Drafts saved successfully',
+        data: results.length === 1 ? results[0] : results,
       };
     } catch (error) {
       console.error(error);
@@ -1272,6 +1540,59 @@ Return ONLY JSON.
     }
   }
 
+  private async markCampaignActive(campaignId: string, platform: string) {
+    let baseCampaignId = campaignId;
+    const platformsList = ['meta', 'google', 'x', 'linkedin'];
+    for (const p of platformsList) {
+      if (campaignId.endsWith(`_${p}`)) {
+        baseCampaignId = campaignId.substring(0, campaignId.length - p.length - 1);
+        break;
+      }
+    }
+
+    const queryObj = Types.ObjectId.isValid(campaignId)
+      ? { _id: campaignId }
+      : { campaignId: campaignId };
+
+    let existing = await this.campaignModel.findOne(queryObj);
+    if (!existing && baseCampaignId !== campaignId) {
+      const baseQuery = Types.ObjectId.isValid(baseCampaignId)
+        ? { _id: baseCampaignId }
+        : { campaignId: baseCampaignId };
+      existing = await this.campaignModel.findOne(baseQuery);
+    }
+
+    if (existing) {
+      existing.status = 'ACTIVE';
+      await existing.save();
+    } else {
+      const inMemory = this.campaigns.get(campaignId) || this.campaigns.get(baseCampaignId);
+      if (inMemory) {
+        let platData = inMemory.data || {};
+        if (inMemory.data && inMemory.data[platform]) {
+          platData = inMemory.data[platform];
+        }
+        let platName = inMemory.name || 'AI Campaign';
+        if (platform !== 'All') {
+          const platLabel = platform.charAt(0).toUpperCase() + platform.slice(1);
+          if (!platName.toLowerCase().includes(platform.toLowerCase())) {
+            platName = `${platName} - ${platLabel}`;
+          }
+        }
+        const created = new this.campaignModel({
+          userId: inMemory.userId,
+          campaignId: campaignId,
+          name: platName,
+          platform: platform,
+          data: platData,
+          status: 'ACTIVE',
+          aiGeneratedContent: inMemory.promoData || inMemory.aiGeneratedContent || {},
+        });
+        await created.save();
+      }
+    }
+  }
+
   async publishMetaCampaign(userId: string, data: any) {
     this.logger.log(`Publishing Meta Campaign for ${userId}`);
     const user = await this.usersService.findById(userId);
@@ -1280,64 +1601,166 @@ Return ONLY JSON.
       throw new BadRequestException('Meta Account not fully connected or Ad Account missing.');
     }
 
-    const { campaignName, dailyBudget, objective, pageId, pixelId, imageUrl, caption, headline, finalUrl } = data;
+    const { campaignName, dailyBudget, objective, pageId, pixelId, imageUrl, caption, headline, finalUrl, location } = data;
     const adAccountId = user.metaAdAccountId;
     const token = user.metaAccessToken;
 
+    // Resolve geo locations dynamically from free-text location query
+    const geoLocations = await this.resolveMetaTargeting(location, token);
+
+    // Normalize free-text campaign goals to Meta Graph API valid objective enums
+    let metaObjective = 'OUTCOME_TRAFFIC';
+    if (objective) {
+      const objNormalized = objective.toUpperCase().replace(/[^A-Z]/g, '');
+      if (objNormalized.includes('SALE') || objNormalized.includes('PURCHASE') || objNormalized.includes('CONVERSION')) {
+        metaObjective = 'OUTCOME_SALES';
+      } else if (objNormalized.includes('LEAD')) {
+        metaObjective = 'OUTCOME_LEADS';
+      } else if (objNormalized.includes('TRAFFIC') || objNormalized.includes('CLICK')) {
+        metaObjective = 'OUTCOME_TRAFFIC';
+      } else if (objNormalized.includes('ENGAGE') || objNormalized.includes('LIKE') || objNormalized.includes('COMMENT')) {
+        metaObjective = 'OUTCOME_ENGAGEMENT';
+      } else if (objNormalized.includes('AWARE') || objNormalized.includes('REACH') || objNormalized.includes('BRAND')) {
+        metaObjective = 'OUTCOME_AWARENESS';
+      } else if (objNormalized.includes('APP') || objNormalized.includes('INSTALL')) {
+        metaObjective = 'OUTCOME_APP_PROMOTION';
+      } else {
+        const validObjectives = [
+          'APP_INSTALLS', 'BRAND_AWARENESS', 'EVENT_RESPONSES', 'LEAD_GENERATION', 'LINK_CLICKS',
+          'LOCAL_AWARENESS', 'MESSAGES', 'OFFER_CLAIMS', 'PAGE_LIKES', 'POST_ENGAGEMENT',
+          'PRODUCT_CATALOG_SALES', 'REACH', 'STORE_VISITS', 'VIDEO_VIEWS', 'OUTCOME_AWARENESS',
+          'OUTCOME_ENGAGEMENT', 'OUTCOME_LEADS', 'OUTCOME_SALES', 'OUTCOME_TRAFFIC',
+          'OUTCOME_APP_PROMOTION', 'CONVERSIONS'
+        ];
+        const exactMatch = validObjectives.find(v => v === objective.toUpperCase().trim());
+        if (exactMatch) {
+          metaObjective = exactMatch;
+        }
+      }
+    }
+
+    let campaignId = null;
+    let adSetId = null;
+    let imageHash = null;
+    let creativeId = null;
+    let adId = null;
+
+    // 1. Create a Campaign
     try {
-      // 1. Create a Campaign
+      this.logger.log(`Step 1: Creating Campaign: name=${campaignName}, objective=${metaObjective}`);
       const campResponse = await axios.post(
         `https://graph.facebook.com/v20.0/${adAccountId}/campaigns`,
         {
           name: campaignName || 'AI Generated Campaign',
-          objective: objective || 'OUTCOME_TRAFFIC', // default to traffic
-          status: 'PAUSED', // Create as draft
+          objective: metaObjective,
+          status: 'ACTIVE', // Create as active to queue for execution
           special_ad_categories: ['NONE'], // Required by FB to be at least ['NONE']
           daily_budget: Math.max((dailyBudget || 10) * 100, 10000), // Budget in cents, min 10000 for INR compatibility
+          bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
           access_token: token,
         }
       );
+      campaignId = campResponse.data.id;
+      this.logger.log(`Step 1 Success: Campaign created with ID=${campaignId}`);
+    } catch (err: any) {
+      const errDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+      this.logger.error(`Step 1 Failed - Meta Campaign Creation Error: ${errDetail}`);
+      throw new InternalServerErrorException(`Meta Campaign Creation Error: ${errDetail}`);
+    }
 
-      const campaignId = campResponse.data.id;
-      
-      // 2. Create Ad Set
+    // 2. Create Ad Set
+    try {
+      this.logger.log(`Step 2: Creating Ad Set for campaignId=${campaignId}`);
       const adSetResponse = await axios.post(
         `https://graph.facebook.com/v20.0/${adAccountId}/adsets`,
         {
           name: `${campaignName} - AdSet`,
           campaign_id: campaignId,
-          status: 'PAUSED',
+          status: 'ACTIVE',
           billing_event: 'IMPRESSIONS',
           optimization_goal: 'LINK_CLICKS',
-          daily_budget: Math.max((dailyBudget || 10) * 100, 10000),
           targeting: {
-            geo_locations: { countries: ['IN'] },
+            geo_locations: geoLocations,
             publisher_platforms: ['facebook', 'instagram']
           },
-          bid_strategy: 'LOWEST_COST_WITHOUT_CAP',
           access_token: token,
         }
       );
-      const adSetId = adSetResponse.data.id;
+      adSetId = adSetResponse.data.id;
+      this.logger.log(`Step 2 Success: Ad Set created with ID=${adSetId}`);
+    } catch (err: any) {
+      const errDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+      this.logger.error(`Step 2 Failed - Meta Ad Set Creation Error: ${errDetail}`);
+      throw new InternalServerErrorException(`Meta Ad Set Creation Error: ${errDetail}`);
+    }
 
-      // 3. Upload Image
-      let imageHash = null;
-      if (imageUrl) {
-        const imgResponse = await axios.post(
-          `https://graph.facebook.com/v20.0/${adAccountId}/adimages`,
-          { bytes: imageUrl, access_token: token } // If imageUrl is base64, otherwise we need to download it or pass 'url' if supported. Wait, FB API accepts 'bytes' (base64 or multipart) or a zip. We don't have direct URL support in /adimages easily, wait, we do: FB supports `bytes` as a zip or base64. But if it's an external URL? FB doesn't natively accept just 'url' for adimages in some versions. But wait, we can pass it in `object_story_spec` dynamically. But wait, `link_data.image_hash` is better. We will use `url` in `adimages` if it works, or fallback to an empty string.
-        ).catch(e => null); // Ignore errors and just proceed without image if it fails
+    // 3. Upload Image
+    if (imageUrl) {
+      try {
+        let base64Bytes: string | null = null;
+        if (imageUrl.startsWith('data:image/')) {
+          base64Bytes = imageUrl.split(',')[1] || null;
+        } else if (imageUrl.startsWith('http') && !imageUrl.includes('blob:')) {
+          this.logger.log(`Step 3: Downloading external image to base64: ${imageUrl}`);
+          const downloadResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+          base64Bytes = Buffer.from(downloadResponse.data).toString('base64');
+        }
+
+        if (base64Bytes) {
+          this.logger.log(`Step 3: Uploading image to /adimages`);
+          const imgResponse = await axios.post(
+            `https://graph.facebook.com/v20.0/${adAccountId}/adimages`,
+            { bytes: base64Bytes, access_token: token }
+          );
+          const imgData = imgResponse.data;
+          this.logger.log('Step 3: Image upload raw response: ' + JSON.stringify(imgData));
+          if (imgData.images) {
+            const firstKey = Object.keys(imgData.images)[0];
+            if (firstKey) {
+              imageHash = imgData.images[firstKey].hash;
+            }
+          } else {
+            const firstKey = Object.keys(imgData)[0];
+            if (firstKey && imgData[firstKey]?.hash) {
+              imageHash = imgData[firstKey].hash;
+            }
+          }
+          this.logger.log(`Step 3 Success: Image uploaded. Hash=${imageHash}`);
+        } else {
+          this.logger.warn(`Step 3 Skipped: Image URL could not be converted to base64 (could be a local blob URL: ${imageUrl})`);
+        }
+      } catch (err: any) {
+        const errDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+        this.logger.error(`Step 3 Failed - Meta AdImage Upload Error (non-fatal, will fallback): ${errDetail}`);
       }
-      
-      // Since fetching image as bytes might be complex inline, let's just use `picture` in link_data
-      // Or actually, `adimages` supports uploading from a URL in some versions? No, `adimages` needs a file.
-      // We will skip imageHash if it's too complex and just provide `picture: imageUrl` in link_data.
+    }
 
-      // 4. Create Ad Creative
+    // Fetch user's Facebook Page ID if pageId is missing/empty
+    let finalPageId = pageId;
+    if (!finalPageId) {
+      try {
+        this.logger.log(`Step 4: Fetching user fallback Facebook page accounts`);
+        const pagesRes = await axios.get(`https://graph.facebook.com/v20.0/me/accounts`, {
+          params: { access_token: token, fields: 'id' }
+        });
+        if (pagesRes.data && pagesRes.data.data && pagesRes.data.data.length > 0) {
+          finalPageId = pagesRes.data.data[0].id;
+        }
+      } catch (e: any) {
+        this.logger.error('Failed to auto-fetch fallback Meta page: ' + (e.response?.data?.error?.message || e.message));
+      }
+    }
+    if (!finalPageId) {
+      finalPageId = '1234567890';
+    }
+    this.logger.log(`Step 4: Using finalPageId=${finalPageId}`);
+
+    // 4. Create Ad Creative
+    try {
       const creativePayload: any = {
         name: `${campaignName} - Creative`,
         object_story_spec: {
-          page_id: pageId || '1234567890', // Fallback to avoid crash, though it will fail API validation if invalid
+          page_id: finalPageId,
           link_data: {
             link: finalUrl || 'https://example.com',
             message: caption || 'AI Generated Ad Copy',
@@ -1346,40 +1769,528 @@ Return ONLY JSON.
         },
         access_token: token,
       };
-      if (imageUrl) {
+
+      if (imageHash) {
+        creativePayload.object_story_spec.link_data.image_hash = imageHash;
+      } else if (imageUrl && imageUrl.startsWith('http') && !imageUrl.includes('blob:')) {
         creativePayload.object_story_spec.link_data.picture = imageUrl;
       }
 
+      this.logger.log(`Step 4: Creating Ad Creative with payload: ${JSON.stringify(creativePayload)}`);
       const creativeResponse = await axios.post(
         `https://graph.facebook.com/v20.0/${adAccountId}/adcreatives`,
         creativePayload
       );
-      const creativeId = creativeResponse.data.id;
+      creativeId = creativeResponse.data.id;
+      this.logger.log(`Step 4 Success: Ad Creative created with ID=${creativeId}`);
+    } catch (err: any) {
+      const errDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+      this.logger.error(`Step 4 Failed - Meta Ad Creative Creation Error: ${errDetail}`);
+      throw new InternalServerErrorException(`Meta Ad Creative Creation Error: ${errDetail}`);
+    }
 
-      // 5. Create Ad
+    // 5. Create Ad
+    try {
+      this.logger.log(`Step 5: Creating Ad under adset=${adSetId} and creative=${creativeId}`);
       const adResponse = await axios.post(
         `https://graph.facebook.com/v20.0/${adAccountId}/ads`,
         {
           name: `${campaignName} - Ad`,
           adset_id: adSetId,
           creative: { creative_id: creativeId },
-          status: 'PAUSED',
+          status: 'ACTIVE',
           access_token: token,
         }
       );
-      const adId = adResponse.data.id;
+      adId = adResponse.data.id;
+      this.logger.log(`Step 5 Success: Ad created with ID=${adId}`);
+    } catch (err: any) {
+      const errDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+      this.logger.error(`Step 5 Failed - Meta Ad Creation Error: ${errDetail}`);
+      throw new InternalServerErrorException(`Meta Ad Creation Error: ${errDetail}`);
+    }
+
+    if (data.campaignId) {
+      const queryObj = Types.ObjectId.isValid(data.campaignId)
+        ? { _id: data.campaignId }
+        : { campaignId: data.campaignId };
+      const doc = await this.campaignModel.findOne(queryObj);
+      if (doc) {
+        doc.campaignId = campaignId;
+        doc.status = 'ACTIVE';
+        doc.data = {
+          ...doc.data,
+          metaCampaignId: campaignId,
+          metaAdSetId: adSetId,
+          metaAdId: adId,
+        };
+        doc.markModified('data');
+        await doc.save();
+        this.logger.log(`Updated local campaign ${data.campaignId} with Meta campaignId=${campaignId}, adSetId=${adSetId}, adId=${adId}`);
+      } else {
+        await this.markCampaignActive(data.campaignId, 'meta');
+      }
+    }
+
+    return {
+      success: true,
+      message: 'Campaign, Ad Set, and Ad successfully created in Meta Ads Manager.',
+      campaignId,
+      adSetId,
+      adId,
+    };
+  }
+
+  async publishGoogleCampaign(userId: string, data: any) {
+    this.logger.log(`Publishing Google Campaign for ${userId}`);
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new BadRequestException('User not found');
+    if (!user.googleAccessToken || !user.googleCustomerId) {
+      throw new BadRequestException('Google Account not fully connected or Customer ID missing.');
+    }
+
+    const { campaignName, dailyBudget } = data;
+    const customerId = user.googleCustomerId.replace(/-/g, ''); // Ensure no dashes
+    const token = user.googleAccessToken;
+    const developerToken = user.googleDeveloperToken || this.configService.get('GOOGLE_DEVELOPER_TOKEN');
+
+    if (!developerToken) {
+      throw new BadRequestException('Google Ads Developer Token is missing in backend configuration. Cannot publish to Google Ads API.');
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'developer-token': developerToken,
+    };
+
+    try {
+      // 1. Create Campaign Budget
+      const budgetResponse = await axios.post(
+        `https://googleads.googleapis.com/v16/customers/${customerId}/campaignBudgets:mutate`,
+        {
+          operations: [{
+            create: {
+              name: `${campaignName || 'AI Campaign'} Budget - ${Date.now()}`,
+              amountMicros: Math.max((dailyBudget || 10) * 1000000, 10000000), // Min $10
+              deliveryMethod: 'STANDARD'
+            }
+          }]
+        },
+        { headers }
+      );
+      const budgetResourceName = budgetResponse.data.results[0].resourceName;
+
+      // 2. Create Campaign
+      const campaignResponse = await axios.post(
+        `https://googleads.googleapis.com/v16/customers/${customerId}/campaigns:mutate`,
+        {
+          operations: [{
+            create: {
+              name: `${campaignName || 'AI Campaign'} - ${Date.now()}`,
+              status: 'PAUSED', // Create as draft
+              advertisingChannelType: 'SEARCH',
+              campaignBudget: budgetResourceName,
+              networkSettings: {
+                targetGoogleSearch: true,
+                targetSearchNetwork: true,
+                targetContentNetwork: true,
+              }
+            }
+          }]
+        },
+        { headers }
+      );
+      const campaignResourceName = campaignResponse.data.results[0].resourceName;
+
+      // 3. Create AdGroup
+      const adGroupResponse = await axios.post(
+        `https://googleads.googleapis.com/v16/customers/${customerId}/adGroups:mutate`,
+        {
+          operations: [{
+            create: {
+              name: `AdGroup - ${Date.now()}`,
+              status: 'PAUSED',
+              campaign: campaignResourceName,
+              type: 'SEARCH_STANDARD'
+            }
+          }]
+        },
+        { headers }
+      );
+      const adGroupResourceName = adGroupResponse.data.results[0].resourceName;
+
+      if (data.campaignId) {
+        await this.markCampaignActive(data.campaignId, 'google');
+      }
 
       return {
         success: true,
-        message: 'Campaign, Ad Set, and Ad successfully created in Meta Ads Manager.',
-        campaignId,
-        adSetId,
-        adId,
+        message: 'Campaign, Budget, and Ad Group successfully created in Google Ads (Paused/Draft mode).',
+        campaignResourceName,
+        adGroupResourceName,
       };
 
     } catch (err: any) {
-      this.logger.error('Meta API Error: ' + err.response?.data?.error?.message || err.message);
-      throw new InternalServerErrorException(err.response?.data?.error?.message || 'Failed to create Meta campaign.');
+      this.logger.error('Google Ads API Error', err.response?.data || err.message);
+      const errorMessage = err.response?.data?.error?.details?.[0]?.errors?.[0]?.message || err.response?.data?.error?.message || err.message;
+      throw new InternalServerErrorException(`Google Ads API Error: ${errorMessage}`);
     }
+  }
+
+  async getCampaignsByUser(userId: string) {
+    try {
+      const campaigns = await this.campaignModel
+        .find({ userId })
+        .sort({ createdAt: -1 });
+
+      let user: any = null;
+      try {
+        if (userId && Types.ObjectId.isValid(userId)) {
+          user = await this.usersService.findById(userId);
+        }
+      } catch (_) { /* user lookup is best-effort */ }
+      const token = user?.metaAccessToken;
+
+
+      const enrichedCampaigns = await Promise.all(
+        campaigns.map(async (c) => {
+          const raw = c.toObject ? c.toObject() : c;
+
+          let delivery = raw.status || 'ACTIVE';
+          let dailyBudget = raw.budget?.daily || 0;
+          let bidStrategy = 'Lowest Cost';
+          let spend = 0;
+          let impressions = 0;
+          let reach = 0;
+          let clicks = 0;
+          let results = 0;
+          let resultType = 'Landing Page Views';
+          let costPerResult = 0;
+          let isRealMeta = false;
+
+          if (raw.platform === 'meta' && raw.campaignId && !raw.campaignId.startsWith('CMP_') && token) {
+            try {
+              // Fetch Campaign Details from Meta Graph API
+              const campRes = await axios.get(
+                `https://graph.facebook.com/v20.0/${raw.campaignId}`,
+                {
+                  params: {
+                    fields: 'name,status,effective_status,configured_status,daily_budget,lifetime_budget,bid_strategy',
+                    access_token: token,
+                  }
+                }
+              );
+              const campData = campRes.data;
+              delivery = campData.effective_status || campData.status || delivery;
+              dailyBudget = campData.daily_budget ? parseFloat(campData.daily_budget) / 100 : dailyBudget;
+              bidStrategy = campData.bid_strategy ? campData.bid_strategy.replace(/_/g, ' ') : bidStrategy;
+              isRealMeta = true;
+
+              // Fetch Campaign Insights
+              const insightsRes = await axios.get(
+                `https://graph.facebook.com/v20.0/${raw.campaignId}/insights`,
+                {
+                  params: {
+                    fields: 'spend,impressions,reach,clicks,actions',
+                    access_token: token,
+                  }
+                }
+              );
+              const insightsData = insightsRes.data?.data?.[0];
+              if (insightsData) {
+                spend = parseFloat(insightsData.spend || 0);
+                impressions = parseInt(insightsData.impressions || 0);
+                reach = parseInt(insightsData.reach || 0);
+                clicks = parseInt(insightsData.clicks || 0);
+
+                if (insightsData.actions) {
+                  const lpv = insightsData.actions.find((a: any) => a.action_type === 'landing_page_view');
+                  const lc = insightsData.actions.find((a: any) => a.action_type === 'link_click');
+                  if (lpv) {
+                    results = parseInt(lpv.value || 0);
+                    resultType = 'Landing Page Views';
+                  } else if (lc) {
+                    results = parseInt(lc.value || 0);
+                    resultType = 'Link Clicks';
+                  } else if (insightsData.actions.length > 0) {
+                    results = parseInt(insightsData.actions[0].value || 0);
+                    resultType = insightsData.actions[0].action_type.replace(/_/g, ' ');
+                  }
+                }
+                costPerResult = results > 0 ? spend / results : 0;
+              }
+            } catch (err: any) {
+              this.logger.error(`Failed to fetch real-time Meta metrics for campaign ${raw.campaignId}: ${err.message}`);
+            }
+          }
+
+          return {
+            ...raw,
+            delivery,
+            dailyBudget,
+            bidStrategy,
+            spend,
+            impressions,
+            reach,
+            clicks,
+            results,
+            resultType,
+            costPerResult,
+            isRealMeta,
+          };
+        })
+      );
+
+      return enrichedCampaigns;
+    } catch (error) {
+      this.logger.error(`Error fetching campaigns for user ${userId}`, error);
+      throw new InternalServerErrorException('Failed to fetch campaigns');
+    }
+  }
+
+  async toggleCampaignStatus(id: string, status: string) {
+    try {
+      const campaign = await this.campaignModel.findById(id);
+      if (!campaign) {
+        throw new BadRequestException('Campaign not found');
+      }
+
+      const userId = campaign.userId;
+      const user = await this.usersService.findById(userId);
+      if (!user) {
+        throw new BadRequestException('User not found in system');
+      }
+
+      const uppercaseStatus = status.toUpperCase(); // 'ACTIVE' or 'PAUSED'
+
+      // Meta toggle
+      if (campaign.platform === 'meta' && campaign.campaignId && !campaign.campaignId.startsWith('CMP_')) {
+        const token = user.metaAccessToken;
+        if (token) {
+          this.logger.log(`Toggling Meta Campaign ${campaign.campaignId} status to ${uppercaseStatus}`);
+
+          // 1. Toggle Campaign
+          await axios.post(
+            `https://graph.facebook.com/v20.0/${campaign.campaignId}`,
+            {
+              status: uppercaseStatus,
+              access_token: token,
+            }
+          ).catch((err) => {
+            const detail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
+            this.logger.error(`Failed to update Meta Campaign status: ${detail}`);
+            throw new BadRequestException(`Meta API Error: ${err.response?.data?.error?.message || err.message}`);
+          });
+
+          // 2. Fetch and Toggle Ad Sets under this Campaign
+          try {
+            const adSetsRes = await axios.get(
+              `https://graph.facebook.com/v20.0/${campaign.campaignId}/adsets`,
+              {
+                params: {
+                  access_token: token,
+                  fields: 'id',
+                }
+              }
+            );
+            const adSets = adSetsRes.data?.data || [];
+            this.logger.log(`Found ${adSets.length} Ad Sets under campaign ${campaign.campaignId} to toggle`);
+            for (const adset of adSets) {
+              this.logger.log(`Toggling Ad Set ${adset.id} status to ${uppercaseStatus}`);
+              await axios.post(
+                `https://graph.facebook.com/v20.0/${adset.id}`,
+                {
+                  status: uppercaseStatus,
+                  access_token: token,
+                }
+              );
+            }
+          } catch (err: any) {
+            this.logger.error(`Failed to toggle child Ad Sets for campaign ${campaign.campaignId}: ${err.message}`);
+          }
+
+          // 3. Fetch and Toggle Ads under this Campaign
+          try {
+            const adsRes = await axios.get(
+              `https://graph.facebook.com/v20.0/${campaign.campaignId}/ads`,
+              {
+                params: {
+                  access_token: token,
+                  fields: 'id',
+                }
+              }
+            );
+            const ads = adsRes.data?.data || [];
+            this.logger.log(`Found ${ads.length} Ads under campaign ${campaign.campaignId} to toggle`);
+            for (const ad of ads) {
+              this.logger.log(`Toggling Ad ${ad.id} status to ${uppercaseStatus}`);
+              await axios.post(
+                `https://graph.facebook.com/v20.0/${ad.id}`,
+                {
+                  status: uppercaseStatus,
+                  access_token: token,
+                }
+              );
+            }
+          } catch (err: any) {
+            this.logger.error(`Failed to toggle child Ads for campaign ${campaign.campaignId}: ${err.message}`);
+          }
+        }
+      }
+
+      // Update local db
+      campaign.status = uppercaseStatus;
+      await campaign.save();
+
+      return {
+        success: true,
+        message: `Campaign status updated to ${status} successfully.`,
+        campaign,
+      };
+    } catch (error: any) {
+      this.logger.error(`Error toggling campaign status for ID ${id}`, error);
+      throw new InternalServerErrorException(error.message || 'Failed to toggle campaign status');
+    }
+  }
+
+  async getMetaBillingStatus(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new BadRequestException('User not found');
+    if (!user.metaAccessToken || !user.metaAdAccountId) {
+      return {
+        connected: false,
+        message: 'Meta account not connected or Ad Account missing.',
+      };
+    }
+
+    const adAccountId = user.metaAdAccountId;
+    const token = user.metaAccessToken;
+
+    try {
+      this.logger.log(`Fetching Meta Ad Account Billing Status for ${adAccountId}`);
+      const response = await axios.get(
+        `https://graph.facebook.com/v20.0/${adAccountId}`,
+        {
+          params: {
+            fields: 'funding_source,funding_source_details,balance,spend_cap,amount_spent,account_status,disable_reason',
+            access_token: token,
+          }
+        }
+      );
+      const data = response.data;
+
+      const statusMap: Record<number, string> = {
+        1: 'ACTIVE',
+        2: 'DISABLED',
+        3: 'UNSETTLED',
+        7: 'PENDING_RISK_REVIEW',
+        9: 'IN_GRACE_PERIOD',
+        100: 'PENDING_CLOSURE',
+        101: 'CLOSED',
+      };
+
+      const accountStatus = statusMap[data.account_status] || 'UNKNOWN';
+      const hasPaymentMethod = !!data.funding_source;
+      const numericId = adAccountId.replace('act_', '');
+      const billingSetupUrl = `https://adsmanager.facebook.com/adsmanager/manage/billing?act=${numericId}`;
+
+      return {
+        connected: true,
+        adAccountId,
+        accountStatus,
+        hasPaymentMethod,
+        fundingSourceDetails: data.funding_source_details || null,
+        balance: data.balance || '0',
+        spendCap: data.spend_cap || '0',
+        amountSpent: data.amount_spent || '0',
+        billingSetupUrl,
+      };
+    } catch (err: any) {
+      const errMsg = err.response?.data?.error?.message || err.message;
+      this.logger.error(`Failed to fetch Meta Billing Status: ${errMsg}`);
+      return {
+        connected: true,
+        error: errMsg,
+        billingSetupUrl: `https://adsmanager.facebook.com/adsmanager/manage/billing`,
+      };
+    }
+  }
+
+  private async resolveMetaTargeting(location: string, token: string): Promise<any> {
+    const geo: any = {};
+    if (!location) {
+      geo.countries = ['IN'];
+      return geo;
+    }
+
+    const parts = location.split(',').map(p => p.trim()).filter(Boolean);
+    const countriesList: string[] = [];
+    const regionsList: any[] = [];
+    const citiesList: any[] = [];
+
+    for (const part of parts) {
+      const cleanPart = part.toUpperCase();
+      const countryMap: Record<string, string> = {
+        'INDIA': 'IN',
+        'UNITED STATES': 'US',
+        'USA': 'US',
+        'UNITED STATES OF AMERICA': 'US',
+        'UNITED KINGDOM': 'GB',
+        'UK': 'GB',
+        'CANADA': 'CA',
+        'AUSTRALIA': 'AU',
+        'GERMANY': 'DE',
+        'FRANCE': 'FR',
+        'JAPAN': 'JP',
+        'SINGAPORE': 'SG',
+        'UNITED ARAB EMIRATES': 'AE',
+        'UAE': 'AE',
+      };
+
+      if (countryMap[cleanPart]) {
+        countriesList.push(countryMap[cleanPart]);
+        continue;
+      }
+      if (cleanPart.length === 2) {
+        countriesList.push(cleanPart);
+        continue;
+      }
+
+      try {
+        this.logger.log(`Searching Meta adgeolocation for: "${part}"`);
+        const response = await axios.get('https://graph.facebook.com/v20.0/search', {
+          params: {
+            type: 'adgeolocation',
+            q: part,
+            access_token: token,
+          }
+        });
+        const matches = response.data?.data;
+        if (matches && matches.length > 0) {
+          const match = matches[0];
+          this.logger.log(`Found Meta location match: name="${match.name}", type="${match.type}", key="${match.key}"`);
+          if (match.type === 'city') {
+            citiesList.push({ key: match.key, radius: 10, distance_unit: 'mile' });
+          } else if (match.type === 'region' || match.type === 'state') {
+            regionsList.push({ key: match.key });
+          } else if (match.type === 'country') {
+            countriesList.push(match.key);
+          }
+        } else {
+          this.logger.warn(`No Meta location match found for: "${part}"`);
+        }
+      } catch (err) {
+        this.logger.error(`Error resolving location matching "${part}": ${err.message}`);
+      }
+    }
+
+    if (countriesList.length > 0) geo.countries = countriesList;
+    if (regionsList.length > 0) geo.regions = regionsList;
+    if (citiesList.length > 0) geo.cities = citiesList;
+
+    if (Object.keys(geo).length === 0) {
+      geo.countries = ['IN'];
+    }
+    return geo;
   }
 }

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import logo from '../../assets/fevicon.png';
 
@@ -101,7 +100,7 @@ export const Agents: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loadingStage, setLoadingStage] = useState('');
-  const [agentStatuses, setAgentStatuses] = useState<Record<string, 'active' | 'sleeping'>>({
+  const agentStatuses: Record<string, 'active' | 'sleeping'> = {
     "review_generation": "active",
     "review_response": "active",
     "social_publishing": "sleeping",
@@ -113,7 +112,7 @@ export const Agents: React.FC = () => {
     "template_design": "active",
     "custom": "active",
     "website_builder": "active"
-  });
+  };
 
   useEffect(() => {
     // Inject html2pdf script if not present
@@ -145,7 +144,7 @@ export const Agents: React.FC = () => {
     setResponseText('');
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldId: string) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, _fieldId: string) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();

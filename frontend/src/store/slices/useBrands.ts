@@ -18,7 +18,6 @@ import {
   removeBrandLocally,
   clearWorkspaceError,
   resetWorkspace,
-  type BrandRecord,
 } from './workspaceSlice';
 
 import {
@@ -34,9 +33,6 @@ import {
   selectSaveStatus,
   selectWorkspaceError,
 } from './workspaceSelectors';
-
-// Adjust to wherever your RootState is defined
-type RootState = any;
 
 export const useBrands = (userId?: string) => {
   const dispatch = useDispatch<any>();

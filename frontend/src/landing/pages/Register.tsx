@@ -6,6 +6,7 @@ import { signInWithPopup } from "firebase/auth";
 import { api } from "../../api/axios";
 import { saveAuthUser } from "../lib/auth";
 import logo from "../../assets/fevicon.png";
+// @ts-ignore
 import BotSVG from "../components/Bot";
 import { useGoogleLogin } from '@react-oauth/google';
 

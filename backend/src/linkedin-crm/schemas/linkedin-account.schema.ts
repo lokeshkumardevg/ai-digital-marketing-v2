@@ -76,6 +76,9 @@ export class LinkedInAccount {
 
   @Prop({ default: 'pending' })
   scraperStatus?: string; // 'pending', 'active', 'failed', 'completed'
+
+  @Prop({ type: [Object], default: [] })
+  events?: any[];
 }
 
 export const LinkedInAccountSchema = SchemaFactory.createForClass(LinkedInAccount);

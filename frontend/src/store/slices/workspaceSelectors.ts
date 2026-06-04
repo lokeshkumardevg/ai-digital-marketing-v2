@@ -29,7 +29,7 @@ export const selectWorkspaceError  = (state: RootState) => state.workspace.error
 export const selectActiveBrand = createSelector(
   selectAllBrands,
   selectActiveBrandId,
-  (brands, activeId) => brands.find(b => b.id === activeId) ?? null,
+  (brands, activeId) => brands.find((b: any) => b.id === activeId) ?? null,
 );
 
 /** Is a fetch currently in flight? */

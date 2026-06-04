@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GlassCard } from '../components/GlassCard';
 import { User, Key, Bell, Shield, Save, Settings as SettingsIcon } from 'lucide-react';
-import { updateUser } from '../../store/slices/authSlice';
+import { updateUser, hydrateSession } from '../../store/slices/authSlice';
 import { addNotification } from '../../store/slices/notificationSlice';
 import type { AppDispatch } from '../../store';
 import toast from 'react-hot-toast';
@@ -22,6 +22,8 @@ export const Settings: React.FC = () => {
   const [googleCustomerId, setGoogleCustomerId] = useState(user?.googleCustomerId || '');
   const [metaAppId, setMetaAppId] = useState(user?.metaAppId || '');
   const [metaAppSecret, setMetaAppSecret] = useState(user?.metaAppSecret || '');
+  const [xAccessToken, setXAccessToken] = useState(user?.twitterAccessToken || '');
+  const [xTokenSecret, setXTokenSecret] = useState(user?.twitterRefreshToken || '');
   
   React.useEffect(() => {
     if (user) {
@@ -34,6 +36,8 @@ export const Settings: React.FC = () => {
       setGoogleCustomerId(user.googleCustomerId || '');
       setMetaAppId(user.metaAppId || '');
       setMetaAppSecret(user.metaAppSecret || '');
+      setXAccessToken(user.twitterAccessToken || '');
+      setXTokenSecret(user.twitterRefreshToken || '');
     }
   }, [user]);
 
@@ -41,6 +45,10 @@ export const Settings: React.FC = () => {
     try {
       const url = new URL(window.location.href);
       const linkedinConnected = url.searchParams.get('linkedinConnected');
+      const metaConnected = url.searchParams.get('metaConnected');
+      const xConnected = url.searchParams.get('xConnected');
+      const googleConnected = url.searchParams.get('googleConnected');
+
       if (linkedinConnected === 'success') {
         toast.success('LinkedIn account connected successfully!');
       } else if (linkedinConnected === 'error') {
@@ -48,8 +56,46 @@ export const Settings: React.FC = () => {
         toast.error(`Failed to connect LinkedIn: ${reason || 'Unknown error'}`);
       }
 
+      if (metaConnected === 'success') {
+        toast.success('Meta Ads account connected successfully!');
+      } else if (metaConnected === 'error') {
+        const reason = url.searchParams.get('reason');
+        toast.error(`Failed to connect Meta Ads: ${reason || 'Unknown error'}`);
+      }
+
+      if (xConnected === 'success') {
+        toast.success('X Ads account connected successfully!');
+      } else if (xConnected === 'error') {
+        const reason = url.searchParams.get('reason');
+        toast.error(`Failed to connect X Ads: ${reason || 'Unknown error'}`);
+      }
+
+      if (googleConnected === 'success') {
+        toast.success('Google Ads account connected successfully!');
+      } else if (googleConnected === 'error') {
+        const reason = url.searchParams.get('reason');
+        toast.error(`Failed to connect Google Ads: ${reason || 'Unknown error'}`);
+      }
+
+      let changed = false;
       if (linkedinConnected) {
         url.searchParams.delete('linkedinConnected');
+        changed = true;
+      }
+      if (metaConnected) {
+        url.searchParams.delete('metaConnected');
+        changed = true;
+      }
+      if (xConnected) {
+        url.searchParams.delete('xConnected');
+        changed = true;
+      }
+      if (googleConnected) {
+        url.searchParams.delete('googleConnected');
+        changed = true;
+      }
+
+      if (changed) {
         url.searchParams.delete('reason');
         window.history.replaceState({}, '', url.toString());
       }
@@ -92,7 +138,7 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const handleSaveApiCredentials = async (type: 'google' | 'meta') => {
+  const handleSaveApiCredentials = async (type: 'google' | 'meta' | 'x') => {
     try {
       const { api } = await import('../../api/axios');
 
@@ -106,6 +152,7 @@ export const Settings: React.FC = () => {
 
         if (response.data.success) {
           toast.success('Google credentials saved successfully!');
+          dispatch(hydrateSession());
           dispatch(addNotification({
             id: Date.now().toString(),
             title: 'Google Credentials Updated',
@@ -123,10 +170,29 @@ export const Settings: React.FC = () => {
 
         if (response.data.success) {
           toast.success('Meta credentials saved successfully!');
+          dispatch(hydrateSession());
           dispatch(addNotification({
             id: Date.now().toString(),
             title: 'Meta Credentials Updated',
             message: 'Your Meta Ads API credentials have been saved.',
+            type: 'success',
+            time: new Date().toISOString(),
+            read: false
+          }));
+        }
+      } else if (type === 'x') {
+        const response = await api.post('/auth/x/credentials', {
+          accessToken: xAccessToken,
+          tokenSecret: xTokenSecret,
+        });
+
+        if (response.data.success) {
+          toast.success('X credentials saved successfully!');
+          dispatch(hydrateSession());
+          dispatch(addNotification({
+            id: Date.now().toString(),
+            title: 'X Credentials Updated',
+            message: 'Your X (Twitter) Ads API credentials have been saved.',
             type: 'success',
             time: new Date().toISOString(),
             read: false
@@ -170,9 +236,8 @@ export const Settings: React.FC = () => {
   const connectX = async () => {
     try {
       const { api } = await import('../../api/axios');
-      const response = await api.get('social/auth/twitter');
-      console.log('X connection response:', response);
-      window.location.href = response.data.data.url;
+      const response = await api.get('/auth/x');
+      window.location.href = response.data.url;
     } catch (error) {
       toast.error('Failed to initiate X connection');
     }
@@ -393,6 +458,56 @@ export const Settings: React.FC = () => {
                         }}
                       >
                         Save Meta Credentials
+                      </button>
+                    </div>
+
+                    {/* X Ads Credentials */}
+                    <div style={{ marginBottom: '32px', padding: '20px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                      <h4 style={{ fontSize: '1rem', marginBottom: '16px', color: '#e7e9ea', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <SettingsIcon size={16} /> X (Twitter) Ads API Credentials
+                      </h4>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                        Set your X Ads Access Token and Access Token Secret directly to connect.
+                      </p>
+
+                      <div className="input-group">
+                        <label>Access Token</label>
+                        <input
+                          type="text"
+                          placeholder="2012447571302817792-..."
+                          className="input-field"
+                          value={xAccessToken}
+                          onChange={e => setXAccessToken(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="input-group">
+                        <label>Access Token Secret (Optional)</label>
+                        <input
+                          type="password"
+                          placeholder="zyBe2QypgJONh..."
+                          className="input-field"
+                          value={xTokenSecret}
+                          onChange={e => setXTokenSecret(e.target.value)}
+                        />
+                      </div>
+
+                      <button
+                        onClick={() => handleSaveApiCredentials('x')}
+                        disabled={!xAccessToken}
+                        style={{
+                          marginTop: '12px',
+                          padding: '10px 20px',
+                          background: 'linear-gradient(135deg, #000000, #333333)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                          cursor: !xAccessToken ? 'not-allowed' : 'pointer',
+                          opacity: !xAccessToken ? 0.6 : 1
+                        }}
+                      >
+                        Save X Credentials
                       </button>
                     </div>
 

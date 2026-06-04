@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../api/axios';
 import { useSelector } from 'react-redux';
-import { PLATFORM_CONFIG } from '../../config/platforms';
 
 const platforms = ['Meta', 'Google', 'X', 'LinkedIn'];
 

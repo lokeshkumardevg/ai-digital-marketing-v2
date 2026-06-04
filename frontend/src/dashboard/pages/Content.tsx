@@ -11,23 +11,7 @@ import AiCreativeModal from '../components/content/AiCreativeModal';
 import UploadByGroupModal from '../components/content/UploadByGroupModal';
 // import AiCreativeWorkspace from '../components/content/AiCreativeWorkspace';
 import { PageLoader } from '../components/Loader';
-
-type CreativeItem = {
-  id: string;
-  name: string;
-  type: string;
-  platform: string;
-  uploadDate: string;
-  lifetime: string;
-  status: string;
-  createdAtRaw: string;
-  scheduledForRaw: string;
-  imageUrl: string;
-  thumbnailUrl: string;
-  lifetimeStartRaw?: string;
-  lifetimeEndRaw?: string;
-  isManualCreative?: boolean;
-};
+import type { CreativeItem } from '../components/content/CreativesTable';
 
 type UploadedGroupItem = {
   file: File;
@@ -74,7 +58,7 @@ const [deletingCreativeId, setDeletingCreativeId] = useState<string | null>(null
   const [lifetimeEnd, setLifetimeEnd] = useState('');
 
   const [groupCreativeType, setGroupCreativeType] = useState('');
-  const [bulkFiles, setBulkFiles] = useState<File[]>([]);
+  // const [bulkFiles, setBulkFiles] = useState<File[]>([]);
 
   const [groupFiles, setGroupFiles] = useState<File[]>([]);
   const [groupUploading, setGroupUploading] = useState(false);
@@ -264,16 +248,16 @@ const [deletingCreativeId, setDeletingCreativeId] = useState<string | null>(null
     setShowBulkUploadModal(true);
   };
 
-  const handleBulkFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setBulkFiles(files);
-  };
+  // const handleBulkFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const files = Array.from(e.target.files || []);
+  //   setBulkFiles(files);
+  // };
 
-  const handleBulkDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const files = Array.from(e.dataTransfer.files || []);
-    setBulkFiles(files);
-  };
+  // const handleBulkDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  //   e.preventDefault();
+  //   const files = Array.from(e.dataTransfer.files || []);
+  //   setBulkFiles(files);
+  // };
 
   const handleGroupCreativeTypeChange = (value: string) => {
     setGroupCreativeType(value);
@@ -361,7 +345,7 @@ const handleDeleteCreative = async (creative: CreativeItem) => {
   if (!confirmed) return;
 
   try {
-    setDeletingCreativeId(creative.id);
+    setDeletingCreativeId(creative.id || null);
     toast.loading('Deleting creative...', { id: 'delete-creative' });
 
     await api.delete(`/content/${creative.id}`);
@@ -627,7 +611,7 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   };
 
 const filtered = creatives.filter((c) => {
-  const matchesSearch = c.name
+  const matchesSearch = (c.name || '')
     .toLowerCase()
     .includes(search.toLowerCase());
 

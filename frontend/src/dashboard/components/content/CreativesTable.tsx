@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Image as ImageIcon, Trash2, Eye, Pencil, Clock3, ChevronLeft, ChevronRight, RefreshCcw } from 'lucide-react';
 
-interface CreativeItem {
+export interface CreativeItem {
   _id?: string;
   id?: string;
   title?: string;
@@ -19,6 +19,9 @@ interface CreativeItem {
   uploadDate?: string;
   status?: string;
   platform?: string;
+  lifetime?: string;
+  scheduledForRaw?: string;
+  isManualCreative?: boolean;
 }
 
 interface CreativesTableProps {

@@ -48,8 +48,13 @@ export class CampaignController {
   }
 
   @Post('publish')
-  publishWithBody(@Body() body: any) {
-    return this.service.publish(body.campaignId || body.id, body);
+  async publishWithBody(@Body() body: any) {
+    try {
+      return await this.service.publish(body.campaignId || body.id, body);
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to publish campaign';
+      throw new BadRequestException(msg);
+    }
   }
 
   @Get(':id/status')
@@ -242,5 +247,28 @@ getDrafts(
   @Post('meta/publish')
   async publishMeta(@Body() body: any) {
     return this.service.publishMetaCampaign(body.userId, body);
+  }
+
+  @Post('google/publish')
+  async publishGoogle(@Body() body: any) {
+    return this.service.publishGoogleCampaign(body.userId, body);
+  }
+
+  @Get('user/:userId')
+  async getCampaigns(@Param('userId') userId: string) {
+    return this.service.getCampaignsByUser(userId);
+  }
+
+  @Post(':id/toggle-status')
+  async toggleStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+  ) {
+    return this.service.toggleCampaignStatus(id, status);
+  }
+
+  @Get('meta/billing-status/:userId')
+  async getMetaBillingStatus(@Param('userId') userId: string) {
+    return this.service.getMetaBillingStatus(userId);
   }
 }

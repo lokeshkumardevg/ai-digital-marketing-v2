@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import {
-  FileEdit, Sparkles, Plus, Wand2, Copy, Trash2,
-  ChevronDown, ToggleLeft, ToggleRight, Image, Type, Video,
-  Calendar, DollarSign, MapPin, Link, Zap, Target, Clock,
-  TrendingUp, Eye, MousePointer, ArrowUpRight, PauseCircle, Send, CheckCircle2, AlertCircle, Loader2,
+  FileEdit, Sparkles, Plus, Trash2,
+  ToggleLeft, ToggleRight, Image, PauseCircle, Send, CheckCircle2, AlertCircle, Loader2,
 } from 'lucide-react';
 
 import { motion } from 'framer-motion';
+import AdCampaignDashboard from '../components/Adcampaigndashboard';
 /* ─── CONSTANTS ──────────────────────────────────────────── */
 const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const PLATFORMS_FILTER = ['All', 'Meta', 'Google', 'X', 'LinkedIn'];
@@ -106,11 +105,7 @@ const PLATFORM_LIST = [
   { id: 'linkedin' as PlatformId, name: 'LinkedIn', color: '#38bdf8', bg: '#0d1a2e' },
 ];
 
-const platformName = (id: string) =>
-  PLATFORM_LIST.find(p => p.id === id)?.name ?? id;
-
-const platformColor = (id: string) =>
-  PLATFORM_LIST.find(p => p.id === id)?.color ?? '#60a5fa';
+// Platform utility helpers
 
 /* ─── STATUS UTILITIES ───────────────────────────────────── */
 const normaliseStatus = (raw: string): string => (raw || 'draft').toLowerCase();
@@ -406,7 +401,7 @@ const sLabel = (color = '#8aaad8'): React.CSSProperties => ({
 });
 
 /* ─── SCORE RING ─────────────────────────────────────────── */
-function ScoreRing({ score, color = '#0665ff' }: { score: number; color?: string }) {
+function ScoreRing({ score }: { score: number }) {
   const r = 18;
   const circ = 2 * Math.PI * r; // ~113
   const offset = circ - (score / 100) * circ;
@@ -730,7 +725,7 @@ interface CreativeStudioProps {
   onImageSelect: (url: string) => void; onCtaChange: (v: string) => void;
   initialCaption?: string; initialCta?: string; initialImage?: string | null;
 }
-function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages, onSubheadingChange, onImageSelect, onCtaChange, initialCaption, initialCta, initialImage }: CreativeStudioProps) {
+function CreativeStudio({ adCopy, activePlatformId, brandAssetImages, onSubheadingChange, onImageSelect, onCtaChange, initialCaption, initialCta, initialImage }: CreativeStudioProps) {
   const [heading, setHeading] = useState(adCopy.headlines[0] || '');
   const [sub, setSub] = useState(initialCaption || adCopy.primaryTexts[0] || '');
   const [cta, setCta] = useState(initialCta || adCopy.callToAction || 'Shop Now');
@@ -769,7 +764,6 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
     setUploadedImgs(p => [url, ...p].slice(0, 6)); pickImg(url); setImgTab('upload');
   };
 
-  const currentImgs = imgTab === 'brand' ? brandAssetImages : imgTab === 'ai' ? aiImgs : uploadedImgs;
   const emptyMsg = imgTab === 'brand' ? 'No brand assets.' : imgTab === 'ai' ? 'Generate an image above.' : 'Upload an image above.';
 
   return (
@@ -915,7 +909,7 @@ interface CampaignEditorProps {
   showToast: (msg: string, type: ToastType) => void;
 }
 
-function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: CampaignEditorProps) {
+export function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: CampaignEditorProps) {
   const brandName = brandDetails?.brand?.name || brandDetails?.name || campaign.name || 'Brand';
   const logoUrl = brandDetails?.logoUrl || brandDetails?.assets?.favicon || '';
 
@@ -932,7 +926,7 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
   const saved = campaign.data || {};
   const aiContent = campaign.aiGeneratedContent || {};
 
-  const [activePid, setActivePid] = useState<PlatformId>((campaign.platform?.toLowerCase() as PlatformId) || 'meta');
+  const [activePid] = useState<PlatformId>((campaign.platform?.toLowerCase() as PlatformId) || 'meta');
   const [loading, setLoading] = useState<LoadingState>(null);
   const [showPlan, setShowPlan] = useState(false);
 
@@ -1216,12 +1210,23 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
 
   /* ── EDITOR VIEW ── */
   if (view === 'editor' && selectedCampaign) {
+    const draftPromoData = {
+      platforms: selectedCampaign.platform ? selectedCampaign.platform.split(',') : ['meta'],
+      budgetDaily: selectedCampaign.budgetDaily,
+      budget: selectedCampaign.budgetDaily,
+      event: selectedCampaign.data?.event,
+    };
+    
     return (
-      <>
-        <style>{DASH_CSS}</style>
-        <CampaignEditor campaign={selectedCampaign} brandDetails={brandDetails} onBack={handleBack} onSaved={handleBack} showToast={showToast} />
-        {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
-      </>
+      <AdCampaignDashboard
+        brandDetails={brandDetails}
+        promoData={draftPromoData}
+        campaignId={selectedCampaign._id}
+        initialDraftData={selectedCampaign.data || {}}
+        onBack={handleBack}
+        onPublish={handleBack}
+        onSaveDraft={handleBack}
+      />
     );
   }
 
@@ -1332,7 +1337,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
 
   const iconItemVariants = {
     hidden: { opacity: 0, y: 30, rotate: -10 },
-    visible: (custom) => ({
+    visible: (custom: any) => ({
       opacity: 1,
       y: 0,
       rotate: 0,
@@ -1356,7 +1361,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
     transition: {
       duration: 2,
       repeat: Infinity,
-      ease: "easeInOut"
+      ease: "easeInOut" as const
     }
   };
 

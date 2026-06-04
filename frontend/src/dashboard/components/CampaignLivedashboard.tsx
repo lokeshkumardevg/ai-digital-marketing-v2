@@ -130,7 +130,7 @@ const AnimCounter: React.FC<{ target: number; prefix?: string; suffix?: string; 
   target, prefix = '', suffix = '', decimals = 0
 }) => {
   const [val, setVal] = useState(0);
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number>(0);
   useEffect(() => {
     const start = performance.now();
     const duration = 1200;
@@ -186,10 +186,11 @@ const RingGauge: React.FC<{ value: number; max?: number; color: string; size?: n
 // PLATFORM CONFIG
 // ============================================
 const getPlatformConfig = (name: string) => {
-  const map: Record<string, { label: string; sub: string; icon: JSX.Element; color: string; accent: string; gradient: string }> = {
+  const map: Record<string, { label: string; sub: string; icon: React.ReactElement; color: string; accent: string; gradient: string }> = {
     meta:     { label: 'Meta Ads',     sub: 'Facebook & Instagram', icon: <FacebookIcon />, color: '#3b82f6', accent: '#60a5fa', gradient: 'linear-gradient(135deg,#1e3a5f,#1e3360)' },
     google:   { label: 'Google Ads',   sub: 'Search, Display & YouTube', icon: <GoogleIcon />, color: '#ea4335', accent: '#f87171', gradient: 'linear-gradient(135deg,#3b1a1a,#2d1515)' },
     twitter:  { label: 'X (Twitter)', sub: 'Promoted Posts & Trends', icon: <TwitterXIcon />, color: '#e7e9ea', accent: '#fff', gradient: 'linear-gradient(135deg,#1a1a1a,#111)' },
+    x:        { label: 'X (Twitter)', sub: 'Promoted Posts & Trends', icon: <TwitterXIcon />, color: '#e7e9ea', accent: '#fff', gradient: 'linear-gradient(135deg,#1a1a1a,#111)' },
     linkedin: { label: 'LinkedIn Ads', sub: 'Sponsored Content & InMail', icon: <LinkedInIcon />, color: '#0a66c2', accent: '#38bdf8', gradient: 'linear-gradient(135deg,#0a1628,#0a1a36)' },
   };
   return map[name] || map['meta'];

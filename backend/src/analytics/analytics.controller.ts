@@ -38,6 +38,20 @@ export class AnalyticsController {
     return this.analyticsService.disconnectGoogle(userId);
   }
 
+  @Post('disconnect/x')
+  @UseGuards(AuthGuard('jwt'))
+  async disconnectX(@Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.analyticsService.disconnectTwitter(userId);
+  }
+
+  @Post('disconnect/linkedin')
+  @UseGuards(AuthGuard('jwt'))
+  async disconnectLinkedIn(@Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.analyticsService.disconnectLinkedIn(userId);
+  }
+
 
   @Post('sync/meta')
   @UseGuards(AuthGuard('jwt'))

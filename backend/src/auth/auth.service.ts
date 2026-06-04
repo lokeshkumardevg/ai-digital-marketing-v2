@@ -179,8 +179,9 @@ export class AuthService {
     const clientId = this.configService.get('X_CLIENT_ID');
     const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
     const redirectUri = `${backendUrl}/auth/x/callback`;
-    const scope = 'tweet.read%20users.read%20ads.read';
-    const codeChallenge = 'challenge'; // In production, generate proper PKCE challenge
+    // Use only basic scopes — ads.read requires special Twitter Ads API access
+    const scope = encodeURIComponent('tweet.read users.read offline.access');
+    const codeChallenge = 'challenge'; // PKCE plain method — must match code_verifier on callback
 
     return `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${userId}&code_challenge=${codeChallenge}&code_challenge_method=plain`;
   }
@@ -227,12 +228,10 @@ export class AuthService {
     let customerId = user.googleCustomerId;
 
     try {
-      const developerToken = user.googleDeveloperToken || this.configService.get('GOOGLE_DEVELOPER_TOKEN');
-      if (developerToken && tokens.access_token) {
+      if (tokens.access_token) {
         const customerRes = await fetch('https://googleads.googleapis.com/v16/customers:listAccessibleCustomers', {
           headers: {
             'Authorization': `Bearer ${tokens.access_token}`,
-            'developer-token': developerToken,
           }
         });
         const customerData = await customerRes.json();
@@ -348,6 +347,32 @@ export class AuthService {
 
   return data;
 }
+
+  async checkGoogleAccounts(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.googleAccessToken) {
+      throw new UnauthorizedException('User not found or Google access token missing. Please connect Google first.');
+    }
+    
+    try {
+      const customerRes = await fetch('https://googleads.googleapis.com/v16/customers:listAccessibleCustomers', {
+        headers: {
+          'Authorization': `Bearer ${user.googleAccessToken}`,
+        }
+      });
+      const customerData = await customerRes.json();
+      return {
+        success: true,
+        message: 'Successfully hit Google Ads API',
+        data: customerData
+      };
+    } catch (e: any) {
+      return {
+        success: false,
+        error: e.message || 'Failed to fetch'
+      };
+    }
+  }
 
   // ================= META =================
 
@@ -500,6 +525,19 @@ async handleMetaCallback(userId: string, code: string) {
     }
   }
 
+  async getMetaBusinesses(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.metaAccessToken) throw new UnauthorizedException('No Meta token');
+    try {
+      const res = await axios.get(`https://graph.facebook.com/v20.0/me/businesses`, {
+        params: { access_token: user.metaAccessToken, fields: 'id,name' }
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new UnauthorizedException(e.response?.data?.error?.message || 'Failed to fetch businesses');
+    }
+  }
+
   async getMetaAdsInsights(userId: string, adAccountId: string) {
     const user = await this.usersService.findById(userId);
     if (!user?.metaAccessToken) {
@@ -527,7 +565,7 @@ async handleMetaCallback(userId: string, code: string) {
     const clientSecret = this.configService.get('X_CLIENT_SECRET');
 
     if (!clientId || !clientSecret) {
-      throw new UnauthorizedException('X credentials not configured');
+      throw new UnauthorizedException('X credentials not configured. Please add X_CLIENT_ID and X_CLIENT_SECRET to .env');
     }
 
     const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
@@ -537,8 +575,10 @@ async handleMetaCallback(userId: string, code: string) {
       grant_type: 'authorization_code',
       client_id: clientId,
       redirect_uri: `${backendUrl}/auth/x/callback`,
-      code_verifier: 'challenge', // In production, this should be stored and retrieved
+      code_verifier: 'challenge', // Must match code_challenge sent in getXAuthUrl
     });
+
+    console.log('[X OAuth] Exchanging code for token...');
 
     const res = await fetch('https://api.twitter.com/2/oauth2/token', {
       method: 'POST',
@@ -549,25 +589,30 @@ async handleMetaCallback(userId: string, code: string) {
       body: params.toString(),
     });
 
-    const tokens = await res.json();
-    if (tokens.error) throw new UnauthorizedException(tokens.error_description);
+    const tokens = await res.json() as any;
+    console.log(`[X OAuth] Token response:`, { error: tokens.error, has_access_token: !!tokens.access_token });
 
-    // Get user info
-    const userRes = await fetch('https://api.twitter.com/2/users/me', {
+    if (tokens.error) {
+      throw new UnauthorizedException(`X OAuth error: ${tokens.error_description || tokens.error}`);
+    }
+
+    // Get user info to save Twitter username for profile display
+    const userRes = await fetch('https://api.twitter.com/2/users/me?user.fields=name,username,profile_image_url', {
       headers: {
         Authorization: `Bearer ${tokens.access_token}`,
       },
     });
 
-    const userData = await userRes.json();
+    const userData = await userRes.json() as any;
+    console.log(`[X OAuth] User info:`, { id: userData.data?.id, username: userData.data?.username });
 
     await this.usersService.update(userId, {
       twitterAccessToken: tokens.access_token,
-      twitterRefreshToken: tokens.refresh_token,
-      twitterUserId: userData.data.id,
+      twitterRefreshToken: tokens.refresh_token || null,
+      twitterUserId: userData.data?.username || userData.data?.id || 'x_user',
     });
 
-    return { message: 'X Ads connected successfully' };
+    return { message: 'X connected successfully' };
   }
 
   async handleLinkedInCallback(userId: string, code: string) {
@@ -632,6 +677,19 @@ async handleMetaCallback(userId: string, code: string) {
       ...(clientSecret && { googleClientSecret: clientSecret }),
       ...(developerToken && { googleDeveloperToken: developerToken }),
       ...(customerId && { googleCustomerId: customerId }),
+    });
+    return { success: true };
+  }
+
+  async updateXCredentials(userId: string, accessToken: string, tokenSecret?: string, twitterUserId?: string) {
+    let parsedUserId = twitterUserId;
+    if (!parsedUserId && accessToken && accessToken.includes('-')) {
+      parsedUserId = accessToken.split('-')[0];
+    }
+    await this.usersService.update(userId, {
+      twitterAccessToken: accessToken,
+      twitterRefreshToken: tokenSecret || null,
+      twitterUserId: parsedUserId || 'default_x_user_id',
     });
     return { success: true };
   }

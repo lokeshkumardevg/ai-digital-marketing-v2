@@ -230,7 +230,7 @@ export const persistActiveBrand = createAsyncThunk<
   { rejectValue: string }
 >(
   'workspace/persistActiveBrand',
-  async ({ userId, brandId }, { rejectWithValue }) => {
+  async ({ userId, brandId }) => {
     try {
       await axios.post(`${API_BASE}/campaign/brand-active/${userId}`, { brandId });
     } catch (err: any) {

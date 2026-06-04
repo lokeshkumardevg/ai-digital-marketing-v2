@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import * as https from 'https';
-import * as http from 'http';
-import { toFile } from 'openai';
 
 import { PLATFORM_SIZES } from '../utils/platform-sizes';
 import { GeneratePostDto } from '../dto/generate-post.dto';
@@ -61,36 +58,6 @@ export class ImageGeneratorService {
 
   private sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  private downloadImage(url: string): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      const client = url.startsWith('https') ? https : http;
-      const request = client.get(url, (res) => {
-        if (
-          res.statusCode &&
-          res.statusCode >= 300 &&
-          res.statusCode < 400 &&
-          res.headers.location
-        ) {
-          this.downloadImage(res.headers.location).then(resolve).catch(reject);
-          return;
-        }
-        if (res.statusCode && res.statusCode !== 200) {
-          reject(new Error(`HTTP ${res.statusCode} for ${url}`));
-          return;
-        }
-        const chunks: Buffer[] = [];
-        res.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
-        res.on('end', () => resolve(Buffer.concat(chunks)));
-        res.on('error', reject);
-      });
-      request.on('error', reject);
-      request.setTimeout(15_000, () => {
-        request.destroy();
-        reject(new Error(`Timeout downloading ${url}`));
-      });
-    });
   }
 
   private selectBrandImages(data: GeneratePostDto): string[] {
@@ -160,7 +127,7 @@ Be specific — this guides an AI image editor to produce premium marketing vers
     return response.choices[0]?.message?.content ?? '';
   }
 
-  // ─── Step 2: Edit one image with retry + back-off ─────────────────
+  // ─── Step 2: Generate one image using DALL-E 3 with retry + back-off ─────────────────
 
   private async editImageForPlatform(
     imageUrl: string,
@@ -174,44 +141,33 @@ Be specific — this guides an AI image editor to produce premium marketing vers
     const brandColors = (data.assets?.brandColors || []).join(', ') || '';
     const keywords    = (data.keywords?.primary   || []).slice(0, 4).join(', ');
 
-    const editPrompt = `Edit this brand image into a premium ${platform.toUpperCase()} social media marketing post.
-
-Brand: ${brandName} | Industry: ${industry}
+    const prompt = `Create a premium ${platform.toUpperCase()} social media marketing post for "${brandName}" (Industry: "${industry}").
 Objective: ${objective}
 Brand Colors: ${brandColors}
 Keywords: ${keywords}
 
-What the brand images show:
-${visualAnalysis}
+Visual Theme / References:
+${visualAnalysis || 'A premium, modern design matching the industry theme.'}
 
 Instructions:
 - ${PLATFORM_EDIT_GUIDE[platform]}
-- Keep the core subject/product from the original image intact
-- Enhance lighting, sharpness, and color grading to premium marketing quality
-- Apply brand colors (${brandColors}) as accent overlays, borders, or gradient elements
-- Leave clean empty space (~20%) for text overlay — do NOT add any text
-- Remove clutter, watermarks, or distracting backgrounds
-- No faces, no logos, no overlaid copy`;
+- Keep the design premium and modern, with strong visual composition.
+- Apply brand colors (${brandColors}) in a clean, modern aesthetic.
+- Leave clean empty space (~20%) for text overlay — do NOT add any text, typography, or words on the image itself.
+- High quality photography, clean background. No overlay text, no logos.`;
 
-    const ext      = imageUrl.split('?')[0].split('.').pop()?.toLowerCase();
-    const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg'
-                   : ext === 'webp'                  ? 'image/webp'
-                   :                                   'image/png';
-
-    this.logger.log(`Downloading image for ${platform}: ${imageUrl}`);
-    const imageBuffer = await this.downloadImage(imageUrl);
-    const imageFile   = await toFile(imageBuffer, `brand.${ext || 'png'}`, { type: mimeType });
+    this.logger.log(`Generating image for ${platform} using DALL-E 3`);
 
     // Retry loop with exponential back-off for 429s
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
-        this.logger.log(`[${platform}] Image edit attempt ${attempt}/${MAX_RETRIES}`);
+        this.logger.log(`[${platform}] Image generation attempt ${attempt}/${MAX_RETRIES}`);
 
-        const response = await this.openai.images.edit({
-          model: 'gpt-image-1',
-          image: imageFile,
-          prompt: editPrompt,
+        const response = await this.openai.images.generate({
+          model: 'dall-e-3',
+          prompt,
           size: PLATFORM_SIZES[platform],
+          response_format: 'b64_json',
         });
 
         const b64 = response.data?.[0]?.b64_json;
@@ -221,12 +177,7 @@ Instructions:
         const is429 = err?.status === 429 || err?.code === 'rate_limit_exceeded';
 
         if (is429 && attempt < MAX_RETRIES) {
-          // Parse retry-after from error message if present, else back-off exponentially
-          const retryAfterMatch = err?.message?.match(/try again in (\d+)s/i);
-          const waitMs = retryAfterMatch
-            ? parseInt(retryAfterMatch[1], 10) * 1000 + 1000   // honour OpenAI's suggestion + 1s buffer
-            : attempt * 15_000;                                  // 15s, 30s fallback
-
+          const waitMs = attempt * 15_000;
           this.logger.warn(
             `[${platform}] Rate limited (attempt ${attempt}). Retrying in ${waitMs / 1000}s…`,
           );
@@ -234,8 +185,7 @@ Instructions:
           continue;
         }
 
-        // Non-429 or out of retries — re-throw
-        this.logger.error(`[${platform}] Image edit failed: ${err?.message}`);
+        this.logger.error(`[${platform}] Image generation failed: ${err?.message}`);
         throw err;
       }
     }
@@ -309,22 +259,26 @@ Rules: mention "${brandName}", stay in "${industry}" industry, CTA specific to t
 
     // 1. Select brand images
     const brandImageUrls = this.selectBrandImages(data);
-    if (brandImageUrls.length === 0) {
-      throw new Error(
-        'No usable brand images in assets.websiteImages. Provide at least one publicly accessible, non-logo image URL.',
-      );
+    let visualAnalysis = '';
+    
+    if (brandImageUrls.length > 0) {
+      try {
+        // 2. Vision analysis — once, shared
+        visualAnalysis = await this.analyzeBrandImages(brandImageUrls, data);
+        this.logger.log('Vision analysis done — starting sequential image edits');
+      } catch (err) {
+        this.logger.warn(`Vision analysis failed (continuing without it): ${err.message}`);
+      }
+    } else {
+      this.logger.log('No brand images found — generating without visual references');
     }
-
-    // 2. Vision analysis — once, shared
-    const visualAnalysis = await this.analyzeBrandImages(brandImageUrls, data);
-    this.logger.log('Vision analysis done — starting sequential image edits');
 
     // 3. Assign one source image per platform (round-robin)
     const platformImageMap: Record<PlatformType, string> = {
-      instagram: brandImageUrls[0 % brandImageUrls.length],
-      facebook:  brandImageUrls[1 % brandImageUrls.length],
-      linkedin:  brandImageUrls[2 % brandImageUrls.length],
-      twitter:   brandImageUrls[3 % brandImageUrls.length],
+      instagram: brandImageUrls.length > 0 ? brandImageUrls[0 % brandImageUrls.length] : '',
+      facebook:  brandImageUrls.length > 0 ? brandImageUrls[1 % brandImageUrls.length] : '',
+      linkedin:  brandImageUrls.length > 0 ? brandImageUrls[2 % brandImageUrls.length] : '',
+      twitter:   brandImageUrls.length > 0 ? brandImageUrls[3 % brandImageUrls.length] : '',
     };
 
     // 4. All 4 content generations in parallel (no rate limit concern for gpt-4o)

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import type { RootState } from '../store';
+import type { RootState } from '../../store';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -100,13 +100,13 @@ const phases: Phase[] = [
 
 // ─── Spinner Component ────────────────────────────────────────────────────────
 
-const Spinner: React.FC = () => (
-  <span style={{
-    display: 'inline-block', width: '14px', height: '14px',
-    border: '2px solid #e9d5ff', borderTopColor: '#0665ff',
-    borderRadius: '50%', animation: 'spin 0.7s linear infinite',
-  }} />
-);
+// const Spinner: React.FC = () => (
+//   <span style={{
+//     display: 'inline-block', width: '14px', height: '14px',
+//     border: '2px solid #e9d5ff', borderTopColor: '#0665ff',
+//     borderRadius: '50%', animation: 'spin 0.7s linear infinite',
+//   }} />
+// );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -114,7 +114,7 @@ export const AiAnalysis: React.FC = () => {
   // Redux — active brand from workspace slice
   const websites = useSelector((s: RootState) => s.workspace.websites);
   const activeWebsiteId = useSelector((s: RootState) => s.workspace.activeWebsiteId);
-  const activeBrand = websites.find(w => w.id === activeWebsiteId);
+  const activeBrand = websites.find((w: any) => w.id === activeWebsiteId);
 
   // Modal state
   const [selectedCard, setSelectedCard] = useState<PhaseCard | null>(null);

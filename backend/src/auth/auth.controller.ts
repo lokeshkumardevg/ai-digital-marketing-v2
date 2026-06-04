@@ -59,6 +59,12 @@ export class AuthController {
     return this.authService.getGoogleAdsInsights(req.user.id, customerId);
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Get('google/check-accounts')
+  async checkGoogleAccounts(@Request() req: any) {
+    return this.authService.checkGoogleAccounts(req.user.id);
+  }
+
   @Get('google/callback')
   async googleCallback(
     @Query('code') code: string,
@@ -137,6 +143,12 @@ export class AuthController {
     return this.authService.getMetaPixels(req.user.id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Get('meta/businesses')
+  async getMetaBusinesses(@Request() req: any) {
+    return this.authService.getMetaBusinesses(req.user.id);
+  }
+
   @Get('meta/callback')
   async metaCallback(
     @Query('code') code: string,
@@ -176,6 +188,20 @@ export class AuthController {
   }
 
   // ================= X (TWITTER) =================
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('x/credentials')
+  async updateXCredentials(
+    @Request() req: any,
+    @Body() body: { accessToken: string; tokenSecret?: string; userId?: string },
+  ) {
+    return this.authService.updateXCredentials(
+      req.user.id,
+      body.accessToken,
+      body.tokenSecret,
+      body.userId,
+    );
+  }
 
   @UseGuards(AuthGuard('jwt'))
   @Get('x')

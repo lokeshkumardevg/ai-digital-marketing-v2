@@ -1,33 +1,28 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 
-import { useDispatch, useSelector } from 'react-redux';
-import { useParams, useNavigate } from 'react-router-dom';
-import { clearSeoData, getSeoData, saveSeoData } from '../../utils/seoStorage';
-import type { RootState, AppDispatch } from '../../store';
+import { useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
+import { getSeoData, saveSeoData } from '../../utils/seoStorage';
+import type { RootState } from '../../store';
 
 import { GlassCard } from '../components/GlassCard';
 
 import { 
-  AlertCircle, AlertTriangle, Zap, Activity, 
-  Globe, Clock, FileText, Image as ImageIcon, Link as LinkIcon, 
-  RefreshCw, FileCode, Check, Layout, Smartphone, ShieldCheck, 
-  Target, BarChart3, Search, Share2, Rocket, TrendingUp, Info,
-  ExternalLink, MousePointer2, Users, PieChart as PieIcon, LineChart as LineIcon
+  Zap, Activity, RefreshCw, Search, Share2, Rocket, Info, ExternalLink
 } from 'lucide-react';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Label,
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  LineChart, Line, BarChart, Bar, Legend
+  BarChart, Bar
 } from 'recharts';
 import toast from 'react-hot-toast';
-import { addNotification } from '../../store/slices/notificationSlice';
 
 type SeoTab = 'dashboard' | 'audit' | 'tracking' | 'keywords' | 'backlinks' | 'competitors' | 'link-building';
 
 export const Seo: React.FC = () => {
   const { view } = useParams();
-  const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
+  // const navigate = useNavigate();
+  // const dispatch = useDispatch<AppDispatch>();
 
   const { brands, activeBrandId } = useSelector((s: RootState) => s.workspace);
 
@@ -117,7 +112,7 @@ export const Seo: React.FC = () => {
     return {
       visibility: Math.min(100, (ascore * 1.5) + (Math.sqrt(baseTraffic)/100)).toFixed(2),
       health: Math.min(100, (result.meta?.title ? 20 : 0) + (result.loadTime < 1.5 ? 40 : 20) + (ascore * 0.4)).toFixed(0),
-      trafficSeries: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((m, i) => ({
+      trafficSeries: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((m, _i) => ({
         name: m,
         organic: Math.floor(baseTraffic * (0.6 + Math.random() * 0.4)),
         direct: Math.floor(baseTraffic * (0.2 + Math.random() * 0.1)),

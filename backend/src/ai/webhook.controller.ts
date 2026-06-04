@@ -165,12 +165,15 @@ CRITICAL REQUIREMENTS:
     const theme = body.theme || 'Corporate';
     const hasLogo = !!body.logoBase64;
 
+    // Extract a clean, short brand name (taking the part before any separator like -, :, |, or comma)
+    const brandName = body.topic.split(/[-:|,\n]/)[0]?.trim() || body.topic || 'Brand';
+
     const realLogoTag = hasLogo
       ? `<img src="${body.logoBase64}" alt="Logo" style="height:48px; object-fit:contain;" />`
-      : `<span class="brand-name" style="font-size:1.5rem;font-weight:800;color:${primaryColor};">${body.topic || 'Brand'}</span>`;
+      : `<span class="brand-name" style="font-size:1.5rem;font-weight:800;color:var(--primary);font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px;">${brandName}</span>`;
 
     const systemPrompt = `You are a World-Class Lead Designer at a top-tier digital agency.
-Your mission: Generate an "Elite" Multi-Page SPA for: "${body.topic}".
+Your mission: Generate an "Elite" Multi-Page SPA for the brand "${brandName}" (Full Topic/Niche: "${body.topic}").
 
 THEME-SPECIFIC RULES (STRICT):
 - If THEME is 'Restaurant': Use elegant food menus, reservation forms, and gallery grids.
@@ -178,39 +181,123 @@ THEME-SPECIFIC RULES (STRICT):
 - If THEME is 'Healthcare' or 'Education': Use clean, trust-building layouts, appointment/enrollment forms, and resource grids.
 - If THEME is 'E-commerce' or 'Real Estate': Use product/property cards with large images, filter UI, and high-impact CTAs.
 
-DESIGN SYSTEM:
-1. TYPOGRAPHY: Elite hierarchy using 'Plus Jakarta Sans'.
-2. COLORS: Primary (${primaryColor}) and Secondary (${secondaryColor}). Use deep semantic shading.
-3. ANIMATIONS: Include AOS library (data-aos="fade-up").
-4. COMPONENTS: Use rounded-3xl, shadow-2xl, and glassmorphism.
+DESIGN SYSTEM & BRAND STYLING:
+1. TYPOGRAPHY: Elite hierarchy using 'Plus Jakarta Sans' or 'Inter' from Google Fonts.
+2. BRAND NAME: Use exactly "${brandName}" as the brand/company name throughout the text, navbar logo, and footer.
+3. COLORS & PALETTE: You must define CSS custom properties at the :root level:
+   :root {
+     --primary: ${primaryColor};
+     --secondary: ${secondaryColor};
+   }
+   You MUST strictly style the entire website using var(--primary) and var(--secondary) for all branding, backgrounds, gradients, borders, highlights, active states, and hover effects. Do NOT use default tailwind or bootstrap/generic colors.
+4. ANIMATIONS: Include AOS library (data-aos="fade-up") or smooth CSS transitions.
+5. COMPONENTS: Use rounded-3xl, shadow-2xl, and beautiful glassmorphism.
+6. CLIENT-SIDE ROUTING (SPA) & LAYOUT: You must build a fully functional Single Page Application. All '.page-section' containers must be wrapped inside a single \`<main>\` element. The Header/Navbar and the Footer MUST sit outside the \`<main>\` wrapper (at the layout level) so they remain visible at all times across all pages. Wrap each page's content in its own container (\`<div id="page-name" class="page-section hidden">\`), except the Home page which must be visible by default.
+7. PAGE TRANSITIONS: Include a CSS animation to fade and slide up pages when they are displayed, making the experience buttery smooth. Add this rule to the stylesheet:
+   @keyframes fadeInUp {
+     from { opacity: 0; transform: translateY(15px); }
+     to { opacity: 1; transform: translateY(0); }
+   }
+   .page-section:not(.hidden) {
+     animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+   }
+8. ABSOLUTE COMPLETENESS & RICH COPY: Every single page in the navigation must be fully fleshed out with extensive, detailed marketing sections, detailed benefit statements, comprehensive user reviews, fully designed lists, and complete descriptive copy specific to the brand. No shorthand stubs, no placeholder comments, and no truncated text.
+9. PREMIUM FOOTER: The footer must be a fully-designed, modern multi-column component containing:
+   - Brand information with logo and a compelling mission statement.
+   - Quick Links (Home, About Us, Services, Portfolio, Contact Us) mapped to the SPA router.
+   - Contact Info (phone, email, hours, physical address).
+   - Fully-styled Newsletter Subscription Form (with email input and submit CTA).
+   - Social media links with premium micro-interactions.
+10. STICKY FLEXBOX LAYOUT (NO OVERLAPS): To prevent any overlaps or footer float issues, use a flex layout on the body:
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      margin: 0;
+    }
+    main {
+      flex: 1;
+    }
+    The Header/Navbar sits at the top, the \`<main>\` container wraps all '.page-section' bodies in the middle, and the Footer sits at the bottom in the normal document flow. Do NOT make the Footer position: fixed or position: absolute; it must sit naturally at the bottom.
 
 TECHNICAL RULES:
-- LOGO: Use exactly [COMPANY_LOGO_IMAGE_TAG].
+- LOGO: Use exactly [COMPANY_LOGO_IMAGE_TAG] for the logo image or fallback text placement.
 - NO TRUNCATION. NO MARKDOWN. ONLY RAW HTML.
 - Start with <!DOCTYPE html> and end with </html>.`;
 
-    const userPrompt = `Build an Elite Multi-Page ${theme} Website for "${body.topic}".
+    const userPrompt = `Build an Elite Multi-Page ${theme} Website for the brand "${brandName}" based on topic "${body.topic}".
 
 REQUIRED PAGES: ${pagesStr}
 PRIMARY COLOR: ${primaryColor}
 SECONDARY COLOR: ${secondaryColor}
 
-INSTRUCTIONS:
-- Look at the logo (if provided) and adapt the ENTIRE theme to its vibe.
-- Every page must have at least 4 unique, content-rich sections.
-- HOME: Hero → Theme-Specific Features → Theme-Specific Grid → Testimonials → FAQ → Footer.
-- ALL OTHER PAGES: Pages must follow the '${theme}' design language strictly.
-- Logo Placeholder: [COMPANY_LOGO_IMAGE_TAG]
+INSTRUCTIONS FOR EACH PAGE (MUST BE FULLY DESIGNED & COMPLETED WITH RICH CONTENT):
+1. HOME:
+   - Stunning Hero section with a powerful value proposition, supporting subtext, and dual call-to-action buttons.
+   - Logos of Trusted Clients / Social Proof ticker.
+   - Core Features Grid showing 4 distinct value propositions with modern icons and hover scale/glassmorphism effects.
+   - Theme-Specific Interactive Showcase (e.g., interactive dashboard mock, tabbed comparison table, food menu slider, or properties search interface).
+   - How It Works / Process Roadmap showing step 1, 2, 3, 4 with line connectors.
+   - Testimonial Carousel or Grid with high-fidelity avatars, star ratings, and long-form reviews.
+   - Interactive FAQ accordion with CSS-only or JS toggle transitions.
+2. ABOUT US:
+   - Rich brand narrative & origin story explaining the company's mission and vision.
+   - Core Values Grid with 4 custom cards using icons, hover gradients, and custom shadows.
+   - Interactive Milestone Timeline showing the brand's achievements over the years.
+   - Founders & Team Grid with individual cards containing high-quality avatars, detailed bios, roles, and animated social links.
+3. SERVICES / PRODUCTS:
+   - Detailed listing of 4-6 distinct offerings, each with its own icon, detailed paragraph, target audience, and value highlight.
+   - High-impact pricing comparison matrix with "Most Popular" badges, listed features checklist, and CTA buttons.
+   - Detailed "Why Choose Us" text block comparing your brand's quality metrics vs. industry average.
+   - Direct scheduling or Consultation CTA section.
+4. PORTFOLIO / GALLERY:
+   - Modern project grid showcasing 6-8 distinct projects.
+   - Interactive Category Filter tabs (e.g., All, Category A, Category B, Category C) that dynamically show/hide project cards using JavaScript.
+   - Rich project card layouts displaying client name, project year, scope, and hover-triggered overlay details.
+5. CONTACT US:
+   - Double-column layout.
+   - Left column: Contact Info card containing beautiful details for address, phone, email, support desk, and operating hours. Integrated map placeholder or vector graphic.
+   - Right column: Fully operational Contact Form (Name, Email, Phone, Message) with custom styling, focus states, floating labels, validation states, and a submit CTA.
 
-IMPORTANT: This site must be professional enough to sell for $10,000.`;
+SPA NAVIGATION SETUP:
+- Define CSS style:
+  .page-section { display: block; opacity: 1; transition: opacity 0.5s ease; }
+  .page-section.hidden { display: none !important; opacity: 0; }
+- Navbar links and Footer quick links for the SPA pages must use hash anchors matching the page IDs (e.g., href="#home", href="#about-us", href="#services", etc.).
+- Include a robust JavaScript router that intercepts clicks ONLY on links whose 'href' starts with '#' (e.g., using link.getAttribute('href')?.startsWith('#')). External links (like social media profiles, newsletter submit actions, or tel/mailto links) must NOT be intercepted or blocked by the router.
+- When an internal hash link is clicked, the router should:
+  1. Prevent the default link behavior.
+  2. Extract the target page ID from the hash (e.g. 'about-us' from '#about-us').
+  3. Find the matching '.page-section' element. If found, hide all other page-sections and show the matching one.
+  4. Update the active CSS class on both header and footer active links.
+  5. Scroll to the top of the window smoothly.
+- Ensure the header/navbar, logo, and footer are placed outside the '.page-section' elements (and outside the '<main>' tag) so they are layout-level and permanently functional.
+
+IMPORTANT: Every page must look professional, fully-designed, and filled with extensive, custom content. No placeholders or stubs.`;
+
+    // Validate image format compatibility for OpenAI Vision API (OpenAI only supports png, jpeg, webp, and gif)
+    let visionImage: string | undefined = undefined;
+    if (body.logoBase64) {
+      const lower = body.logoBase64.toLowerCase();
+      const isSupported = lower.startsWith('data:image/png') ||
+                          lower.startsWith('data:image/jpeg') ||
+                          lower.startsWith('data:image/jpg') ||
+                          lower.startsWith('data:image/webp') ||
+                          lower.startsWith('data:image/gif');
+      if (isSupported) {
+        visionImage = body.logoBase64;
+      } else {
+        this.logger.warn(`Logo image format is not supported by OpenAI Vision API (e.g. SVG). Skipping image input for LLM prompt.`);
+      }
+    }
 
     const raw = await this.aiService.generateContent(
       userPrompt,
       systemPrompt,
       undefined,
       'gpt-4o',
-      16384,
-      body.logoBase64 || undefined,
+      16384 as any,
+      visionImage as any,
     );
 
     let html = raw
@@ -219,10 +306,14 @@ IMPORTANT: This site must be professional enough to sell for $10,000.`;
       .replace(/```\s*$/i, '')
       .trim();
     
-    // Safety check for malformed logo tags
+    // Safety check for malformed logo tags or AI using placeholder directly inside img tags
+    html = html.replace(/<img[^>]*?\[COMPANY_LOGO_IMAGE_TAG\][^>]*?>/gi, realLogoTag);
+    html = html.replace(/<img[^>]*?src=["'](?:logo|Logo)["'][^>]*?>/gi, realLogoTag);
+
     const escapedTopic = body.topic.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const brokenImgRegex = new RegExp(`<img[^>]*src=["']${escapedTopic}["'][^>]*>`, 'gi');
-    html = html.replace(brokenImgRegex, '[COMPANY_LOGO_IMAGE_TAG]');
+    const escapedBrand = brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const brandImgRegex = new RegExp(`<img[^>]*?src=["'](?:${escapedTopic}|${escapedBrand})["'][^>]*?>`, 'gi');
+    html = html.replace(brandImgRegex, realLogoTag);
     
     html = html.replace(/\[COMPANY_LOGO_IMAGE_TAG\]/g, realLogoTag);
 

@@ -14,7 +14,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSelector, useDispatch } from 'react-redux';
 import {
-  Zap, Globe, Target, DollarSign, Brain,
+  Zap, Globe, DollarSign, Brain,
   ShieldCheck, RefreshCw, CheckCircle2, XCircle,
   ArrowRight, TrendingUp,
   Building2, Rocket, AlertTriangle, Loader2,
@@ -25,6 +25,7 @@ import axios from 'axios';
 import { upsertBrandLocally } from '../../store/slices/workspaceSlice';
 import { Header } from '../components/Header';
 import AdCampaignDashboard from '../components/Adcampaigndashboard';
+// toast import removed
 
 
 // ============================================================
@@ -798,8 +799,6 @@ const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
     })),
   ];
   const withUs = [myScore, myScore + 8, myScore + 18, myScore + 30, myScore + 45].map(v => Math.min(v, 99));
-  const industryAvg = rows.filter(r => !r.isUs).map(r => r.score);
-  const avgScore = industryAvg.length ? Math.round(industryAvg.reduce((a, b) => a + b, 0) / industryAvg.length) : myScore - 8;
   const scoreColor = (s: number) => s >= 80 ? '#10b981' : s >= 60 ? '#f59e0b' : '#ef4444';
   const maxScore = Math.max(...rows.map(r => r.score), 100);
 
@@ -854,7 +853,7 @@ const EditablePromoObjective: React.FC<{
   onGenerate: (data: PromoObjectiveData) => void;
   onDecline: () => void;
   user: any
-}> = ({ brandName, initialData, onGenerate, onDecline, user }) => {
+}> = ({ brandName, initialData, onGenerate, onDecline: _onDecline, user }) => {
   const [data, setData] = useState<PromoObjectiveData>(initialData);
   const [submitted, setSubmitted] = useState(false);
   const businessTypes = ['Online Shopping', 'Solution & Online Service', 'Local Store & Service', 'App'];
@@ -1234,7 +1233,7 @@ export const Campaigns: React.FC = () => {
     }
   }, [clearSession]);
 
-  const handleDashboardPublish = useCallback(async (result: { success: boolean; message?: string }, planId?: string) => {
+  const handleDashboardPublish = useCallback(async (result: { success: boolean; message?: string }, _planId?: string) => {
     if (result.success) await clearSession();
   }, [clearSession]);
 

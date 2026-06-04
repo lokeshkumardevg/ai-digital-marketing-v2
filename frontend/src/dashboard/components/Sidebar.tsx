@@ -148,8 +148,6 @@ export const Sidebar: React.FC = () => {
   const isSubActive = (subItems: SubItem[]) =>
     subItems.some((sub) => location.pathname.startsWith(sub.path));
 
-  const visibleMenuItems = MENU_ITEMS.filter((it) => hasAccess(it.permission));
-
   return (
     <div
       style={{

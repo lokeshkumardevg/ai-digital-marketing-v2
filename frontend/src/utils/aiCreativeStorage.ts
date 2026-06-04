@@ -67,17 +67,17 @@ function pruneHistory(history: StoredHistoryEntry[]): StoredHistoryEntry[] {
   }));
 }
 
-function getStore(): typeof localforage {
-  return localforage;
-}
+// function getStore(): typeof localforage {
+//   return localforage;
+// }
 
-function createStores() {
-  const lf = getStore();
-  lf.config({
-    name: STORAGE_NAMESPACE,
-    storeName: GENERATED_IMAGES_TABLE,
-  });
-}
+// function createStores() {
+//   const lf = getStore();
+//   lf.config({
+//     name: STORAGE_NAMESPACE,
+//     storeName: GENERATED_IMAGES_TABLE,
+//   });
+// }
 
 // localforage instances
 const generatedImagesStore = localforage.createInstance({
@@ -159,20 +159,18 @@ export async function saveGeneratedImages(
   }
 }
 
-function migrateFromLocalStorageIfNeeded(): boolean {
-  if (!isBrowser()) return false;
-
-  const alreadyMigrated = stateStore.getItem('migrationDone');
-  // note: we can't await here; we'll check during load
-  return true;
-}
+// function migrateFromLocalStorageIfNeeded(): boolean {
+//   if (!isBrowser()) return false;
+// 
+//   const alreadyMigrated = stateStore.getItem('migrationDone');
+//   // note: we can't await here; we'll check during load
+//   return true;
+// }
 
 export async function loadWithMigration(): Promise<AiCreativeStorageState> {
   if (!isBrowser()) {
     return { generatedImages: [], history: [], updatedAt: new Date(0).toISOString() };
   }
-
-  let migrated = false;
 
   // 1) Try localforage first
   const [generatedImages, history, migrationFlag] = await Promise.all([
@@ -210,7 +208,6 @@ export async function loadWithMigration(): Promise<AiCreativeStorageState> {
         // ignore
       }
 
-      migrated = true;
       return {
         generatedImages: migratedGenerated,
         history: migratedHistory,

@@ -4,16 +4,13 @@ import { api } from "../../../api/axios";
 import {
   RefreshCcw,
   Sparkles,
-  ImagePlus,
   Info,
   Bot,
-  ChevronDown,
   Loader2,
   ArrowLeft,
   X,
   Download,
   Plus,
-  Image as ImageIcon,
 } from 'lucide-react';
 
 
@@ -52,17 +49,17 @@ interface HistoryEntry {
   images: GeneratedCreativeItem[];
 }
 
-const ratioOptions = [
-  { label: '1:1', value: '1:1' },
-  { label: '4:3', value: '4:3' },
-  { label: '3:4', value: '3:4' },
-  { label: '16:9', value: '16:9' },
-  { label: '9:16', value: '9:16' },
-];
-
-const imageCountOptions = ['1', '2', '3', '4'];
-
-const modelOptions = ['Nano Banana Pro', 'Nano Banana Lite', 'Creative Studio'];
+// const ratioOptions = [
+//   { label: '1:1', value: '1:1' },
+//   { label: '4:3', value: '4:3' },
+//   { label: '3:4', value: '3:4' },
+//   { label: '16:9', value: '16:9' },
+//   { label: '9:16', value: '9:16' },
+// ];
+// 
+// const imageCountOptions = ['1', '2', '3', '4'];
+// 
+// const modelOptions = ['Nano Banana Pro', 'Nano Banana Lite', 'Creative Studio'];
 
 const LOCAL_STORAGE_HISTORY_KEY = 'ai-creative-history-v1';
 const LOCAL_STORAGE_GENERATED_KEY = 'ai-creative-generated-v1';
@@ -373,20 +370,20 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
     background: dk.inputBg,
   };
 
-  const selectStyle: React.CSSProperties = {
-    width: '100%',
-    height: '50px',
-    borderRadius: '999px',
-    border: `1.5px solid ${dk.border}`,
-    background: dk.inputBg,
-    padding: '0 42px 0 16px',
-    color: dk.text,
-    fontWeight: 600,
-    fontSize: '0.96rem',
-    outline: 'none',
-    appearance: 'none',
-    cursor: 'pointer',
-  };
+  // const selectStyle: React.CSSProperties = {
+  //   width: '100%',
+  //   height: '50px',
+  //   borderRadius: '999px',
+  //   border: `1.5px solid ${dk.border}`,
+  //   background: dk.inputBg,
+  //   padding: '0 42px 0 16px',
+  //   color: dk.text,
+  //   fontWeight: 600,
+  //   fontSize: '0.96rem',
+  //   outline: 'none',
+  //   appearance: 'none',
+  //   cursor: 'pointer',
+  // };
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;

@@ -259,7 +259,7 @@ function MetaPreview({ brandName, logoUrl, caption, cta, imageUrl }: PreviewProp
   );
 }
 
-function GooglePreview({ brandName, caption, cta, imageUrl }: PreviewProps) {
+function GooglePreview({ brandName, caption, imageUrl }: PreviewProps) {
   return (
     <div className="google-ad">
       <div style={{ fontSize: 10, color: "#8A97B0", marginBottom: 4, display: "flex", alignItems: "center", gap: 4 }}>
@@ -461,11 +461,12 @@ interface SidebarProps {
   platforms: Platform[]; campaigns: Campaign[];
   activePlatformId: PlatformId; activeCampaignId: string; enabledPlatforms: PlatformId[];
   onPlatformSwitch: (id: PlatformId) => void;
+  onTogglePlatform: (id: PlatformId) => void;
   onSelectCampaign: (id: string) => void;
   onAddCampaign: (platformId: PlatformId) => void;
 }
 
-function Sidebar({ platforms, campaigns, activePlatformId, activeCampaignId, enabledPlatforms, onPlatformSwitch, onSelectCampaign, onAddCampaign }: SidebarProps) {
+function Sidebar({ platforms, campaigns, activePlatformId, activeCampaignId, enabledPlatforms, onPlatformSwitch, onTogglePlatform, onSelectCampaign, onAddCampaign }: SidebarProps) {
   const ap = platforms.find(p => p.id === activePlatformId) || platforms[0];
   const aCamps = campaigns.filter(c => c.platformId === activePlatformId);
   return (
@@ -484,17 +485,19 @@ function Sidebar({ platforms, campaigns, activePlatformId, activeCampaignId, ena
             return (
               <div key={p.id}
                 className={`plat-tab${active ? " nav-active" : ""}${!enabled ? " plat-tab-disabled" : ""}`}
-                onClick={() => enabled && onPlatformSwitch(p.id)}
-                title={!enabled ? `${p.name} not in this campaign` : p.name}
-                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "8px 4px", borderRadius: 10, border: `1px solid ${active ? "var(--blue-bdr)" : "var(--bdr)"}`, cursor: enabled ? "pointer" : "not-allowed", transition: "all .15s", background: active ? "var(--blue-lt)" : "transparent", opacity: enabled ? 1 : 0.4, position: "relative" }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: active ? p.bg : "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center" }}>{p.icon}</div>
+                onClick={() => {
+                  if (!enabled) onTogglePlatform(p.id);
+                  else onPlatformSwitch(p.id);
+                }}
+                title={!enabled ? `Click to add ${p.name} to this campaign` : p.name}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "10px 4px", borderRadius: 10, border: `1px solid ${active ? "var(--blue-bdr)" : "var(--bdr)"}`, cursor: "pointer", transition: "all .15s", background: active ? "var(--blue-lt)" : "transparent", opacity: enabled ? 1 : 0.6, position: "relative" }}>
+                
+                <div style={{ position: "absolute", top: 6, left: 6 }}>
+                  <input type="checkbox" checked={enabled} onChange={() => onTogglePlatform(p.id)} onClick={(e) => e.stopPropagation()} style={{ cursor: "pointer", transform: "scale(1.1)" }} />
+                </div>
+
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: active ? p.bg : "var(--surface2)", display: "flex", alignItems: "center", justifyContent: "center", marginTop: 4 }}>{p.icon}</div>
                 <span style={{ fontSize: 10, color: active ? p.color : "var(--t3)", fontWeight: active ? 700 : 400 }}>{p.name}</span>
-                {active && <span style={{ width: 4, height: 4, borderRadius: "50%", background: p.color }} />}
-                {!enabled && (
-                  <span style={{ position: "absolute", top: 3, right: 3, width: 12, height: 12, borderRadius: "50%", background: "var(--bdr2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <svg width="7" height="7" viewBox="0 0 10 10" fill="none"><rect x="2" y="4.5" width="6" height="5" rx="1" stroke="var(--t3)" strokeWidth="1" /><path d="M3.5 4.5V3.5a1.5 1.5 0 013 0v1" stroke="var(--t3)" strokeWidth="1" /></svg>
-                  </span>
-                )}
               </div>
             );
           })}
@@ -535,19 +538,55 @@ function Sidebar({ platforms, campaigns, activePlatformId, activeCampaignId, ena
 }
 
 /* ─── TOP BAR ─────────────────────────────────────────────── */
-const PLATFORM_FIELDS: Record<string, { label: string; placeholder: string }[]> = {
+export const PLATFORM_FIELDS: Record<string, { label: string; placeholder: string }[]> = {
   meta: [{ label: "Business", placeholder: "Select business" }, { label: "Ad Account", placeholder: "Select ad account" }, { label: "Facebook Page", placeholder: "Select page" }, { label: "Pixel", placeholder: "Select pixel" }],
   google: [{ label: "Manager Account", placeholder: "Select MCC" }, { label: "Google Ads Account", placeholder: "Select account" }, { label: "GA4 Property", placeholder: "Select GA4" }, { label: "Conversion Action", placeholder: "Select conversion" }],
   linkedin: [{ label: "Company Page", placeholder: "Select page" }, { label: "Ad Account", placeholder: "Select account" }, { label: "Insight Tag", placeholder: "Select tag" }],
   x: [{ label: "Ad Account", placeholder: "Select account" }, { label: "X Profile", placeholder: "Select profile" }, { label: "Pixel", placeholder: "Select pixel" }],
 };
 
-function TopBar({ activePlatformId, isEnabled }: { activePlatformId: PlatformId; isEnabled: boolean }) {
+interface TopBarProps {
+  activePlatformId: PlatformId;
+  isEnabled: boolean;
+  selectedMetaPage: string;
+  setSelectedMetaPage: (v: string) => void;
+  selectedMetaPixel: string;
+  setSelectedMetaPixel: (v: string) => void;
+  selectedMetaBusiness: string;
+  setSelectedMetaBusiness: (v: string) => void;
+  selectedGoogleAccount: string;
+  setSelectedGoogleAccount: (v: string) => void;
+}
+
+export function TopBar({
+  activePlatformId,
+  isEnabled,
+  selectedMetaPage,
+  setSelectedMetaPage,
+  selectedMetaPixel,
+  setSelectedMetaPixel,
+  selectedMetaBusiness,
+  setSelectedMetaBusiness,
+  selectedGoogleAccount,
+  setSelectedGoogleAccount,
+}: TopBarProps) {
   const { user } = useSelector((state: any) => state.auth);
   const fields = PLATFORM_FIELDS[activePlatformId] || [];
 
   const [metaPages, setMetaPages] = useState<any[]>([]);
   const [metaPixels, setMetaPixels] = useState<any[]>([]);
+  const [metaBusinesses, setMetaBusinesses] = useState<any[]>([]);
+  const [googleAccounts, setGoogleAccounts] = useState<any[]>([]);
+
+  // Local states for X (Twitter) dropdown choices
+  const [selectedXAccount, setSelectedXAccount] = useState<string>("");
+  const [selectedXProfile, setSelectedXProfile] = useState<string>("");
+  const [selectedXPixel, setSelectedXPixel] = useState<string>("");
+
+  // Local states for LinkedIn dropdown choices
+  const [selectedLiPage, setSelectedLiPage] = useState<string>("");
+  const [selectedLiAccount, setSelectedLiAccount] = useState<string>("");
+  const [selectedLiTag, setSelectedLiTag] = useState<string>("");
 
   useEffect(() => {
     if (activePlatformId === 'meta' && user?.metaAccessToken) {
@@ -559,22 +598,38 @@ function TopBar({ activePlatformId, isEnabled }: { activePlatformId: PlatformId;
         api.get('/auth/meta/pixels').then(res => {
           if (res.data?.data) setMetaPixels(res.data.data);
         }).catch(e => console.error("Pixels error", e));
+
+        api.get('/auth/meta/businesses').then(res => {
+          if (res.data?.data) setMetaBusinesses(res.data.data);
+        }).catch(e => console.error("Businesses error", e));
       });
     }
-  }, [activePlatformId, user?.metaAccessToken]);
+
+    if (activePlatformId === 'google' && user?.googleAccessToken) {
+      import('../../api/axios').then(({ api }) => {
+        api.get('/auth/google/check-accounts').then(res => {
+          if (res.data?.data?.resourceNames) {
+            const accounts = res.data.data.resourceNames.map((r: string) => {
+              const id = r.split('/')[1];
+              return { id, name: `Account ${id}` };
+            });
+            setGoogleAccounts(accounts);
+          }
+        }).catch(e => console.error("Google accounts error", e));
+      });
+    }
+  }, [activePlatformId, user?.metaAccessToken, user?.googleAccessToken]);
 
   const isNotConnected = (
     (activePlatformId === 'meta' && !user?.metaAccessToken) ||
-    (activePlatformId === 'google' && !user?.googleAccessToken) ||
-    (activePlatformId === 'linkedin' && !user?.linkedinAccessToken) ||
-    ((activePlatformId === 'x' || activePlatformId === 'twitter') && !user?.twitterAccessToken)
+    (activePlatformId === 'google' && !user?.googleAccessToken)
   );
 
   const getPlatformName = () => {
     if (activePlatformId === 'meta') return 'Meta Ads';
     if (activePlatformId === 'google') return 'Google Ads';
     if (activePlatformId === 'linkedin') return 'LinkedIn Ads';
-    if (activePlatformId === 'x' || activePlatformId === 'twitter') return 'X Ads';
+    if (activePlatformId === 'x') return 'X Ads';
     return 'Ads';
   };
 
@@ -584,7 +639,7 @@ function TopBar({ activePlatformId, isEnabled }: { activePlatformId: PlatformId;
       let endpoint = '';
       if (activePlatformId === 'meta') endpoint = '/auth/meta';
       else if (activePlatformId === 'google') endpoint = '/auth/google';
-      else if (activePlatformId === 'x' || activePlatformId === 'twitter') endpoint = '/auth/x';
+      else if (activePlatformId === 'x') endpoint = '/auth/x';
       else if (activePlatformId === 'linkedin') endpoint = '/linkedin-crm/oauth/url';
 
       if (endpoint) {
@@ -596,37 +651,166 @@ function TopBar({ activePlatformId, isEnabled }: { activePlatformId: PlatformId;
     }
   };
 
+  const handleDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>, platform: string, fieldLabel: string) => {
+    const val = e.target.value;
+    if (val === 'create') {
+      if (platform === 'meta') {
+        window.open('https://business.facebook.com/', '_blank');
+      } else if (platform === 'google') {
+        if (fieldLabel.includes('GA4')) {
+          window.open('https://analytics.google.com/', '_blank');
+        } else {
+          window.open('https://ads.google.com/', '_blank');
+        }
+      } else if (platform === 'linkedin') {
+        window.open('https://business.linkedin.com/marketing-solutions/ads', '_blank');
+      } else if (platform === 'x' || platform === 'twitter') {
+        window.open('https://ads.x.com/', '_blank');
+      }
+      e.target.value = '';
+      return;
+    }
+
+    if (platform === 'meta') {
+      if (fieldLabel === 'Facebook Page') setSelectedMetaPage(val);
+      else if (fieldLabel === 'Pixel') setSelectedMetaPixel(val);
+      else if (fieldLabel === 'Business') setSelectedMetaBusiness(val);
+    } else if (platform === 'google') {
+      if (fieldLabel === 'Google Ads Account' || fieldLabel === 'Manager Account') {
+        setSelectedGoogleAccount(val);
+      }
+    } else if (platform === 'x') {
+      if (fieldLabel === 'Ad Account') setSelectedXAccount(val);
+      else if (fieldLabel === 'X Profile') setSelectedXProfile(val);
+      else if (fieldLabel === 'Pixel') setSelectedXPixel(val);
+    } else if (platform === 'linkedin') {
+      if (fieldLabel === 'Company Page') setSelectedLiPage(val);
+      else if (fieldLabel === 'Ad Account') setSelectedLiAccount(val);
+      else if (fieldLabel === 'Insight Tag') setSelectedLiTag(val);
+    }
+  };
+
   const getDropdownContent = (f: any) => {
     if (activePlatformId === 'meta') {
-      if (f.label === 'Ad Account') {
-        const adAccountName = user?.metaAdAccountName || user?.metaAdAccountId;
-        return <span style={{color: adAccountName ? '#111' : 'var(--t3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{adAccountName || f.placeholder}</span>;
-      }
-      if (f.label === 'Facebook Page' && metaPages.length > 0) {
+      if (f.label === 'Business') {
         return (
-          <select style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
+          <select value={selectedMetaBusiness} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
             <option value="">{f.placeholder}</option>
-            {metaPages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            {metaBusinesses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+            <option value="create">+ Create New {f.label}</option>
           </select>
         );
       }
-      if (f.label === 'Pixel' && metaPixels.length > 0) {
+      if (f.label === 'Ad Account') {
+        const adAccountName = user?.metaAdAccountName || user?.metaAdAccountId;
         return (
-          <select style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
+          <select onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: adAccountName ? '#111' : 'var(--t3)', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{adAccountName || f.placeholder}</option>
+            <option value="create">+ Create New {f.label}</option>
+          </select>
+        );
+      }
+      if (f.label === 'Facebook Page') {
+        return (
+          <select value={selectedMetaPage} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
             <option value="">{f.placeholder}</option>
+            {metaPages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            <option value="create">+ Create New {f.label}</option>
+          </select>
+        );
+      }
+      if (f.label === 'Pixel') {
+        return (
+          <select value={selectedMetaPixel} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{metaPixels.length === 0 ? 'No pixels found' : f.placeholder}</option>
             {metaPixels.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            <option value="create">+ Create New {f.label}</option>
           </select>
         );
       }
     }
     
     if (activePlatformId === 'google') {
-      if (f.label === 'Google Ads Account') {
-        return <span style={{color: user?.googleCustomerId ? '#111' : 'var(--t3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{user?.googleCustomerId || f.placeholder}</span>;
+      if (f.label === 'Google Ads Account' || f.label === 'Manager Account') {
+        const hasAccounts = googleAccounts.length > 0;
+        return (
+          <select value={selectedGoogleAccount} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: (user?.googleCustomerId || hasAccounts) ? '#111' : 'var(--t3)', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{user?.googleCustomerId || f.placeholder}</option>
+            {googleAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+            <option value="create">+ Create New {f.label}</option>
+          </select>
+        );
       }
     }
 
-    return <span style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{f.placeholder}</span>;
+    if (activePlatformId === 'x') {
+      if (f.label === 'Ad Account') {
+        return (
+          <select value={selectedXAccount} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{f.placeholder}</option>
+            <option value="x_act_01">X Ads Account - Primary</option>
+            <option value="x_act_02">X Ads Account - Business</option>
+            <option value="create">+ Create New {f.label}</option>
+          </select>
+        );
+      }
+      if (f.label === 'X Profile') {
+        const defaultProfileName = user?.twitterUserId && !user.twitterUserId.match(/^\d+$/) ? `@${user.twitterUserId}` : '@WheedleTechno';
+        return (
+          <select value={selectedXProfile} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{f.placeholder}</option>
+            <option value="x_prof_01">{defaultProfileName}</option>
+            <option value="create">+ Create New {f.label}</option>
+          </select>
+        );
+      }
+      if (f.label === 'Pixel') {
+        return (
+          <select value={selectedXPixel} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{f.placeholder}</option>
+            <option value="x_pix_01">X Website Pixel - Main</option>
+            <option value="create">+ Create New {f.label}</option>
+          </select>
+        );
+      }
+    }
+
+    if (activePlatformId === 'linkedin') {
+      if (f.label === 'Ad Account') {
+        return (
+          <select value={selectedLiAccount} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{f.placeholder}</option>
+            <option value="li_act_01">LinkedIn Ads Account - Default</option>
+            <option value="create">+ Create New {f.label}</option>
+          </select>
+        );
+      }
+      if (f.label === 'Company Page') {
+        return (
+          <select value={selectedLiPage} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{f.placeholder}</option>
+            <option value="li_page_01">Wheedle Technology Page</option>
+            <option value="create">+ Create New {f.label}</option>
+          </select>
+        );
+      }
+      if (f.label === 'Insight Tag') {
+        return (
+          <select value={selectedLiTag} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{f.placeholder}</option>
+            <option value="li_tag_01">LinkedIn Insight Tag - Main</option>
+            <option value="create">+ Create New {f.label}</option>
+          </select>
+        );
+      }
+    }
+
+    return (
+      <select onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: 'var(--t3)', cursor: 'pointer', appearance: 'none' }}>
+        <option value="">{f.placeholder}</option>
+        <option value="create">+ Create New {f.label}</option>
+      </select>
+    );
   };
 
   return (
@@ -1060,16 +1244,23 @@ interface AdCampaignDashboardProps {
   onBack?: () => void;
   onPublish?: (result: { success: boolean }, planId: PlanId) => void;
   onSaveDraft?: (result: { success: boolean }) => void;
+  initialDraftData?: Record<string, any>;
 }
 
-export default function AdCampaignDashboard({ brandDetails, promoData, campaignId, onBack = () => { }, onPublish = () => { }, onSaveDraft = () => { } }: AdCampaignDashboardProps) {
+export default function AdCampaignDashboard({ brandDetails, promoData, campaignId, onBack = () => { }, onPublish = () => { }, onSaveDraft = () => { }, initialDraftData }: AdCampaignDashboardProps) {
 
   const brandName = brandDetails?.brand?.name || brandDetails?.name || "Brand";
   const logoUrl = brandDetails?.logoUrl || brandDetails?.assets?.logoUrl || brandDetails?.assets?.logoPreview || brandDetails?.assets?.favicon || "";
   const { user } = useSelector((state: any) => state.auth);
   const userId = user?._id || "";
 
-  const enabledPlatforms = resolveEnabledPlatforms(promoData);
+  const [enabledPlatforms, setEnabledPlatforms] = useState<PlatformId[]>(() => {
+    if (initialDraftData && Object.keys(initialDraftData).length > 0) {
+      const valid = Object.keys(initialDraftData).filter(k => PLATFORMS.some(p => p.id === k)) as PlatformId[];
+      if (valid.length > 0) return valid;
+    }
+    return resolveEnabledPlatforms(promoData);
+  });
 
   /* ── Collect static brand images ── */
   const collectBrandImages = (): string[] => {
@@ -1095,13 +1286,19 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
   const locationStr = promoData?.targetLocations || promoData?.targetLocation || SEED.location;
 
   /* ── Shared ad settings (same across all platforms) ── */
-  const [adEvent, setAdEvent] = useState<string>(promoData?.event || promoData?.adGoal || SEED.event);
-  const [adBudget, setAdBudget] = useState<string>(budgetStr);
-  const [adSchedule, setAdSchedule] = useState<string>(promoData?.schedule || SEED.schedule);
-  const [adFinalUrl, setAdFinalUrl] = useState<string>(promoData?.finalUrl || "");
-  const [adLocation, setAdLocation] = useState<string>(locationStr);
-  const [adAdvantage, setAdAdvantage] = useState<boolean>(promoData?.advantagePlus ?? SEED.advantagePlus);
+  const globalDraftData = initialDraftData ? (initialDraftData[enabledPlatforms[0]] || initialDraftData) : null;
+  const [adEvent, setAdEvent] = useState<string>(globalDraftData?.event || promoData?.event || promoData?.adGoal || SEED.event);
+  const [adBudget, setAdBudget] = useState<string>(globalDraftData?.budget || budgetStr);
+  const [adSchedule, setAdSchedule] = useState<string>(globalDraftData?.schedule || promoData?.schedule || SEED.schedule);
+  const [adFinalUrl, setAdFinalUrl] = useState<string>(globalDraftData?.finalUrl || promoData?.finalUrl || "");
+  const [adLocation, setAdLocation] = useState<string>(globalDraftData?.location || locationStr);
+  const [adAdvantage, setAdAdvantage] = useState<boolean>(globalDraftData?.advantagePlus ?? promoData?.advantagePlus ?? SEED.advantagePlus);
   const [adEstimated] = useState<string>(promoData?.estimatedAudience || SEED.estimatedAudience);
+
+  const [selectedMetaPage, setSelectedMetaPage] = useState<string>("");
+  const [selectedMetaPixel, setSelectedMetaPixel] = useState<string>("");
+  const [selectedMetaBusiness, setSelectedMetaBusiness] = useState<string>("");
+  const [selectedGoogleAccount, setSelectedGoogleAccount] = useState<string>("");
 
   /* ─────────────────────────────────────────────────────────
    * PER-PLATFORM CREATIVE STATE
@@ -1111,16 +1308,18 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
   const defaultPrimaryText = promoData?.primaryTexts?.[0] || SEED.primaryTexts[0];
   const defaultCta = promoData?.callToAction || SEED.cta;
 
-  const buildDefaultCreative = (): PlatformCreative => ({
-    headline: defaultHeadline,
-    primaryText: defaultPrimaryText,
-    cta: defaultCta,
-    image: null,
+  const buildDefaultCreative = (draftPlatformData?: any): PlatformCreative => ({
+    headline: draftPlatformData?.headline || defaultHeadline,
+    primaryText: draftPlatformData?.primaryText || draftPlatformData?.caption || defaultPrimaryText,
+    cta: draftPlatformData?.cta || defaultCta,
+    image: draftPlatformData?.image || draftPlatformData?.imageUrl || null,
   });
 
   const [platformCreatives, setPlatformCreatives] = useState<Record<string, PlatformCreative>>(() => {
     const init: Record<string, PlatformCreative> = {};
-    enabledPlatforms.forEach(pid => { init[pid] = buildDefaultCreative(); });
+    enabledPlatforms.forEach(pid => { 
+      init[pid] = buildDefaultCreative(initialDraftData?.[pid] || (initialDraftData?.platform === pid ? initialDraftData : null)); 
+    });
     return init;
   });
 
@@ -1130,6 +1329,23 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
       [pid]: { ...(prev[pid] ?? buildDefaultCreative()), ...patch },
     }));
   }, []);
+
+  const handleTogglePlatform = (id: PlatformId) => {
+    setEnabledPlatforms(prev => {
+      if (prev.includes(id)) {
+        if (prev.length === 1) {
+          showToast("At least one platform must be selected.", "info");
+          return prev;
+        }
+        const next = prev.filter(p => p !== id);
+        if (activePid === id) setActivePid(next[0]);
+        return next;
+      } else {
+        setActivePid(id);
+        return [...prev, id];
+      }
+    });
+  };
 
   /* ── Active platform state ── */
   const [activePid, setActivePid] = useState<PlatformId>(enabledPlatforms[0] ?? "meta");
@@ -1196,11 +1412,48 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
   const handleSelectPlan = useCallback(async (planId: PlanId) => {
     setShowPlanModal(false);
     setLoading("publish");
-    await new Promise<void>(r => setTimeout(r, 1200));
-    showToast(`Published with ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan!`, "success");
-    onPublish({ success: true }, planId);
-    setLoading(null);
-  }, [onPublish, showToast]);
+    try {
+      const activePlatData = platformCreatives[activePid];
+      let targetCid = campaignId || activeCid;
+      if (targetCid && activePid !== 'All' && !targetCid.endsWith(`_${activePid}`)) {
+        targetCid = `${targetCid}_${activePid}`;
+      }
+
+      const payload = {
+        userId,
+        campaignId: targetCid,
+        campaignName: `${brandName}_${activePid}_Campaign`,
+        dailyBudget: parseInt(adBudget) || 10,
+        objective: adEvent,
+        finalUrl: adFinalUrl,
+        headline: activePlatData?.headline,
+        caption: activePlatData?.primaryText || '',
+        imageUrl: activePlatData?.image || '',
+        pageId: selectedMetaPage,
+        pixelId: selectedMetaPixel,
+        googleAccountId: selectedGoogleAccount,
+        location: adLocation,
+      };
+
+      const { api } = await import('../../api/axios');
+      if (activePid === 'google') {
+        const res = await api.post('/campaign/google/publish', payload);
+        showToast(res.data?.message || 'Published to Google Ads successfully!', "success");
+      } else if (activePid === 'meta') {
+        const res = await api.post('/campaign/meta/publish', payload);
+        showToast(res.data?.message || 'Published to Meta Ads successfully!', "success");
+      } else {
+        const res = await api.post('/campaign/publish', { ...payload, platform: activePid });
+        showToast(res.data?.message || `Published with ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan!`, "success");
+      }
+      setTimeout(() => onPublish({ success: true }, planId), 1500);
+    } catch (err: any) {
+      console.error('Publish error:', err);
+      showToast(err.response?.data?.message || 'Failed to publish campaign', "error");
+    } finally {
+      setLoading(null);
+    }
+  }, [onPublish, showToast, activePid, platformCreatives, userId, campaignId, activeCid, brandName, adBudget, adEvent, adFinalUrl, selectedMetaPage, selectedMetaPixel, selectedGoogleAccount, adLocation]);
 
   const campaignTitle = `${brandName}_${promoData?.businessGoal || promoData?.objective || "OUTCOME_SALES"}_${activePlat.name}_${new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}`;
 
@@ -1272,7 +1525,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
       const result = await response.json();
       if (!response.ok) throw new Error(result.message || "Failed to save draft");
       showToast(result.message || "Draft saved!", "success");
-      onSaveDraft({ success: true });
+      setTimeout(() => onSaveDraft({ success: true }), 1500);
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Failed to save draft", "error");
       onSaveDraft({ success: false });
@@ -1299,14 +1552,25 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     <>
       <style>{GLOBAL_CSS}</style>
       <div className="dash-root">
-        <TopBar activePlatformId={activePid} isEnabled={isCurrentPlatformEnabled} />
+        <TopBar 
+          activePlatformId={activePid} 
+          isEnabled={isCurrentPlatformEnabled} 
+          selectedMetaPage={selectedMetaPage}
+          setSelectedMetaPage={setSelectedMetaPage}
+          selectedMetaPixel={selectedMetaPixel}
+          setSelectedMetaPixel={setSelectedMetaPixel}
+          selectedMetaBusiness={selectedMetaBusiness}
+          setSelectedMetaBusiness={setSelectedMetaBusiness}
+          selectedGoogleAccount={selectedGoogleAccount}
+          setSelectedGoogleAccount={setSelectedGoogleAccount}
+        />
 
         <div className="dash-inner">
           <Sidebar
             platforms={PLATFORMS} campaigns={campaigns}
             activePlatformId={activePid} activeCampaignId={activeCid}
             enabledPlatforms={enabledPlatforms}
-            onPlatformSwitch={switchPlat} onSelectCampaign={setActiveCid} onAddCampaign={addCampaign}
+            onPlatformSwitch={switchPlat} onTogglePlatform={handleTogglePlatform} onSelectCampaign={setActiveCid} onAddCampaign={addCampaign}
           />
 
           <div className="dash-main">

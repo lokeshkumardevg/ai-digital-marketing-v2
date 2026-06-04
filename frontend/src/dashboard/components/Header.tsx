@@ -7,11 +7,10 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../store/slices/authSlice';
-import { clearSeoData } from '../../utils/seoStorage';  
 
 import {
   setActiveWebsite,
-  upsertBrandLocally,addWebsite
+  upsertBrandLocally
 } from '../../store/slices/workspaceSlice';
 
 import { markAllReadAsync, markOneReadAsync, deleteOneAsync, fetchNotifications } from '../../store/slices/notificationSlice';
@@ -61,11 +60,11 @@ export const Header: React.FC = () => {
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [showReplaceModal, setShowReplaceModal] = useState(false);
 
-const [pendingBrand, setPendingBrand] = useState<any>(null);
+  const [pendingBrand, setPendingBrand] = useState<any>(null);
 
-const [existingBrandName, setExistingBrandName] = useState('');
+  const [existingBrandName, setExistingBrandName] = useState('');
 
-const [isReplacing, setIsReplacing] = useState(false);
+  const [isReplacing, setIsReplacing] = useState(false);
 
   // ── Payment gateway state ──
   const [payStep, setPayStep] = useState<PayStep>('select');
@@ -138,42 +137,42 @@ const [isReplacing, setIsReplacing] = useState(false);
     }, 1000);
   };
 
-const processPayment = async () => {
-  if (!user?.id) return;
+  const processPayment = async () => {
+    if (!user?.id) return;
 
-  try {
-    setPayStep('processing');
+    try {
+      setPayStep('processing');
 
-    const res = await axios.post(`${API_BASE}/wallet/credit`, {
-      userId: user.id,
-      amount: addFundsAmount,
-      description: `Wallet topup via ${payMethod}`
-    });
+      const res = await axios.post(`${API_BASE}/wallet/credit`, {
+        userId: user.id,
+        amount: addFundsAmount,
+        description: `Wallet topup via ${payMethod}`
+      });
 
-    setWalletBalance(res.data.balance);
+      setWalletBalance(res.data.balance);
 
-    setPayStep('success');
+      setPayStep('success');
 
-  } catch (err) {
-    toast.error('Payment failed');
-    setPayStep('select');
-  }
-};
+    } catch (err) {
+      toast.error('Payment failed');
+      setPayStep('select');
+    }
+  };
 
-const spendFromWallet = async (amount: number, description = 'Usage') => {
-  try {
-    const res = await axios.post(`${API_BASE}/wallet/debit`, {
-      userId: user.id,
-      amount,
-      description,
-    });
-
-    setWalletBalance(res.data.balance);
-
-  } catch (err: any) {
-    toast.error(err?.response?.data?.message || 'Insufficient balance');
-  }
-};
+  // const spendFromWallet = async (amount: number, description = 'Usage') => {
+  //   try {
+  //     const res = await axios.post(`${API_BASE}/wallet/debit`, {
+  //       userId: user.id,
+  //       amount,
+  //       description,
+  //     });
+  // 
+  //     setWalletBalance(res.data.balance);
+  // 
+  //   } catch (err: any) {
+  //     toast.error(err?.response?.data?.message || 'Insufficient balance');
+  //   }
+  // };
 
   const resetPay = () => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -192,156 +191,156 @@ const spendFromWallet = async (amount: number, description = 'Usage') => {
   // ── Existing handlers ──
   const handleAddWebsite = async () => {
 
-  if (!user?.id) {
-    toast.error('Not authenticated');
-    return;
-  }
-
-  console.log('[brand-save] handleAddWebsite start', { userId: user?.id, newSiteName, newSiteUrl, websites });
-
-  if (!newSiteName || !newSiteUrl) {
-    toast.error('Both Name and URL are required!');
-    return;
-  }
-
-  try {
-
-    const payload = {
-      brandDetails: {
-        name: newSiteName,
-        url: newSiteUrl,
-        brandName: newSiteName,
-      },
-      website: newSiteUrl,
-    };
-
-    toast.loading('Saving brand...', {
-      id: 'brand-save',
-    });
-
-    // IMPORTANT
-    // NO forceReplace here
-    const res = await axios.post(
-      `${API_BASE}/campaign/brand-save/${user.id}`,
-      payload,
-    );
-
-    const saved = res?.data;
-
-    dispatch(
-      upsertBrandLocally({
-        id: saved?.brand?.id || Date.now().toString(),
-        name: newSiteName,
-        url: newSiteUrl,
-      }) as any,
-    );
-
-    toast.success('Brand synced', {
-      id: 'brand-save',
-    });
-
-    setShowAddWebsite(false);
-
-    setNewSiteName('');
-    setNewSiteUrl('');
-
-  } catch (e: any) {
-
-    const res = e?.response;
-    const data = res?.data;
-    const status = res?.status;
-
-    console.log('[brand-save] handleAddWebsite error', { status, data, err: e });
-
-    // OPEN REPLACE MODAL (must be triggered by HTTP 409 + replaceRequired=true)
-    if (status === 409 && data?.replaceRequired === true) {
-      toast.dismiss('brand-save');
-
-      setPendingBrand({
-        name: newSiteName,
-        url: newSiteUrl,
-      });
-
-      // Prefer backend-provided existingBrand if available
-      const backendExistingName = data?.existingBrand?.name || data?.existingBrand?.brand?.name;
-      const existingBrandFromState = websites?.[0]?.name;
-
-      setExistingBrandName(backendExistingName || existingBrandFromState || 'Current Brand');
-
-      setShowReplaceModal(true);
+    if (!user?.id) {
+      toast.error('Not authenticated');
       return;
     }
 
-    toast.error(data?.message || 'Failed to save brand');
-  }
-};
-const handleConfirmReplace = async () => {
+    console.log('[brand-save] handleAddWebsite start', { userId: user?.id, newSiteName, newSiteUrl, websites });
 
-  if (!pendingBrand || !user?.id) return;
+    if (!newSiteName || !newSiteUrl) {
+      toast.error('Both Name and URL are required!');
+      return;
+    }
 
-  try {
+    try {
 
-    setIsReplacing(true);
+      const payload = {
+        brandDetails: {
+          name: newSiteName,
+          url: newSiteUrl,
+          brandName: newSiteName,
+        },
+        website: newSiteUrl,
+      };
 
-    toast.loading('Replacing brand...', {
-      id: 'replace-brand',
-    });
+      toast.loading('Saving brand...', {
+        id: 'brand-save',
+      });
 
-    const payload = {
-      brandDetails: {
-        name: pendingBrand.name,
-        url: pendingBrand.url,
-        brandName: pendingBrand.name,
-      },
-      website: pendingBrand.url,
-    };
+      // IMPORTANT
+      // NO forceReplace here
+      const res = await axios.post(
+        `${API_BASE}/campaign/brand-save/${user.id}`,
+        payload,
+      );
 
-    // NOW force replace
-    const res = await axios.post(
-      `${API_BASE}/campaign/brand-save/${user.id}?forceReplace=true`,
-      payload,
-    );
+      const saved = res?.data;
 
-    const saved = res?.data;
+      dispatch(
+        upsertBrandLocally({
+          id: saved?.brand?.id || Date.now().toString(),
+          name: newSiteName,
+          url: newSiteUrl,
+        }) as any,
+      );
 
-    dispatch(
-      upsertBrandLocally({
-        id: saved?.brand?.id || Date.now().toString(),
-        name: pendingBrand.name,
-        url: pendingBrand.url,
-      }) as any,
-    );
+      toast.success('Brand synced', {
+        id: 'brand-save',
+      });
 
-    toast.success('Brand replaced successfully', {
-      id: 'replace-brand',
-    });
+      setShowAddWebsite(false);
 
-    setShowReplaceModal(false);
+      setNewSiteName('');
+      setNewSiteUrl('');
 
-    setPendingBrand(null);
+    } catch (e: any) {
 
-    setShowAddWebsite(false);
+      const res = e?.response;
+      const data = res?.data;
+      const status = res?.status;
 
-    setNewSiteName('');
-    setNewSiteUrl('');
+      console.log('[brand-save] handleAddWebsite error', { status, data, err: e });
 
-  } catch (e: any) {
+      // OPEN REPLACE MODAL (must be triggered by HTTP 409 + replaceRequired=true)
+      if (status === 409 && data?.replaceRequired === true) {
+        toast.dismiss('brand-save');
 
-    toast.error(
-      e?.response?.data?.message || 'Replace failed',
-      {
-        id: 'replace-brand',
+        setPendingBrand({
+          name: newSiteName,
+          url: newSiteUrl,
+        });
+
+        // Prefer backend-provided existingBrand if available
+        const backendExistingName = data?.existingBrand?.name || data?.existingBrand?.brand?.name;
+        const existingBrandFromState = websites?.[0]?.name;
+
+        setExistingBrandName(backendExistingName || existingBrandFromState || 'Current Brand');
+
+        setShowReplaceModal(true);
+        return;
       }
-    );
 
-  } finally {
-    setIsReplacing(false);
-  }
-};
-const handleCancelReplace = () => {
-  setShowReplaceModal(false);
-  setPendingBrand(null);
-};
+      toast.error(data?.message || 'Failed to save brand');
+    }
+  };
+  const handleConfirmReplace = async () => {
+
+    if (!pendingBrand || !user?.id) return;
+
+    try {
+
+      setIsReplacing(true);
+
+      toast.loading('Replacing brand...', {
+        id: 'replace-brand',
+      });
+
+      const payload = {
+        brandDetails: {
+          name: pendingBrand.name,
+          url: pendingBrand.url,
+          brandName: pendingBrand.name,
+        },
+        website: pendingBrand.url,
+      };
+
+      // NOW force replace
+      const res = await axios.post(
+        `${API_BASE}/campaign/brand-save/${user.id}?forceReplace=true`,
+        payload,
+      );
+
+      const saved = res?.data;
+
+      dispatch(
+        upsertBrandLocally({
+          id: saved?.brand?.id || Date.now().toString(),
+          name: pendingBrand.name,
+          url: pendingBrand.url,
+        }) as any,
+      );
+
+      toast.success('Brand replaced successfully', {
+        id: 'replace-brand',
+      });
+
+      setShowReplaceModal(false);
+
+      setPendingBrand(null);
+
+      setShowAddWebsite(false);
+
+      setNewSiteName('');
+      setNewSiteUrl('');
+
+    } catch (e: any) {
+
+      toast.error(
+        e?.response?.data?.message || 'Replace failed',
+        {
+          id: 'replace-brand',
+        }
+      );
+
+    } finally {
+      setIsReplacing(false);
+    }
+  };
+  const handleCancelReplace = () => {
+    setShowReplaceModal(false);
+    setPendingBrand(null);
+  };
 
   const handleLogout = () => {
     dispatch(logout());
@@ -476,10 +475,10 @@ const handleCancelReplace = () => {
                       <span className="wallet-dropdown__add-label" style={{ marginTop: 4 }}>Payment method</span>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
                         {([
-                          ['qr',   '⊞', 'QR Code',       'Scan to pay'],
-                          ['url',  '🔗', 'Payment link',  'Share URL'],
-                          ['card', '💳', 'Credit / Debit','Enter card'],
-                          ['upi',  '⚡', 'UPI / Wallet',  'Instant pay'],
+                          ['qr', '⊞', 'QR Code', 'Scan to pay'],
+                          ['url', '🔗', 'Payment link', 'Share URL'],
+                          ['card', '💳', 'Credit / Debit', 'Enter card'],
+                          ['upi', '⚡', 'UPI / Wallet', 'Instant pay'],
                         ] as [PayMethod, string, string, string][]).map(([id, icon, title, sub]) => (
                           <div key={id} style={methodCardStyle(payMethod === id)} onClick={() => setPayMethod(id)}>
                             <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
@@ -521,20 +520,20 @@ const handleCancelReplace = () => {
                           <rect x="16" y="104" width="20" height="20" rx="1" fill="var(--color-text-primary)" />
                           {/* Data modules (static pattern) */}
                           {[
-                            [56,4],[62,4],[68,4],[56,10],[68,10],[62,16],[56,22],[68,22],
-                            [56,56],[62,56],[68,56],[74,56],[80,56],[56,62],[80,62],
-                            [56,68],[62,68],[74,68],[80,68],[56,74],[68,74],[80,74],
-                            [56,80],[62,80],[68,80],[74,80],
-                            [92,56],[98,56],[104,56],[110,56],[116,56],[122,56],[128,56],
-                            [92,62],[104,62],[116,62],[128,62],
-                            [92,68],[98,68],[104,68],[110,68],[122,68],[128,68],
-                            [92,74],[110,74],[128,74],
-                            [92,80],[98,80],[104,80],[116,80],[122,80],[128,80],
-                            [4,56],[10,56],[16,56],[22,56],[28,56],[34,56],[40,56],
-                            [4,62],[16,62],[28,62],[40,62],
-                            [4,68],[10,68],[22,68],[34,68],[40,68],
-                            [4,74],[28,74],[34,74],
-                            [4,80],[10,80],[16,80],[22,80],[40,80],
+                            [56, 4], [62, 4], [68, 4], [56, 10], [68, 10], [62, 16], [56, 22], [68, 22],
+                            [56, 56], [62, 56], [68, 56], [74, 56], [80, 56], [56, 62], [80, 62],
+                            [56, 68], [62, 68], [74, 68], [80, 68], [56, 74], [68, 74], [80, 74],
+                            [56, 80], [62, 80], [68, 80], [74, 80],
+                            [92, 56], [98, 56], [104, 56], [110, 56], [116, 56], [122, 56], [128, 56],
+                            [92, 62], [104, 62], [116, 62], [128, 62],
+                            [92, 68], [98, 68], [104, 68], [110, 68], [122, 68], [128, 68],
+                            [92, 74], [110, 74], [128, 74],
+                            [92, 80], [98, 80], [104, 80], [116, 80], [122, 80], [128, 80],
+                            [4, 56], [10, 56], [16, 56], [22, 56], [28, 56], [34, 56], [40, 56],
+                            [4, 62], [16, 62], [28, 62], [40, 62],
+                            [4, 68], [10, 68], [22, 68], [34, 68], [40, 68],
+                            [4, 74], [28, 74], [34, 74],
+                            [4, 80], [10, 80], [16, 80], [22, 80], [40, 80],
                           ].map(([x, y], i) => (
                             <rect key={i} x={x} y={y} width="5" height="5" rx="1" fill="var(--color-text-primary)" />
                           ))}
@@ -601,8 +600,8 @@ const handleCancelReplace = () => {
 
                       <div style={{ background: 'var(--color-background-secondary)', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
                         {[
-                          ['Amount',  `$${addFundsAmount.toLocaleString()}`],
-                          ['Status',  'Active'],
+                          ['Amount', `$${addFundsAmount.toLocaleString()}`],
+                          ['Status', 'Active'],
                           ['Expires', '24 hours'],
                         ].map(([k, v]) => (
                           <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
@@ -782,7 +781,7 @@ const handleCancelReplace = () => {
           {/* ── Ask AI ── */}
           <button className="btn-ask-ai" onClick={() => navigate('/chatbot')}>
             <Sparkles size={15} />
-            <span>Ask AI</span>
+            <span>Ask W-AI</span>
           </button>
 
           {/* ── Bell + User ── */}
@@ -984,13 +983,13 @@ const handleCancelReplace = () => {
       )}
 
       <ReplaceBrandModal
-  open={showReplaceModal}
-  existingBrand={existingBrandName}
-  newBrand={pendingBrand?.name || ''}
-  loading={isReplacing}
-  onCancel={handleCancelReplace}
-  onConfirm={handleConfirmReplace}
-/>
+        open={showReplaceModal}
+        existingBrand={existingBrandName}
+        newBrand={pendingBrand?.name || ''}
+        loading={isReplacing}
+        onCancel={handleCancelReplace}
+        onConfirm={handleConfirmReplace}
+      />
     </>
   );
 };

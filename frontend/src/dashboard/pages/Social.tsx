@@ -39,7 +39,7 @@ export const Social: React.FC = () => {
         setSelectedPlatforms(initialSelection);
       })
       .catch(() => undefined);
-    dispatch(fetchSocialPosts(activeWebsiteId));
+    dispatch(fetchSocialPosts(activeWebsiteId || undefined));
   }, [dispatch, activeWebsiteId]);
 
   useEffect(() => {
@@ -147,7 +147,7 @@ export const Social: React.FC = () => {
       });
 
       await promise;
-      dispatch(fetchSocialPosts(activeWebsiteId));
+      dispatch(fetchSocialPosts(activeWebsiteId || undefined));
       dispatch(fetchConnections());
       dispatch(addNotification({
         id: Date.now().toString(),

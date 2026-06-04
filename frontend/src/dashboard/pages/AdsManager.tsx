@@ -1,64 +1,265 @@
 import React, { useState, useEffect } from 'react';
-import { BrainCircuit, TrendingUp, Zap, BarChart2, RefreshCw, Search, MoreHorizontal, ArrowUpRight } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { BrainCircuit, TrendingUp, Zap, BarChart2, RefreshCw, Search, ArrowUpRight, CheckCircle, AlertCircle } from 'lucide-react';
 import { SmartTable } from '../components/SmartTable';
-
-const statusStyles: Record<string, { bg: string; color: string; dot: string }> = {
-  active: { bg: 'rgba(16,185,129,0.12)', color: '#10b981', dot: '#10b981' },
-  paused: { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b', dot: '#f59e0b' },
-  draft: { bg: 'rgba(255,255,255,0.05)', color: '#94a3b8', dot: '#94a3b8' },
-};
+import { api } from '../../api/axios';
 
 const platforms = ['All', 'Meta', 'Google', 'X', 'LinkedIn'];
 
+const ToggleSwitch: React.FC<{ isActive: boolean; onToggle: () => void; disabled?: boolean }> = ({ isActive, onToggle, disabled }) => {
+  return (
+    <div 
+      onClick={() => !disabled && onToggle()}
+      style={{
+        width: '38px',
+        height: '20px',
+        borderRadius: '999px',
+        background: disabled ? 'rgba(255,255,255,0.05)' : isActive ? 'var(--blue)' : 'rgba(255,255,255,0.15)',
+        position: 'relative',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        transition: 'background-color 0.2s',
+        opacity: disabled ? 0.4 : 1,
+        display: 'inline-block'
+      }}
+    >
+      <div 
+        style={{
+          width: '14px',
+          height: '14px',
+          borderRadius: '50%',
+          background: '#fff',
+          position: 'absolute',
+          top: '3px',
+          left: isActive ? '21px' : '3px',
+          transition: 'left 0.2s ease-in-out',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+        }}
+      />
+    </div>
+  );
+};
+
 export const AdsManager: React.FC = () => {
+  const { user } = useSelector((state: any) => state.auth);
+  const userId = user?._id || '';
+
   const [activePlatform, setActivePlatform] = useState('All');
   const [search, setSearch] = useState('');
   const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const [billingStatus, setBillingStatus] = useState<any>({
+    connected: false,
+    hasPaymentMethod: false,
+    billingSetupUrl: 'https://adsmanager.facebook.com/adsmanager/manage/billing',
+    loading: true,
+  });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const fetchCampaigns = () => {
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    api.get(`/campaign/user/${userId}`)
+      .then(res => {
+        const campaignsData = Array.isArray(res.data) ? res.data : [];
+        const hashStr = (str: string) => {
+          let hash = 0;
+          for (let i = 0; i < str.length; i++) hash = Math.imul(31, hash) + str.charCodeAt(i) | 0;
+          return Math.abs(hash);
+        };
+
+        const mapped = campaignsData.map((c: any) => {
+          try {
+            if (!c) {
+              return {
+                id: '',
+                name: 'AI Campaign',
+                platform: 'Meta',
+                status: 'active',
+                delivery: 'ACTIVE',
+                spend: '$0.00',
+                budget: '$35/day',
+                roas: '0.0x',
+                ctr: '0.00%',
+                impressions: '0',
+                reach: '0',
+                results: '0 (Landing Page Views)',
+                costPerResult: '—',
+                bidStrategy: 'Lowest Cost',
+                score: 70
+              };
+            }
+
+            const seed = c._id ? hashStr(c._id.toString()) : Math.random() * 1000;
+            const sM1 = (seed % 100) / 100;
+            const sM2 = (seed % 50) / 50;
+
+            const isReal = !!c.isRealMeta;
+
+            const rawSpend = isReal ? c.spend : (100 + sM1 * 1000);
+            const spendVal = Number(rawSpend) || 0;
+
+            const rawImpressions = isReal ? c.impressions : Math.floor((10 + sM2 * 490) * 1000);
+            const impressionsVal = Number(rawImpressions) || 0;
+
+            const rawClicks = isReal ? c.clicks : Math.floor(impressionsVal * (0.03 + sM1 * 0.08));
+            const clicksVal = Number(rawClicks) || 0;
+
+            const rawReach = isReal ? c.reach : Math.floor(impressionsVal * 0.9);
+            const reachVal = Number(rawReach) || 0;
+            
+            const ctrVal = impressionsVal > 0 ? (clicksVal / impressionsVal) * 100 : 0;
+            const roasVal = isReal ? (clicksVal > 0 && spendVal > 0 ? (spendVal * 2.5) / spendVal : 2.5) : (2.0 + sM2 * 4);
+
+            const rawResults = isReal ? c.results : Math.floor(clicksVal * 0.4);
+            const resultsVal = Number(rawResults) || 0;
+
+            const resultTypeVal = isReal ? c.resultType : 'Landing Page Views';
+
+            const rawCostPerResult = isReal ? c.costPerResult : (resultsVal > 0 ? spendVal / resultsVal : 0);
+            const costPerResultVal = Number(rawCostPerResult) || 0;
+
+            const rawBudget = isReal ? c.dailyBudget : (c.budget?.daily || 35);
+            const budgetVal = Number(rawBudget) || 35;
+
+            const deliveryVal = isReal ? c.delivery : (c.status || 'ACTIVE');
+            const bidStrategyVal = isReal ? c.bidStrategy : 'Lowest Cost';
+
+            let plat = c.platform || 'Meta';
+            const lowerPlat = plat.toLowerCase();
+            if (lowerPlat === 'x' || lowerPlat === 'twitter') {
+              plat = 'X';
+            } else if (lowerPlat === 'meta') {
+              plat = 'Meta';
+            } else if (lowerPlat === 'google') {
+              plat = 'Google';
+            } else if (lowerPlat === 'linkedin') {
+              plat = 'LinkedIn';
+            }
+
+            return {
+              id: c._id ? c._id.toString() : '',
+              name: c.name || 'AI Campaign',
+              platform: plat,
+              status: (c.status || 'active').toLowerCase(),
+              delivery: deliveryVal,
+              spend: `$${spendVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+              budget: `$${budgetVal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/day`,
+              roas: `${Number(roasVal || 0).toFixed(1)}x`,
+              ctr: `${Number(ctrVal || 0).toFixed(2)}%`,
+              impressions: impressionsVal >= 1000 ? `${(impressionsVal / 1000).toFixed(0)}K` : impressionsVal.toString(),
+              reach: reachVal >= 1000 ? `${(reachVal / 1000).toFixed(0)}K` : reachVal.toString(),
+              results: `${resultsVal} (${resultTypeVal || 'Landing Page Views'})`,
+              costPerResult: costPerResultVal > 0 ? `$${costPerResultVal.toFixed(2)}` : '—',
+              bidStrategy: bidStrategyVal || 'Lowest Cost',
+              score: Math.floor(Number(c.aiStrategy?.performanceScore || (60 + sM1 * 35)) || 70)
+            };
+          } catch (itemErr) {
+            console.error('Failed mapping campaign item:', c, itemErr);
+            let plat = c?.platform || 'Meta';
+            const lowerPlat = plat.toLowerCase();
+            if (lowerPlat === 'x' || lowerPlat === 'twitter') {
+              plat = 'X';
+            } else if (lowerPlat === 'meta') {
+              plat = 'Meta';
+            } else if (lowerPlat === 'google') {
+              plat = 'Google';
+            } else if (lowerPlat === 'linkedin') {
+              plat = 'LinkedIn';
+            }
+
+            return {
+              id: c?._id ? c._id.toString() : '',
+              name: c?.name || 'AI Campaign',
+              platform: plat,
+              status: 'active',
+              delivery: 'ACTIVE',
+              spend: '$0.00',
+              budget: '$35/day',
+              roas: '0.0x',
+              ctr: '0.00%',
+              impressions: '0',
+              reach: '0',
+              results: '0 (Landing Page Views)',
+              costPerResult: '—',
+              bidStrategy: 'Lowest Cost',
+              score: 70
+            };
+          }
+        });
+        setAds(mapped);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Campaigns fetch failed', err);
+        showToast('Failed to load campaigns from server', 'error');
+        setLoading(false);
+      });
+  };
+
+  const fetchBillingStatus = () => {
+    if (!userId) return;
+    api.get(`/campaign/meta/billing-status/${userId}`)
+      .then(res => {
+        setBillingStatus({
+          connected: res.data?.connected ?? false,
+          hasPaymentMethod: res.data?.hasPaymentMethod ?? false,
+          billingSetupUrl: res.data?.billingSetupUrl || 'https://adsmanager.facebook.com/adsmanager/manage/billing',
+          accountStatus: res.data?.accountStatus || 'UNKNOWN',
+          adAccountId: res.data?.adAccountId || '',
+          loading: false,
+        });
+      })
+      .catch(err => {
+        console.error('Failed to fetch billing status', err);
+        setBillingStatus((prev: any) => ({ ...prev, loading: false }));
+      });
+  };
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/campaigns`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-    })
-    .then(res => res.json())
-    .then(json => {
-      const hashStr = (str: string) => {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) hash = Math.imul(31, hash) + str.charCodeAt(i) | 0;
-        return Math.abs(hash);
-      };
+    fetchCampaigns();
+    fetchBillingStatus();
+  }, [userId]);
 
-      const mapped = json.map((c: any) => {
-        const seed = c._id ? hashStr(c._id.toString()) : Math.random() * 1000;
-        const sM1 = (seed % 100) / 100;
-        const sM2 = (seed % 50) / 50;
-
-        return {
-          id: c._id,
-          name: c.name || 'AI Campaign',
-          platform: c.platform || 'Meta',
-          status: (c.status || 'active').toLowerCase(),
-          spend: `$${((100 + sM1 * 1000)).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-          roas: `${(2.0 + sM2 * 4).toFixed(1)}x`,
-          ctr: `${(3.0 + sM1 * 8).toFixed(1)}%`,
-          impressions: `${Math.floor(10 + sM2 * 490)}K`,
-          score: Math.floor(c.aiStrategy?.performanceScore || (60 + sM1 * 35))
-        };
-      });
-      setAds(mapped);
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error('Campaigns fetch failed', err);
-      setLoading(false);
-    });
-  }, []);
+  const handleToggle = async (campaignId: string, currentStatus: string) => {
+    setTogglingId(campaignId);
+    const newStatus = currentStatus === 'active' ? 'paused' : 'active';
+    try {
+      showToast(`Updating status to ${newStatus}...`, 'info');
+      const response = await api.post(`/campaign/${campaignId}/toggle-status`, { status: newStatus });
+      if (response.data?.success) {
+        setAds(prev => prev.map(ad => ad.id === campaignId ? { ...ad, status: newStatus } : ad));
+        showToast(`Campaign successfully ${newStatus === 'active' ? 'activated' : 'paused'}!`, 'success');
+      }
+    } catch (err: any) {
+      console.error('Failed to toggle campaign status:', err);
+      const errMsg = err.response?.data?.message || 'Failed to update campaign status on Meta API';
+      showToast(errMsg, 'error');
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   const filtered = ads.filter(ad => {
-    const matchPlatform = activePlatform === 'All' || ad.platform === activePlatform;
+    const platformLabel = ad.platform?.toLowerCase();
+    const activePlatformLower = activePlatform.toLowerCase();
+    const matchPlatform = activePlatform === 'All' || platformLabel === activePlatformLower;
     const matchSearch = ad.name.toLowerCase().includes(search.toLowerCase());
     return matchPlatform && matchSearch;
   });
+
+  const activeCount = ads.filter(ad => ad.status === 'active').length;
+  const pausedCount = ads.filter(ad => ad.status === 'paused').length;
+  const draftCount = ads.filter(ad => ad.status === 'draft').length;
 
   if (loading) return (
     <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
@@ -85,7 +286,7 @@ export const AdsManager: React.FC = () => {
           {[
             { label: 'Total Spend', value: '$4,790', sub: 'This month', icon: BarChart2, color: '#0665ff' },
             { label: 'Avg ROAS', value: '3.4x', sub: '+0.6x vs last week', icon: TrendingUp, color: '#16a34a' },
-            { label: 'Active Ads', value: '3', sub: '2 paused, 1 draft', icon: Zap, color: '#d97706' },
+            { label: 'Active Ads', value: String(activeCount), sub: `${pausedCount} paused, ${draftCount} draft`, icon: Zap, color: '#d97706' },
             { label: 'AI Score', value: '74/100', sub: 'Good performance', icon: BrainCircuit, color: '#0665ff' },
           ].map((stat, i) => (
             <div key={i} style={{ flex: 1, borderRight: i < 3 ? '1px solid rgba(255,255,255,0.08)' : 'none', paddingRight: i < 3 ? '32px' : '0' }}>
@@ -98,6 +299,64 @@ export const AdsManager: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Account Integrity & Billing Status Alert Banner */}
+        {billingStatus.connected && !billingStatus.loading && (
+          <div style={{ 
+            background: billingStatus.hasPaymentMethod ? 'rgba(16, 185, 129, 0.04)' : 'rgba(239, 68, 68, 0.06)', 
+            border: `1px solid ${billingStatus.hasPaymentMethod ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.25)'}`, 
+            borderRadius: '12px', 
+            padding: '16px 20px', 
+            marginBottom: '20px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            gap: '16px',
+            animation: 'fadeIn 0.3s ease-out'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {billingStatus.hasPaymentMethod ? (
+                <CheckCircle size={18} color="#10b981" />
+              ) : (
+                <AlertCircle size={18} color="#ef4444" />
+              )}
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                  {billingStatus.hasPaymentMethod ? 'Ad Account Payment Setup Ok' : 'Meta Ad Account Payment Method Required'}
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                  {billingStatus.hasPaymentMethod 
+                    ? `Your connected Meta Ad Account (${billingStatus.adAccountId || 'Active'}) has active payment settings.` 
+                    : 'To avoid ad delivery failures or pauses, you must configure a valid billing card or payment method on your Meta Ads Manager.'}
+                </div>
+              </div>
+            </div>
+            {!billingStatus.hasPaymentMethod && (
+              <a 
+                href={billingStatus.billingSetupUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  padding: '8px 16px', 
+                  borderRadius: '8px', 
+                  background: '#ef4444', 
+                  color: '#fff', 
+                  textDecoration: 'none', 
+                  fontWeight: 600, 
+                  fontSize: '0.78rem', 
+                  transition: 'background-color 0.2s' 
+                }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#dc2626'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#ef4444'}
+              >
+                Setup Payment Method <ArrowUpRight size={13} />
+              </a>
+            )}
+          </div>
+        )}
 
         {/* Optimization Hub */}
         <div style={{ background: 'rgba(38, 49, 214, 0.05)', border: '1px solid rgba(38, 49, 214, 0.2)', borderRadius: '12px', padding: '16px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -132,7 +391,7 @@ export const AdsManager: React.FC = () => {
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search campaigns..."
                 style={{ padding: '8px 14px 8px 32px', borderRadius: '8px', border: '1px solid var(--glass-border)', fontSize: '0.82rem', color: 'var(--text-secondary)', outline: 'none', width: '220px', background: 'var(--bg-card)' }} />
             </div>
-            <button style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-card)', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+            <button onClick={() => { fetchCampaigns(); fetchBillingStatus(); }} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 14px', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-card)', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
               <RefreshCw size={13} /> Refresh
             </button>
           </div>
@@ -144,7 +403,12 @@ export const AdsManager: React.FC = () => {
             title="Active Optimization Campaigns"
             searchPlaceholder="Search campaigns by name..."
             columns={[
-              { key: 'name', label: 'Campaign', sortable: true, render: (row) => <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{row.name}</span> },
+              { key: 'name', label: 'Campaign', sortable: true, render: (row) => (
+                <div>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'block' }}>{row.name}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>ID: {row.id}</span>
+                </div>
+              ) },
               { key: 'platform', label: 'Platform', sortable: true, render: (row) => {
                 const platformColors: Record<string, string> = {
                   'Meta': '#1877f2',
@@ -163,21 +427,57 @@ export const AdsManager: React.FC = () => {
                   border: `1px solid ${color}30`
                 }}>{row.platform}</span>;
               } },
-              { key: 'status', label: 'Status', sortable: true, render: (row) => {
-                  const st = statusStyles[row.status] || statusStyles.draft;
+              { key: 'delivery', label: 'Delivery', sortable: true, render: (row) => {
+                  let bg = 'rgba(255,255,255,0.05)';
+                  let color = '#94a3b8';
+                  let text = row.delivery || 'Unknown';
+                  
+                  const cleanDev = text.toUpperCase();
+                  if (cleanDev.includes('ACTIVE')) {
+                    bg = 'rgba(16,185,129,0.12)';
+                    color = '#10b981';
+                    text = 'Active';
+                  } else if (cleanDev.includes('PAUSED')) {
+                    bg = 'rgba(245,158,11,0.12)';
+                    color = '#f59e0b';
+                    text = 'Paused';
+                  } else if (cleanDev.includes('BILLING') || cleanDev.includes('ERROR') || cleanDev.includes('PAYMENT')) {
+                    bg = 'rgba(239,68,68,0.12)';
+                    color = '#ef4444';
+                    text = 'Payment error';
+                  } else if (cleanDev.includes('REVIEW')) {
+                    bg = 'rgba(59,130,246,0.12)';
+                    color = '#3b82f6';
+                    text = 'In review';
+                  } else if (cleanDev.includes('DISABLED') || cleanDev.includes('DISAPPROVED')) {
+                    bg = 'rgba(239,68,68,0.12)';
+                    color = '#ef4444';
+                    text = 'Disabled';
+                  }
+
                   return (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '99px', background: st.bg, color: st.color, fontSize: '0.75rem', fontWeight: 600, textTransform: 'capitalize' }}>
-                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: st.dot }} />{row.status}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '99px', background: bg, color: color, fontSize: '0.75rem', fontWeight: 600 }}>
+                      <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: color }} />{text}
                     </span>
                   );
               }},
+              { key: 'toggle', label: 'Status Switch', sortable: false, render: (row) => (
+                <ToggleSwitch 
+                  isActive={row.status === 'active'} 
+                  onToggle={() => handleToggle(row.id, row.status)}
+                  disabled={row.status === 'draft' || (togglingId === row.id)}
+                />
+              )},
+              { key: 'results', label: 'Results', sortable: true, render: (row) => <span style={{ color: 'var(--text-primary)', fontSize: '0.8rem', fontWeight: 500 }}>{row.results}</span> },
+              { key: 'costPerResult', label: 'Cost per Result', sortable: true, render: (row) => <span style={{ color: 'var(--text-secondary)' }}>{row.costPerResult}</span> },
+              { key: 'budget', label: 'Budget', sortable: true, render: (row) => <span style={{ color: 'var(--text-secondary)' }}>{row.budget}</span> },
+              { key: 'spend', label: 'Amount Spent', sortable: true, render: (row) => <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{row.spend}</span> },
               { key: 'impressions', label: 'Impressions', sortable: true, render: (row) => <span style={{ color: 'var(--text-secondary)' }}>{row.impressions}</span> },
-              { key: 'spend', label: 'Spend', sortable: true, render: (row) => <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{row.spend}</span> },
-              { key: 'roas', label: 'ROAS', sortable: true, render: (row) => <span style={{ color: '#16a34a', fontWeight: 700 }}>{row.roas}</span> },
-              { key: 'ctr', label: 'CTR', sortable: true, render: (row) => <span style={{ color: 'var(--text-secondary)' }}>{row.ctr}</span> },
+              { key: 'reach', label: 'Reach', sortable: true, render: (row) => <span style={{ color: 'var(--text-secondary)' }}>{row.reach}</span> },
+              { key: 'bidStrategy', label: 'Bid Strategy', sortable: true, render: (row) => <span style={{ color: 'var(--text-dim)', fontSize: '0.78rem' }}>{row.bidStrategy}</span> },
               { key: 'score', label: 'AI Score', sortable: true, render: (row) => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '64px', height: '5px', borderRadius: '99px', background: 'var(--bg-elevated)' }}>
+                  <div style={{ width: '54px', height: '5px', borderRadius: '99px', background: 'var(--bg-elevated)' }}>
                     <div style={{ height: '100%', width: `${row.score}%`, background: row.score > 80 ? '#22c55e' : row.score > 60 ? '#f59e0b' : '#ef4444', borderRadius: '99px' }} />
                   </div>
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: row.score > 80 ? '#16a34a' : row.score > 60 ? '#d97706' : '#dc2626' }}>{row.score}</span>
@@ -188,6 +488,30 @@ export const AdsManager: React.FC = () => {
           />
         </div>
       </div>
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          background: toast.type === 'success' ? '#10b981' : toast.type === 'error' ? '#ef4444' : '#3b82f6',
+          color: '#fff',
+          padding: '12px 24px',
+          borderRadius: '10px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+          zIndex: 10000,
+          fontWeight: 600,
+          fontSize: '0.85rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }}>
+          {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle size={15} />}
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 };

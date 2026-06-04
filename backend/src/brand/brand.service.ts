@@ -114,7 +114,7 @@ export class BrandService {
 // ── Step 4: Conflict check ────────────────────────────────
 const existing = await this.brandModel.findOne({ userId });
 
-if (existing && !forceReplace) {
+if (existing && !forceReplace && (existing.name || '').trim().toLowerCase() !== brandName.trim().toLowerCase()) {
   throw new (await import('@nestjs/common')).ConflictException({
     ok: false,
     replaceRequired: true,

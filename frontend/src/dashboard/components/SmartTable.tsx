@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronUp, ChevronDown, MoreVertical, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronUp, ChevronDown, MoreVertical, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Column {
   key: string;
@@ -23,7 +23,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({
   title,
   searchPlaceholder = 'Search records...',
   actions,
-  dark = true,
+  dark: _dark = true,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);

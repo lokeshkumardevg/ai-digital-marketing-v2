@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { SmartTable } from '../components/SmartTable';
-import { Users, RefreshCw, Database, CreditCard, Wallet } from 'lucide-react';
+import { Users, RefreshCw, Database } from 'lucide-react';
 
 const dateRanges = ['Last 7 days', 'Last 14 days', 'Last 30 days', 'Last 90 days', 'Today'];
 
@@ -56,8 +56,8 @@ export const Crm: React.FC = () => {
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [audiences, setAudiences]       = useState<any[]>([]);
   const [loading, setLoading]           = useState(true);
-  const [rechargeAmount, setRechargeAmount] = useState(500);
-  const [walletBalance, setWalletBalance] = useState(0);
+  // const [rechargeAmount, setRechargeAmount] = useState(500);
+  // const [walletBalance, setWalletBalance] = useState(0);
   const { user } = useSelector((state: any) => state.auth);
   const [kpis, setKpis] = useState([
     { label: 'Spend',          value: '$0.00', color: D.purple,  checked: true,  key: 'spend' },
@@ -102,74 +102,91 @@ export const Crm: React.FC = () => {
     try {
       const url = new URL(window.location.href);
       const googleConnected = url.searchParams.get('googleConnected');
+      const metaConnected = url.searchParams.get('metaConnected');
+      const xConnected = url.searchParams.get('xConnected');
+      const linkedinConnected = url.searchParams.get('linkedinConnected');
+
       if (googleConnected === 'success') toast.success('Google Ads connected successfully');
       if (googleConnected === 'error') toast.error('Failed to connect Google Ads');
+      if (metaConnected === 'success') toast.success('Meta Ads connected successfully');
+      if (metaConnected === 'error') toast.error('Failed to connect Meta Ads');
+      if (xConnected === 'success') toast.success('X Ads connected successfully');
+      if (xConnected === 'error') toast.error('Failed to connect X Ads');
+      if (linkedinConnected === 'success') toast.success('LinkedIn account connected successfully');
+      if (linkedinConnected === 'error') toast.error('Failed to connect LinkedIn');
 
-      url.searchParams.delete('googleConnected');
-      window.history.replaceState({}, '', url.toString());
+      let changed = false;
+      if (googleConnected) { url.searchParams.delete('googleConnected'); changed = true; }
+      if (metaConnected) { url.searchParams.delete('metaConnected'); changed = true; }
+      if (xConnected) { url.searchParams.delete('xConnected'); changed = true; }
+      if (linkedinConnected) { url.searchParams.delete('linkedinConnected'); changed = true; }
+
+      if (changed) {
+        window.history.replaceState({}, '', url.toString());
+      }
     } catch {}
 
-    import('../../api/axios').then(({ api }) => {
-      api.get('/billing/wallet').then(res => {
-        setWalletBalance(res.data?.balance ?? 0);
-      }).catch(() => {});
-    });
+    // import('../../api/axios').then(({ api }) => {
+    //   api.get('/billing/wallet').then(res => {
+    //     setWalletBalance(res.data?.balance ?? 0);
+    //   }).catch(() => {});
+    // });
   }, []);
 
 
-  const handleRazorpayRecharge = async () => {
-    try {
-      const { api } = await import('../../api/axios');
-      const orderRes = await api.post('/billing/razorpay/create-order', {
-        amount: rechargeAmount,
-        tenantId: 'default_tenant',
-      });
-      const order = orderRes.data.order;
-
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: order.amount,
-        currency: 'INR',
-        name: 'Wheedle.ai',
-        description: 'Wallet Recharge',
-        order_id: order.id,
-        handler: async (response: any) => {
-          try {
-            await api.post('/billing/razorpay/verify', {
-              tenantId: 'default_tenant',
-              amount: rechargeAmount,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-            toast.success(`$${rechargeAmount} added to wallet!`);
-            setWalletBalance(prev => prev + rechargeAmount);
-          } catch {
-            toast.error('Payment verification failed');
-          }
-        },
-        prefill: { name: 'Wheedle User', email: 'user@wheedle.ai' },
-       theme: { color: '#0665ff' },
-      };
-
-      if (!(window as unknown as { Razorpay?: unknown }).Razorpay) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-          script.onload = () => resolve();
-          script.onerror = () => reject(new Error('Razorpay SDK failed to load'));
-          document.body.appendChild(script);
-        });
-      }
-
-      const Rzp = (window as unknown as { Razorpay: new (opts: typeof options) => { open: () => void } }).Razorpay;
-      const rzp = new Rzp(options);
-      rzp.open();
-    } catch (err: unknown) {
-      const ax = err as { response?: { data?: { message?: string } } };
-      toast.error(ax?.response?.data?.message || 'Failed to initiate payment');
-    }
-  };
+  // const handleRazorpayRecharge = async () => {
+  //   try {
+  //     const { api } = await import('../../api/axios');
+  //     const orderRes = await api.post('/billing/razorpay/create-order', {
+  //       amount: rechargeAmount,
+  //       tenantId: 'default_tenant',
+  //     });
+  //     const order = orderRes.data.order;
+  // 
+  //     const options = {
+  //       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+  //       amount: order.amount,
+  //       currency: 'INR',
+  //       name: 'Wheedle.ai',
+  //       description: 'Wallet Recharge',
+  //       order_id: order.id,
+  //       handler: async (response: any) => {
+  //         try {
+  //           await api.post('/billing/razorpay/verify', {
+  //             tenantId: 'default_tenant',
+  //             amount: rechargeAmount,
+  //             razorpay_order_id: response.razorpay_order_id,
+  //             razorpay_payment_id: response.razorpay_payment_id,
+  //             razorpay_signature: response.razorpay_signature,
+  //           });
+  //           toast.success(`$${rechargeAmount} added to wallet!`);
+  //           setWalletBalance(prev => prev + rechargeAmount);
+  //         } catch {
+  //           toast.error('Payment verification failed');
+  //         }
+  //       },
+  //       prefill: { name: 'Wheedle User', email: 'user@wheedle.ai' },
+  //      theme: { color: '#0665ff' },
+  //     };
+  // 
+  //     if (!(window as unknown as { Razorpay?: unknown }).Razorpay) {
+  //       await new Promise<void>((resolve, reject) => {
+  //         const script = document.createElement('script');
+  //         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+  //         script.onload = () => resolve();
+  //         script.onerror = () => reject(new Error('Razorpay SDK failed to load'));
+  //         document.body.appendChild(script);
+  //       });
+  //     }
+  // 
+  //     const Rzp = (window as unknown as { Razorpay: new (opts: typeof options) => { open: () => void } }).Razorpay;
+  //     const rzp = new Rzp(options);
+  //     rzp.open();
+  //   } catch (err: unknown) {
+  //     const ax = err as { response?: { data?: { message?: string } } };
+  //     toast.error(ax?.response?.data?.message || 'Failed to initiate payment');
+  //   }
+  // };
 
   const toggleKpi = (i: number) => {
     const newKpis = [...kpis];
@@ -335,8 +352,8 @@ export const Crm: React.FC = () => {
           {[ 
             { label: 'Meta', connected: !!user?.metaAccessToken, disconnectable: true },
             { label: 'Google', connected: !!(user?.googleRefreshToken || user?.googleAccessToken), disconnectable: true },
-            { label: 'X', connected: !!user?.twitterAccessToken, disconnectable: false },
-            { label: 'LinkedIn', connected: !!user?.linkedinAccessToken, disconnectable: false },
+            { label: 'X', connected: !!user?.twitterAccessToken, disconnectable: true },
+            { label: 'LinkedIn', connected: !!user?.linkedinAccessToken, disconnectable: true },
           ].map((item) => (
             <div
               key={item.label}
@@ -362,7 +379,11 @@ export const Crm: React.FC = () => {
                   onClick={async () => {
                     try {
                       const { api } = await import('../../api/axios');
-                      const endpoint = item.label === 'Meta' ? '/analytics/disconnect/meta' : '/analytics/disconnect/google';
+                      let endpoint = '/analytics/disconnect/meta';
+                      if (item.label === 'Google') endpoint = '/analytics/disconnect/google';
+                      else if (item.label === 'X') endpoint = '/analytics/disconnect/x';
+                      else if (item.label === 'LinkedIn') endpoint = '/analytics/disconnect/linkedin';
+                      
                       await api.post(endpoint);
                       toast.success(`${item.label} disconnected.`);
                       void fetchData();

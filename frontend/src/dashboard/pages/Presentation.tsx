@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import PptxGenJS from 'pptxgenjs';
 import {
   ChevronLeft, ChevronRight, BarChart3, Bot, Globe, Target, Cpu, Zap,
-  ArrowRight, Layout, Sparkles, Shield, Rocket, Search, Gem,
+  Layout, Sparkles, Shield, Rocket, Search, Gem,
   BrainCircuit, LayoutTemplate, Images, GitBranch, Users, MessageSquare,
-  CheckCircle2, Lock, ShieldCheck, TrendingUp, Download, Printer
+  CheckCircle2, TrendingUp
 } from 'lucide-react';
 import './Presentation.css';
 
@@ -176,11 +176,7 @@ const slides = [
   }
 ];
 
-export const Presentation: React.FC = () => {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
-  const downloadPPT = () => {
+export const downloadPPT = () => {
     try {
       console.log("Starting PPT generation...");
       const pptx = new PptxGenJS();
@@ -189,7 +185,7 @@ export const Presentation: React.FC = () => {
       pptx.defineLayout({ name: 'WHEEDLE_LAYOUT', width: 13.3, height: 7.5 });
       pptx.layout = 'WHEEDLE_LAYOUT';
 
-      slides.forEach((slide, index) => {
+      slides.forEach((slide) => {
         const pptSlide = pptx.addSlide();
 
         // Background - Deep Brand Blue
@@ -200,7 +196,7 @@ export const Presentation: React.FC = () => {
           pptSlide.addImage({
             path: window.location.origin + '/assets/logo_full_v2.png?v=' + Date.now(),
             x: 0.3, y: 0.2, w: 1.8, h: 0.6,
-            sizing: { type: 'contain' }
+            sizing: { type: 'contain', w: 1.8, h: 0.6 }
           });
         } catch (e) {
           console.warn("Logo failed to load for PPT", e);
@@ -226,7 +222,7 @@ export const Presentation: React.FC = () => {
 
         // 4. Subtitle/Content
         if (slide.subtitle || slide.content) {
-          pptSlide.addText(slide.subtitle || slide.content, {
+          pptSlide.addText(slide.subtitle || slide.content || '', {
             x: 0.5,
             y: 1.8,
             w: '90%',
@@ -313,7 +309,11 @@ export const Presentation: React.FC = () => {
       console.error("PPT Generation Error:", error);
       alert("Error generating PPT: " + error);
     }
-  };
+};
+
+export const Presentation: React.FC = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   const nextSlide = () => setCurrentSlide(prev => (prev === slides.length - 1 ? prev : prev + 1));
   const prevSlide = () => setCurrentSlide(prev => (prev === 0 ? prev : prev - 1));

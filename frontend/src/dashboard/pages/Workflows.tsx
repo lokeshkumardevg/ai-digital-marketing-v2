@@ -16,7 +16,6 @@ import {
   Activity,
   ChevronRight,
   Target,
-  BarChart,
   Settings,
   X
 } from 'lucide-react';

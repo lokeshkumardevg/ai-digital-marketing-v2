@@ -538,8 +538,6 @@ const SpendChart: React.FC<{ derived: DerivedAnalytics | null }> = ({ derived })
             label: 'ROI',
             data: d.roi,
             backgroundColor: 'rgba(34,211,238,.55)',
-            borderRadius: 5,
-            borderSkipped: false as const,
             type: 'line' as const,
             yAxisID: 'yRoi',
             tension: 0.4,

@@ -56,29 +56,27 @@ const normalizeUrl = (value: string) => {
   return `https://${trimmed}`;
 };
 
-const extractImagesFromResponse = (payload: FetchImagesResponse): string[] => {
+const extractImagesFromResponse = (payload: any): string[] => {
   if (Array.isArray(payload)) {
-    return payload.filter((item) => typeof item === 'string' && item.trim().length > 0);
+    return payload.filter((item: any) => typeof item === 'string' && item.trim().length > 0);
   }
 
-  if (Array.isArray(payload?.images)) {
-    return payload.images.filter((item) => typeof item === 'string' && item.trim().length > 0);
-  }
-
-  if (Array.isArray(payload?.data)) {
-    return payload.data.filter((item) => typeof item === 'string' && item.trim().length > 0);
-  }
-
-  if (payload?.data && typeof payload.data === 'object' && Array.isArray(payload.data.images)) {
-    return payload.data.images.filter((item) => typeof item === 'string' && item.trim().length > 0);
-  }
-
-  if (payload?.result && Array.isArray(payload.result)) {
-    return payload.result.filter((item) => typeof item === 'string' && item.trim().length > 0);
-  }
-
-  if (payload?.result && typeof payload.result === 'object' && Array.isArray(payload.result.images)) {
-    return payload.result.images.filter((item) => typeof item === 'string' && item.trim().length > 0);
+  if (payload && typeof payload === 'object') {
+    if (Array.isArray(payload.images)) {
+      return payload.images.filter((item: any) => typeof item === 'string' && item.trim().length > 0);
+    }
+    if (Array.isArray(payload.data)) {
+      return payload.data.filter((item: any) => typeof item === 'string' && item.trim().length > 0);
+    }
+    if (payload.data && typeof payload.data === 'object' && Array.isArray(payload.data.images)) {
+      return payload.data.images.filter((item: any) => typeof item === 'string' && item.trim().length > 0);
+    }
+    if (Array.isArray(payload.result)) {
+      return payload.result.filter((item: any) => typeof item === 'string' && item.trim().length > 0);
+    }
+    if (payload.result && typeof payload.result === 'object' && Array.isArray(payload.result.images)) {
+      return payload.result.images.filter((item: any) => typeof item === 'string' && item.trim().length > 0);
+    }
   }
 
   return [];

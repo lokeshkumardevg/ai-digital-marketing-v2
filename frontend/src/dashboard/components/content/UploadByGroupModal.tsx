@@ -43,10 +43,10 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
   groupCreativeType,
   groupFiles,
   groupUploading,
-  groupSaving,
-  groupUploaded,
-  groupLifetimeStart,
-  groupLifetimeEnd,
+  groupSaving: _groupSaving,
+  groupUploaded: _groupUploaded,
+  groupLifetimeStart: _groupLifetimeStart,
+  groupLifetimeEnd: _groupLifetimeEnd,
   uploadedGroupItems,
   onClose,
   onCreativeTypeChange,
@@ -55,9 +55,9 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
   onDragOver,
   onUpload,
   onRemoveFile,
-  onLifetimeStartChange,
-  onLifetimeEndChange,
-  onConfirm,
+  onLifetimeStartChange: _onLifetimeStartChange,
+  onLifetimeEndChange: _onLifetimeEndChange,
+  onConfirm: _onConfirm,
 }) => {
   if (!open) return null;
 

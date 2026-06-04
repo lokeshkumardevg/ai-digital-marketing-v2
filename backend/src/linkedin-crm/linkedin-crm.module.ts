@@ -6,6 +6,7 @@ import { LinkedInAccount, LinkedInAccountSchema } from './schemas/linkedin-accou
 import { LinkedInLead, LinkedInLeadSchema } from './schemas/linkedin-lead.schema';
 import { LinkedInPost, LinkedInPostSchema } from './schemas/linkedin-post.schema';
 import { LinkedInAdCampaign, LinkedInAdCampaignSchema } from './schemas/linkedin-ad-campaign.schema';
+import { User, UserSchema } from '../users/schemas/user.schema';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { LinkedInAdCampaign, LinkedInAdCampaignSchema } from './schemas/linkedin
       { name: LinkedInLead.name, schema: LinkedInLeadSchema },
       { name: LinkedInPost.name, schema: LinkedInPostSchema },
       { name: LinkedInAdCampaign.name, schema: LinkedInAdCampaignSchema },
+      { name: User.name, schema: UserSchema },
     ]),
   ],
   controllers: [LinkedInCrmController],

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { GlassCard } from '../components/GlassCard';
 import {
   MessageCircle, Mail, Send, CheckCircle, Users, Smartphone, Sparkles,
   Upload, X, Clock, AlertCircle, Zap, FileSpreadsheet,
@@ -57,23 +56,7 @@ const LOG_STATUS_BG: Record<string, string> = {
   pending: 'rgba(148,163,184,0.10)',
 };
 
-// ─── AI Templates ─────────────────────────────────────────────────────────────
-const AI_TEMPLATES: Record<CampaignType, string[]> = {
-  whatsapp: [
-    "Hi {{name}}! Your exclusive offer is live — grab 20% off before midnight. Shop now!",
-    "Hey {{name}}, your order has been shipped. Track it here: [link]. Questions? Reply anytime.",
-    "{{name}}, we miss you! Come back — your wishlist items are back in stock.",
-  ],
-  email: [
-    "Hi {{name}},\n\nWe have exciting news tailored just for you. Check out our latest campaign.\n\nBest,\nThe Wheedle Team",
-    "Hello {{name}},\n\nYour subscription has been renewed. Here is a summary of your account activity.\n\nThank you!",
-    "Dear {{name}},\n\nWe noticed you have not visited in a while. Log in today and see what is new!\n\nWarm regards,\nThe Team",
-  ],
-  both: [
-    "Hi {{name}}! You have a special message waiting. Check your email for full details.",
-    "Hey {{name}} — Big news! We just launched something incredible for you. Details in your inbox!",
-  ],
-};
+
 
 // ─── Stat Badge ───────────────────────────────────────────────────────────────
 const StatBadge = ({ icon, label, value, color }: {

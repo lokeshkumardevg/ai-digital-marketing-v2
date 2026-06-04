@@ -16,6 +16,11 @@ import {
   fetchLeadPosts,
   fetchAdCampaigns,
   fetchPosts,
+  triggerProfileScrape,
+  fetchOrganizations,
+  connectOrganization,
+  fetchEvents,
+  createEvent,
   type LinkedInLead,
 } from '../../store/slices/linkedinCrmSlice';
 import {
@@ -24,9 +29,7 @@ import {
   Target,
   Plus,
   Search,
-  Filter,
   X,
-  ChevronRight,
   Star,
   MessageSquare,
   Phone,
@@ -37,7 +40,6 @@ import {
   Clock,
   Zap,
   UserCheck,
-  BarChart3,
   Trash2,
   ExternalLink,
   Link2,
@@ -52,7 +54,6 @@ import {
   MessageCircle,
   ThumbsUp,
   Megaphone,
-  BarChart2,
   Calendar,
   DollarSign,
   TrendingUp as TrendingUpIcon,
@@ -83,8 +84,8 @@ export const LinkedInCrm: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const {
     connectedAccount, accountLoading, leads, leadsLoading,
-    selectedLead, leadStats, error, adCampaigns, adsLoading,
-    posts, postsLoading
+    selectedLead, leadStats, adCampaigns, adsLoading,
+    posts, postsLoading, organizations, orgsLoading, events, eventsLoading
   } = useSelector((state: any) => state.linkedinCrm);
 
   const [view, setView] = useState<'pipeline' | 'table'>('pipeline');
@@ -101,6 +102,7 @@ export const LinkedInCrm: React.FC = () => {
   const [showConnectedAccountModal, setShowConnectedAccountModal] = useState(false);
   const [liAtCookie, setLiAtCookie] = useState('');
   const [isScraping, setIsScraping] = useState(false);
+  const [publishTarget, setPublishTarget] = useState<'personal' | 'company'>('personal');
 
   // New lead form
   const [newLead, setNewLead] = useState({
@@ -113,6 +115,8 @@ export const LinkedInCrm: React.FC = () => {
     dispatch(fetchLeadStats());
     dispatch(fetchAdCampaigns());
     dispatch(fetchPosts());
+    dispatch(fetchOrganizations());
+    dispatch(fetchEvents());
   }, [dispatch]);
 
   useEffect(() => {
@@ -150,8 +154,7 @@ export const LinkedInCrm: React.FC = () => {
     if (!liAtCookie) return;
     try {
       setIsScraping(true);
-      // @ts-ignore - triggerProfileScrape is added to slice
-      await dispatch({ type: 'linkedinCrm/triggerProfileScrape', payload: liAtCookie });
+      await dispatch(triggerProfileScrape(liAtCookie)).unwrap();
       setLiAtCookie('');
       alert('Scraping started! Check back in a few minutes.');
     } catch (err) {
@@ -222,7 +225,10 @@ export const LinkedInCrm: React.FC = () => {
   const handlePublishPost = async () => {
     if (!postContent.trim()) return;
     try {
-      await dispatch(publishLinkedInPost(postContent)).unwrap();
+      const authorUrn = publishTarget === 'company' && connectedAccount?.connectedOrganizationUrn
+        ? connectedAccount.connectedOrganizationUrn
+        : undefined;
+      await dispatch(publishLinkedInPost({ text: postContent, authorUrn })).unwrap();
       setShowComposePost(false);
       setPostContent('');
       alert('Post published successfully to LinkedIn!');
@@ -522,7 +528,14 @@ export const LinkedInCrm: React.FC = () => {
         </>
       ) : mainTab === 'my_posts' ? (
         /* ============= MY POSTS & ANALYTICS CONTENT ============= */
-        <MyPostsView posts={posts} loading={postsLoading} account={connectedAccount} />
+        <MyPostsView
+          posts={posts}
+          loading={postsLoading}
+          account={connectedAccount}
+          events={events}
+          eventsLoading={eventsLoading}
+          onCreateEvent={(eventData) => dispatch(createEvent(eventData))}
+        />
       ) : (
         /* ============= ADS MANAGER CONTENT ============= */
         <AdsManagerView campaigns={adCampaigns} loading={adsLoading} />
@@ -613,6 +626,62 @@ export const LinkedInCrm: React.FC = () => {
               <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase' }}>LinkedIn ID</div>
                 <div style={{ fontSize: '0.9rem', color: '#e5e5e5', fontFamily: 'monospace' }}>{connectedAccount.linkedinId || connectedAccount.id || 'Unknown'}</div>
+              </div>
+              <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Building2 size={12} /> Connected Company Page / Organization
+                </div>
+                {connectedAccount.connectedOrganizationUrn ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(99,102,241,0.05)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.1)' }}>
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{connectedAccount.connectedOrganizationName}</div>
+                      <div style={{ fontSize: '0.65rem', color: '#64748b', fontFamily: 'monospace', marginTop: '2px' }}>{connectedAccount.connectedOrganizationUrn}</div>
+                    </div>
+                    <button 
+                      onClick={() => dispatch(connectOrganization({ orgUrn: '', orgName: '' }))}
+                      style={{ background: 'rgba(239,68,68,0.1)', border: 'none', borderRadius: '6px', padding: '6px 10px', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Disconnect Page
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <p style={{ margin: '0 0 10px', fontSize: '0.75rem', color: '#94a3b8' }}>
+                      Connect a company page to publish posts and run ads as your business instead of your personal profile.
+                    </p>
+                    {orgsLoading ? (
+                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Loading organizations...</div>
+                    ) : organizations && organizations.length > 0 ? (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <select
+                          id="org-select"
+                          style={{
+                            flex: 1, padding: '8px 12px', borderRadius: '8px',
+                            background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
+                            color: '#fff', fontSize: '0.8rem', cursor: 'pointer', outline: 'none'
+                          }}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val) {
+                              const found = organizations.find((o: any) => o.urn === val);
+                              if (found) {
+                                dispatch(connectOrganization({ orgUrn: found.urn, orgName: found.name }));
+                              }
+                            }
+                          }}
+                          defaultValue=""
+                        >
+                          <option value="" disabled>Select a Company Page...</option>
+                          {organizations.map((org: any) => (
+                            <option key={org.urn} value={org.urn}>{org.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '0.8rem', color: '#ef4444' }}>No administration pages found on LinkedIn.</div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -728,6 +797,43 @@ export const LinkedInCrm: React.FC = () => {
               </button>
             </div>
           </div>
+          {connectedAccount?.connectedOrganizationUrn && (
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
+                Post As
+              </label>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setPublishTarget('personal')}
+                  style={{
+                    flex: 1, padding: '8px 12px', borderRadius: '10px',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: publishTarget === 'personal' ? 'rgba(0,119,181,0.15)' : 'rgba(255,255,255,0.02)',
+                    color: publishTarget === 'personal' ? '#00A0DC' : '#94a3b8',
+                    borderColor: publishTarget === 'personal' ? '#0077B5' : 'rgba(255,255,255,0.08)',
+                    fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
+                  }}
+                >
+                  Personal Profile ({connectedAccount.profileName})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPublishTarget('company')}
+                  style={{
+                    flex: 1, padding: '8px 12px', borderRadius: '10px',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: publishTarget === 'company' ? 'rgba(0,119,181,0.15)' : 'rgba(255,255,255,0.02)',
+                    color: publishTarget === 'company' ? '#00A0DC' : '#94a3b8',
+                    borderColor: publishTarget === 'company' ? '#0077B5' : 'rgba(255,255,255,0.08)',
+                    fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer'
+                  }}
+                >
+                  Company Page ({connectedAccount.connectedOrganizationName})
+                </button>
+              </div>
+            </div>
+          )}
 
           <div style={{ marginBottom: '16px' }}>
             <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
@@ -794,7 +900,7 @@ const PipelineView: React.FC<{
   leads: LinkedInLead[];
   onStageChange: (leadId: string, stage: string) => void;
   onLeadClick: (lead: LinkedInLead) => void;
-}> = ({ leads, onStageChange, onLeadClick }) => {
+}> = ({ leads, onStageChange: _onStageChange, onLeadClick }) => {
   return (
     <div style={{ width: '100%', overflowX: 'auto', paddingBottom: '16px' }}>
       <div style={{
@@ -1076,8 +1182,8 @@ const LeadDetailPanel: React.FC<{
   newNote: string;
   setNewNote: (note: string) => void;
 }> = ({ lead, onClose, onStageChange, onAddNote, onDelete, newNote, setNewNote }) => {
-  const dispatch = useAppDispatch();
-  const { leadPosts, leadPostsLoading } = useAppSelector((state) => state.linkedinCrm);
+  const dispatch = useDispatch<AppDispatch>();
+  const { leadPosts, leadPostsLoading } = useSelector((state: any) => state.linkedinCrm);
   const [activeTab, setActiveTab] = useState<'details' | 'posts'>('details');
 
   useEffect(() => {
@@ -1240,7 +1346,7 @@ const LeadDetailPanel: React.FC<{
                 key={s.key}
                 onClick={() => onStageChange(s.key)}
                 style={{
-                  padding: '6px 12px', borderRadius: '8px', border: 'none',
+                  padding: '6px 12px', borderRadius: '8px',
                   background: lead.stage === s.key ? `${s.color}22` : 'rgba(255,255,255,0.04)',
                   color: lead.stage === s.key ? s.color : '#64748b',
                   fontWeight: 600, fontSize: '0.7rem', cursor: 'pointer',
@@ -1422,7 +1528,24 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
 );
 
 // ==================== MY POSTS VIEW ====================
-const MyPostsView: React.FC<{ posts: any[]; loading: boolean; account: any }> = ({ posts, loading, account }) => {
+const MyPostsView: React.FC<{
+  posts: any[];
+  loading: boolean;
+  account: any;
+  events: any[];
+  eventsLoading: boolean;
+  onCreateEvent: (eventData: any) => void;
+}> = ({ posts, loading, account, events, eventsLoading, onCreateEvent }) => {
+  const [subTab, setSubTab] = useState<'posts' | 'events'>('posts');
+  const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [newEvent, setNewEvent] = useState({
+    name: '',
+    description: '',
+    startsAt: '',
+    onlineMeetingUrl: '',
+    format: 'AUDIO', // 'AUDIO' or 'VIDEO'
+  });
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: '#64748b' }}>
@@ -1434,7 +1557,6 @@ const MyPostsView: React.FC<{ posts: any[]; loading: boolean; account: any }> = 
   // Calculate some fake insights for UI demo since API data isn't fully robust
   const totalImpressions = posts.reduce((sum, p) => sum + (p.impressions || Math.floor(Math.random() * 5000) + 500), 0);
   const totalEngagement = posts.reduce((sum, p) => sum + (p.likes || 0) + (p.comments || 0), 0);
-  const topPerformingPost = posts.length > 0 ? posts.reduce((max, p) => ((p.likes || 0) > (max.likes || 0) ? p : max), posts[0]) : null;
 
   return (
     <div>
@@ -1485,70 +1607,290 @@ const MyPostsView: React.FC<{ posts: any[]; loading: boolean; account: any }> = 
         </div>
       </div>
 
-      {/* Posts List */}
-      <h3 style={{ margin: '0 0 16px', color: '#e5e5e5', fontSize: '1.1rem' }}>Your Recent Posts</h3>
-      
-      {posts.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-          <FileText size={32} color="#64748b" style={{ marginBottom: '16px' }} />
-          <h4 style={{ margin: '0 0 8px', color: '#e5e5e5' }}>No Posts Found</h4>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8' }}>You haven't published any posts yet. Use the Compose Post button above.</p>
+      {/* Sub Tabs */}
+      <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+        <button
+          onClick={() => setSubTab('posts')}
+          style={{
+            background: 'none', border: 'none', padding: '10px 4px', cursor: 'pointer',
+            color: subTab === 'posts' ? '#e5e5e5' : '#64748b',
+            fontWeight: 600, fontSize: '0.85rem',
+            borderBottom: subTab === 'posts' ? '2px solid #00A0DC' : '2px solid transparent',
+            transition: 'all 0.15s'
+          }}
+        >
+          Recent Posts
+        </button>
+        <button
+          onClick={() => setSubTab('events')}
+          style={{
+            background: 'none', border: 'none', padding: '10px 4px', cursor: 'pointer',
+            color: subTab === 'events' ? '#e5e5e5' : '#64748b',
+            fontWeight: 600, fontSize: '0.85rem',
+            borderBottom: subTab === 'events' ? '2px solid #00A0DC' : '2px solid transparent',
+            transition: 'all 0.15s'
+          }}
+        >
+          LinkedIn Events
+        </button>
+      </div>
+
+      {/* === SUB-TAB: POSTS === */}
+      {subTab === 'posts' && (
+        <div>
+          <h3 style={{ margin: '0 0 16px', color: '#e5e5e5', fontSize: '1.1rem' }}>Your Recent Posts</h3>
+          {posts.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+              <FileText size={32} color="#64748b" style={{ marginBottom: '16px' }} />
+              <h4 style={{ margin: '0 0 8px', color: '#e5e5e5' }}>No Posts Found</h4>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8' }}>You haven't published any posts yet. Use the Compose Post button above.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {posts.map((post) => {
+                const impressions = post.impressions || Math.floor(Math.random() * 2000) + 300; // Mock impressions if 0
+                const engRate = ((post.likes + post.comments) / impressions) * 100;
+                return (
+                  <div key={post._id} style={{ 
+                    background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '20px', 
+                    border: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '24px', flexWrap: 'wrap'
+                  }}>
+                    <div style={{ flex: '1 1 300px' }}>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '8px', display: 'flex', gap: '12px' }}>
+                        <span>{new Date(post.createdAt || Date.now()).toLocaleDateString()}</span>
+                        {post.postType && <span style={{ textTransform: 'capitalize', color: '#818cf8' }}>{post.postType}</span>}
+                      </div>
+                      <p style={{ margin: '0 0 16px', fontSize: '0.95rem', lineHeight: '1.5', color: '#e5e5e5', whiteSpace: 'pre-wrap' }}>
+                        {post.content}
+                      </p>
+                      {post.hashtags && post.hashtags.length > 0 && (
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                          {post.hashtags.map((tag: string) => (
+                            <span key={tag} style={{ fontSize: '0.75rem', color: '#0ea5e9', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                              <Hash size={12} />{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div style={{ width: '250px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '16px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                      <h4 style={{ margin: '0 0 12px', fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase' }}>Performance Insights</h4>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>Impressions</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{impressions.toLocaleString()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>Likes</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{post.likes}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                        <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>Comments</span>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{post.comments}</span>
+                      </div>
+                      <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Engagement Rate</span>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: engRate > 3 ? '#22c55e' : '#f59e0b' }}>
+                            {engRate.toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {posts.map((post) => {
-            const impressions = post.impressions || Math.floor(Math.random() * 2000) + 300; // Mock impressions if 0
-            const engRate = ((post.likes + post.comments) / impressions) * 100;
-            return (
-              <div key={post._id} style={{ 
-                background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '20px', 
-                border: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '24px', flexWrap: 'wrap'
-              }}>
-                <div style={{ flex: '1 1 300px' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '8px', display: 'flex', gap: '12px' }}>
-                    <span>{new Date(post.createdAt || Date.now()).toLocaleDateString()}</span>
-                    {post.postType && <span style={{ textTransform: 'capitalize', color: '#818cf8' }}>{post.postType}</span>}
-                  </div>
-                  <p style={{ margin: '0 0 16px', fontSize: '0.95rem', lineHeight: '1.5', color: '#e5e5e5', whiteSpace: 'pre-wrap' }}>
-                    {post.content}
-                  </p>
-                  {post.hashtags && post.hashtags.length > 0 && (
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      {post.hashtags.map((tag: string) => (
-                        <span key={tag} style={{ fontSize: '0.75rem', color: '#0ea5e9', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                          <Hash size={12} />{tag}
+      )}
+
+      {/* === SUB-TAB: EVENTS === */}
+      {subTab === 'events' && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <h3 style={{ margin: 0, color: '#e5e5e5', fontSize: '1.1rem' }}>LinkedIn Virtual Events</h3>
+            <button
+              onClick={() => setShowCreateEvent(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                background: 'linear-gradient(135deg, #0077B5, #00A0DC)',
+                color: '#fff', border: 'none', borderRadius: '10px',
+                padding: '8px 16px', fontSize: '0.8rem', fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              <Calendar size={14} /> Create Event
+            </button>
+          </div>
+
+          {eventsLoading ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '150px' }}>
+              <Loader2 size={24} className="spin" style={{ animation: 'spin 1s linear infinite' }} />
+            </div>
+          ) : events && events.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
+              {events.map((evt: any) => {
+                const isUpcoming = new Date(evt.startsAt || evt.startsAtTime).getTime() > Date.now();
+                return (
+                  <div key={evt.id || evt._id} style={{
+                    background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '20px',
+                    border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
+                  }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <span style={{
+                          fontSize: '0.65rem', padding: '3px 8px', borderRadius: '8px', fontWeight: 700,
+                          background: isUpcoming ? 'rgba(14,165,233,0.15)' : 'rgba(100,116,139,0.15)',
+                          color: isUpcoming ? '#0ea5e9' : '#94a3b8'
+                        }}>
+                          {isUpcoming ? 'UPCOMING' : 'COMPLETED'}
                         </span>
-                      ))}
+                        <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Users size={12} /> {evt.attendees || 0} registered
+                        </span>
+                      </div>
+                      <h4 style={{ margin: '0 0 8px', color: '#e5e5e5', fontSize: '0.95rem', fontWeight: 700 }}>{evt.name || evt.title}</h4>
+                      <p style={{ margin: '0 0 14px', fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.4 }}>{evt.description || 'No description provided.'}</p>
                     </div>
-                  )}
-                </div>
-                
-                <div style={{ width: '250px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '16px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                  <h4 style={{ margin: '0 0 12px', fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase' }}>Performance Insights</h4>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>Impressions</span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{impressions.toLocaleString()}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>Likes</span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{post.likes}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                    <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>Comments</span>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{post.comments}</span>
-                  </div>
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Engagement Rate</span>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: engRate > 3 ? '#22c55e' : '#f59e0b' }}>
-                        {engRate.toFixed(1)}%
-                      </span>
+
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#cbd5e1' }}>
+                        <Clock size={12} color="#818cf8" />
+                        <span>{new Date(evt.startsAt || evt.startsAtTime).toLocaleString()}</span>
+                      </div>
+                      {evt.onlineMeetingUrl && (
+                        <a href={evt.onlineMeetingUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: '#0ea5e9', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                          Join Event Link <ExternalLink size={10} />
+                        </a>
+                      )}
                     </div>
                   </div>
-                </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+              <Calendar size={28} color="#64748b" style={{ marginBottom: '12px', opacity: 0.5 }} />
+              <h4 style={{ margin: '0 0 6px', color: '#e5e5e5', fontSize: '0.9rem' }}>No Virtual Events</h4>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>Create an audio or video event to connect with your LinkedIn audience.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Create Event Modal */}
+      {showCreateEvent && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.6)', zIndex: 2000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: '#0f1629', borderRadius: '20px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            padding: '28px', width: '500px', boxSizing: 'border-box',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#e5e5e5' }}>Create LinkedIn Event</h3>
+              <button onClick={() => setShowCreateEvent(false)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#94a3b8' }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Event Name *</label>
+                <input
+                  type="text"
+                  placeholder="E.g., AI Marketing Workshop"
+                  value={newEvent.name}
+                  onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                />
               </div>
-            );
-          })}
+
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Event Format</label>
+                <select
+                  value={newEvent.format}
+                  onChange={(e) => setNewEvent({ ...newEvent, format: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', cursor: 'pointer', boxSizing: 'border-box' }}
+                >
+                  <option value="AUDIO">LinkedIn Audio Event</option>
+                  <option value="VIDEO">LinkedIn Live Video Event</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Start Date & Time *</label>
+                <input
+                  type="datetime-local"
+                  value={newEvent.startsAt}
+                  onChange={(e) => setNewEvent({ ...newEvent, startsAt: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Online Event / Meeting Link</label>
+                <input
+                  type="url"
+                  placeholder="https://example.com/meeting"
+                  value={newEvent.onlineMeetingUrl}
+                  onChange={(e) => setNewEvent({ ...newEvent, onlineMeetingUrl: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Description *</label>
+                <textarea
+                  placeholder="Describe what your event is about..."
+                  rows={4}
+                  value={newEvent.description}
+                  onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', resize: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+              <button
+                onClick={() => setShowCreateEvent(false)}
+                style={{ padding: '10px 20px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94a3b8', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!newEvent.name.trim() || !newEvent.startsAt || !newEvent.description.trim()) {
+                    alert('Please fill in all required fields (*)');
+                    return;
+                  }
+                  onCreateEvent({
+                    name: newEvent.name,
+                    description: newEvent.description,
+                    startsAt: new Date(newEvent.startsAt).getTime(),
+                    onlineMeetingUrl: newEvent.onlineMeetingUrl,
+                    format: newEvent.format
+                  });
+                  setShowCreateEvent(false);
+                  setNewEvent({ name: '', description: '', startsAt: '', onlineMeetingUrl: '', format: 'AUDIO' });
+                }}
+                disabled={!newEvent.name.trim() || !newEvent.startsAt || !newEvent.description.trim()}
+                style={{
+                  padding: '10px 24px', borderRadius: '10px',
+                  background: (newEvent.name.trim() && newEvent.startsAt && newEvent.description.trim()) ? 'linear-gradient(135deg, #0077B5, #00A0DC)' : 'rgba(255,255,255,0.06)',
+                  border: 'none', color: '#fff', cursor: (newEvent.name.trim() && newEvent.startsAt && newEvent.description.trim()) ? 'pointer' : 'not-allowed',
+                  fontWeight: 600, fontSize: '0.85rem'
+                }}
+              >
+                Create Event
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
