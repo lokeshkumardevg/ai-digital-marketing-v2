@@ -11,6 +11,7 @@ import { socialReducer } from './slices/socialSlice';
 import { rolesReducer } from './slices/rolesSlice';
 import { workflowsReducer } from './slices/workflowsSlice';
 import { linkedinCrmReducer } from './slices/linkedinCrmSlice';
+import reviewsReducer from './slices/reviewsSlice';
 import { fetchBrands } from './slices/workspaceSlice';
 
 export const store = configureStore({
@@ -27,6 +28,7 @@ export const store = configureStore({
     roles: rolesReducer,
     workflows: workflowsReducer,
     linkedinCrm: linkedinCrmReducer,
+    reviews: reviewsReducer,
   },
 });
 

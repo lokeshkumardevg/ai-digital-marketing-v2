@@ -6,7 +6,7 @@ import logo from '../../assets/fevicon.png';
 const agentConfigs: Record<string, any> = {
   "review_generation": {
     title: "Review Generation Agent",
-    url: `http://localhost:3000/webhook/review-gen`,
+    url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/review-gen`,
     fields: [
       { id: "customer_name", label: "Customer Name", type: "text", placeholder: "e.g., John Doe" },
       { id: "product", label: "Product/Service", type: "text", placeholder: "e.g., Premium Web Plan" }
@@ -14,7 +14,7 @@ const agentConfigs: Record<string, any> = {
   },
   "review_response": {
     title: "Review Response Agent",
-    url: `http://localhost:3000/webhook/review-response`,
+    url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/review-response`,
     fields: [
       { id: "star_rating", label: "Star Rating (1-5)", type: "text", placeholder: "e.g., 4" },
       { id: "review_text", label: "Customer Review Text", type: "textarea", placeholder: "Paste customer review..." }
@@ -22,14 +22,14 @@ const agentConfigs: Record<string, any> = {
   },
   "social_publishing": {
     title: "Social Publishing Agent",
-    url: `http://localhost:3000/webhook/social-pub`,
+    url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/social-pub`,
     fields: [
       { id: "topic", label: "Post Topic", type: "textarea", placeholder: "e.g., New feature announcement" }
     ]
   },
   "social_engagement": {
     title: "Social Engagement Agent",
-    url: `http://localhost:3000/webhook/social-engage`,
+    url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/social-engage`,
     fields: [
       { id: "brand_tone", label: "Brand Tone", type: "text", placeholder: "e.g., Friendly & Professional" },
       { id: "user_comment", label: "User Comment to Reply To", type: "textarea", placeholder: "Paste the user comment here..." }
@@ -37,14 +37,14 @@ const agentConfigs: Record<string, any> = {
   },
   "reporting": {
     title: "Reporting Agent",
-    url: `http://localhost:3000/webhook/reporting`,
+    url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/reporting`,
     fields: [
       { id: "metrics", label: "Raw Metrics Data", type: "textarea", placeholder: "e.g., 500 visitors, 10 sales, 2% conversion rate" }
     ]
   },
   "listings_optimization": {
     title: "Listings Optimization Agent",
-    url: `http://localhost:3000/webhook/listings-opt`,
+    url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/listings-opt`,
     fields: [
       { id: "business_name", label: "Business Name", type: "text", placeholder: "e.g., Joe's Coffee" },
       { id: "keywords", label: "Target Keywords (SEO)", type: "textarea", placeholder: "e.g., best coffee, organic espresso, downtown cafe" }
@@ -52,7 +52,7 @@ const agentConfigs: Record<string, any> = {
   },
   "lead_generation": {
     title: "Lead Generation Agent",
-    url: `http://localhost:3000/webhook/lead-gen`,
+    url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/lead-gen`,
     fields: [
       { id: "industry", label: "Target Industry", type: "text", placeholder: "e.g., Real Estate" },
       { id: "region", label: "Region", type: "text", placeholder: "e.g., New York" }
@@ -60,21 +60,21 @@ const agentConfigs: Record<string, any> = {
   },
   "contact_segmentation": {
     title: "Contact Segmentation Agent",
-    url: `http://localhost:3000/webhook/segmentation`,
+    url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/segmentation`,
     fields: [
       { id: "customer_data", label: "Customer Data Example", type: "textarea", placeholder: "e.g., Age 25, clicked email 3 times, bought shoes." }
     ]
   },
   "template_design": {
     title: "Template Design Agent",
-    url: `http://localhost:3000/webhook/template-design`,
+    url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/template-design`,
     fields: [
       { id: "topic", label: "Website/Template Title or Topic", type: "text", placeholder: "e.g., Luxury Watch Landing Page" }
     ]
   },
   "custom": {
     title: "Custom Agent",
-    url: `http://localhost:3000/webhook/custom`,
+    url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/custom`,
     fields: [
       { id: "instruction", label: "Custom Instruction (System Prompt)", type: "text", placeholder: "e.g., Act as a marketing director..." },
       { id: "input", label: "Input Data", type: "textarea", placeholder: "Enter raw data to process..." }
@@ -82,7 +82,7 @@ const agentConfigs: Record<string, any> = {
   },
   "website_builder": {
     title: "Full Website Architect",
-    url: `http://localhost:3000/webhook/website-builder`,
+    url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/website-builder`,
     fields: [
       { id: "topic", label: "Business Name / Website Topic", type: "text", placeholder: "e.g., LuxeCuts - A Premium Barber Shop in New York" },
       { id: "pages", label: "Pages (Count or Names)", type: "text", placeholder: "e.g., 5 OR Home, About, Services, Contact" },
@@ -162,7 +162,7 @@ export const Agents: React.FC = () => {
 
   const runAgentWorkflow = async () => {
     if (!selectedAgentKey) return;
-    const config = agentConfigs[selectedAgentKey] || { url: `http://localhost:3000/webhook/generic` };
+    const config = agentConfigs[selectedAgentKey] || { url: `${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/webhook/generic` };
 
     setIsLoading(true);
     setResponseText('');

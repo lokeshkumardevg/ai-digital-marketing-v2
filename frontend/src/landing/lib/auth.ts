@@ -36,5 +36,6 @@ export const getAuthUser = (): AuthUser | null => {
 export const clearAuthUser = (): void => {
   try {
     localStorage.removeItem(AUTH_USER_KEY);
+    localStorage.removeItem('access_token');
   } catch {}
 };

@@ -47,6 +47,11 @@ export class CampaignController {
     return this.service.publish(id);
   }
 
+  @Post('publish')
+  publishWithBody(@Body() body: any) {
+    return this.service.publish(body.campaignId || body.id, body);
+  }
+
   @Get(':id/status')
   status(@Param('id') id: string) {
     return this.service.getStatus(id);
@@ -233,4 +238,9 @@ getDrafts(
 ) {
   return this.service.getDraftsByUser(userId);
 }
+
+  @Post('meta/publish')
+  async publishMeta(@Body() body: any) {
+    return this.service.publishMetaCampaign(body.userId, body);
+  }
 }

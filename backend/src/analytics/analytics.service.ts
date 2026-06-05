@@ -508,8 +508,7 @@ export class AnalyticsService {
       throw new Error('Meta access token not found for user. Connect Meta Ads first.');
     }
 
-    const adAccountId =
-      this.configService.get<string>('META_AD_ACCOUNT_ID') || '';
+    const adAccountId = user.metaAdAccountId || this.configService.get<string>('META_AD_ACCOUNT_ID') || '';
     const token = user.metaAccessToken;
 
     const since = new Date();

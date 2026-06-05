@@ -27,6 +27,7 @@ import { BrandModule } from './brand/brand.module';
 import { PlatformPostsModule } from './platformposts/platformposts.module';
 import { LinkedInCrmModule } from './linkedin-crm/linkedin-crm.module';
 import { LinkedinScraperModule } from './linkedin-scraper/linkedin-scraper.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { LinkedinScraperModule } from './linkedin-scraper/linkedin-scraper.modul
     PlatformPostsModule,
     LinkedInCrmModule,
     LinkedinScraperModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

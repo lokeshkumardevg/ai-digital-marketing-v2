@@ -1,3 +1,4 @@
+import { UsersModule } from '../users/users.module';
 import { Module } from '@nestjs/common';
 import { CampaignService } from './campaigns.service';
 import { CampaignController } from './campaigns.controller';
@@ -8,6 +9,7 @@ import { CampaigndSchema } from './schemas/campaind.schema';
 
 @Module({
   imports: [
+    UsersModule,
 MongooseModule.forFeature([
   {
     name: 'Session',

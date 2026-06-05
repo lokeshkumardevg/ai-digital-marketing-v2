@@ -87,7 +87,7 @@ interface Plan {
   popular?: boolean;
 }
 
-const API_BASE = "http://localhost:3000";
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 /* ─── GLOBAL STYLES ─────────────────────────────────────── */
 const GLOBAL_CSS = `
@@ -536,24 +536,120 @@ function Sidebar({ platforms, campaigns, activePlatformId, activeCampaignId, ena
 
 /* ─── TOP BAR ─────────────────────────────────────────────── */
 const PLATFORM_FIELDS: Record<string, { label: string; placeholder: string }[]> = {
-  meta: [{ label: "Business", placeholder: "Select business" }, { label: "Ad Account", placeholder: "Select ad account" }, { label: "Facebook Page", placeholder: "Select page" }, { label: "Instagram", placeholder: "Select Instagram" }, { label: "Pixel", placeholder: "Select pixel" }],
+  meta: [{ label: "Business", placeholder: "Select business" }, { label: "Ad Account", placeholder: "Select ad account" }, { label: "Facebook Page", placeholder: "Select page" }, { label: "Pixel", placeholder: "Select pixel" }],
   google: [{ label: "Manager Account", placeholder: "Select MCC" }, { label: "Google Ads Account", placeholder: "Select account" }, { label: "GA4 Property", placeholder: "Select GA4" }, { label: "Conversion Action", placeholder: "Select conversion" }],
   linkedin: [{ label: "Company Page", placeholder: "Select page" }, { label: "Ad Account", placeholder: "Select account" }, { label: "Insight Tag", placeholder: "Select tag" }],
   x: [{ label: "Ad Account", placeholder: "Select account" }, { label: "X Profile", placeholder: "Select profile" }, { label: "Pixel", placeholder: "Select pixel" }],
 };
 
 function TopBar({ activePlatformId, isEnabled }: { activePlatformId: PlatformId; isEnabled: boolean }) {
+  const { user } = useSelector((state: any) => state.auth);
   const fields = PLATFORM_FIELDS[activePlatformId] || [];
+
+  const [metaPages, setMetaPages] = useState<any[]>([]);
+  const [metaPixels, setMetaPixels] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (activePlatformId === 'meta' && user?.metaAccessToken) {
+      import('../../api/axios').then(({ api }) => {
+        api.get('/auth/meta/pages').then(res => {
+          if (res.data?.data) setMetaPages(res.data.data);
+        }).catch(e => console.error("Pages error", e));
+        
+        api.get('/auth/meta/pixels').then(res => {
+          if (res.data?.data) setMetaPixels(res.data.data);
+        }).catch(e => console.error("Pixels error", e));
+      });
+    }
+  }, [activePlatformId, user?.metaAccessToken]);
+
+  const isNotConnected = (
+    (activePlatformId === 'meta' && !user?.metaAccessToken) ||
+    (activePlatformId === 'google' && !user?.googleAccessToken) ||
+    (activePlatformId === 'linkedin' && !user?.linkedinAccessToken) ||
+    ((activePlatformId === 'x' || activePlatformId === 'twitter') && !user?.twitterAccessToken)
+  );
+
+  const getPlatformName = () => {
+    if (activePlatformId === 'meta') return 'Meta Ads';
+    if (activePlatformId === 'google') return 'Google Ads';
+    if (activePlatformId === 'linkedin') return 'LinkedIn Ads';
+    if (activePlatformId === 'x' || activePlatformId === 'twitter') return 'X Ads';
+    return 'Ads';
+  };
+
+  const handleConnect = async () => {
+    try {
+      const { api } = await import('../../api/axios');
+      let endpoint = '';
+      if (activePlatformId === 'meta') endpoint = '/auth/meta';
+      else if (activePlatformId === 'google') endpoint = '/auth/google';
+      else if (activePlatformId === 'x' || activePlatformId === 'twitter') endpoint = '/auth/x';
+      else if (activePlatformId === 'linkedin') endpoint = '/linkedin-crm/oauth/url';
+
+      if (endpoint) {
+        const response = await api.get(endpoint);
+        window.location.href = response.data.url;
+      }
+    } catch (error) {
+      console.error('Failed to initiate connection', error);
+    }
+  };
+
+  const getDropdownContent = (f: any) => {
+    if (activePlatformId === 'meta') {
+      if (f.label === 'Ad Account') {
+        const adAccountName = user?.metaAdAccountName || user?.metaAdAccountId;
+        return <span style={{color: adAccountName ? '#111' : 'var(--t3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{adAccountName || f.placeholder}</span>;
+      }
+      if (f.label === 'Facebook Page' && metaPages.length > 0) {
+        return (
+          <select style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{f.placeholder}</option>
+            {metaPages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        );
+      }
+      if (f.label === 'Pixel' && metaPixels.length > 0) {
+        return (
+          <select style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{f.placeholder}</option>
+            {metaPixels.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        );
+      }
+    }
+    
+    if (activePlatformId === 'google') {
+      if (f.label === 'Google Ads Account') {
+        return <span style={{color: user?.googleCustomerId ? '#111' : 'var(--t3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{user?.googleCustomerId || f.placeholder}</span>;
+      }
+    }
+
+    return <span style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>{f.placeholder}</span>;
+  };
+
   return (
     <div style={{ display: "flex", gap: 8, padding: "10px 16px", borderBottom: "1px solid var(--bdr)", background: "#fff", alignItems: "flex-end", flexWrap: "wrap", flexShrink: 0, position: "relative" }}>
-      {fields.map(f => (
-        <div key={f.label} style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1, minWidth: 130, opacity: isEnabled ? 1 : .35, pointerEvents: isEnabled ? "auto" : "none", transition: "opacity .2s" }}>
-          <span style={{ fontSize: 9, color: "var(--blue)", fontWeight: 700, letterSpacing: ".5px", textTransform: "uppercase" }}>{f.label}</span>
-          <div className="tb-sel" style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: 8, padding: "7px 10px", color: "var(--t3)", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "border-color .15s" }}>
-            <span>{f.placeholder}</span><span style={{ fontSize: 10 }}>▾</span>
+      {isNotConnected ? (
+        <div style={{ flex: 1, display: "flex", justifyContent: "center", padding: "5px 0" }}>
+          <div onClick={handleConnect} className="tb-sel" style={{ background: "linear-gradient(135deg, #1877f2, #0e5a8a)", border: "none", borderRadius: 8, padding: "8px 20px", color: "white", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 600 }}>
+            Connect {getPlatformName()}
           </div>
         </div>
-      ))}
+      ) : (
+        fields.map(f => (
+          <div key={f.label} style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1, minWidth: 130, opacity: isEnabled ? 1 : .35, pointerEvents: isEnabled ? "auto" : "none", transition: "opacity .2s" }}>
+            <span style={{ fontSize: 9, color: "var(--blue)", fontWeight: 700, letterSpacing: ".5px", textTransform: "uppercase" }}>{f.label}</span>
+            <div className="tb-sel" style={{ background: "var(--surface)", border: "1px solid var(--bdr)", borderRadius: 8, padding: "7px 10px", color: "var(--t3)", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", transition: "border-color .15s", overflow: "hidden" }}>
+              {getDropdownContent(f)}
+              {(!getDropdownContent(f).props || getDropdownContent(f).type !== 'select') && (
+                <span style={{ fontSize: 10, pointerEvents: 'none', marginLeft: 4 }}>▾</span>
+              )}
+            </div>
+          </div>
+        ))
+      )}
       {!isEnabled && (
         <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 11, color: "var(--t3)", background: "rgba(248,250,255,.85)", backdropFilter: "blur(2px)", zIndex: 2 }}>
           <I.Lock /> This platform is not included in your campaign

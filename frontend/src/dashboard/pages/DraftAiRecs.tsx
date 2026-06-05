@@ -9,16 +9,16 @@ import {
 
 import { motion } from 'framer-motion';
 /* ─── CONSTANTS ──────────────────────────────────────────── */
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const PLATFORMS_FILTER = ['All', 'Meta', 'Google', 'X', 'LinkedIn'];
 
 /* ─── TYPES ──────────────────────────────────────────────── */
-type PlatformId   = 'meta' | 'google' | 'x' | 'linkedin';
+type PlatformId = 'meta' | 'google' | 'x' | 'linkedin';
 type LoadingState = 'publish' | 'draft' | null;
-type ToastType    = 'success' | 'error' | 'info';
+type ToastType = 'success' | 'error' | 'info';
 type BillingCycle = 'monthly' | 'yearly';
-type PlanId       = 'free' | 'silver' | 'gold';
-type View         = 'list' | 'editor';
+type PlanId = 'free' | 'silver' | 'gold';
+type View = 'list' | 'editor';
 
 interface CampaignDoc {
   _id: string;
@@ -100,10 +100,10 @@ const SEED = {
 
 /* ─── PLATFORM CONFIG ────────────────────────────────────── */
 const PLATFORM_LIST = [
-  { id: 'meta'     as PlatformId, name: 'Meta',     color: '#60a5fa', bg: '#0d1f3c' },
-  { id: 'google'   as PlatformId, name: 'Google',   color: '#34d399', bg: '#0d2a20' },
-  { id: 'x'        as PlatformId, name: 'X',        color: '#93c5fd', bg: '#0d1f3c' },
-  { id: 'linkedin' as PlatformId, name: 'LinkedIn',  color: '#38bdf8', bg: '#0d1a2e' },
+  { id: 'meta' as PlatformId, name: 'Meta', color: '#60a5fa', bg: '#0d1f3c' },
+  { id: 'google' as PlatformId, name: 'Google', color: '#34d399', bg: '#0d2a20' },
+  { id: 'x' as PlatformId, name: 'X', color: '#93c5fd', bg: '#0d1f3c' },
+  { id: 'linkedin' as PlatformId, name: 'LinkedIn', color: '#38bdf8', bg: '#0d1a2e' },
 ];
 
 const platformName = (id: string) =>
@@ -118,11 +118,11 @@ const normaliseStatus = (raw: string): string => (raw || 'draft').toLowerCase();
 const statusStyle = (status: string): React.CSSProperties => {
   const s = normaliseStatus(status);
   const map: Record<string, React.CSSProperties> = {
-    draft:     { background: '#1c1a05', color: '#fbbf24', border: '1px solid #92400e' },
+    draft: { background: '#1c1a05', color: '#fbbf24', border: '1px solid #92400e' },
     published: { background: '#052010', color: '#34d399', border: '1px solid #065f46' },
-    approved:  { background: '#052010', color: '#34d399', border: '1px solid #065f46' },
-    rejected:  { background: '#200505', color: '#f87171', border: '1px solid #7f1d1d' },
-    pending:   { background: '#0d0a2e', color: '#a78bfa', border: '1px solid #4c1d95' },
+    approved: { background: '#052010', color: '#34d399', border: '1px solid #065f46' },
+    rejected: { background: '#200505', color: '#f87171', border: '1px solid #7f1d1d' },
+    pending: { background: '#0d0a2e', color: '#a78bfa', border: '1px solid #4c1d95' },
   };
   return map[s] || map.draft;
 };
@@ -374,13 +374,13 @@ const DASH_CSS = `
 
 /* ─── SMALL SHARED COMPONENTS ────────────────────────────── */
 const I = {
-  Settings: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 10a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" strokeWidth="1.4"/><path d="M13.5 8a5.5 5.5 0 01-.1 1l1.4 1.1-1.5 2.6-1.7-.7a5.5 5.5 0 01-1.7 1l-.3 1.8h-3l-.3-1.8a5.5 5.5 0 01-1.7-1l-1.7.7L1.2 10.1 2.6 9A5.5 5.5 0 012.5 8a5.5 5.5 0 01.1-1L1.2 5.9l1.5-2.6 1.7.7a5.5 5.5 0 011.7-1L6.4 1.3h3l.3 1.7a5.5 5.5 0 011.7 1l1.7-.7 1.5 2.6-1.4 1.1a5.5 5.5 0 01.1 1z" stroke="currentColor" strokeWidth="1.3"/></svg>,
-  Users:    () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.4"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>,
-  Sparkle:  () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M3.8 3.8l2 2M10.2 10.2l2 2M10.2 3.8l-2 2M5.8 10.2l-2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>,
-  Upload:   () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 10V4M5.5 6.5L8 4l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><rect x="2" y="12" width="12" height="1.5" rx=".75" fill="currentColor"/></svg>,
-  Back:     () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-  Check:    () => <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
-  Lock:     () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.4"/><path d="M5 7V5.5a3 3 0 016 0V7" stroke="currentColor" strokeWidth="1.4"/></svg>,
+  Settings: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 10a2 2 0 100-4 2 2 0 000 4z" stroke="currentColor" strokeWidth="1.4" /><path d="M13.5 8a5.5 5.5 0 01-.1 1l1.4 1.1-1.5 2.6-1.7-.7a5.5 5.5 0 01-1.7 1l-.3 1.8h-3l-.3-1.8a5.5 5.5 0 01-1.7-1l-1.7.7L1.2 10.1 2.6 9A5.5 5.5 0 012.5 8a5.5 5.5 0 01.1-1L1.2 5.9l1.5-2.6 1.7.7a5.5 5.5 0 011.7-1L6.4 1.3h3l.3 1.7a5.5 5.5 0 011.7 1l1.7-.7 1.5 2.6-1.4 1.1a5.5 5.5 0 01.1 1z" stroke="currentColor" strokeWidth="1.3" /></svg>,
+  Users: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.4" /><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg>,
+  Sparkle: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M3.8 3.8l2 2M10.2 10.2l2 2M10.2 3.8l-2 2M5.8 10.2l-2 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>,
+  Upload: () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 10V4M5.5 6.5L8 4l2.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><rect x="2" y="12" width="12" height="1.5" rx=".75" fill="currentColor" /></svg>,
+  Back: () => <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  Check: () => <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>,
+  Lock: () => <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="8" rx="2" stroke="currentColor" strokeWidth="1.4" /><path d="M5 7V5.5a3 3 0 016 0V7" stroke="currentColor" strokeWidth="1.4" /></svg>,
 };
 
 const card = (ex: React.CSSProperties = {}): React.CSSProperties => ({
@@ -517,27 +517,27 @@ function DisabledOverlay() {
 /* ─── PLATFORM ICONS ─────────────────────────────────────── */
 const MetaIcon = ({ size = 18 }: { size?: number }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <path d="M6.897 4h-.024l-.031 2.615h.022c1.715 0 3.046 1.357 5.94 6.246l.175.297.012.02 1.62-2.438-.012-.019a48.763 48.763 0 0 0-1.098-1.716 28.01 28.01 0 0 0-1.175-1.629C10.413 4.932 8.812 4 6.896 4z" fill="url(#mi0)"/>
-    <path d="M6.873 4C4.95 4.01 3.247 5.258 2.02 7.17l2.254 1.231.011-.017c.718-1.083 1.61-1.774 2.568-1.785h.021L6.896 4h-.023z" fill="url(#mi1)"/>
-    <path d="M2.019 7.17l-.011.017C1.2 8.447.598 9.995.274 11.664l2.534.6.004-.022c.27-1.467.786-2.828 1.456-3.845l.011-.017L2.02 7.17z" fill="url(#mi2)"/>
-    <path d="M2.807 12.264l-2.533-.6-.005.022c-.177.918-.267 1.851-.269 2.786l2.598.233v-.023a12.591 12.591 0 0 1 .21-2.44z" fill="url(#mi3)"/>
-    <path d="M10.78 9.654c-1.528 2.35-2.454 3.825-2.454 3.825-2.035 3.2-2.739 3.917-3.871 3.917a1.545 1.545 0 0 1-1.186-.508l-2.017 1.744.014.017C2.01 19.518 3.058 20 4.356 20c1.963 0 3.374-.928 5.884-5.33l1.766-3.13a41.283 41.283 0 0 0-1.227-1.886z" fill="#0082FB"/>
-    <path d="M20.918 5.713C19.853 4.633 18.583 4 17.225 4c-1.432 0-2.637.787-3.723 1.944l1.382 1.24.016-.017c.715-.747 1.408-1.12 2.176-1.12.826 0 1.6.39 2.27 1.075l1.589-1.425-.016-.016z" fill="#0082FB"/>
-    <path d="M23.998 14.125c-.06-3.467-1.27-6.566-3.064-8.396l-1.588 1.424.015.016c1.35 1.392 2.277 3.98 2.361 6.971h2.292v-.022z" fill="url(#mi7)"/>
-    <path d="M18.309 16.515c-.55-.642-1.232-1.712-2.303-3.44l-1.396-2.336-.011-.02-1.62 2.438.012.02.989 1.668c.959 1.61 1.74 2.774 2.493 3.585l1.834-1.914a2.353 2.353 0 0 1-.014-.017z" fill="url(#mi12)"/>
+    <path d="M6.897 4h-.024l-.031 2.615h.022c1.715 0 3.046 1.357 5.94 6.246l.175.297.012.02 1.62-2.438-.012-.019a48.763 48.763 0 0 0-1.098-1.716 28.01 28.01 0 0 0-1.175-1.629C10.413 4.932 8.812 4 6.896 4z" fill="url(#mi0)" />
+    <path d="M6.873 4C4.95 4.01 3.247 5.258 2.02 7.17l2.254 1.231.011-.017c.718-1.083 1.61-1.774 2.568-1.785h.021L6.896 4h-.023z" fill="url(#mi1)" />
+    <path d="M2.019 7.17l-.011.017C1.2 8.447.598 9.995.274 11.664l2.534.6.004-.022c.27-1.467.786-2.828 1.456-3.845l.011-.017L2.02 7.17z" fill="url(#mi2)" />
+    <path d="M2.807 12.264l-2.533-.6-.005.022c-.177.918-.267 1.851-.269 2.786l2.598.233v-.023a12.591 12.591 0 0 1 .21-2.44z" fill="url(#mi3)" />
+    <path d="M10.78 9.654c-1.528 2.35-2.454 3.825-2.454 3.825-2.035 3.2-2.739 3.917-3.871 3.917a1.545 1.545 0 0 1-1.186-.508l-2.017 1.744.014.017C2.01 19.518 3.058 20 4.356 20c1.963 0 3.374-.928 5.884-5.33l1.766-3.13a41.283 41.283 0 0 0-1.227-1.886z" fill="#0082FB" />
+    <path d="M20.918 5.713C19.853 4.633 18.583 4 17.225 4c-1.432 0-2.637.787-3.723 1.944l1.382 1.24.016-.017c.715-.747 1.408-1.12 2.176-1.12.826 0 1.6.39 2.27 1.075l1.589-1.425-.016-.016z" fill="#0082FB" />
+    <path d="M23.998 14.125c-.06-3.467-1.27-6.566-3.064-8.396l-1.588 1.424.015.016c1.35 1.392 2.277 3.98 2.361 6.971h2.292v-.022z" fill="url(#mi7)" />
+    <path d="M18.309 16.515c-.55-.642-1.232-1.712-2.303-3.44l-1.396-2.336-.011-.02-1.62 2.438.012.02.989 1.668c.959 1.61 1.74 2.774 2.493 3.585l1.834-1.914a2.353 2.353 0 0 1-.014-.017z" fill="url(#mi12)" />
     <defs>
-      <linearGradient id="mi0" x1="75.897%" x2="26.312%" y1="89.199%" y2="12.194%"><stop offset=".06%" stopColor="#0867DF"/><stop offset="85.91%" stopColor="#0064E0"/></linearGradient>
-      <linearGradient id="mi1" x1="21.67%" x2="97.068%" y1="75.874%" y2="23.985%"><stop offset="13.23%" stopColor="#0064DF"/><stop offset="99.88%" stopColor="#0064E0"/></linearGradient>
-      <linearGradient id="mi2" x1="38.263%" x2="60.895%" y1="89.127%" y2="16.131%"><stop offset="1.47%" stopColor="#0072EC"/><stop offset="68.81%" stopColor="#0064DF"/></linearGradient>
-      <linearGradient id="mi3" x1="47.032%" x2="52.15%" y1="90.19%" y2="15.745%"><stop offset="7.31%" stopColor="#007CF6"/><stop offset="99.43%" stopColor="#0072EC"/></linearGradient>
-      <linearGradient id="mi7" x1="43.762%" x2="57.602%" y1="6.235%" y2="98.514%"><stop offset="0%" stopColor="#0082FB"/><stop offset="99.95%" stopColor="#0081FA"/></linearGradient>
-      <linearGradient id="mi12" x1="32.254%" x2="68.003%" y1="19.719%" y2="84.908%"><stop offset="27.65%" stopColor="#0867DF"/><stop offset="100%" stopColor="#0471E9"/></linearGradient>
+      <linearGradient id="mi0" x1="75.897%" x2="26.312%" y1="89.199%" y2="12.194%"><stop offset=".06%" stopColor="#0867DF" /><stop offset="85.91%" stopColor="#0064E0" /></linearGradient>
+      <linearGradient id="mi1" x1="21.67%" x2="97.068%" y1="75.874%" y2="23.985%"><stop offset="13.23%" stopColor="#0064DF" /><stop offset="99.88%" stopColor="#0064E0" /></linearGradient>
+      <linearGradient id="mi2" x1="38.263%" x2="60.895%" y1="89.127%" y2="16.131%"><stop offset="1.47%" stopColor="#0072EC" /><stop offset="68.81%" stopColor="#0064DF" /></linearGradient>
+      <linearGradient id="mi3" x1="47.032%" x2="52.15%" y1="90.19%" y2="15.745%"><stop offset="7.31%" stopColor="#007CF6" /><stop offset="99.43%" stopColor="#0072EC" /></linearGradient>
+      <linearGradient id="mi7" x1="43.762%" x2="57.602%" y1="6.235%" y2="98.514%"><stop offset="0%" stopColor="#0082FB" /><stop offset="99.95%" stopColor="#0081FA" /></linearGradient>
+      <linearGradient id="mi12" x1="32.254%" x2="68.003%" y1="19.719%" y2="84.908%"><stop offset="27.65%" stopColor="#0867DF" /><stop offset="100%" stopColor="#0471E9" /></linearGradient>
     </defs>
   </svg>
 );
-const GoogleIcon = ({ size = 18 }: { size?: number }) => (<svg width={size} height={size} viewBox="0 0 48 48"><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.6h12.4c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-3.9 6.9-9.7 6.9-16.5z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.3-5.6c-2.1 1.4-4.7 2.2-8.6 2.2-6.6 0-12.2-4.5-14.2-10.5H2.3v5.8C6.3 42.6 14.6 48 24 48z"/><path fill="#FBBC05" d="M9.8 28.3c-.5-1.4-.8-2.9-.8-4.3s.3-2.9.8-4.3v-5.8H2.3C.8 17.1 0 20.5 0 24s.8 6.9 2.3 10.1l7.5-5.8z"/><path fill="#EA4335" d="M24 9.5c3.7 0 7 1.3 9.6 3.8l7.2-7.2C36.9 2.1 31.5 0 24 0 14.6 0 6.3 5.4 2.3 13.9l7.5 5.8C11.8 14 17.4 9.5 24 9.5z"/></svg>);
-const XIcon = ({ size = 16 }: { size?: number }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="#e2eaff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>);
-const LinkedInIcon = ({ size = 18 }: { size?: number }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="#38bdf8"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>);
+const GoogleIcon = ({ size = 18 }: { size?: number }) => (<svg width={size} height={size} viewBox="0 0 48 48"><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.6h12.4c-.5 2.8-2.1 5.2-4.5 6.8v5.6h7.3c4.3-3.9 6.9-9.7 6.9-16.5z" /><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.3-5.6c-2.1 1.4-4.7 2.2-8.6 2.2-6.6 0-12.2-4.5-14.2-10.5H2.3v5.8C6.3 42.6 14.6 48 24 48z" /><path fill="#FBBC05" d="M9.8 28.3c-.5-1.4-.8-2.9-.8-4.3s.3-2.9.8-4.3v-5.8H2.3C.8 17.1 0 20.5 0 24s.8 6.9 2.3 10.1l7.5-5.8z" /><path fill="#EA4335" d="M24 9.5c3.7 0 7 1.3 9.6 3.8l7.2-7.2C36.9 2.1 31.5 0 24 0 14.6 0 6.3 5.4 2.3 13.9l7.5 5.8C11.8 14 17.4 9.5 24 9.5z" /></svg>);
+const XIcon = ({ size = 16 }: { size?: number }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="#e2eaff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>);
+const LinkedInIcon = ({ size = 18 }: { size?: number }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="#38bdf8"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>);
 
 const PLATFORM_ICONS: Record<PlatformId, React.ReactNode> = {
   meta: <MetaIcon />, google: <GoogleIcon />, x: <XIcon />, linkedin: <LinkedInIcon />,
@@ -547,7 +547,7 @@ const PLATFORM_ICONS_SM: Record<PlatformId, React.ReactNode> = {
 };
 
 const PLATFORM_TAB_ICONS: Record<string, React.ReactNode> = {
-  All: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="#4a6090"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="#4a6090"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="#4a6090"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="#4a6090"/></svg>,
+  All: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="#4a6090" /><rect x="9" y="1" width="6" height="6" rx="1.5" fill="#4a6090" /><rect x="1" y="9" width="6" height="6" rx="1.5" fill="#4a6090" /><rect x="9" y="9" width="6" height="6" rx="1.5" fill="#4a6090" /></svg>,
   Meta: <MetaIcon size={16} />,
   Google: <GoogleIcon size={16} />,
   X: <XIcon size={14} />,
@@ -700,10 +700,10 @@ function PlatformPreview({ platformId, brandName, logoUrl, caption, cta, imageUr
     linkedin: <LinkedInPreview brandName={brandName} logoUrl={logoUrl} caption={caption} cta={cta} imageUrl={imageUrl} />,
   };
   const meta = {
-    meta:     { label: 'Meta Ads Feed',       color: '#60a5fa' },
-    google:   { label: 'Google Search Ad',    color: '#34d399' },
-    x:        { label: 'X Promoted Post',     color: '#93c5fd' },
-    linkedin: { label: 'LinkedIn Sponsored',  color: '#38bdf8' },
+    meta: { label: 'Meta Ads Feed', color: '#60a5fa' },
+    google: { label: 'Google Search Ad', color: '#34d399' },
+    x: { label: 'X Promoted Post', color: '#93c5fd' },
+    linkedin: { label: 'LinkedIn Sponsored', color: '#38bdf8' },
   }[platformId];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -807,8 +807,8 @@ function CreativeStudio({ brandName, adCopy, activePlatformId, brandAssetImages,
             brandAssetImages.length === 0
               ? <div style={{ background: '#060f24', border: '1.5px dashed #1a2d50', borderRadius: 10, padding: '20px 14px', textAlign: 'center', color: '#4a6090', fontSize: 11 }}>{emptyMsg}</div>
               : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
-                  {brandAssetImages.map((url, i) => <div key={i} className={`brand-asset-img${selImg === url ? ' sel' : ''}`} onClick={() => pickImg(url)} style={{ aspectRatio: '1', position: 'relative', overflow: 'hidden', border: `2px solid ${selImg === url ? '#22d3ee' : '#1a2d50'}`, cursor: 'pointer' }}><img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />{selImg === url && <div style={{ position: 'absolute', inset: 0, background: '#0665ff1a', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: 4 }}><div style={{ width: 18, height: 18, borderRadius: '50%', background: '#0665ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><I.Check /></div></div>}</div>)}
-                </div>
+                {brandAssetImages.map((url, i) => <div key={i} className={`brand-asset-img${selImg === url ? ' sel' : ''}`} onClick={() => pickImg(url)} style={{ aspectRatio: '1', position: 'relative', overflow: 'hidden', border: `2px solid ${selImg === url ? '#22d3ee' : '#1a2d50'}`, cursor: 'pointer' }}><img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />{selImg === url && <div style={{ position: 'absolute', inset: 0, background: '#0665ff1a', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: 4 }}><div style={{ width: 18, height: 18, borderRadius: '50%', background: '#0665ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><I.Check /></div></div>}</div>)}
+              </div>
           )}
           {imgTab === 'ai' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -917,30 +917,30 @@ interface CampaignEditorProps {
 
 function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: CampaignEditorProps) {
   const brandName = brandDetails?.brand?.name || brandDetails?.name || campaign.name || 'Brand';
-  const logoUrl   = brandDetails?.logoUrl || brandDetails?.assets?.favicon || '';
+  const logoUrl = brandDetails?.logoUrl || brandDetails?.assets?.favicon || '';
 
   const collectBrandImages = (): string[] => {
     if (!brandDetails?.assets) return SEED.demoImages;
     const a = brandDetails.assets;
     const out: string[] = [];
-    if (Array.isArray(a.images))     out.push(...a.images.filter(Boolean));
-    if (Array.isArray(a.banners))    out.push(...a.banners.filter(Boolean));
+    if (Array.isArray(a.images)) out.push(...a.images.filter(Boolean));
+    if (Array.isArray(a.banners)) out.push(...a.banners.filter(Boolean));
     if (Array.isArray(a.thumbnails)) out.push(...a.thumbnails.filter(Boolean));
     return out.length > 0 ? out : SEED.demoImages;
   };
 
-  const saved     = campaign.data || {};
+  const saved = campaign.data || {};
   const aiContent = campaign.aiGeneratedContent || {};
 
-  const [activePid,   setActivePid]   = useState<PlatformId>((campaign.platform?.toLowerCase() as PlatformId) || 'meta');
-  const [loading,     setLoading]     = useState<LoadingState>(null);
-  const [showPlan,    setShowPlan]    = useState(false);
+  const [activePid, setActivePid] = useState<PlatformId>((campaign.platform?.toLowerCase() as PlatformId) || 'meta');
+  const [loading, setLoading] = useState<LoadingState>(null);
+  const [showPlan, setShowPlan] = useState(false);
 
-  const [adEvent,     setAdEvent]     = useState(saved.event     || SEED.event);
-  const [adBudget,    setAdBudget]    = useState(saved.budget    || (campaign.budgetDaily ? `${campaign.budgetDaily} USD` : SEED.budget));
-  const [adSchedule,  setAdSchedule]  = useState(saved.schedule  || SEED.schedule);
-  const [adFinalUrl,  setAdFinalUrl]  = useState(saved.finalUrl  || '');
-  const [adLocation,  setAdLocation]  = useState(saved.location  || SEED.location);
+  const [adEvent, setAdEvent] = useState(saved.event || SEED.event);
+  const [adBudget, setAdBudget] = useState(saved.budget || (campaign.budgetDaily ? `${campaign.budgetDaily} USD` : SEED.budget));
+  const [adSchedule, setAdSchedule] = useState(saved.schedule || SEED.schedule);
+  const [adFinalUrl, setAdFinalUrl] = useState(saved.finalUrl || '');
+  const [adLocation, setAdLocation] = useState(saved.location || SEED.location);
   const [adAdvantage, setAdAdvantage] = useState<boolean>(saved.advantagePlus ?? SEED.advantagePlus);
 
   const [pvCaption, setPvCaption] = useState(
@@ -951,11 +951,11 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
   );
   const [pvCta, setPvCta] = useState(saved.cta || SEED.cta);
 
-  const activePlat   = PLATFORM_LIST.find(p => p.id === activePid) || PLATFORM_LIST[0];
+  const activePlat = PLATFORM_LIST.find(p => p.id === activePid) || PLATFORM_LIST[0];
   const campaignTitle = campaign.name || `${brandName}_Campaign_${activePlat.name}`;
 
   const adCopy: AdCopy = {
-    headlines:    [aiContent.headline || SEED.headlines[0], ...SEED.headlines.slice(1)],
+    headlines: [aiContent.headline || SEED.headlines[0], ...SEED.headlines.slice(1)],
     primaryTexts: [pvCaption, ...SEED.primaryTexts.slice(1)],
     callToAction: pvCta,
   };
@@ -1030,7 +1030,7 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
                 <TargetAudienceCard location={adLocation} advantagePlus={adAdvantage} enabled={activePid === 'meta'} onLocationChange={setAdLocation} onAdvantageToggle={() => setAdAdvantage(p => !p)} />
               </div>
               <PlatformPreview platformId={activePid} brandName={brandName} logoUrl={logoUrl} caption={pvCaption} cta={pvCta} imageUrl={pvImage} estimatedAudience={SEED.estimatedAudience} />
-              <CreativeStudio brandName={brandName} adCopy={adCopy} activePlatformId={activePid} brandAssetImages={collectBrandImages()} onHeadingChange={() => {}} onSubheadingChange={setPvCaption} onImageSelect={setPvImage} onCtaChange={setPvCta} initialCaption={saved.caption || aiContent.primaryText} initialCta={saved.cta} initialImage={(saved.image && saved.image.trim() !== '') ? saved.image : (aiContent.imageUrl || null)} />
+              <CreativeStudio brandName={brandName} adCopy={adCopy} activePlatformId={activePid} brandAssetImages={collectBrandImages()} onHeadingChange={() => { }} onSubheadingChange={setPvCaption} onImageSelect={setPvImage} onCtaChange={setPvCta} initialCaption={saved.caption || aiContent.primaryText} initialCta={saved.cta} initialImage={(saved.image && saved.image.trim() !== '') ? saved.image : (aiContent.imageUrl || null)} />
             </div>
           </div>
           <BottomBar onBack={onBack} onPublish={() => setShowPlan(true)} onSaveDraft={handleDraft} loading={loading} activePlatformName={activePlat.name} />
@@ -1046,14 +1046,14 @@ function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showToast }: 
    ═══════════════════════════════════════════════════════════ */
 function mapToCard(c: CampaignDoc): DraftCard {
   return {
-    id:         c._id,
-    name:       c.name || 'AI Campaign Concept',
-    platform:   (c.platform || 'meta').toLowerCase(),
-    status:     normaliseStatus(c.status),
-    score:      Math.floor(c.aiStrategy?.performanceScore ?? (Math.random() * 30 + 60)),
-    rec:        c.aiStrategy?.marketingStrategy || 'Add urgency CTA — "Limited time only!" to boost CTR by ~18%',
+    id: c._id,
+    name: c.name || 'AI Campaign Concept',
+    platform: (c.platform || 'meta').toLowerCase(),
+    status: normaliseStatus(c.status),
+    score: Math.floor(c.aiStrategy?.performanceScore ?? (Math.random() * 30 + 60)),
+    rec: c.aiStrategy?.marketingStrategy || 'Add urgency CTA — "Limited time only!" to boost CTR by ~18%',
     components: ['Image', 'Headline', 'Copy', 'CTA'],
-    raw:        c,
+    raw: c,
   };
 }
 
@@ -1137,16 +1137,16 @@ function DraftMobileCard({
 export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDetails }) => {
   const { user } = useSelector((state: any) => state.auth);
 
-  const [view,             setView]           = useState<View>('list');
-  const [selectedCampaign, setSelected]       = useState<CampaignDoc | null>(null);
-  const [activePlatform,   setActivePlatform] = useState('All');
-  const [drafts,           setDrafts]         = useState<DraftCard[]>([]);
-  const [rawDocs,          setRawDocs]        = useState<CampaignDoc[]>([]);
-  const [listLoading,      setListLoading]    = useState(true);
-  const [fetchError,       setFetchError]     = useState<string | null>(null);
-  const [autoPublish,      setAutoPublish]    = useState<Record<string, boolean>>({});
+  const [view, setView] = useState<View>('list');
+  const [selectedCampaign, setSelected] = useState<CampaignDoc | null>(null);
+  const [activePlatform, setActivePlatform] = useState('All');
+  const [drafts, setDrafts] = useState<DraftCard[]>([]);
+  const [rawDocs, setRawDocs] = useState<CampaignDoc[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [autoPublish, setAutoPublish] = useState<Record<string, boolean>>({});
   const [globalAutoPublish, setGlobalAutoPublish] = useState(false);
-  const [toast,            setToast]          = useState<ToastState | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
 
   const showToast = useCallback((msg: string, type: ToastType = 'info') => {
     setToast({ message: msg, type });
@@ -1281,84 +1281,84 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
   const publishedCount = drafts.filter(d => d.status === 'published').length;
 
   const emptyIcons = [
-    { label: 'Interest', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#4a6090" strokeWidth="1.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M16.9 16.9l2.1 2.1M4.9 19.1l2.1-2.1M16.9 7.1l2.1-2.1" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round"/></svg> },
-    { label: 'Creatives', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#4a6090" strokeWidth="1.5"/><path d="M3 15l5-5 4 4 3-3 6 5" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><circle cx="8.5" cy="8.5" r="1.5" fill="#4a6090"/></svg> },
-    { label: 'Ad Copy', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 10h10M4 14h12M4 18h8" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round"/></svg> },
-    { label: 'Age', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#4a6090" strokeWidth="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round"/></svg> },
-    { label: 'Gender', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="5" stroke="#4a6090" strokeWidth="1.5"/><path d="M16 6l5-5M21 6V1h-5" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M11 16v6M8 19h6" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round"/></svg> },
-    { label: 'Locations', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.7 2 6 4.7 6 8c0 5 6 14 6 14s6-9 6-14c0-3.3-2.7-6-6-6z" stroke="#4a6090" strokeWidth="1.5"/><circle cx="12" cy="8" r="2" stroke="#4a6090" strokeWidth="1.5"/></svg> },
-    { label: 'Products', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M3 6h18M16 10a4 4 0 01-8 0" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-    { label: 'CTA', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4l8 8-8 8" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+    { label: 'Interest', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="#4a6090" strokeWidth="1.5" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M16.9 16.9l2.1 2.1M4.9 19.1l2.1-2.1M16.9 7.1l2.1-2.1" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" /></svg> },
+    { label: 'Creatives', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#4a6090" strokeWidth="1.5" /><path d="M3 15l5-5 4 4 3-3 6 5" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><circle cx="8.5" cy="8.5" r="1.5" fill="#4a6090" /></svg> },
+    { label: 'Ad Copy', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 10h10M4 14h12M4 18h8" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" /></svg> },
+    { label: 'Age', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="#4a6090" strokeWidth="1.5" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" /></svg> },
+    { label: 'Gender', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="5" stroke="#4a6090" strokeWidth="1.5" /><path d="M16 6l5-5M21 6V1h-5" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M11 16v6M8 19h6" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" /></svg> },
+    { label: 'Locations', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.7 2 6 4.7 6 8c0 5 6 14 6 14s6-9 6-14c0-3.3-2.7-6-6-6z" stroke="#4a6090" strokeWidth="1.5" /><circle cx="12" cy="8" r="2" stroke="#4a6090" strokeWidth="1.5" /></svg> },
+    { label: 'Products', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /><path d="M3 6h18M16 10a4 4 0 01-8 0" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg> },
+    { label: 'CTA', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 12h16M12 4l8 8-8 8" stroke="#4a6090" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg> },
   ];
   // Animation variants
-const containerVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: "easeOut",
-      staggerChildren: 0.1,
-      delayChildren: 0.2
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
     }
-  }
-};
+  };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: "easeOut" }
-  }
-};
-
-const statsBoxVariants = {
-  hidden: { opacity: 0, scale: 0.9 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.3, ease: "easeOut" }
-  },
-  hover: {
-    scale: 1.02,
-    transition: { duration: 0.2, ease: "easeInOut" }
-  },
-  tap: {
-    scale: 0.98
-  }
-};
-
-const iconItemVariants = {
-  hidden: { opacity: 0, y: 30, rotate: -10 },
-  visible: (custom) => ({
-    opacity: 1,
-    y: 0,
-    rotate: 0,
-    transition: {
-      duration: 0.5,
-      delay: custom * 0.1,
-      type: "spring",
-      stiffness: 200,
-      damping: 15
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.4, ease: "easeOut" }
     }
-  }),
-  hover: {
-    y: -5,
-    rotate: 5,
-    transition: { duration: 0.2 }
-  }
-};
+  };
 
-const pulseAnimation = {
-  scale: [1, 1.05, 1],
-  transition: {
-    duration: 2,
-    repeat: Infinity,
-    ease: "easeInOut"
-  }
-};
+  const statsBoxVariants = {
+    hidden: { opacity: 0, scale: 0.9 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.3, ease: "easeOut" }
+    },
+    hover: {
+      scale: 1.02,
+      transition: { duration: 0.2, ease: "easeInOut" }
+    },
+    tap: {
+      scale: 0.98
+    }
+  };
+
+  const iconItemVariants = {
+    hidden: { opacity: 0, y: 30, rotate: -10 },
+    visible: (custom) => ({
+      opacity: 1,
+      y: 0,
+      rotate: 0,
+      transition: {
+        duration: 0.5,
+        delay: custom * 0.1,
+        type: "spring",
+        stiffness: 200,
+        damping: 15
+      }
+    }),
+    hover: {
+      y: -5,
+      rotate: 5,
+      transition: { duration: 0.2 }
+    }
+  };
+
+  const pulseAnimation = {
+    scale: [1, 1.05, 1],
+    transition: {
+      duration: 2,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }
+  };
 
 
   return (
@@ -1383,187 +1383,187 @@ const pulseAnimation = {
         </div>
 
         {/* ── Recommended Ads Section ── */}
-  <div className="rec-section">
-  <motion.div
-    className="rec-header"
-    variants={containerVariants}
-    initial="hidden"
-    animate="visible"
-  >
-    <motion.div className="rec-header-left" variants={itemVariants}>
-      <motion.h2
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.4 }}
-      >
-        Recommended Ads
-      </motion.h2>
-      <motion.p
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.4 }}
-      >
-        Top campaigns recommended. Select one to view structure.
-      </motion.p>
-    </motion.div>
-
-    <motion.div className="rec-stats" variants={itemVariants}>
-      <motion.div
-        className="rec-stat-box"
-        variants={statsBoxVariants}
-        whileHover="hover"
-        whileTap="tap"
-      >
-        <div style={{ border: 'none', padding: '0 12px 0 0', gap: 8, display: 'flex', alignItems: 'center' }}>
+        <div className="rec-section">
           <motion.div
-            style={{ width: 32, height: 32, borderRadius: 8, background: '#071c4a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #1a3a7a' }}
-            whileHover={{ scale: 1.1, rotate: 15 }}
-            whileTap={{ scale: 0.9 }}
+            className="rec-header"
+            variants={containerVariants as any}
+            initial="hidden"
+            animate="visible"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="#60a5fa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </motion.div>
-          <div>
-            <motion.div
-              className="stat-num"
-              animate={pulseAnimation}
-            >
-              0
+            <motion.div className="rec-header-left" variants={itemVariants as any}>
+              <motion.h2
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.4 }}
+              >
+                Recommended Ads
+              </motion.h2>
+              <motion.p
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+              >
+                Top campaigns recommended. Select one to view structure.
+              </motion.p>
             </motion.div>
-            <div className="stat-label">Recommendations</div>
-          </div>
+
+            <motion.div className="rec-stats" variants={itemVariants as any}>
+              <motion.div
+                className="rec-stat-box"
+                variants={statsBoxVariants as any}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <div style={{ border: 'none', padding: '0 12px 0 0', gap: 8, display: 'flex', alignItems: 'center' }}>
+                  <motion.div
+                    style={{ width: 32, height: 32, borderRadius: 8, background: '#071c4a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #1a3a7a' }}
+                    whileHover={{ scale: 1.1, rotate: 15 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="#60a5fa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </motion.div>
+                  <div>
+                    <motion.div
+                      className="stat-num"
+                      animate={pulseAnimation}
+                    >
+                      0
+                    </motion.div>
+                    <div className="stat-label">Recommendations</div>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                className="rec-stat-box"
+                variants={statsBoxVariants as any}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <motion.div
+                  style={{ width: 32, height: 32, borderRadius: 8, background: '#05201a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #065f46' }}
+                  whileHover={{ scale: 1.1, rotate: -15 }}
+                >
+                  <Send size={15} color="#34d399" />
+                </motion.div>
+                <div>
+                  <motion.div
+                    className="stat-num"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 300, delay: 0.5 }}
+                  >
+                    {publishedCount}
+                  </motion.div>
+                  <div className="stat-label">Published</div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                style={{ paddingLeft: 16, display: 'flex', alignItems: 'center', gap: 8 }}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6, duration: 0.4 }}
+              >
+                <motion.button
+                  className="auto-pub-btn"
+                  onClick={() => {
+                    const campaignsToPublish = drafts.filter(draft => draft.raw?.autoPublish);
+                    if (campaignsToPublish.length === 0) {
+                      showToast('Select at least one campaign for auto publish', 'info');
+                      return;
+                    }
+                    setGlobalAutoPublish(p => !p);
+                    showToast(`Auto-publish ${!globalAutoPublish ? 'enabled' : 'disabled'}`, 'success');
+                  }}
+                  style={{ color: globalAutoPublish ? '#22d3ee' : '#e2eaff' }}
+                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div
+                    animate={{ rotate: globalAutoPublish ? 0 : 180 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {globalAutoPublish ? <ToggleRight size={18} color="#0665ff" /> : <ToggleLeft size={18} color="#4a6090" />}
+                  </motion.div>
+                  Auto-Publish
+                </motion.button>
+
+                <motion.button
+                  className="pause-btn"
+                  whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' }}
+                  whileTap={{ scale: 0.95 }}
+                  animate={{ x: [0, -2, 2, -2, 0] }}
+                  transition={{ duration: 0.5, delay: 1 }}
+                >
+                  <PauseCircle size={15} />
+                  Pause
+                </motion.button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="rec-empty"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+          >
+            <motion.div
+              className="rec-empty-icons"
+              variants={containerVariants as any}
+              initial="hidden"
+              animate="visible"
+            >
+              {emptyIcons.map((item, index) => (
+                <motion.div
+                  key={item.label}
+                  className="rec-empty-icon-item"
+                  custom={index}
+                  variants={iconItemVariants as any}
+                  whileHover="hover"
+                >
+                  <motion.div
+                    className="rec-empty-icon-circle"
+                    whileHover={{ scale: 1.2, rotate: 10 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    {item.icon}
+                  </motion.div>
+                  <motion.span
+                    className="rec-empty-icon-label"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 + index * 0.1 }}
+                  >
+                    {item.label}
+                  </motion.span>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            <motion.p
+              className="rec-empty-text"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
+            >
+              <motion.strong
+                animate={{ color: ['#60a5fa', '#a78bfa', '#60a5fa'] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                Wheedle.AI
+              </motion.strong> monitors your first campaign for 24 hours, then uses AI-powered insights to recommend your next best campaigns.
+              Switch on <motion.strong
+                whileHover={{ scale: 1.05, display: 'inline-block' }}
+              >
+                Auto-publish ↗
+              </motion.strong> to launch them automatically for maximum impact.
+            </motion.p>
+          </motion.div>
         </div>
-      </motion.div>
-
-      <motion.div
-        className="rec-stat-box"
-        variants={statsBoxVariants}
-        whileHover="hover"
-        whileTap="tap"
-      >
-        <motion.div
-          style={{ width: 32, height: 32, borderRadius: 8, background: '#05201a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #065f46' }}
-          whileHover={{ scale: 1.1, rotate: -15 }}
-        >
-          <Send size={15} color="#34d399" />
-        </motion.div>
-        <div>
-          <motion.div
-            className="stat-num"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 300, delay: 0.5 }}
-          >
-            {publishedCount}
-          </motion.div>
-          <div className="stat-label">Published</div>
-        </div>
-      </motion.div>
-
-      <motion.div
-        style={{ paddingLeft: 16, display: 'flex', alignItems: 'center', gap: 8 }}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.6, duration: 0.4 }}
-      >
-        <motion.button
-          className="auto-pub-btn"
-          onClick={() => {
-            const campaignsToPublish = drafts.filter(draft => draft.raw?.autoPublish);
-            if (campaignsToPublish.length === 0) {
-              showToast('Select at least one campaign for auto publish', 'info');
-              return;
-            }
-            setGlobalAutoPublish(p => !p);
-            showToast(`Auto-publish ${!globalAutoPublish ? 'enabled' : 'disabled'}`, 'success');
-          }}
-          style={{ color: globalAutoPublish ? '#22d3ee' : '#e2eaff' }}
-          whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <motion.div
-            animate={{ rotate: globalAutoPublish ? 0 : 180 }}
-            transition={{ duration: 0.3 }}
-          >
-            {globalAutoPublish ? <ToggleRight size={18} color="#0665ff" /> : <ToggleLeft size={18} color="#4a6090" />}
-          </motion.div>
-          Auto-Publish
-        </motion.button>
-
-        <motion.button
-          className="pause-btn"
-          whileHover={{ scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' }}
-          whileTap={{ scale: 0.95 }}
-          animate={{ x: [0, -2, 2, -2, 0] }}
-          transition={{ duration: 0.5, delay: 1 }}
-        >
-          <PauseCircle size={15} />
-          Pause
-        </motion.button>
-      </motion.div>
-    </motion.div>
-  </motion.div>
-
-  <motion.div
-    className="rec-empty"
-    initial={{ opacity: 0, y: 30 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
-  >
-    <motion.div
-      className="rec-empty-icons"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {emptyIcons.map((item, index) => (
-        <motion.div
-          key={item.label}
-          className="rec-empty-icon-item"
-          custom={index}
-          variants={iconItemVariants}
-          whileHover="hover"
-        >
-          <motion.div
-            className="rec-empty-icon-circle"
-            whileHover={{ scale: 1.2, rotate: 10 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            {item.icon}
-          </motion.div>
-          <motion.span
-            className="rec-empty-icon-label"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 + index * 0.1 }}
-          >
-            {item.label}
-          </motion.span>
-        </motion.div>
-      ))}
-    </motion.div>
-
-    <motion.p
-      className="rec-empty-text"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.8, duration: 0.5 }}
-    >
-      <motion.strong
-        animate={{ color: ['#60a5fa', '#a78bfa', '#60a5fa'] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        Wheedle.AI
-      </motion.strong> monitors your first campaign for 24 hours, then uses AI-powered insights to recommend your next best campaigns.
-      Switch on <motion.strong
-        whileHover={{ scale: 1.05, display: 'inline-block' }}
-      >
-        Auto-publish ↗
-      </motion.strong> to launch them automatically for maximum impact.
-    </motion.p>
-  </motion.div>
-</div>
 
         {/* ── Unpublished Drafts Section ── */}
         <div className="drafts-section">

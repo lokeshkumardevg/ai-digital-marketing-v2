@@ -20,7 +20,7 @@ import axios from 'axios';
 import './Header.css';
 
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 type PayStep = 'select' | 'qr' | 'url' | 'card' | 'upi' | 'processing' | 'success';
 type PayMethod = 'qr' | 'url' | 'card' | 'upi';

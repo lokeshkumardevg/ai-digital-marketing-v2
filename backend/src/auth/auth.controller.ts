@@ -20,6 +20,15 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
+  @Post('google/login')
+  async googleLoginAuth(@Body() body: { credential?: string, idToken?: string, access_token?: string }) {
+    const token = body.credential || body.idToken || body.access_token;
+    if (!token) {
+      throw new UnauthorizedException('Missing Google token');
+    }
+    return this.authService.loginWithGoogleIdToken(token);
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Get('profile')
   getProfile(@Request() req: any) {
@@ -37,8 +46,8 @@ export class AuthController {
   // ✅ Keep JWT here (user must be logged in to connect Google)
   @UseGuards(AuthGuard('jwt'))
   @Get('google')
-  getGoogleAuthUrl(@Request() req: any) {
-    return { url: this.authService.getGoogleAuthUrl(req.user.id) };
+  async getGoogleAuthUrl(@Request() req: any) {
+    return { url: await this.authService.getGoogleAuthUrl(req.user.id) };
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -60,7 +69,8 @@ export class AuthController {
     }
 
     const userId = state;
-    const redirectBase = 'http://localhost:5173/crm';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const redirectBase = `${frontendUrl}/settings`;
 
     try {
       await this.authService.handleGoogleCallback(userId, code);
@@ -79,8 +89,8 @@ export class AuthController {
   async updateGoogleCredentials(
     @Request() req: any,
     @Body() body: {
-      clientId: string;
-      clientSecret: string;
+      clientId?: string;
+      clientSecret?: string;
       developerToken?: string;
       customerId?: string;
     },
@@ -115,12 +125,25 @@ export class AuthController {
     return { url: this.authService.getMetaAuthUrl(req.user.id) };
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Get('meta/pages')
+  async getMetaPages(@Request() req: any) {
+    return this.authService.getMetaPages(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('meta/pixels')
+  async getMetaPixels(@Request() req: any) {
+    return this.authService.getMetaPixels(req.user.id);
+  }
+
   @Get('meta/callback')
   async metaCallback(
     @Query('code') code: string,
     @Query('state') state: string,
   ) {
-    const redirectBase = 'http://localhost:5173/crm';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const redirectBase = `${frontendUrl}/settings`;
 
     // eslint-disable-next-line no-console
     console.log('[AuthController] metaCallback hit', {
@@ -165,7 +188,20 @@ export class AuthController {
     @Query('code') code: string,
     @Query('state') state: string,
   ) {
-    return this.authService.handleXCallback(state, code);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const redirectBase = `${frontendUrl}/settings`;
+
+    if (!code || !state) {
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?xConnected=error&reason=missing_params" /></head><body>Redirecting...</body></html>`;
+    }
+
+    try {
+      await this.authService.handleXCallback(state, code);
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?xConnected=success" /></head><body>Redirecting...</body></html>`;
+    } catch (e: any) {
+      console.log('[AuthController] xCallback error', e?.message || e);
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?xConnected=error" /></head><body>Redirecting...</body></html>`;
+    }
   }
 
   // ================= LINKEDIN =================
@@ -181,7 +217,20 @@ export class AuthController {
     @Query('code') code: string,
     @Query('state') state: string,
   ) {
-    return this.authService.handleLinkedInCallback(state, code);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const redirectBase = `${frontendUrl}/settings`;
+
+    if (!code || !state) {
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?linkedinConnected=error&reason=missing_params" /></head><body>Redirecting...</body></html>`;
+    }
+
+    try {
+      await this.authService.handleLinkedInCallback(state, code);
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?linkedinConnected=success" /></head><body>Redirecting...</body></html>`;
+    } catch (e: any) {
+      console.log('[AuthController] linkedinCallback error', e?.message || e);
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?linkedinConnected=error" /></head><body>Redirecting...</body></html>`;
+    }
   }
 }
 

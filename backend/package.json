@@ -45,6 +45,7 @@
     "class-validator": "^0.15.1",
     "color-thief-node": "^1.0.4",
     "google-ads-api": "^23.0.0",
+    "google-auth-library": "^10.6.2",
     "ioredis": "^5.10.1",
     "mongoose": "^9.4.1",
     "multer": "^2.1.1",

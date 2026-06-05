@@ -1,11 +1,34 @@
 import { Controller, Post, Body, Logger } from '@nestjs/common';
 import { AiService } from './ai.service';
+import { SemrushService } from './semrush.service';
+import * as cheerio from 'cheerio';
 
 @Controller('webhook')
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);
 
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly semrushService: SemrushService,
+  ) {}
+
+  private async scrapeUrl(url: string): Promise<string> {
+    try {
+      if (!url) return '';
+      const targetUrl = url.startsWith('http') ? url : `https://${url}`;
+      const fetchResponse = await fetch(targetUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120' }
+      });
+      if (fetchResponse.ok) {
+        const htmlText = await fetchResponse.text();
+        const $ = cheerio.load(htmlText);
+        return $('body').text().replace(/\s+/g, ' ').slice(0, 3000);
+      }
+    } catch (e) {
+      this.logger.error(`Failed to scrape ${url}`);
+    }
+    return '';
+  }
 
   // ── REVIEW GENERATION ─────────────────────────────────────
   @Post('review-gen')
@@ -65,8 +88,8 @@ export class WebhookController {
   @Post('lead-gen')
   async leadGen(@Body() body: { industry: string; region: string }) {
     this.logger.log('[lead-gen] Request received');
-    const prompt = `Analyze the target industry '${body.industry}' in the region '${body.region}'. Formulate a quick lead generation strategy and provide 2 example mock leads in JSON format.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a lead generation strategist.', undefined, 'gpt-3.5-turbo', 1500);
+    const prompt = `Analyze the target industry '${body.industry}' in the region '${body.region}'. Formulate a highly accurate, real-world lead generation strategy. Do NOT generate fake "mock" names. Provide exact, real platforms, real networking groups, and actual verifiable methods to extract leads in this specific niche and region.`;
+    const result = await this.aiService.generateContent(prompt, 'You are a strict, data-driven lead generation strategist. Provide only real, actionable data without hallucinating fake people.', undefined, 'gpt-4o', 2000);
     return { aiOutput: result };
   }
 
@@ -204,5 +227,89 @@ IMPORTANT: This site must be professional enough to sell for $10,000.`;
     html = html.replace(/\[COMPANY_LOGO_IMAGE_TAG\]/g, realLogoTag);
 
     return { aiOutput: html };
+  }
+
+  // ── AD COPYWRITER ────────────────────────────────────────
+  @Post('ad-copy')
+  async adCopy(@Body() body: { product: string; platform: string; product_url?: string }) {
+    this.logger.log('[ad-copy] Request received');
+    let realContext = '';
+    if (body.product_url) {
+      const scrapedText = await this.scrapeUrl(body.product_url);
+      if (scrapedText) realContext = `\n\nREAL WEBSITE CONTEXT (Scraped from ${body.product_url}):\n${scrapedText}`;
+    }
+    const prompt = `Act as an elite direct-response copywriter. Write 3 high-converting ad copy variations for ${body.platform} promoting: "${body.product}".${realContext}\n\nUse the REAL features from the scraped context if provided. Include Headline, Primary Text, and CTA for each variation. Make it highly engaging and factually accurate to the product.`;
+    const result = await this.aiService.generateContent(prompt, 'You are an elite digital marketing copywriter. Base your claims on the provided real context.', undefined, 'gpt-4o', 2000);
+    return { aiOutput: result };
+  }
+
+  // ── EMAIL SEQUENCE ───────────────────────────────────────
+  @Post('email-sequence')
+  async emailSequence(@Body() body: { product_name: string; audience: string }) {
+    this.logger.log('[email-sequence] Request received');
+    const prompt = `Act as a world-class email marketer. Write a 3-part email drip sequence (1. Welcome/Hook, 2. Nurture/Value, 3. Hard Sale) for the product "${body.product_name}" targeting "${body.audience}". Include subject lines and compelling CTAs.`;
+    const result = await this.aiService.generateContent(prompt, 'You are a master email marketer and copywriter.', undefined, 'gpt-4o', 3000);
+    return { aiOutput: result };
+  }
+
+  // ── BLOG WRITER ──────────────────────────────────────────
+  @Post('blog-writer')
+  async blogWriter(@Body() body: { title: string; keywords: string }) {
+    this.logger.log('[blog-writer] Request received');
+    
+    // Fetch REAL keyword data from Semrush for the first keyword
+    let realSeoData = '';
+    try {
+      const firstKeyword = body.keywords.split(',')[0]?.trim();
+      if (firstKeyword) {
+         const kwData = await this.semrushService.getOrganicKeywords(firstKeyword.replace(/\s+/g, ''));
+         if (kwData && kwData.length > 0) {
+            realSeoData = `\n\nREAL SEMRUSH DATA FOR KEYWORDS:\n${JSON.stringify(kwData.slice(0, 3))}\nUse this real volume and competition data to inform your content strategy.`;
+         }
+      }
+    } catch (e) {
+      this.logger.error('Failed to fetch Semrush data for blog writer', e);
+    }
+
+    const prompt = `Act as an expert SEO content writer. Write a comprehensive, highly engaging blog post with the title "${body.title}". Naturally incorporate these keywords: ${body.keywords}.${realSeoData}\n\nUse proper headings (H2, H3), bullet points, and a strong conclusion. Ensure factual accuracy.`;
+    const result = await this.aiService.generateContent(prompt, 'You are an expert SEO blog writer. Use the provided real Semrush data to optimize the article.', undefined, 'gpt-4o', 4000);
+    return { aiOutput: result };
+  }
+
+  // ── VIDEO SCRIPT ─────────────────────────────────────────
+  @Post('video-script')
+  async videoScript(@Body() body: { platform: string; topic: string }) {
+    this.logger.log('[video-script] Request received');
+    const prompt = `Act as a viral video producer for ${body.platform}. Write a short, highly engaging video script about "${body.topic}". Include a strong 3-second hook, visual cues (what to show on screen), pacing notes, and a call-to-action.`;
+    const result = await this.aiService.generateContent(prompt, 'You are a viral social media video producer.', undefined, 'gpt-3.5-turbo', 2000);
+    return { aiOutput: result };
+  }
+
+  // ── PRESS RELEASE ────────────────────────────────────────
+  @Post('press-release')
+  async pressRelease(@Body() body: { company: string; announcement: string; company_url?: string }) {
+    this.logger.log('[press-release] Request received');
+    let realContext = '';
+    if (body.company_url) {
+      const scrapedText = await this.scrapeUrl(body.company_url);
+      if (scrapedText) realContext = `\n\nREAL COMPANY BACKGROUND (Scraped from ${body.company_url}):\n${scrapedText}`;
+    }
+    const prompt = `Act as a senior PR specialist. Write a formal, media-ready press release for ${body.company} announcing: "${body.announcement}".${realContext}\n\nInclude a catchy headline, dateline, introduction, quote placeholder, body paragraphs, and a factual boilerplate based on the real scraped data.`;
+    const result = await this.aiService.generateContent(prompt, 'You are a senior Public Relations specialist. Base the boilerplate and company facts ONLY on the scraped context if provided.', undefined, 'gpt-4o', 2000);
+    return { aiOutput: result };
+  }
+
+  // ── BRAND IDENTITY ───────────────────────────────────────
+  @Post('brand-identity')
+  async brandIdentity(@Body() body: { business_description: string; website_url?: string }) {
+    this.logger.log('[brand-identity] Request received');
+    let realContext = '';
+    if (body.website_url) {
+      const scrapedText = await this.scrapeUrl(body.website_url);
+      if (scrapedText) realContext = `\n\nREAL WEBSITE CONTENT (Scraped from ${body.website_url}):\n${scrapedText}`;
+    }
+    const prompt = `Act as a Chief Brand Officer. Based on this business description: "${body.business_description}".${realContext}\n\nGenerate a comprehensive brand identity framework that matches the real scraped content. Include: 1. Brand Voice & Tone, 2. Mission Statement, 3. Vision Statement, 4. Core Values (3-4 points), 5. Ideal Customer Persona snippet. DO NOT make up fake facts; extract the true essence from the scraped data.`;
+    const result = await this.aiService.generateContent(prompt, 'You are an elite Chief Brand Officer. Use real data from the scraped context.', undefined, 'gpt-4o', 3000);
+    return { aiOutput: result };
   }
 }
