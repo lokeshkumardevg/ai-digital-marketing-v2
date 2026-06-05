@@ -31,6 +31,7 @@ import { Products } from './dashboard/pages/Products';
 import { ChatEmbed } from './dashboard/pages/ChatEmbed';
 import { Presentation } from './dashboard/pages/Presentation';
 import { LinkedInCrm } from './dashboard/pages/LinkedInCrm';
+import { Reviews } from './dashboard/pages/Reviews';
 
 import { Templates } from './dashboard/pages/Templates';
 import { hydrateSession } from './store/slices/authSlice';
@@ -223,6 +224,8 @@ const App: React.FC = () => {
 
         {/* LinkedIn AI CRM */}
         <Route path="/linkedin-crm" element={<ProtectedRoute><DarkDashboardLayoutFull><LinkedInCrm /></DarkDashboardLayoutFull></ProtectedRoute>} />
+        {/* Reviews & Reputation Management */}
+        <Route path="/reviews" element={<ProtectedRoute><DashboardLayoutFull><Reviews /></DashboardLayoutFull></ProtectedRoute>} />
       </Routes>
     </Router>
   );
