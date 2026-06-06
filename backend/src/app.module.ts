@@ -78,6 +78,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     PlatformPostsModule,
     LinkedInCrmModule,
     LinkedinScraperModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

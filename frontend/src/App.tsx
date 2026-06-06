@@ -42,6 +42,11 @@ import { Notifications } from './dashboard/pages/Notifications';
 import io from 'socket.io-client';
 import type { AppDispatch } from './store';
 import { Activity } from 'lucide-react';
+import RecommendationsPage from './dashboard/pages/RecommendationsPage';
+import AnalyticsPage from './dashboard/pages/AnalyticsPage';
+import CustomersPage from './dashboard/pages/CustomersPage';
+import InboxPage from './dashboard/pages/InboxPage';
+import DashboardPage from './dashboard/pages/DashboardPage';
 
 const ProtectedRoute = ({ children, requiredPermission }: { children: React.ReactNode, requiredPermission?: string }) => {
   const { isAuthenticated, status, user } = useSelector((state: any) => state.auth);
@@ -60,11 +65,11 @@ const ProtectedRoute = ({ children, requiredPermission }: { children: React.Reac
 
   // RBAC Engine Validation
   if (requiredPermission && user) {
-     const perms = user.permissions || [];
-     const canViewUsers = requiredPermission === 'view_users' && perms.includes('manage_users');
-     if (user.role !== 'superadmin' && !perms.includes('*') && !perms.includes(requiredPermission) && !canViewUsers) {
-        return <Navigate to="/crm" replace />;
-     }
+    const perms = user.permissions || [];
+    const canViewUsers = requiredPermission === 'view_users' && perms.includes('manage_users');
+    if (user.role !== 'superadmin' && !perms.includes('*') && !perms.includes(requiredPermission) && !canViewUsers) {
+      return <Navigate to="/crm" replace />;
+    }
   }
 
   return <>{children}</>;
@@ -194,7 +199,7 @@ const App: React.FC = () => {
         <Route path="/campaigns" element={<ProtectedRoute><CampaignLayout><Campaigns /></CampaignLayout></ProtectedRoute>} />
         <Route path="/templates" element={<ProtectedRoute><DashboardLayoutFull><Templates /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/content" element={<ProtectedRoute><DashboardLayoutFull><Content /></DashboardLayoutFull></ProtectedRoute>} />
-        <Route path="/content/ai-workspace" element={<ProtectedRoute><DashboardLayoutFull><AiCreativeWorkspacePage /></DashboardLayoutFull></ProtectedRoute>}/>
+        <Route path="/content/ai-workspace" element={<ProtectedRoute><DashboardLayoutFull><AiCreativeWorkspacePage /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/chatbot" element={<ProtectedRoute><DashboardLayout><ChatbotBuilder /></DashboardLayout></ProtectedRoute>} />
         <Route path="/analytics" element={<ProtectedRoute><DashboardLayout><Analytics /></DashboardLayout></ProtectedRoute>} />
         <Route path="/billing" element={<ProtectedRoute><DashboardLayout><Billing /></DashboardLayout></ProtectedRoute>} />
@@ -226,6 +231,12 @@ const App: React.FC = () => {
         <Route path="/linkedin-crm" element={<ProtectedRoute><DarkDashboardLayoutFull><LinkedInCrm /></DarkDashboardLayoutFull></ProtectedRoute>} />
         {/* Reviews & Reputation Management */}
         <Route path="/reviews" element={<ProtectedRoute><DashboardLayoutFull><Reviews /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/reputation/dashboard" element={<ProtectedRoute><DashboardLayoutFull><DashboardPage /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/reputation/inbox" element={<ProtectedRoute><DashboardLayoutFull><InboxPage /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/reputation/customers" element={<ProtectedRoute><DashboardLayoutFull><CustomersPage /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/reputation/analytics" element={<ProtectedRoute><DashboardLayoutFull><AnalyticsPage /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/reputation/recommendations" element={<ProtectedRoute><DashboardLayoutFull><RecommendationsPage /></DashboardLayoutFull></ProtectedRoute>} />
+
       </Routes>
     </Router>
   );
