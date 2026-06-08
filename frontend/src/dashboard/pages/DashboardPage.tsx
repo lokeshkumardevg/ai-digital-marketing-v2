@@ -2,8 +2,7 @@
 // Route: /reviews/dashboard
 //
 // Displays KPI stat cards, area/pie/bar charts, and AI insights.
-// Fetches stats from Redux on mount.
-// Fully responsive: 6-col → 3-col → 2-col KPI grid, stacked charts on mobile.
+// Data fetched via Redux → reputationSlice → fetchDashboardStats.
 
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,11 +15,11 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 import { GlassCard } from '../components/GlassCard';
-import type { AppDispatch } from '../../store';
-import { fetchReviewStats, clearStatus } from '../../store/slices/reviewsSlice';
 import { PLATFORM_META } from '../components/Reviewhelpers';
+import { fetchDashboardStats } from '../../store/slices/Reputationslice';
+import type { AppDispatch, RootState } from '../../store';
 
-// ─── Responsive styles injected once ───────────────────────────────────────
+// ─── Responsive styles injected once ─────────────────────────
 const RESPONSIVE_CSS = `
   .dash-kpi-grid {
     display: grid;
@@ -95,41 +94,57 @@ function injectCSS() {
   cssInjected = true;
 }
 
-// ─── Component ──────────────────────────────────────────────────────────────
+// ─── Component ───────────────────────────────────────────────
 const DashboardPage: React.FC = () => {
   injectCSS();
 
-  const { stats, statsStatus } = useSelector((s: any) => s.reviews);
   const dispatch = useDispatch<AppDispatch>();
-  const { user } = useSelector((state: any) => state.auth);
 
+  // ── Selectors ──────────────────────────────────────────────
+  const stats        = useSelector((s: RootState) => s.reputation.dashboardStats);
+  const dashLoad     = useSelector((s: RootState) => s.reputation.dashboardLoad);
+  const { user }     = useSelector((s: RootState) => (s as any).auth);
+  const { activeBrandId } = useSelector((s: any) => s.workspace);
+  const brandId: string = activeBrandId || user?.id || 'demo';
+  const isLoading = dashLoad.status === 'idle' || dashLoad.status === 'loading';
+  const isError   = dashLoad.status === 'failed';
+
+  // ── Fetch on mount ─────────────────────────────────────────
   useEffect(() => {
-    if (statsStatus === 'idle') {
-      dispatch(fetchReviewStats(user.id || 'demo'));
-    }
-  }, [statsStatus, dispatch, user.id]);
+    dispatch(fetchDashboardStats({ brandId }));
+  }, [dispatch, brandId]);
 
-  // ── Loading ──────────────────────────────────────────────────────────────
-  if (statsStatus === 'loading' || !stats) {
+  const handleRetry = () => dispatch(fetchDashboardStats({ brandId }));
+
+  const tooltipStyle = {
+    background: '#0f172a',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '8px',
+    fontSize: '12px',
+  };
+
+  // ── Loading ───────────────────────────────────────────────
+  if (isLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40vh' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', color: 'var(--accent-primary)' }}>
-          <RefreshCw size={36} className="animate-spin" />
+          <RefreshCw size={36} style={{ animation: 'spin 1s linear infinite' }} />
           <p style={{ color: 'var(--text-secondary)' }}>Loading dashboard...</p>
         </div>
+        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  // ── Error ────────────────────────────────────────────────────────────────
-  if (statsStatus === 'failed') {
+  // ── Error ─────────────────────────────────────────────────
+  if (isError || !stats) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40vh' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
           <AlertCircle size={36} style={{ marginBottom: '12px', color: '#ef4444' }} />
-          <p>Failed to load dashboard stats.</p>
+          <p>{dashLoad.error || 'Failed to load dashboard stats.'}</p>
           <button
-            onClick={() => dispatch(clearStatus())}
+            onClick={handleRetry}
             style={{ marginTop: '12px', background: 'var(--accent-gradient)', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 20px', cursor: 'pointer', fontWeight: 600 }}
           >
             Retry
@@ -139,7 +154,7 @@ const DashboardPage: React.FC = () => {
     );
   }
 
-  // ── Derived data ─────────────────────────────────────────────────────────
+  // ── Derived data ──────────────────────────────────────────
   const STAT_CARDS = [
     { label: 'Total Reviews',      value: stats.totalReviews.toLocaleString(), icon: MessageSquare, color: '#7033f5', bg: 'rgba(112,51,245,0.12)', trend: '+18.6%', trendUp: true  },
     { label: 'Average Rating',     value: `${stats.averageRating} ★`,          icon: Star,          color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', trend: '+0.2',   trendUp: true  },
@@ -157,25 +172,18 @@ const DashboardPage: React.FC = () => {
 
   const ratingData = [1, 2, 3, 4, 5].map(r => ({
     star: `${r} Star`,
-    count: stats.ratingDistribution?.[r] || 0,
+    count: (stats.ratingDistribution as Record<string, number>)?.[r] || 0,
   }));
 
-  const trendData = (stats.trend || []).map((t: any) => ({
-    date: t._id,
+  const trendData = (stats.trend || []).map(t => ({
+    date:    t._id,
     reviews: t.count,
-    rating: Math.round(t.avgRating * 10) / 10,
+    rating:  Math.round(t.avgRating * 10) / 10,
   }));
 
   const RATING_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981'];
 
-  const tooltipStyle = {
-    background: '#0f172a',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '8px',
-    fontSize: '12px',
-  };
-
-  // ── Render ───────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(14px, 2.5vw, 24px)', padding: 'clamp(14px, 2.5vw, 24px)' }}>
 
@@ -186,11 +194,7 @@ const DashboardPage: React.FC = () => {
           return (
             <GlassCard key={card.label} style={{ padding: 'clamp(14px, 2vw, 20px)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
-                <div style={{
-                  width: '36px', height: '36px', flexShrink: 0,
-                  borderRadius: '10px', background: card.bg, color: card.color,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
+                <div style={{ width: '36px', height: '36px', flexShrink: 0, borderRadius: '10px', background: card.bg, color: card.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <Icon size={17} />
                 </div>
                 <span className="dash-kpi-label" style={{ color: 'var(--text-secondary)', paddingTop: '2px' }}>
@@ -209,13 +213,10 @@ const DashboardPage: React.FC = () => {
       {/* ── Reviews Over Time + Platform Breakdown ── */}
       <div className="dash-row2">
 
-        {/* Area chart */}
         <GlassCard>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '8px' }}>
             <h3 className="dash-card-title">Reviews Over Time</h3>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '20px' }}>
-              Daily
-            </span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '20px' }}>Daily</span>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={trendData}>
@@ -226,13 +227,7 @@ const DashboardPage: React.FC = () => {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis
-                dataKey="date"
-                stroke="#4b5563"
-                tick={{ fontSize: 10 }}
-                interval="preserveStartEnd"
-                tickCount={6}
-              />
+              <XAxis dataKey="date" stroke="#4b5563" tick={{ fontSize: 10 }} interval="preserveStartEnd" tickCount={6} />
               <YAxis stroke="#4b5563" tick={{ fontSize: 10 }} width={32} />
               <Tooltip contentStyle={tooltipStyle} />
               <Area type="monotone" dataKey="reviews" stroke="#7033f5" fill="url(#reviewGradient)" strokeWidth={2} dot={false} />
@@ -240,7 +235,6 @@ const DashboardPage: React.FC = () => {
           </ResponsiveContainer>
         </GlassCard>
 
-        {/* Pie chart */}
         <GlassCard>
           <div style={{ marginBottom: '20px' }}>
             <h3 className="dash-card-title">Reviews by Platform</h3>
@@ -273,7 +267,6 @@ const DashboardPage: React.FC = () => {
       {/* ── Ratings Distribution + Platform Overview ── */}
       <div className="dash-row3">
 
-        {/* Bar chart */}
         <GlassCard>
           <div style={{ marginBottom: '20px' }}>
             <h3 className="dash-card-title">Ratings Distribution</h3>
@@ -291,7 +284,6 @@ const DashboardPage: React.FC = () => {
           </ResponsiveContainer>
         </GlassCard>
 
-        {/* Platform overview */}
         <GlassCard>
           <div style={{ marginBottom: '16px' }}>
             <h3 className="dash-card-title">Platform Overview</h3>
@@ -300,17 +292,9 @@ const DashboardPage: React.FC = () => {
             {Object.entries(stats.byPlatform || {}).map(([platform, count]) => {
               const meta = PLATFORM_META[platform];
               return (
-                <div
-                  key={platform}
-                  style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '14px', border: '1px solid rgba(255,255,255,0.06)' }}
-                >
+                <div key={platform} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '14px', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                    <div style={{
-                      width: '28px', height: '28px', borderRadius: '8px',
-                      background: meta?.bg, color: meta?.color,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '12px', fontWeight: 700, flexShrink: 0,
-                    }}>
+                    <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: meta?.bg, color: meta?.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>
                       {meta?.icon}
                     </div>
                     <span style={{ fontSize: '0.8rem', fontWeight: 600, color: meta?.color }}>
@@ -348,16 +332,9 @@ const DashboardPage: React.FC = () => {
               style={{ background: insight.bg, borderRadius: '12px', padding: 'clamp(12px, 2vw, 16px)', border: `1px solid ${insight.color}22` }}
             >
               <div style={{ fontSize: '20px', marginBottom: '8px' }}>{insight.icon}</div>
-              <div style={{ fontSize: 'clamp(0.72rem, 1.2vw, 0.82rem)', fontWeight: 600, marginBottom: '4px', lineHeight: 1.35 }}>
-                {insight.title}
-              </div>
+              <div style={{ fontSize: 'clamp(0.72rem, 1.2vw, 0.82rem)', fontWeight: 600, marginBottom: '4px', lineHeight: 1.35 }}>{insight.title}</div>
               <div style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>{insight.sub}</div>
-              <button style={{
-                marginTop: '12px', fontSize: '0.68rem',
-                color: insight.color, background: 'transparent',
-                border: `1px solid ${insight.color}44`, borderRadius: '6px',
-                padding: '4px 10px', cursor: 'pointer',
-              }}>
+              <button style={{ marginTop: '12px', fontSize: '0.68rem', color: insight.color, background: 'transparent', border: `1px solid ${insight.color}44`, borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}>
                 View details
               </button>
             </div>
@@ -365,6 +342,7 @@ const DashboardPage: React.FC = () => {
         </div>
       </GlassCard>
 
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

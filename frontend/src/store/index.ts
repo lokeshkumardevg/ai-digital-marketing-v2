@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
+import reputationReducer from './slices/Reputationslice';
 import { authReducer } from './slices/authSlice';
 import { workspaceReducer } from './slices/workspaceSlice';
 import { notificationReducer } from './slices/notificationSlice';
@@ -28,6 +29,7 @@ export const store = configureStore({
     roles: rolesReducer,
     workflows: workflowsReducer,
     linkedinCrm: linkedinCrmReducer,
+    reputation: reputationReducer,
     reviews: reviewsReducer,
   },
 });

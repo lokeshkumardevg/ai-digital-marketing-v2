@@ -28,6 +28,7 @@ import { PlatformPostsModule } from './platformposts/platformposts.module';
 import { LinkedInCrmModule } from './linkedin-crm/linkedin-crm.module';
 import { LinkedinScraperModule } from './linkedin-scraper/linkedin-scraper.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { ReputationModule } from './reputation/reputation.module';
 
 @Module({
   imports: [
@@ -79,6 +80,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     LinkedInCrmModule,
     LinkedinScraperModule,
     ReviewsModule,
+    ReputationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
