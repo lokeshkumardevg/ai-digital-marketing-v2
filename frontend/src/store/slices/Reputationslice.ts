@@ -71,7 +71,7 @@ export interface Analytics {
   topicBreakdown: TopicBreakdownItem[];
 }
 
-// ─── NEW: ReputationInsight (matches actual backend response) ────────────────
+// ─── ReputationInsight ───────────────────────────────────────────────────────
 export interface ReputationInsight {
   _id: string;
   userId: string;
@@ -86,7 +86,6 @@ export interface ReputationInsight {
   updatedAt: string;
 }
 
-// kept for backward-compat if used elsewhere
 export interface Recommendation {
   _id: string;
   brandId: string;
@@ -146,7 +145,7 @@ interface ReputationState {
   analytics: Analytics;
   analyticsLoad: LoadState;
 
-  // Recommendations — now a single insight object
+  // Recommendations
   insight: ReputationInsight | null;
   recommendationsLoad: LoadState;
   generateRecsLoad: LoadState;
@@ -196,11 +195,8 @@ const initialState: ReputationState = {
 // ─── Helper: extract single insight from any response shape ─────────────────
 const extractInsight = (payload: any): ReputationInsight | null => {
   if (!payload) return null;
-  // Backend returns array → take first/latest item
   if (Array.isArray(payload)) return payload[0] ?? null;
-  // Backend returns { data: [...] }
   if (Array.isArray(payload?.data)) return payload.data[0] ?? null;
-  // Backend returns single object directly
   if (payload._id) return payload;
   return null;
 };
@@ -281,7 +277,7 @@ export const resolveReview = createAsyncThunk(
 
 export const fetchCustomers = createAsyncThunk(
   'reputation/fetchCustomers',
-  async (params: Record<string, any> = {}, { rejectWithValue }) => {
+  async (params: Record<string, any> & { brandId?: string } = {}, { rejectWithValue }) => {
     try {
       const res = await api.get('/reputation/customers', { params });
       return res.data;
@@ -299,6 +295,52 @@ export const addCustomer = createAsyncThunk(
       return res.data;
     } catch (e: any) {
       return rejectWithValue(e.response?.data?.message || 'Failed to add customer');
+    }
+  }
+);
+
+// ─── NEW: createLead thunk (matches POST /reputation/leads) ─────────────────
+export const createLead = createAsyncThunk(
+  'reputation/createLead',
+  async (
+    payload: {
+      firstName: string;
+      lastName:  string;
+      email:     string;
+      phone?:    string;
+      source?:   string;
+      brandId?:  string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await api.post('/reputation/leads', payload);
+      return res.data; // { success: true, customerId, data: Customer }
+    } catch (e: any) {
+      return rejectWithValue(e.response?.data?.message || 'Failed to create lead');
+    }
+  }
+);
+
+// ─── NEW: createLeadsBulk thunk (POST /reputation/leads/bulk) ───────────────
+export const createLeadsBulk = createAsyncThunk(
+  'reputation/createLeadsBulk',
+  async (
+    leads: Array<{
+      firstName: string;
+      lastName:  string;
+      email:     string;
+      phone?:    string;
+      source?:   string;
+      brandId?:  string;
+    }>,
+    { rejectWithValue }
+  ) => {
+    try {
+      const res = await api.post('/reputation/leads/bulk', { leads });
+      return res.data; // { success, inserted, customers: Customer[] }
+    } catch (e: any) {
+      return rejectWithValue(e.response?.data?.message || 'Failed to bulk import leads');
     }
   }
 );
@@ -339,7 +381,7 @@ export const fetchAnalytics = createAsyncThunk(
         api.get('/reputation/analytics/topic-breakdown', { params }),
       ]);
       return {
-        ratingTrend: ratingRes.data,
+        ratingTrend:    ratingRes.data,
         sentimentTrend: sentimentRes.data,
         topicBreakdown: topicRes.data,
       };
@@ -349,7 +391,6 @@ export const fetchAnalytics = createAsyncThunk(
   }
 );
 
-/** GET /reputation/recommendations */
 export const fetchRecommendations = createAsyncThunk(
   'reputation/fetchRecommendations',
   async (params: Record<string, any> = {}, { rejectWithValue }) => {
@@ -362,7 +403,6 @@ export const fetchRecommendations = createAsyncThunk(
   }
 );
 
-/** POST /reputation/recommendations/generate */
 export const generateRecommendations = createAsyncThunk(
   'reputation/generateRecommendations',
   async (payload: Record<string, any> = {}, { rejectWithValue }) => {
@@ -375,12 +415,15 @@ export const generateRecommendations = createAsyncThunk(
   }
 );
 
+// ─── FIX: deleteCustomer — plain string arg (was { customerId, brandId }) ───
 export const deleteCustomer = createAsyncThunk(
   'reputation/deleteCustomer',
-  async ({ customerId, brandId }: { customerId: string; brandId: string }, { rejectWithValue }) => {
+  async ({ id, brandId }: { id: string; brandId: string }, { rejectWithValue }) => {
     try {
-      await api.delete(`/reputation/customers/${customerId}`, { params: { brandId } });
-      return { customerId };
+      await api.delete(`/reputation/customers/${id}`, {
+        params: { brandId },  // → DELETE /reputation/customers/:id?brandId=xxx
+      });
+      return { id };
     } catch (e: any) {
       return rejectWithValue(e.response?.data?.message || 'Failed to delete customer');
     }
@@ -432,10 +475,10 @@ const reputationSlice = createSlice({
       .addCase(fetchReviews.pending,   (s)    => setLoading(s.reviewsLoad))
       .addCase(fetchReviews.fulfilled, (s, a) => {
         setSucceeded(s.reviewsLoad);
-        s.reviews           = a.payload.reviews ?? a.payload;
-        s.reviewsTotal      = a.payload.total      ?? s.reviews.length;
-        s.reviewsTotalPages = a.payload.totalPages ?? 1;
-        s.reviewsCurrentPage = a.payload.page      ?? 1;
+        s.reviews            = a.payload.reviews ?? a.payload;
+        s.reviewsTotal       = a.payload.total      ?? s.reviews.length;
+        s.reviewsTotalPages  = a.payload.totalPages ?? 1;
+        s.reviewsCurrentPage = a.payload.page       ?? 1;
       })
       .addCase(fetchReviews.rejected,  (s, a) => setFailed(s.reviewsLoad, a.payload as string))
 
@@ -461,8 +504,8 @@ const reputationSlice = createSlice({
         const review = s.reviews.find((r) => r._id === a.payload.reviewId);
         if (review) { review.isReplied = true; review.status = 'replied'; review.publishedReply = a.payload.replyText; }
         if (s.reviewDetail?._id === a.payload.reviewId) {
-          s.reviewDetail.isReplied = true;
-          s.reviewDetail.status = 'replied';
+          s.reviewDetail.isReplied     = true;
+          s.reviewDetail.status        = 'replied';
           s.reviewDetail.publishedReply = a.payload.replyText;
         }
       })
@@ -476,7 +519,7 @@ const reputationSlice = createSlice({
         if (review) { review.isResolved = true; review.status = 'ignored'; }
         if (s.reviewDetail?._id === a.payload.reviewId) {
           s.reviewDetail.isResolved = true;
-          s.reviewDetail.status = 'ignored';
+          s.reviewDetail.status     = 'ignored';
         }
       })
       .addCase(resolveReview.rejected,  (s, a) => { s.resolveStatus[a.meta.arg] = 'idle'; })
@@ -500,10 +543,36 @@ const reputationSlice = createSlice({
       })
       .addCase(fetchCustomers.rejected,  (s, a) => setFailed(s.customersLoad, a.payload as string))
 
-      // ── Add Customer ─────────────────────────────────────────────────────
+      // ── Add Customer (legacy) ─────────────────────────────────────────────
       .addCase(addCustomer.pending,   (s)    => setLoading(s.addCustomerLoad))
-      .addCase(addCustomer.fulfilled, (s, a) => { setSucceeded(s.addCustomerLoad); s.customers.unshift(a.payload); s.customersTotal += 1; })
+      .addCase(addCustomer.fulfilled, (s, a) => {
+        setSucceeded(s.addCustomerLoad);
+        s.customers.unshift(a.payload);
+        s.customersTotal += 1;
+      })
       .addCase(addCustomer.rejected,  (s, a) => setFailed(s.addCustomerLoad, a.payload as string))
+
+      // ── Create Lead (POST /reputation/leads) ─────────────────────────────
+      .addCase(createLead.pending,   (s)    => setLoading(s.addCustomerLoad))
+      .addCase(createLead.fulfilled, (s, a) => {
+        setSucceeded(s.addCustomerLoad);
+        // backend returns { success, customerId, data: Customer }
+        const customer: Customer = a.payload.data ?? a.payload;
+        s.customers.unshift(customer);
+        s.customersTotal += 1;
+      })
+      .addCase(createLead.rejected,  (s, a) => setFailed(s.addCustomerLoad, a.payload as string))
+
+      // ── Create Leads Bulk (POST /reputation/leads/bulk) ──────────────────
+      .addCase(createLeadsBulk.pending,   (s)    => setLoading(s.importCustomersLoad))
+      .addCase(createLeadsBulk.fulfilled, (s, a) => {
+        setSucceeded(s.importCustomersLoad);
+        // prepend all newly created customers to the list
+        const incoming: Customer[] = a.payload.customers ?? [];
+        s.customers      = [...incoming, ...s.customers];
+        s.customersTotal = s.customersTotal + incoming.length;
+      })
+      .addCase(createLeadsBulk.rejected,  (s, a) => setFailed(s.importCustomersLoad, a.payload as string))
 
       // ── Import CSV ───────────────────────────────────────────────────────
       .addCase(importCustomersCSV.pending,   (s)    => setLoading(s.importCustomersLoad))
@@ -520,10 +589,11 @@ const reputationSlice = createSlice({
       .addCase(sendReviewRequest.rejected,  (s, a) => { s.sendRequestStatus[a.meta.arg] = 'idle'; })
 
       // ── Delete Customer ──────────────────────────────────────────────────
-      .addCase(deleteCustomer.fulfilled, (s, a) => {
-        s.customers = s.customers.filter((c) => c._id !== a.payload.customerId);
-        s.customersTotal = Math.max(0, s.customersTotal - 1);
-      })
+     .addCase(deleteCustomer.fulfilled, (state, action) => {
+  state.customers = state.customers.filter(
+    (c: any) => c._id !== action.payload.id  // ✅ was customerId, now id
+  );
+})
 
       // ── Analytics ────────────────────────────────────────────────────────
       .addCase(fetchAnalytics.pending,   (s)    => setLoading(s.analyticsLoad))
@@ -535,7 +605,7 @@ const reputationSlice = createSlice({
           ? rawRating
           : Array.isArray(rawRating?.data) ? rawRating.data : [];
 
-        const rawSentiment = a.payload.sentimentTrend;
+        const rawSentiment  = a.payload.sentimentTrend;
         const sentimentRows: any[] = Array.isArray(rawSentiment)
           ? rawSentiment
           : Array.isArray(rawSentiment?.data) ? rawSentiment.data : [];
@@ -553,7 +623,7 @@ const reputationSlice = createSlice({
         });
         s.analytics.sentimentTrend = Object.values(sentimentMap);
 
-        const rawTopics = a.payload.topicBreakdown;
+        const rawTopics  = a.payload.topicBreakdown;
         const topicRows: any[] = Array.isArray(rawTopics)
           ? rawTopics
           : Array.isArray(rawTopics?.data) ? rawTopics.data : [];
@@ -567,7 +637,7 @@ const reputationSlice = createSlice({
       })
       .addCase(fetchAnalytics.rejected,  (s, a) => setFailed(s.analyticsLoad, a.payload as string))
 
-      // ── Fetch Recommendations (GET) ──────────────────────────────────────
+      // ── Fetch Recommendations ────────────────────────────────────────────
       .addCase(fetchRecommendations.pending,   (s)    => setLoading(s.recommendationsLoad))
       .addCase(fetchRecommendations.fulfilled, (s, a) => {
         setSucceeded(s.recommendationsLoad);
@@ -575,7 +645,7 @@ const reputationSlice = createSlice({
       })
       .addCase(fetchRecommendations.rejected,  (s, a) => setFailed(s.recommendationsLoad, a.payload as string))
 
-      // ── Generate Recommendations (POST) ──────────────────────────────────
+      // ── Generate Recommendations ─────────────────────────────────────────
       .addCase(generateRecommendations.pending,   (s)    => setLoading(s.generateRecsLoad))
       .addCase(generateRecommendations.fulfilled, (s, a) => {
         setSucceeded(s.generateRecsLoad);

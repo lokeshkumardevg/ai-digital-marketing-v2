@@ -14,6 +14,7 @@ import {
   DEMO_TOPIC_BREAKDOWN,
   DEMO_INSIGHTS,
 } from './demo-data';
+import { CreateLeadDto } from 'src/dto/create-lead.dto';
 
 @Injectable()
 export class ReputationService {
@@ -80,11 +81,6 @@ async getDashboardStats(brandId: string) {
       { $limit: 30 },
     ]),
   ]);
-
-  // Return demo data when DB is empty
-  if (totalReviews === 0) {
-     return { ...DEMO_DASHBOARD, isDemoData: true };
-  }
 
   const avg = avgRatingAgg[0]?.avg ?? 0;
 
@@ -164,16 +160,6 @@ async getDashboardStats(brandId: string) {
       this.reviewModel.find(filter).sort({ reviewDate: -1 }).skip(skip).limit(limit).lean(),
       this.reviewModel.countDocuments(filter),
     ]);
-    if (!reviews.length) {
-  return {
-    reviews: DEMO_REVIEWS,
-    total: DEMO_REVIEWS.length,
-    page,
-    limit,
-    totalPages: 1,
-    isDemoData: true,
-  };
-}
 
     return { reviews, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
@@ -181,13 +167,6 @@ async getDashboardStats(brandId: string) {
   // GET /reputation/reviews/:id
 async getReviewById(id: string) {
   const review = await this.reviewModel.findById(id).lean();
-
-  if (!review) {
-    return {
-      ...DEMO_REVIEWS[0],
-      isDemoData: true,
-    };
-  }
 
   return {
     ...review,
@@ -321,16 +300,6 @@ Review: "${review.content}"
       this.customerModel.find({ brandId }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       this.customerModel.countDocuments({ brandId }),
     ]);
-    if (!data.length) {
-  return {
-    data: DEMO_CUSTOMERS,
-    total: DEMO_CUSTOMERS.length,
-    page,
-    limit,
-    totalPages: 1,
-    isDemoData: true,
-  };
-}
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
@@ -350,13 +319,6 @@ async getCustomerById(id: string, brandId: string) {
   const customer = await this.customerModel
     .findOne({ _id: id, brandId })
     .lean();
-
-  if (!customer) {
-    return {
-      ...DEMO_CUSTOMERS[0],
-      isDemoData: true,
-    };
-  }
 
   return {
     ...customer,
@@ -397,10 +359,6 @@ async getCustomerById(id: string, brandId: string) {
   // GET /reputation/analytics/rating-trend?brandId=xxx&months=6
 async getRatingTrend(brandId: string, months = 6) {
   const filter: any = brandId ? { brandId } : {};
-      return {
-      data: DEMO_RATING_TREND,
-      isDemoData: true,
-    };
 
   const trend = await this.reviewModel.aggregate([
     { $match: filter },
@@ -418,13 +376,6 @@ async getRatingTrend(brandId: string, months = 6) {
     { $limit: months },
   ]);
 
-  if (!trend.length) {
-    return {
-      data: DEMO_RATING_TREND,
-      isDemoData: true,
-    };
-  }
-
   return {
     data: trend.map((t) => ({
       month: `${t._id.year}-${String(t._id.month).padStart(2, '0')}`,
@@ -438,10 +389,6 @@ async getRatingTrend(brandId: string, months = 6) {
   // GET /reputation/analytics/sentiment-trend?brandId=xxx
 async getSentimentTrend(brandId: string) {
   const filter: any = brandId ? { brandId } : {};
-      return {
-      data: DEMO_SENTIMENT_TREND,
-      isDemoData: true,
-    };
 
   const data = await this.reviewModel.aggregate([
     { $match: filter },
@@ -457,13 +404,6 @@ async getSentimentTrend(brandId: string) {
     },
     { $sort: { '_id.year': 1, '_id.month': 1 } },
   ]);
-
-  if (!data.length) {
-    return {
-      data: DEMO_SENTIMENT_TREND,
-      isDemoData: true,
-    };
-  }
 
   return {
     data,
@@ -498,10 +438,6 @@ async getTopicBreakdown(brandId: string) {
     { $limit: 10 },
   ]);
 
-  if (!topics.length) {
-   return DEMO_TOPIC_BREAKDOWN;
-  }
-
   return {
     data: topics,
     isDemoData: false,
@@ -519,10 +455,6 @@ async getInsights(brandId: string) {
     .sort({ createdAt: -1 })
     .lean();
 
-  if (!insights.length) {
-    return DEMO_INSIGHTS;
-  }
-
   return insights;
 }
 
@@ -533,13 +465,6 @@ async getInsights(brandId: string) {
       .sort({ reviewDate: -1 })
       .limit(20)
       .lean();
-
-   if (!recentReviews.length) {
-  return {
-    data: DEMO_INSIGHTS,
-    isDemoData: true,
-  };
-}
 
     const reviewSummary = recentReviews
       .map((r: any) => `${r.rating}★ (${r.sentiment}) [${r.platform}]: ${(r.content || '').slice(0, 120)}`)
@@ -595,5 +520,27 @@ Return ONLY a JSON array with exactly this shape (no extra keys):
       { new: true },
     );
   }
+
+  // POST /reputation/leads
+async createLeadsBulk(dtos: CreateLeadDto[]) {
+  const docs = dtos.map(dto => ({
+    brandId:         dto.brandId  || 'default',
+    userId:          dto.userId,
+    name:            dto.name,
+    email:           dto.email,
+    phone:           dto.phone    || '',
+    lastPurchase:    dto.lastPurchase,
+    totalSpent:      dto.totalSpent,
+  }));
+
+  const customers = await this.customerModel.insertMany(docs, { ordered: false });
+  // ordered: false → continues on duplicate/validation errors, doesn't stop the batch
+
+  return {
+    success:   true,
+    inserted:  customers.length,
+    customers, // full array back
+  };
+}
   
 }

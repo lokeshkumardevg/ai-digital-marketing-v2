@@ -56,15 +56,19 @@ export const SentimentBadge: React.FC<{ sentiment: string }> = ({ sentiment }) =
 };
 
 // ─── Customer Type (used by Customers page) ───────────────────
-export type Customer = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  source: 'Manual' | 'Csv' | 'Shopify';
-  status: 'Requested' | 'Not sent';
-  createdAt: string;
-};
+export interface Customer {
+  _id:          string;
+  userId:       string;
+  brandId:      string;
+  name:         string;
+  email:        string;
+  phone?:       string;
+  reviewStatus: 'pending' | 'sent' | 'completed';
+  source:       'manual' | 'csv' | 'website' | 'shopify' | 'referral';
+  status:       'pending' | 'active' | 'inactive';
+  createdAt?:   string;
+  updatedAt?:   string;
+}
 
 export const SOURCE_META: Record<string, { color: string; bg: string }> = {
   Csv:     { color: '#6b7280', bg: 'rgba(107,114,128,0.12)' },

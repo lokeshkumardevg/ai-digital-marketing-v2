@@ -29,6 +29,7 @@ import { LinkedInCrmModule } from './linkedin-crm/linkedin-crm.module';
 import { LinkedinScraperModule } from './linkedin-scraper/linkedin-scraper.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ReputationModule } from './reputation/reputation.module';
+import { GoogleBusinessModule } from './google-business/google-business.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { ReputationModule } from './reputation/reputation.module';
     LinkedinScraperModule,
     ReviewsModule,
     ReputationModule,
+    GoogleBusinessModule,
   ],
   controllers: [AppController],
   providers: [AppService],
