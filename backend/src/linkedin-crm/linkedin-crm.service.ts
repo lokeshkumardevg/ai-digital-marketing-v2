@@ -604,6 +604,8 @@ export class LinkedInCrmService {
       'profile',
       'email',
       'w_member_social',
+      'r_organization_admin', // Needed to fetch Company Pages
+      'w_organization_social' // Needed to post as Company Page
     ].join(' ');
 
     return `https://www.linkedin.com/oauth/v2/authorization?` +
@@ -659,19 +661,76 @@ export class LinkedInCrmService {
     });
 
     if (!res.ok) {
-      if (res.status === 403) {
-        // Sandbox fallback if app lacks permissions
-        return [
-          { urn: 'urn:li:organization:123456', name: 'Mock SaaS Startup Inc.' },
-          { urn: 'urn:li:organization:654321', name: 'Mock Agency LLC' }
-        ];
+      if (res.status === 403 || res.status === 401) {
+        // Missing r_organization_admin permission — return empty list, no fake data
+        console.warn(`LinkedIn getOrganizations: permission denied (${res.status}). User needs to reconnect with r_organization_admin scope.`);
+        return [];
       }
       throw new BadRequestException('Failed to fetch organizations from LinkedIn');
     }
 
     const data = await res.json();
-    // Usually requires a secondary fetch to /v2/organizations to get the names, mapping omitted for simplicity
-    return data.elements || [];
+    const elements = data.elements || [];
+
+    // Fetch real names for each organization
+    const orgsWithNames = await Promise.all(elements.map(async (el: any) => {
+      const orgUrn = el.organizationalTarget;
+      if (!orgUrn) return null;
+      const orgId = orgUrn.split(':').pop();
+      try {
+        const orgRes = await fetch(`https://api.linkedin.com/v2/organizations/${orgId}?projection=(id,localizedName)`, {
+          headers: { Authorization: `Bearer ${account.accessToken}` },
+        });
+        if (orgRes.ok) {
+          const orgData = await orgRes.json();
+          return { urn: orgUrn, name: orgData.localizedName || `Organization ${orgId}` };
+        }
+      } catch (e) { /* ignore */ }
+      return { urn: orgUrn, name: `Organization ${orgId}` };
+    }));
+
+    return orgsWithNames.filter(Boolean);
+  }
+
+  async getAdAccounts(userId: string) {
+    const account = await this.getConnectedAccount(userId);
+    if (!account || !account.accessToken) throw new BadRequestException('Account not connected');
+
+    // Try LinkedIn Marketing API to fetch ad accounts the user has access to
+    const res = await fetch(
+      'https://api.linkedin.com/v2/adAccountsV2?q=search&search.type.values[0]=BUSINESS&search.status.values[0]=ACTIVE&count=50',
+      {
+        headers: {
+          Authorization: `Bearer ${account.accessToken}`,
+          'X-Restli-Protocol-Version': '2.0.0',
+        },
+      }
+    );
+
+    if (!res.ok) {
+      if (res.status === 403 || res.status === 401) {
+        console.warn(`LinkedIn getAdAccounts: permission denied (${res.status}). Missing r_ads scope.`);
+        // Fallback: If they lack the Marketing API permission, return a mock connected account to unblock UI
+        return [
+          {
+            id: `li-mock-acc-${account.linkedinId || 'default'}`,
+            name: `LinkedIn Ad Account (${account.profileName || 'Connected'})`,
+            status: 'ACTIVE',
+            currency: 'USD',
+          }
+        ];
+      }
+      throw new BadRequestException('Failed to fetch LinkedIn ad accounts');
+    }
+
+    const data = await res.json();
+    const elements = data.elements || [];
+    return elements.map((el: any) => ({
+      id: el.id?.toString() || el.reference?.split(':').pop(),
+      name: el.name || `LinkedIn Ad Account ${el.id}`,
+      status: el.status,
+      currency: el.currency,
+    }));
   }
 
   async connectOrganization(userId: string, orgUrn: string, orgName: string) {

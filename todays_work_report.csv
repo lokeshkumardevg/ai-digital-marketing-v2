@@ -1,0 +1,5 @@
+Module Name,Module Description,Status,Progress %,Remarks
+Auth Module (Google),"Fixed Google Ads Manager account not fetching. Rewrote the listAccessibleCustomers API call to use the gRPC google-ads-api library to bypass proxy 404 errors.",Completed,100,"Google Ads accounts now correctly appear in the UI dropdown."
+Campaign Publishing (Google),"Refactored publishGoogleCampaign to use the new gRPC google-ads-api. Replaced REST endpoints for Budgets, Campaigns, and AdGroups to fix 404 errors.",Completed,100,"Successfully creates a Draft (PAUSED) Campaign with Budget and AdGroup in the user's real Google Ads account."
+Campaign Publishing (LinkedIn),"Added real LinkedIn publishing instead of mock database entries. Wired the dashboard 'Publish' action to hit a new /linkedin/publish endpoint.",Completed,100,"Publishes the AI generated ad caption as a real Organic Post to the connected LinkedIn feed."
+Campaign Publishing (Meta),"Fixed Meta Ad publishing by mapping user performance goals to Meta's strict objective enum rules.",Completed,100,"Resolved 'Invalid parameter: optimization_goal' error."

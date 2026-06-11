@@ -9,15 +9,7 @@ import {
   ArrowUpRight, BrainCircuit, Wand2
 } from 'lucide-react';
 
-const mockAnalytics = [
-  { name: 'Mon', traffic: 4000, conversion: 2400 },
-  { name: 'Tue', traffic: 3000, conversion: 1398 },
-  { name: 'Wed', traffic: 2000, conversion: 9800 },
-  { name: 'Thu', traffic: 2780, conversion: 3908 },
-  { name: 'Fri', traffic: 1890, conversion: 4800 },
-  { name: 'Sat', traffic: 2390, conversion: 3800 },
-  { name: 'Sun', traffic: 3490, conversion: 4300 },
-];
+
 
 export const Dashboard: React.FC = () => {
   const [data, setData] = useState<{ daily: any[], summary: any } | null>(null);
@@ -29,11 +21,11 @@ export const Dashboard: React.FC = () => {
       .catch(console.error);
   }, []);
 
-  const chartData = data?.daily ? data.daily.map((d: any) => ({
+  const chartData = data?.daily && data.daily.length > 0 ? data.daily.map((d: any) => ({
     name: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
-    traffic: Math.floor(d.spend * 50),
-    conversion: Math.floor(d.spend * 12 * d.roas)
-  })).reverse() : mockAnalytics;
+    traffic: d.impressions || 0,
+    conversion: d.conversions || 0
+  })).reverse() : [];
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
@@ -63,17 +55,17 @@ export const Dashboard: React.FC = () => {
         marginBottom: '32px'
       }}>
         {[
-          { label: 'Total AI Content', value: '1,429', change: '+12.5%', icon: Wand2, color: 'var(--accent-primary)' },
-          { label: 'Predicted ROI', value: '342%', change: '+4.2%', icon: TrendingUp, color: 'var(--success)' },
-          { label: 'Active Campaigns', value: '24', change: '+2', icon: Target, color: 'var(--warning)' },
-          { label: 'Total Conversions', value: '8,904', change: '+24%', icon: MousePointerClick, color: 'var(--info)' },
+          { label: 'Total AI Content', value: data?.aiContentCount || 0, change: '0%', icon: Wand2, color: 'var(--accent-primary)' },
+          { label: 'Predicted ROI', value: data?.summary?.roas ? `${data.summary.roas}x` : '0x', change: '0%', icon: TrendingUp, color: 'var(--success)' },
+          { label: 'Active Campaigns', value: data?.campaigns || 0, change: '0', icon: Target, color: 'var(--warning)' },
+          { label: 'Total Conversions', value: data?.summary?.conversions || 0, change: '0%', icon: MousePointerClick, color: 'var(--info)' },
         ].map((stat, i) => (
           <GlassCard key={i} onClick={() => {}}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '8px' }}>{stat.label}</div>
                 <div style={{ fontSize: '1.8rem', fontWeight: 600, fontFamily: 'Outfit' }}>
-                  {i === 1 && data ? `${data.summary.roas}x` : i === 3 && data ? Math.floor(data.summary.spend * 12) : stat.value}
+                  {stat.value}
                 </div>
               </div>
               <div style={{ 
@@ -130,12 +122,7 @@ export const Dashboard: React.FC = () => {
         <GlassCard>
           <h3 style={{ marginBottom: '24px', fontSize: '1.2rem' }}>AI Orchestrator Status</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {[
-              { name: 'OpenAI (GPT-4)', status: 'Active', usage: '89%', color: 'var(--success)' },
-              { name: 'Gemini Pro', status: 'Fallback Ready', usage: '12%', color: 'var(--warning)' },
-              { name: 'Meta Llama 3', status: 'Idle', usage: '0%', color: 'var(--text-secondary)' },
-              { name: 'Stability AI', status: 'Active (Ads)', usage: '45%', color: 'var(--success)' },
-            ].map((model, i) => (
+            {(data?.orchestratorStatus || []).map((model: any, i: number) => (
               <div key={i} style={{ 
                 background: 'rgba(255,255,255,0.02)', 
                 padding: '16px', borderRadius: '12px', border: '1px solid var(--glass-border)',

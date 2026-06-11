@@ -1,0 +1,39 @@
+{
+  "errors": [
+    {
+      "error_code": {
+        "context_error": "OPERATION_NOT_PERMITTED_FOR_CONTEXT"
+      },
+      "message": "The operation is not allowed for the given context.",
+      "location": {
+        "field_path_elements": [
+          {
+            "field_name": "operations",
+            "index": 0
+          }
+        ]
+      }
+    },
+    {
+      "error_code": {
+        "field_error": "REQUIRED"
+      },
+      "message": "The required field was not present.",
+      "location": {
+        "field_path_elements": [
+          {
+            "field_name": "operations",
+            "index": 0
+          },
+          {
+            "field_name": "create"
+          },
+          {
+            "field_name": "contains_eu_political_advertising"
+          }
+        ]
+      }
+    }
+  ],
+  "request_id": "zHFr0HKLAis3jMY5_CgM5Q"
+}

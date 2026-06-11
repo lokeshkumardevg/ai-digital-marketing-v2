@@ -259,6 +259,12 @@ export class LinkedInCrmController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Get('ad-accounts')
+  async getAdAccounts(@Request() req: any) {
+    return this.linkedinCrmService.getAdAccounts(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Post('organizations/connect')
   async connectOrganization(@Request() req: any, @Body() body: { orgUrn: string; orgName: string }) {
     if (!body.orgUrn || !body.orgName) {

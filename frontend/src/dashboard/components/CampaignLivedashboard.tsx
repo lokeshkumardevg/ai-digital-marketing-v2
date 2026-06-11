@@ -369,9 +369,8 @@ export const LiveDashboard: React.FC<{
   const cfg = getPlatformConfig(platform?.name);
   const sc = statusConfig[campaign.status] || statusConfig['CREATING'];
 
-  // Generate sparkline mock data for visual richness
-  const genSpark = (base: number, len = 12) =>
-    Array.from({ length: len }, (_, i) => Math.max(0, base * (0.6 + 0.5 * Math.sin(i * 0.8) + 0.2 * Math.random())));
+  // No mock data allowed
+  const genSpark = (base: number, len = 12) => [];
 
   const overallMetrics = campaign.overallMetrics || {};
   const platMetrics = platform?.metrics || {};
@@ -383,15 +382,15 @@ export const LiveDashboard: React.FC<{
     color: ['#3b82f6', '#ea4335', '#e7e9ea', '#0a66c2'][i % 4],
   }));
 
-  // Weekly bar data (mock based on real total)
+  // Weekly bar data (strictly dynamic, currently we don't have this in API so it returns 0 to avoid fake numbers)
   const weeklyData = [
-    { label: 'Mon', value: overallMetrics.totalSpend * 0.12, color: cfg.color },
-    { label: 'Tue', value: overallMetrics.totalSpend * 0.18, color: cfg.color },
-    { label: 'Wed', value: overallMetrics.totalSpend * 0.15, color: cfg.color },
-    { label: 'Thu', value: overallMetrics.totalSpend * 0.22, color: cfg.color },
-    { label: 'Fri', value: overallMetrics.totalSpend * 0.19, color: cfg.color },
-    { label: 'Sat', value: overallMetrics.totalSpend * 0.08, color: `${cfg.color}66` },
-    { label: 'Sun', value: overallMetrics.totalSpend * 0.06, color: `${cfg.color}66` },
+    { label: 'Mon', value: 0, color: cfg.color },
+    { label: 'Tue', value: 0, color: cfg.color },
+    { label: 'Wed', value: 0, color: cfg.color },
+    { label: 'Thu', value: 0, color: cfg.color },
+    { label: 'Fri', value: 0, color: cfg.color },
+    { label: 'Sat', value: 0, color: `${cfg.color}66` },
+    { label: 'Sun', value: 0, color: `${cfg.color}66` },
   ];
 
   return (
@@ -624,8 +623,7 @@ export const LiveDashboard: React.FC<{
               {campaign.platforms.map(p => {
                 const pc = getPlatformConfig(p.name);
                 const ps = statusConfig[p.status] || statusConfig['CREATING'];
-                const health = p.status === 'ACTIVE' ? 90 + Math.random() * 10
-                  : p.status === 'CREATING' ? 30 + Math.random() * 20 : 50;
+                const health = p.status === 'ACTIVE' ? 100 : p.status === 'CREATING' ? 50 : 0;
                 return (
                   <div key={p.name} className="ld-health-row">
                     <div className="ld-health-icon">{pc.icon}</div>

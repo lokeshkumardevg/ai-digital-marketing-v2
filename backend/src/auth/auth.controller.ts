@@ -230,6 +230,18 @@ export class AuthController {
     }
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Get('x/profile')
+  async getXProfile(@Request() req: any) {
+    return this.authService.getXProfile(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('x/ad-accounts')
+  async getXAdAccounts(@Request() req: any) {
+    return this.authService.getXAdAccounts(req.user.id);
+  }
+
   // ================= LINKEDIN =================
 
   @UseGuards(AuthGuard('jwt'))
@@ -257,6 +269,12 @@ export class AuthController {
       console.log('[AuthController] linkedinCallback error', e?.message || e);
       return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?linkedinConnected=error" /></head><body>Redirecting...</body></html>`;
     }
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('linkedin/profile')
+  async getLinkedInProfile(@Request() req: any) {
+    return this.authService.getLinkedInProfile(req.user.id);
   }
 }
 

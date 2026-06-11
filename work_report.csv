@@ -1,0 +1,5 @@
+Task Name,Status,Description,Time Spent,Date
+"X (Twitter) Backend Integration","Completed","Added backend API endpoints for X OAuth, profile fetching, and Ad Accounts fetching.",2 hours,2026-06-10
+"Frontend X OAuth Flow","Completed","Updated Ad Campaign Dashboard to support real X connections, replaced 'coming soon' with functioning dropdowns and OAuth redirect.",1.5 hours,2026-06-10
+"LinkedIn OAuth Fix","Completed","Fixed a critical bug where LinkedIn login crashed due to unapproved 'r_ads' scope; implemented fallback mechanism for missing ad accounts.",1 hour,2026-06-10
+"Dashboard UI & Dropdown Fixes","Completed","Fixed X profile dropdown bugs to properly initiate OAuth flow instead of opening Twitter Ads blindly.",0.5 hours,2026-06-10

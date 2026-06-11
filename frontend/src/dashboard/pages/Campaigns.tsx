@@ -794,11 +794,11 @@ const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
   const bName = brand?.brand?.name || 'Your Brand';
   const rows = [
     { name: bName, score: myScore, isUs: true },
-    ...competitors.slice(0, 3).map((c: any, i: number) => ({
-      name: c.name, score: Math.max(20, Math.min(95, myScore + [-12, 15, -5][i % 3])), isUs: false,
+    ...competitors.slice(0, 3).map((c: any) => ({
+      name: c.name, score: c.score || Math.max(20, Math.min(95, myScore - 10)), isUs: false,
     })),
   ];
-  const withUs = [myScore, myScore + 8, myScore + 18, myScore + 30, myScore + 45].map(v => Math.min(v, 99));
+  const withUs = [myScore, Math.min(myScore + 5, 99), Math.min(myScore + 10, 99), Math.min(myScore + 20, 99), Math.min(myScore + 30, 99)];
   const scoreColor = (s: number) => s >= 80 ? '#10b981' : s >= 60 ? '#f59e0b' : '#ef4444';
   const maxScore = Math.max(...rows.map(r => r.score), 100);
 

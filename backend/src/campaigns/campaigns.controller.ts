@@ -254,6 +254,11 @@ getDrafts(
     return this.service.publishGoogleCampaign(body.userId, body);
   }
 
+  @Post('linkedin/publish')
+  async publishLinkedin(@Body() body: any) {
+    return this.service.publishLinkedinCampaign(body.userId, body);
+  }
+
   @Get('user/:userId')
   async getCampaigns(@Param('userId') userId: string) {
     return this.service.getCampaignsByUser(userId);

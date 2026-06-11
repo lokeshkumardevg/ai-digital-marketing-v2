@@ -1044,8 +1044,8 @@ function mapToCard(c: CampaignDoc): DraftCard {
     name: c.name || 'AI Campaign Concept',
     platform: (c.platform || 'meta').toLowerCase(),
     status: normaliseStatus(c.status),
-    score: Math.floor(c.aiStrategy?.performanceScore ?? (Math.random() * 30 + 60)),
-    rec: c.aiStrategy?.marketingStrategy || 'Add urgency CTA — "Limited time only!" to boost CTR by ~18%',
+    score: Math.floor(c.aiStrategy?.performanceScore ?? 0),
+    rec: c.aiStrategy?.marketingStrategy || 'Add urgency CTA — "Limited time only!" to boost CTR',
     components: ['Image', 'Headline', 'Copy', 'CTA'],
     raw: c,
   };

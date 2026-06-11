@@ -114,14 +114,14 @@ export const Seo: React.FC = () => {
       health: Math.min(100, (result.meta?.title ? 20 : 0) + (result.loadTime < 1.5 ? 40 : 20) + (ascore * 0.4)).toFixed(0),
       trafficSeries: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((m, _i) => ({
         name: m,
-        organic: Math.floor(baseTraffic * (0.6 + Math.random() * 0.4)),
-        direct: Math.floor(baseTraffic * (0.2 + Math.random() * 0.1)),
-        social: Math.floor(baseTraffic * (0.05 + Math.random() * 0.05)),
-        referral: Math.floor(baseTraffic * (0.1 + Math.random() * 0.05))
+        organic: Math.floor(baseTraffic * 0.6),
+        direct: Math.floor(baseTraffic * 0.2),
+        social: Math.floor(baseTraffic * 0.05),
+        referral: Math.floor(baseTraffic * 0.15)
       })),
       kwPositioning: ['1-3', '4-10', '11-20', '21-50', '51-100'].map((range, i) => ({
         range,
-        count: Math.floor(parseInt(result.semrush?.overview?.Or || '0') / (i + 1) * (0.5 + Math.random())),
+        count: Math.floor(parseInt(result.semrush?.overview?.Or || '0') / (i + 1) * 0.5),
         color: ['#10b981', '#34d399', '#3b82f6', '#f59e0b', '#ef4444'][i]
       }))
     };

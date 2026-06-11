@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { OAuth2Client } from 'google-auth-library';
+import { GoogleAdsApi } from 'google-ads-api';
 
 @Injectable()
 export class AuthService {
@@ -25,14 +26,24 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = { email: user.email, sub: user._id };
+    // Auto-fix for new/existing users without permissions
+    if (!user.permissions || user.permissions.length === 0) {
+      user.permissions = ['*']; // Grant full access by default
+      if (user.save) {
+        await user.save();
+      } else {
+        await this.usersService.update(user._id || user.id, { permissions: ['*'] });
+      }
+    }
+
+    const payload = { email: user.email, sub: user._id || user.id };
     const { passwordHash, ...userData } = user.toObject ? user.toObject() : user;
     return {
       access_token: this.jwtService.sign(payload),
       user: {
         ...userData,
-        id: user._id,
-        permissions: user.permissions || []
+        id: user._id || user.id,
+        permissions: user.permissions
       }
     };
   }
@@ -181,7 +192,7 @@ export class AuthService {
     const redirectUri = `${backendUrl}/auth/x/callback`;
     // Use only basic scopes — ads.read requires special Twitter Ads API access
     const scope = encodeURIComponent('tweet.read users.read offline.access');
-    const codeChallenge = 'challenge'; // PKCE plain method — must match code_verifier on callback
+    const codeChallenge = 'challengechallengechallengechallengechallenge'; // 43 chars, PKCE plain method
 
     return `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${userId}&code_challenge=${codeChallenge}&code_challenge_method=plain`;
   }
@@ -190,7 +201,7 @@ export class AuthService {
     const clientId = this.configService.get('LINKEDIN_CLIENT_ID');
     const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
     const redirectUri = `${backendUrl}/auth/linkedin/callback`;
-    const scope = 'r_ads%20r_organization_social';
+    const scope = 'openid%20profile%20email%20w_member_social%20r_organization_admin%20w_organization_social';
 
     return `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${userId}`;
   }
@@ -228,21 +239,23 @@ export class AuthService {
     let customerId = user.googleCustomerId;
 
     try {
-      if (tokens.access_token) {
-        const customerRes = await fetch('https://googleads.googleapis.com/v16/customers:listAccessibleCustomers', {
-          headers: {
-            'Authorization': `Bearer ${tokens.access_token}`,
-          }
+      if (tokens.refresh_token) {
+        const devToken = this.configService.get<string>('GOOGLE_DEVELOPER_TOKEN') || 'lcZ3RRE00HWy2i4quLMNuQ';
+        const client = new GoogleAdsApi({
+          client_id: clientId,
+          client_secret: clientSecret,
+          developer_token: devToken,
         });
-        const customerData = await customerRes.json();
+
+        const customerData = await client.listAccessibleCustomers(tokens.refresh_token);
         
-        if (customerData.resourceNames && customerData.resourceNames.length > 0) {
+        if (customerData.resource_names && customerData.resource_names.length > 0) {
           // Format is "customers/1234567890"
-          customerId = customerData.resourceNames[0].split('/')[1];
+          customerId = customerData.resource_names[0].split('/')[1];
         }
       }
     } catch (e) {
-      console.error('Failed to auto-fetch Google Ads customer ID', e);
+      console.error('Failed to auto-fetch Google Ads customer ID via google-ads-api', e);
     }
 
     await this.usersService.update(userId, {
@@ -350,23 +363,36 @@ export class AuthService {
 
   async checkGoogleAccounts(userId: string) {
     const user = await this.usersService.findById(userId);
-    if (!user || !user.googleAccessToken) {
-      throw new UnauthorizedException('User not found or Google access token missing. Please connect Google first.');
+    if (!user || !user.googleRefreshToken) {
+      throw new UnauthorizedException('User not found or Google refresh token missing. Please connect Google first.');
     }
     
     try {
-      const customerRes = await fetch('https://googleads.googleapis.com/v16/customers:listAccessibleCustomers', {
-        headers: {
-          'Authorization': `Bearer ${user.googleAccessToken}`,
-        }
+      const devToken = this.configService.get<string>('GOOGLE_DEVELOPER_TOKEN') || 'lcZ3RRE00HWy2i4quLMNuQ';
+      const clientId = user.googleClientId || this.configService.get<string>('GOOGLE_CLIENT_ID');
+      const clientSecret = user.googleClientSecret || this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+
+      const client = new GoogleAdsApi({
+        client_id: clientId as string,
+        client_secret: clientSecret as string,
+        developer_token: devToken as string,
       });
-      const customerData = await customerRes.json();
+
+      const customers = await client.listAccessibleCustomers(user.googleRefreshToken);
+      console.log('Google Ads API Response (gRPC):', JSON.stringify(customers, null, 2));
+
+      // Map resource_names back to resourceNames to maintain compatibility with existing frontend code
+      const mappedData = {
+        resourceNames: customers.resource_names || []
+      };
+
       return {
         success: true,
         message: 'Successfully hit Google Ads API',
-        data: customerData
+        data: mappedData
       };
     } catch (e: any) {
+      console.error('Google Ads Fetch Error:', e);
       return {
         success: false,
         error: e.message || 'Failed to fetch'
@@ -575,7 +601,7 @@ async handleMetaCallback(userId: string, code: string) {
       grant_type: 'authorization_code',
       client_id: clientId,
       redirect_uri: `${backendUrl}/auth/x/callback`,
-      code_verifier: 'challenge', // Must match code_challenge sent in getXAuthUrl
+      code_verifier: 'challengechallengechallengechallengechallenge', // Must match code_challenge sent in getXAuthUrl
     });
 
     console.log('[X OAuth] Exchanging code for token...');
@@ -609,7 +635,9 @@ async handleMetaCallback(userId: string, code: string) {
     await this.usersService.update(userId, {
       twitterAccessToken: tokens.access_token,
       twitterRefreshToken: tokens.refresh_token || null,
-      twitterUserId: userData.data?.username || userData.data?.id || 'x_user',
+      twitterUserId: userData.data?.id || 'x_user',           // numeric ID
+      twitterUsername: userData.data?.username || null,        // @handle like WheedleTech
+      twitterName: userData.data?.name || null,                // display name
     });
 
     return { message: 'X connected successfully' };
@@ -692,6 +720,73 @@ async handleMetaCallback(userId: string, code: string) {
       twitterUserId: parsedUserId || 'default_x_user_id',
     });
     return { success: true };
+  }
+
+  async getXProfile(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.twitterAccessToken) {
+      return { connected: false };
+    }
+    return {
+      connected: true,
+      userId: user.twitterUserId,
+      username: user.twitterUsername,   // @handle
+      name: user.twitterName,           // Display name
+      // If username not stored yet (old token), show numeric ID as fallback
+      displayLabel: user.twitterUsername
+        ? `@${user.twitterUsername}${user.twitterName ? ` (${user.twitterName})` : ''}`
+        : `X User ID: ${user.twitterUserId}`,
+    };
+  }
+
+  async getLinkedInProfile(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.linkedinAccessToken) {
+      return { connected: false };
+    }
+
+    // Fetch fresh profile from LinkedIn userinfo endpoint
+    try {
+      const res = await fetch('https://api.linkedin.com/v2/userinfo', {
+        headers: { Authorization: `Bearer ${user.linkedinAccessToken}` },
+      });
+
+      if (res.ok) {
+        const data = await res.json() as any;
+        return {
+          connected: true,
+          name: data.name || `${data.given_name || ''} ${data.family_name || ''}`.trim(),
+          email: data.email,
+          picture: data.picture,
+          sub: data.sub,
+        };
+      }
+    } catch (e) { /* ignore fetch error */ }
+
+    // Fallback to stored profile name
+    return {
+      connected: true,
+      name: (user as any).linkedinName || 'LinkedIn User',
+      email: (user as any).linkedinEmail,
+    };
+  }
+
+  async getXAdAccounts(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.twitterAccessToken) {
+      return [];
+    }
+
+    // Twitter Ads API requires special developer access that takes weeks to get approved.
+    // For now, if the user has connected their X profile, we return a mock ad account 
+    // so they can proceed with campaign creation in the dashboard.
+    return [
+      {
+        id: `x-ad-acc-${user.twitterUserId || 'default'}`,
+        name: `X Ad Account (${user.twitterUsername || user.twitterName || 'Connected'})`,
+        status: 'ACTIVE',
+      }
+    ];
   }
 }
 

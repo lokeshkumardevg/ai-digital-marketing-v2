@@ -113,6 +113,7 @@ const BASE_MENU_ITEMS: MenuItem[] = [
       { path: '/chatbot', label: 'AI Chatbot', badge: 'beta' },
       { path: '/messaging', label: 'Messaging' },
       { path: '/ai-agents', label: 'AI Agents', badge: 'new' },
+      { path: '/calling-agent', label: 'Voice Calling', badge: 'beta' },
     ],
   },
   { path: '/billing', label: 'Billing', icon: CreditCard, permission: 'billing' },

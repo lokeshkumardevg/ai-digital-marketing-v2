@@ -31,16 +31,7 @@ const DonutChart: React.FC<{
   );
 };
 
-const topAudiencesMock = [
-  { name: 'Local Diners', tags: ['Neighborhood restaurants', 'Classic diners', 'Local comfort food'], cpa: '2.8 CPA', spend: '$455 spend · 11 campaigns' },
-  { name: 'Fast Food Lovers', tags: ['Burgers', 'Quick service', 'Deals'], cpa: '4.1 CPA', spend: '$280 spend · 7 campaigns' },
-  { name: 'Latino Community', tags: ['Spanish content', 'Cultural events'], cpa: '3.2 CPA', spend: '$175 spend · 4 campaigns' },
-];
 
-const topPagesMock = [
-  { url: 'https://www.goodkarmasj.com/', cvr: '1.88% CVR', spend: '$325 spend · 3 campaigns' },
-  { url: 'https://www.goodkarmasj.com/menu', cvr: '0.92% CVR', spend: '$130 spend · 2 campaigns' },
-];
 
 export const AdInsights: React.FC = () => {
   const [activePlatform, setActivePlatform] = useState('Meta');
@@ -158,18 +149,18 @@ export const AdInsights: React.FC = () => {
 
             <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '10px' }}>Top Audiences</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {topAudiencesMock.map((aud, i) => (
-                <div key={i} style={{ padding: '12px 0', borderBottom: i < topAudiencesMock.length - 1 ? '1px dashed #f1f5f9' : 'none' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '6px' }}>{aud.name}</div>
+              {(data.audiences || []).length > 0 ? (data.audiences || []).map((aud: any, i: number) => (
+                <div key={i} style={{ padding: '12px 0', borderBottom: i < data.audiences.length - 1 ? '1px dashed #f1f5f9' : 'none' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '6px' }}>{aud.label || aud.name}</div>
                   <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '5px' }}>
-                    {aud.tags.map(tag => <span key={tag} style={{ padding: '2px 8px', borderRadius: '5px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{tag}</span>)}
+                    {(aud.tags || []).map((tag: string) => <span key={tag} style={{ padding: '2px 8px', borderRadius: '5px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{tag}</span>)}
                   </div>
                   <div style={{ fontSize: '0.75rem', display: 'flex', gap: '12px' }}>
-                    <span style={{ color: '#0665ff', fontWeight: 700 }}>{aud.cpa}</span>
-                    <span style={{ color: 'var(--text-dim)' }}>{aud.spend}</span>
+                    <span style={{ color: '#0665ff', fontWeight: 700 }}>{aud.cpa || '0'} CPA</span>
+                    <span style={{ color: 'var(--text-dim)' }}>${aud.spend || 0} spend</span>
                   </div>
                 </div>
-              ))}
+              )) : <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>No top audiences found.</div>}
             </div>
           </div>
 
@@ -193,17 +184,16 @@ export const AdInsights: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '10px' }}>Top Pages</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {topPagesMock.map((page, i) => (
-                <div key={i} style={{ padding: '12px 0', borderBottom: i < topPagesMock.length - 1 ? '1px dashed #f1f5f9' : 'none' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)', marginBottom: '4px', wordBreak: 'break-all' }}>{page.url}</div>
+              {(data.pages || []).length > 0 ? (data.pages || []).map((page: any, i: number) => (
+                <div key={i} style={{ padding: '12px 0', borderBottom: i < data.pages.length - 1 ? '1px dashed #f1f5f9' : 'none' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)', marginBottom: '4px', wordBreak: 'break-all' }}>{page.label || page.url}</div>
                   <div style={{ fontSize: '0.75rem', display: 'flex', gap: '12px' }}>
-                    <span style={{ color: '#0665ff', fontWeight: 700 }}>{page.cvr}</span>
-                    <span style={{ color: 'var(--text-dim)' }}>{page.spend}</span>
+                    <span style={{ color: '#0665ff', fontWeight: 700 }}>{page.cvr || '0'} CVR</span>
+                    <span style={{ color: 'var(--text-dim)' }}>${page.spend || 0} spend</span>
                   </div>
                 </div>
-              ))}
+              )) : <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>No top pages found.</div>}
             </div>
           </div>
         </div>

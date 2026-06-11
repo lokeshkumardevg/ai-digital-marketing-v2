@@ -582,11 +582,20 @@ export function TopBar({
   const [selectedXAccount, setSelectedXAccount] = useState<string>("");
   const [selectedXProfile, setSelectedXProfile] = useState<string>("");
   const [selectedXPixel, setSelectedXPixel] = useState<string>("");
+  
+  const [xAccounts, setXAccounts] = useState<any[]>([]);
 
   // Local states for LinkedIn dropdown choices
   const [selectedLiPage, setSelectedLiPage] = useState<string>("");
   const [selectedLiAccount, setSelectedLiAccount] = useState<string>("");
   const [selectedLiTag, setSelectedLiTag] = useState<string>("");
+  
+  const [liAccounts, setLiAccounts] = useState<any[]>([]);
+  const [liPages, setLiPages] = useState<any[]>([]);
+
+  // Real connected account profile data
+  const [xProfile, setXProfile] = useState<any>(null);
+  const [liProfile, setLiProfile] = useState<any>(null);
 
   useEffect(() => {
     if (activePlatformId === 'meta' && user?.metaAccessToken) {
@@ -618,11 +627,53 @@ export function TopBar({
         }).catch(e => console.error("Google accounts error", e));
       });
     }
-  }, [activePlatformId, user?.metaAccessToken, user?.googleAccessToken]);
+
+    if (activePlatformId === 'x' && user?.twitterAccessToken) {
+      import('../../api/axios').then(({ api }) => {
+        api.get('/auth/x/profile').then(res => {
+          if (res.data?.connected) setXProfile(res.data);
+        }).catch(e => console.error('X profile error', e));
+
+        api.get('/auth/x/ad-accounts').then(res => {
+          if (res.data && Array.isArray(res.data)) {
+            setXAccounts(res.data);
+          }
+        }).catch(e => console.error('X ad accounts error', e));
+      });
+    }
+
+    if (activePlatformId === 'linkedin' && user?.linkedinAccessToken) {
+      import('../../api/axios').then(({ api }) => {
+        // Fetch real LinkedIn profile name
+        api.get('/auth/linkedin/profile').then(res => {
+          if (res.data?.connected) setLiProfile(res.data);
+        }).catch(e => console.error('LinkedIn profile error', e));
+
+        api.get('/linkedin-crm/organizations').then(res => {
+          if (res.data && Array.isArray(res.data)) {
+            const pages = res.data.map((org: any) => ({
+              id: org.urn,
+              name: org.name || `LinkedIn Page (${org.urn.split(':').pop()})`
+            }));
+            setLiPages(pages);
+          }
+        }).catch(e => console.error("LinkedIn pages error", e));
+
+        // Fetch real LinkedIn Ad Accounts
+        api.get('/linkedin-crm/ad-accounts').then(res => {
+          if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+            setLiAccounts(res.data);
+          }
+        }).catch(e => console.error("LinkedIn ad accounts error", e));
+      });
+    }
+  }, [activePlatformId, user?.metaAccessToken, user?.googleAccessToken, user?.linkedinAccessToken, user?.twitterAccessToken]);
 
   const isNotConnected = (
     (activePlatformId === 'meta' && !user?.metaAccessToken) ||
-    (activePlatformId === 'google' && !user?.googleAccessToken)
+    (activePlatformId === 'google' && !user?.googleAccessToken) ||
+    (activePlatformId === 'linkedin' && !user?.linkedinAccessToken) ||
+    (activePlatformId === 'x' && !user?.twitterAccessToken)
   );
 
   const getPlatformName = () => {
@@ -665,7 +716,11 @@ export function TopBar({
       } else if (platform === 'linkedin') {
         window.open('https://business.linkedin.com/marketing-solutions/ads', '_blank');
       } else if (platform === 'x' || platform === 'twitter') {
-        window.open('https://ads.x.com/', '_blank');
+        if (fieldLabel === 'X Profile') {
+          handleConnect();
+        } else {
+          window.open('https://ads.x.com/', '_blank');
+        }
       }
       e.target.value = '';
       return;
@@ -744,32 +799,35 @@ export function TopBar({
     }
 
     if (activePlatformId === 'x') {
-      if (f.label === 'Ad Account') {
-        return (
-          <select value={selectedXAccount} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
-            <option value="">{f.placeholder}</option>
-            <option value="x_act_01">X Ads Account - Primary</option>
-            <option value="x_act_02">X Ads Account - Business</option>
-            <option value="create">+ Create New {f.label}</option>
-          </select>
-        );
-      }
       if (f.label === 'X Profile') {
-        const defaultProfileName = user?.twitterUserId && !user.twitterUserId.match(/^\d+$/) ? `@${user.twitterUserId}` : '@WheedleTechno';
+        // Show the real connected Twitter handle fetched from the new /auth/x/profile endpoint
+        const profileLabel = xProfile?.displayLabel || null;
+        const profileId = xProfile?.username || xProfile?.userId || '';
         return (
-          <select value={selectedXProfile} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
-            <option value="">{f.placeholder}</option>
-            <option value="x_prof_01">{defaultProfileName}</option>
-            <option value="create">+ Create New {f.label}</option>
+          <select value={selectedXProfile} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: profileLabel ? '#111' : 'var(--t3)', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{profileLabel || (user?.twitterAccessToken ? 'Loading profile...' : f.placeholder)}</option>
+            {profileLabel && <option value={profileId}>{profileLabel}</option>}
+            <option value="create">+ Connect X Account</option>
           </select>
         );
       }
-      if (f.label === 'Pixel') {
+      
+      if (f.label === 'Ad Account') {
+        const hasAccounts = xAccounts.length > 0;
         return (
-          <select value={selectedXPixel} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
-            <option value="">{f.placeholder}</option>
-            <option value="x_pix_01">X Website Pixel - Main</option>
-            <option value="create">+ Create New {f.label}</option>
+          <select value={selectedXAccount} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: hasAccounts ? '#111' : 'var(--t3)', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{hasAccounts ? f.placeholder : 'No ad accounts found'}</option>
+            {xAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+          </select>
+        );
+      }
+      
+      if (f.label === 'Pixel (Optional)') {
+        const hasAccounts = xAccounts.length > 0;
+        return (
+          <select value={selectedXPixel} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: hasAccounts ? '#111' : 'var(--t3)', cursor: 'pointer', appearance: 'none' }}>
+            <option value="">{hasAccounts ? f.placeholder : 'Select an Ad Account first'}</option>
+            {hasAccounts && <option value="default_pixel">Default X Pixel</option>}
           </select>
         );
       }
@@ -777,29 +835,64 @@ export function TopBar({
 
     if (activePlatformId === 'linkedin') {
       if (f.label === 'Ad Account') {
+        const hasAccounts = liAccounts.length > 0;
+        if (!hasAccounts) {
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
+              <span style={{ fontSize: 11, color: 'var(--t3)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>No ad account found</span>
+              <span
+                onClick={() => window.open('https://www.linkedin.com/campaignmanager/', '_blank')}
+                style={{ fontSize: 10, color: 'var(--blue)', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', textDecoration: 'underline', flexShrink: 0 }}
+              >
+                Create ↗
+              </span>
+            </div>
+          );
+        }
         return (
           <select value={selectedLiAccount} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
             <option value="">{f.placeholder}</option>
-            <option value="li_act_01">LinkedIn Ads Account - Default</option>
-            <option value="create">+ Create New {f.label}</option>
+            {liAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
           </select>
         );
       }
       if (f.label === 'Company Page') {
+        const hasPages = liPages.length > 0;
+        const profileName = liProfile?.name;
+
+        if (!hasPages) {
+          // Show reconnect UI with real connected name
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
+              <span style={{ fontSize: 11, color: 'var(--t3)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profileName ? `${profileName} — no pages` : 'No pages found'}
+              </span>
+              <span
+                onClick={async () => {
+                  const { api } = await import('../../api/axios');
+                  const res = await api.get('/linkedin-crm/oauth/url');
+                  if (res.data?.url) window.location.href = res.data.url;
+                }}
+                style={{ fontSize: 10, color: 'var(--blue)', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', textDecoration: 'underline', flexShrink: 0 }}
+              >
+                Reconnect ↗
+              </span>
+            </div>
+          );
+        }
+
         return (
           <select value={selectedLiPage} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
             <option value="">{f.placeholder}</option>
-            <option value="li_page_01">Wheedle Technology Page</option>
-            <option value="create">+ Create New {f.label}</option>
+            {liPages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
         );
       }
       if (f.label === 'Insight Tag') {
+        // Insight Tag requires LinkedIn Marketing API access — show informational placeholder
         return (
-          <select value={selectedLiTag} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
-            <option value="">{f.placeholder}</option>
-            <option value="li_tag_01">LinkedIn Insight Tag - Main</option>
-            <option value="create">+ Create New {f.label}</option>
+          <select disabled style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: 'var(--t3)', cursor: 'not-allowed', appearance: 'none' }}>
+            <option>Requires Marketing API access</option>
           </select>
         );
       }
@@ -1442,6 +1535,9 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
       } else if (activePid === 'meta') {
         const res = await api.post('/campaign/meta/publish', payload);
         showToast(res.data?.message || 'Published to Meta Ads successfully!', "success");
+      } else if (activePid === 'linkedin') {
+        const res = await api.post('/campaign/linkedin/publish', payload);
+        showToast(res.data?.message || 'Published to LinkedIn successfully!', "success");
       } else {
         const res = await api.post('/campaign/publish', { ...payload, platform: activePid });
         showToast(res.data?.message || `Published with ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan!`, "success");

@@ -34,8 +34,8 @@ export class WebhookController {
   @Post('review-gen')
   async reviewGen(@Body() body: { customer_name: string; product: string }) {
     this.logger.log('[review-gen] Request received');
-    const prompt = `Draft a professional review request email for customer ${body.customer_name} who recently purchased ${body.product}. Keep it brief!`;
-    const result = await this.aiService.generateContent(prompt, 'You are a professional marketing copywriter.', undefined, 'gpt-3.5-turbo', 1500);
+    const prompt = `Act as an Elite Customer Success Manager. Draft a psychology-backed, highly-persuasive review request email for customer ${body.customer_name} who recently purchased ${body.product}. The email must be brief, reduce friction, and use the 'foot-in-the-door' psychological technique to maximize conversion.`;
+    const result = await this.aiService.generateContent(prompt, 'You are an Elite Customer Success Manager. Prioritize customer psychology, conversion rate optimization, and absolute brevity. Do not include placeholder text.', undefined, 'gpt-3.5-turbo', 1500);
     return { aiOutput: result };
   }
 
@@ -43,8 +43,8 @@ export class WebhookController {
   @Post('review-response')
   async reviewResponse(@Body() body: { star_rating: string; review_text: string }) {
     this.logger.log('[review-response] Request received');
-    const prompt = `Draft a professional response to this ${body.star_rating}-star customer review. The review says: "${body.review_text}". Make it empathetic and professional.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a professional customer service manager.', undefined, 'gpt-3.5-turbo', 1500);
+    const prompt = `Act as a Senior Crisis Management & CX Specialist. Draft a professional response to this ${body.star_rating}-star customer review: "${body.review_text}". If 1-3 stars, use the 'HEART' framework (Hear, Empathize, Apologize, Resolve, Diagnose) to de-escalate without admitting legal fault. If 4-5 stars, amplify the positive sentiment and softly encourage repeat business.`;
+    const result = await this.aiService.generateContent(prompt, 'You are a Senior Crisis Management & CX Specialist. Adhere strictly to the HEART framework for negative reviews and brand amplification for positive ones.', undefined, 'gpt-3.5-turbo', 1500);
     return { aiOutput: result };
   }
 
@@ -52,8 +52,8 @@ export class WebhookController {
   @Post('social-pub')
   async socialPub(@Body() body: { topic: string }) {
     this.logger.log('[social-pub] Request received');
-    const prompt = `Act as a Social Media expert. Create an engaging LinkedIn & Twitter post for the following topic: '${body.topic}'. Include emojis and hashtags.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a social media marketing expert.', undefined, 'gpt-3.5-turbo', 1500);
+    const prompt = `Act as a Viral Social Media Strategist. Create a high-converting post for the following topic: '${body.topic}'. Provide two distinct variations:\n1. LinkedIn (focus on professional storytelling, thought leadership, and formatting with line breaks).\n2. Twitter/X (focus on punchy hooks, thread-style formatting, and brevity).\nInclude optimal emojis and highly-researched hashtags.`;
+    const result = await this.aiService.generateContent(prompt, 'You are a Viral Social Media Strategist. Strictly differentiate between platform algorithms (LinkedIn vs Twitter). Optimize for dwell time and CTR.', undefined, 'gpt-3.5-turbo', 1500);
     return { aiOutput: result };
   }
 
@@ -61,8 +61,8 @@ export class WebhookController {
   @Post('social-engage')
   async socialEngage(@Body() body: { brand_tone: string; user_comment: string }) {
     this.logger.log('[social-engage] Request received');
-    const prompt = `Draft a reply to the following social media user comment. Follow a '${body.brand_tone}' brand tone. Comment: "${body.user_comment}".`;
-    const result = await this.aiService.generateContent(prompt, 'You are a social media engagement specialist.', undefined, 'gpt-3.5-turbo', 1500);
+    const prompt = `Act as a Brand Reputation Manager. Draft a reply to the following social media user comment. You MUST strictly adhere to a '${body.brand_tone}' brand tone. Comment: "${body.user_comment}". De-escalate if negative, build community if positive.`;
+    const result = await this.aiService.generateContent(prompt, 'You are an elite Brand Reputation Manager. Maintain absolute strictness to the specified brand tone. Do not sound robotic.', undefined, 'gpt-3.5-turbo', 1500);
     return { aiOutput: result };
   }
 
@@ -70,8 +70,8 @@ export class WebhookController {
   @Post('reporting')
   async reporting(@Body() body: { metrics: string }) {
     this.logger.log('[reporting] Request received');
-    const prompt = `You are a Reporting AI. Analyze the following raw metrics data and summarize it into 3 clear bullet points of actionable insights: ${body.metrics}`;
-    const result = await this.aiService.generateContent(prompt, 'You are a data analytics expert.', undefined, 'gpt-3.5-turbo', 1500);
+    const prompt = `Act as a Fractional Chief Marketing Officer (CMO). Analyze the following raw metrics data: ${body.metrics}. Do not just repeat the numbers. Synthesize this data into exactly 3 bullet points focusing purely on: 1. Return on Investment (ROI), 2. Customer Acquisition Cost (CAC) implications, and 3. Immediate actionable business pivots required.`;
+    const result = await this.aiService.generateContent(prompt, 'You are an elite Fractional CMO and Data Scientist. Provide strictly high-level, strategic business insights. No fluff.', undefined, 'gpt-3.5-turbo', 1500);
     return { aiOutput: result };
   }
 
@@ -79,8 +79,8 @@ export class WebhookController {
   @Post('listings-opt')
   async listingsOpt(@Body() body: { business_name: string; keywords: string }) {
     this.logger.log('[listings-opt] Request received');
-    const prompt = `Act as an SEO Listings Expert for a business named '${body.business_name}'. Write an optimized Google Business Profile description utilizing these keywords: ${body.keywords}.`;
-    const result = await this.aiService.generateContent(prompt, 'You are an SEO and local listings expert.', undefined, 'gpt-3.5-turbo', 1500);
+    const prompt = `Act as a Local SEO Architect. Write an optimized Google Business Profile (GBP) description for the business '${body.business_name}'. Strategically implement these keywords via Latent Semantic Indexing (LSI) without keyword stuffing: ${body.keywords}. Optimize for local map pack rankings and high CTR.`;
+    const result = await this.aiService.generateContent(prompt, 'You are an elite Local SEO Architect. Follow strict Google Business Profile guidelines. Maximize local keyword density naturally.', undefined, 'gpt-3.5-turbo', 1500);
     return { aiOutput: result };
   }
 
@@ -88,8 +88,8 @@ export class WebhookController {
   @Post('lead-gen')
   async leadGen(@Body() body: { industry: string; region: string }) {
     this.logger.log('[lead-gen] Request received');
-    const prompt = `Analyze the target industry '${body.industry}' in the region '${body.region}'. Formulate a highly accurate, real-world lead generation strategy. Do NOT generate fake "mock" names. Provide exact, real platforms, real networking groups, and actual verifiable methods to extract leads in this specific niche and region.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a strict, data-driven lead generation strategist. Provide only real, actionable data without hallucinating fake people.', undefined, 'gpt-4o', 2000);
+    const prompt = `Act as a B2B/B2C Growth Hacker. Formulate a highly accurate, real-world lead generation strategy for the industry '${body.industry}' in the region '${body.region}'. Mandate real-world tactics (e.g., Boolean search strings, specific local databases, scraping methodologies) instead of generic advice. DO NOT hallucinate fake names.`;
+    const result = await this.aiService.generateContent(prompt, 'You are a strict, data-driven Growth Hacker. Provide only real, actionable methodologies, precise Boolean search queries, and verifiable platforms. Zero hallucination.', undefined, 'gpt-4o', 2000);
     return { aiOutput: result };
   }
 
@@ -97,8 +97,8 @@ export class WebhookController {
   @Post('segmentation')
   async segmentation(@Body() body: { customer_data: string }) {
     this.logger.log('[segmentation] Request received');
-    const prompt = `You are a Data Segmentation AI. Given this customer interaction footprint, categorize them into a specific marketing segment (e.g. VIP, At-Risk) and explain why: ${body.customer_data}`;
-    const result = await this.aiService.generateContent(prompt, 'You are a customer data analyst.', undefined, 'gpt-3.5-turbo', 1500);
+    const prompt = `Act as a Senior Data Scientist. Analyze this customer interaction footprint: ${body.customer_data}. Perform an RFM (Recency, Frequency, Monetary) analysis categorization. Predict potential churn behavior and recommend exactly 2 LTV (Life-Time Value) optimization strategies specifically tailored to this segment's psychology.`;
+    const result = await this.aiService.generateContent(prompt, 'You are a Senior Data Scientist specializing in RFM analysis and predictive customer behavior. Be highly analytical and concise.', undefined, 'gpt-3.5-turbo', 1500);
     return { aiOutput: result };
   }
 
@@ -125,8 +125,8 @@ CRITICAL REQUIREMENTS:
   @Post('custom')
   async custom(@Body() body: { instruction: string; input: string }) {
     this.logger.log('[custom] Request received');
-    const prompt = `${body.instruction}\n\nHere is the data: ${body.input}`;
-    const result = await this.aiService.generateContent(prompt, 'You are a helpful AI assistant.', undefined, 'gpt-3.5-turbo', 1500);
+    const prompt = `Follow this custom instruction with 100% strict adherence and zero deviation: '${body.instruction}'\n\nInput Data to process: ${body.input}`;
+    const result = await this.aiService.generateContent(prompt, 'You are an ultra-precise AI execution engine. Strictly follow the user custom instruction without hallucination, preamble, or deviation.', undefined, 'gpt-3.5-turbo', 1500);
     return { aiOutput: result };
   }
 
@@ -329,8 +329,8 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       const scrapedText = await this.scrapeUrl(body.product_url);
       if (scrapedText) realContext = `\n\nREAL WEBSITE CONTEXT (Scraped from ${body.product_url}):\n${scrapedText}`;
     }
-    const prompt = `Act as an elite direct-response copywriter. Write 3 high-converting ad copy variations for ${body.platform} promoting: "${body.product}".${realContext}\n\nUse the REAL features from the scraped context if provided. Include Headline, Primary Text, and CTA for each variation. Make it highly engaging and factually accurate to the product.`;
-    const result = await this.aiService.generateContent(prompt, 'You are an elite digital marketing copywriter. Base your claims on the provided real context.', undefined, 'gpt-4o', 2000);
+    const prompt = `Act as an elite Direct-Response Copywriter. Write 3 high-converting ad copy variations for ${body.platform} promoting: "${body.product}".${realContext}\n\nStrictly use the PAS (Problem-Agitate-Solve) or AIDA (Attention-Interest-Desire-Action) marketing frameworks. Base all claims on the scraped context. Output must include Headline, Primary Text, and CTA for each variation.`;
+    const result = await this.aiService.generateContent(prompt, 'You are an elite direct-response copywriter. Strictly mandate PAS or AIDA frameworks. Base claims ONLY on real context.', undefined, 'gpt-4o', 2000);
     return { aiOutput: result };
   }
 
@@ -338,8 +338,8 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
   @Post('email-sequence')
   async emailSequence(@Body() body: { product_name: string; audience: string }) {
     this.logger.log('[email-sequence] Request received');
-    const prompt = `Act as a world-class email marketer. Write a 3-part email drip sequence (1. Welcome/Hook, 2. Nurture/Value, 3. Hard Sale) for the product "${body.product_name}" targeting "${body.audience}". Include subject lines and compelling CTAs.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a master email marketer and copywriter.', undefined, 'gpt-4o', 3000);
+    const prompt = `Act as a Lifecycle Marketing Master. Write a 3-part email drip sequence for "${body.product_name}" targeting "${body.audience}".\nEmail 1: The 'Soap Opera Sequence' Hook (High drama/curiosity).\nEmail 2: Value/Nurture (Overcoming objections).\nEmail 3: The Hard Sale (Scarcity and direct CTA).\nInclude high-open-rate subject lines and strictly avoid spam-trigger words.`;
+    const result = await this.aiService.generateContent(prompt, 'You are a master Lifecycle Email Marketer. Mandate Soap Opera sequence structures. Optimize for deliverability and open-rates.', undefined, 'gpt-4o', 3000);
     return { aiOutput: result };
   }
 
@@ -362,8 +362,8 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       this.logger.error('Failed to fetch Semrush data for blog writer', e);
     }
 
-    const prompt = `Act as an expert SEO content writer. Write a comprehensive, highly engaging blog post with the title "${body.title}". Naturally incorporate these keywords: ${body.keywords}.${realSeoData}\n\nUse proper headings (H2, H3), bullet points, and a strong conclusion. Ensure factual accuracy.`;
-    const result = await this.aiService.generateContent(prompt, 'You are an expert SEO blog writer. Use the provided real Semrush data to optimize the article.', undefined, 'gpt-4o', 4000);
+    const prompt = `Act as an EEAT (Experience, Expertise, Authoritativeness, Trustworthiness) SEO Content Strategist. Write a highly engaging blog post titled "${body.title}". Incorporate these keywords: ${body.keywords}.${realSeoData}\n\nStrictly follow Google's EEAT guidelines. Use optimal H2/H3 hierarchy, bullet points for scannability, and LSI keyword integration. Ensure absolute factual accuracy.`;
+    const result = await this.aiService.generateContent(prompt, 'You are an elite SEO Content Strategist. Strictly enforce Google EEAT guidelines, LSI keyword usage, and perfect semantic structure.', undefined, 'gpt-4o', 4000);
     return { aiOutput: result };
   }
 
@@ -371,8 +371,8 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
   @Post('video-script')
   async videoScript(@Body() body: { platform: string; topic: string }) {
     this.logger.log('[video-script] Request received');
-    const prompt = `Act as a viral video producer for ${body.platform}. Write a short, highly engaging video script about "${body.topic}". Include a strong 3-second hook, visual cues (what to show on screen), pacing notes, and a call-to-action.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a viral social media video producer.', undefined, 'gpt-3.5-turbo', 2000);
+    const prompt = `Act as a TikTok/Reels Viral Producer. Write a highly engaging short-form video script about "${body.topic}" optimized for ${body.platform}. Include: 1. A pattern-interrupting 3-second visual hook. 2. AVD (Average View Duration) optimization pacing notes. 3. A dual-column format (Visual Actions vs. Audio/Spoken text). 4. A seamless loop or strong CTA.`;
+    const result = await this.aiService.generateContent(prompt, 'You are a viral short-form video producer. Optimize strictly for algorithmic retention graphs, AVD, and pattern interruption.', undefined, 'gpt-3.5-turbo', 2000);
     return { aiOutput: result };
   }
 
@@ -385,8 +385,8 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       const scrapedText = await this.scrapeUrl(body.company_url);
       if (scrapedText) realContext = `\n\nREAL COMPANY BACKGROUND (Scraped from ${body.company_url}):\n${scrapedText}`;
     }
-    const prompt = `Act as a senior PR specialist. Write a formal, media-ready press release for ${body.company} announcing: "${body.announcement}".${realContext}\n\nInclude a catchy headline, dateline, introduction, quote placeholder, body paragraphs, and a factual boilerplate based on the real scraped data.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a senior Public Relations specialist. Base the boilerplate and company facts ONLY on the scraped context if provided.', undefined, 'gpt-4o', 2000);
+    const prompt = `Act as a Tier-1 Public Relations Director. Write a formal, media-ready press release for ${body.company} announcing: "${body.announcement}".${realContext}\n\nStrictly adhere to AP Style guidelines. Include a journalistic inverted pyramid structure, a compelling dateline, an executive quote placeholder, and a professional corporate boilerplate based strictly on the scraped context.`;
+    const result = await this.aiService.generateContent(prompt, 'You are a Tier-1 PR Director. Strictly enforce AP Style, inverted pyramid structure, and media-ready formatting. Base the boilerplate ONLY on scraped context.', undefined, 'gpt-4o', 2000);
     return { aiOutput: result };
   }
 
@@ -399,8 +399,8 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       const scrapedText = await this.scrapeUrl(body.website_url);
       if (scrapedText) realContext = `\n\nREAL WEBSITE CONTENT (Scraped from ${body.website_url}):\n${scrapedText}`;
     }
-    const prompt = `Act as a Chief Brand Officer. Based on this business description: "${body.business_description}".${realContext}\n\nGenerate a comprehensive brand identity framework that matches the real scraped content. Include: 1. Brand Voice & Tone, 2. Mission Statement, 3. Vision Statement, 4. Core Values (3-4 points), 5. Ideal Customer Persona snippet. DO NOT make up fake facts; extract the true essence from the scraped data.`;
-    const result = await this.aiService.generateContent(prompt, 'You are an elite Chief Brand Officer. Use real data from the scraped context.', undefined, 'gpt-4o', 3000);
+    const prompt = `Act as a Chief Brand Officer. Based on this business description: "${body.business_description}".${realContext}\n\nGenerate an elite brand identity framework. Include: 1. Primary Jungian Brand Archetype. 2. Tone-of-Voice Matrix (Do's and Don'ts). 3. A 10-word Mission Statement. 4. A 10-word Vision Statement. 5. Deep Psychographic profiling of the ideal customer. Base all factual essence on the scraped data.`;
+    const result = await this.aiService.generateContent(prompt, 'You are an elite Chief Brand Officer. Use advanced branding psychology (Jungian archetypes, psychographics). Rely on real scraped data.', undefined, 'gpt-4o', 3000);
     return { aiOutput: result };
   }
 }

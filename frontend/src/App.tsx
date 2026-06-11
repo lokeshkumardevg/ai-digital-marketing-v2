@@ -17,6 +17,7 @@ import { Settings } from './dashboard/pages/Settings';
 import { Seo } from './dashboard/pages/Seo';
 import { Social } from './dashboard/pages/Social';
 import { Agents } from './dashboard/pages/Agents';
+import { CallingAgent } from './dashboard/pages/CallingAgent';
 import { Roles } from './dashboard/pages/Roles';
 import { Users } from './dashboard/pages/Users';
 import { Workflows } from './dashboard/pages/Workflows';
@@ -207,6 +208,7 @@ const App: React.FC = () => {
         <Route path="/seo/:view" element={<ProtectedRoute><DashboardLayout><Seo /></DashboardLayout></ProtectedRoute>} />
         <Route path="/social" element={<ProtectedRoute><DashboardLayout><Social /></DashboardLayout></ProtectedRoute>} />
         <Route path="/ai-agents" element={<ProtectedRoute><DashboardLayout><Agents /></DashboardLayout></ProtectedRoute>} />
+        <Route path="/calling-agent" element={<ProtectedRoute><DashboardLayout><CallingAgent /></DashboardLayout></ProtectedRoute>} />
         <Route path="/roles" element={<ProtectedRoute requiredPermission="superadmin"><DashboardLayout><Roles /></DashboardLayout></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><DashboardLayout><Users /></DashboardLayout></ProtectedRoute>} />
         <Route path="/workflows" element={<ProtectedRoute><DashboardLayout><Workflows /></DashboardLayout></ProtectedRoute>} />

@@ -1554,8 +1554,8 @@ const MyPostsView: React.FC<{
     );
   }
 
-  // Calculate some fake insights for UI demo since API data isn't fully robust
-  const totalImpressions = posts.reduce((sum, p) => sum + (p.impressions || Math.floor(Math.random() * 5000) + 500), 0);
+  // Dynamic data from API. Fallback to 0 if not present.
+  const totalImpressions = posts.reduce((sum, p) => sum + (p.impressions || 0), 0);
   const totalEngagement = posts.reduce((sum, p) => sum + (p.likes || 0) + (p.comments || 0), 0);
 
   return (
@@ -1648,8 +1648,8 @@ const MyPostsView: React.FC<{
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {posts.map((post) => {
-                const impressions = post.impressions || Math.floor(Math.random() * 2000) + 300; // Mock impressions if 0
-                const engRate = ((post.likes + post.comments) / impressions) * 100;
+                const impressions = post.impressions || 0;
+                const engRate = impressions > 0 ? ((post.likes + post.comments) / impressions) * 100 : 0;
                 return (
                   <div key={post._id} style={{ 
                     background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '20px', 

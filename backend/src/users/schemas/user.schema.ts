@@ -81,6 +81,12 @@ export class User {
   twitterUserId?: string;
 
   @Prop()
+  twitterUsername?: string; // The @handle (e.g. WheedleTech)
+
+  @Prop()
+  twitterName?: string; // Display name (e.g. Wheedle Technologies)
+
+  @Prop()
   instagramAccessToken?: string;
 
   @Prop()

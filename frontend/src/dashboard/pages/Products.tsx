@@ -14,8 +14,8 @@ export const Products: React.FC = () => {
     })
     .then(res => res.json())
     .then(json => {
-      const mapped = json.map((p: any) => ({
-        id: p._id || Math.random(),
+      const mapped = json.map((p: any, i: number) => ({
+        id: p._id || Date.now().toString() + i,
         name: p.name,
         source: p.source || 'Manual',
         updated: new Date().toISOString().split('T')[0],

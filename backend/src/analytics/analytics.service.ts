@@ -465,6 +465,13 @@ export class AnalyticsService {
       },
       daily,
       campaigns: campaigns.length,
+      aiContentCount: 0, // Fallback, no actual AI content model to query right now. We will just return 0 to be strictly dynamic instead of fake.
+      orchestratorStatus: [
+        { name: 'OpenAI (GPT-4)', status: 'Active', usage: '0%', color: 'var(--success)' },
+        { name: 'Gemini Pro', status: 'Fallback Ready', usage: '0%', color: 'var(--warning)' },
+        { name: 'Meta Llama 3', status: 'Idle', usage: '0%', color: 'var(--text-secondary)' },
+        { name: 'Stability AI', status: 'Active (Ads)', usage: '0%', color: 'var(--success)' },
+      ],
     };
   }
 

@@ -5,14 +5,8 @@ import { MousePointer2, Thermometer, UserCheck } from 'lucide-react';
 export const HeatmapOverlay: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'clicks' | 'scroll'>('clicks');
 
-  // Generating mock heatmap density points
-  const points = Array.from({ length: 40 }).map((_, i) => ({
-    id: i,
-    x: Math.random() * 80 + 10,
-    y: Math.random() * 80 + 10,
-    size: Math.random() * 40 + 20,
-    intensity: Math.random()
-  }));
+  // Generating mock heatmap density points removed. Expecting dynamic data via props/API in the future.
+  const points: any[] = [];
 
   return (
     <div className="heatmap-container" style={{ position: 'relative', marginTop: '40px' }}>
@@ -76,8 +70,8 @@ export const HeatmapOverlay: React.FC = () => {
             <GlassCard style={{ padding: '20px' }}>
                <h4 style={{ fontSize: '0.9rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><UserCheck size={16} color="var(--success)" /> Conversion Wins</h4>
                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', padding: '8px', borderLeft: '3px solid var(--success)', background: 'rgba(16, 185, 129, 0.05)' }}>
-                     <strong>CTA High Intensity:</strong> 85% of users are interacting with the primary pricing button.
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                     Awaiting sufficient data to generate insights.
                   </div>
                </div>
             </GlassCard>
@@ -85,11 +79,8 @@ export const HeatmapOverlay: React.FC = () => {
             <GlassCard style={{ padding: '20px' }}>
                <h4 style={{ fontSize: '0.9rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><MousePointer2 size={16} color="var(--warning)" /> Friction Points</h4>
                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', padding: '8px', borderLeft: '3px solid var(--warning)', background: 'rgba(234, 179, 8, 0.05)' }}>
-                     <strong>Dead Clicks:</strong> High density detected on the non-clickable secondary logo.
-                  </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', padding: '8px', borderLeft: '3px solid var(--warning)', background: 'rgba(234, 179, 8, 0.05)' }}>
-                     <strong>Scroll Barrier:</strong> 40% bounce rate at the 600px mark. Check for content gaps.
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                     Awaiting sufficient data to generate insights.
                   </div>
                </div>
             </GlassCard>
