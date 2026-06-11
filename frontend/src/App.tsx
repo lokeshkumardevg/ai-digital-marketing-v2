@@ -12,6 +12,12 @@ import Billing from './dashboard/pages/Billing';
 // @ts-ignore
 import Home from './landing/pages/Home';
 // @ts-ignore
+import Features from './landing/pages/Features';
+// @ts-ignore
+import Tutorial from "./landing/pages/tutorial";
+import Help from './landing/pages/Help';
+import PricingPage from './landing/pages/PricingPage';
+import Resources from './landing/pages/Resources';
 import Register from './landing/pages/Register';
 import { Settings } from './dashboard/pages/Settings';
 import { Seo } from './dashboard/pages/Seo';
@@ -188,6 +194,11 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/landing" element={<Home />} />
+        <Route path="/features" element={<Features />} />
+        <Route path="/tutorial" element={<Tutorial />} />
+        <Route path="/pricing" element={<PricingPage />} />\
+        <Route path="/resources" element={<Resources />} />
+        <Route path="/help" element={<Help />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Register />} />
         <Route path="/signup" element={<Register />} />

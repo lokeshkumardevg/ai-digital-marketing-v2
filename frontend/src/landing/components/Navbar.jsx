@@ -4,7 +4,7 @@ import Button from "./Button";
 import logo from "../../assets/fevicon.png";
 import { Menu, X } from "lucide-react";
 
-const navItems = ["Features", "Tutorial", "Pricing", "Resources", "Careers"];
+const navItems = ["Features", "Tutorial", "Pricing", "Resources", "Help"];
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +30,16 @@ function Navbar() {
     };
   }, [isOpen]);
 
-  const hrefFor = (item) => "#" + item.toLowerCase();
+  const routeMap = {
+    Features: "/features",
+    Pricing: "/pricing",
+    Tutorial: "/tutorial",
+    Resources: "/resources",
+    // Careers: "/careers",
+    Help: "/help",
+  };
+  const hrefFor = (item) => routeMap[item] ?? "#" + item.toLowerCase();
+  const isRoute = (item) => !!routeMap[item];
 
   const navLinkClass = isScrolled
     ? "font-medium text-white/60 hover:text-white transition duration-300 relative group text-[13px]"
@@ -95,10 +104,16 @@ const btnClass = isScrolled
             {/* Desktop Nav */}
             <nav className="hidden lg:flex items-center gap-6 relative z-10 whitespace-nowrap">
               {navItems.map((item) => {
-                return (
-                  <a key={item} href={hrefFor(item)} className={navLinkClass}>
-                    {item}
-                    <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-blue-500 transition-all duration-300 group-hover:w-full" />
+                const href = hrefFor(item);
+                const cls = navLinkClass;
+                const underline = <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-blue-500 transition-all duration-300 group-hover:w-full" />;
+                return isRoute(item) ? (
+                  <Link key={item} to={href} className={cls}>
+                    {item}{underline}
+                  </Link>
+                ) : (
+                  <a key={item} href={href} className={cls}>
+                    {item}{underline}
                   </a>
                 );
               })}
@@ -215,29 +230,30 @@ const btnClass = isScrolled
             Menu
           </p>
           {navItems.map((item, i) => {
-            return (
-              <a
-                key={item}
-                href={hrefFor(item)}
-                onClick={() => setIsOpen(false)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "13px 0",
-                  borderBottom: "1px solid rgba(255,255,255,0.05)",
-                  color: "rgba(255,255,255,0.75)",
-                  fontSize: 15,
-                  fontWeight: 500,
-                  textDecoration: "none",
-                  transition: "color 0.2s ease",
-                  animationDelay: i * 50 + "ms",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.75)"; }}
-              >
-                {item}
-                <span style={{ color: "rgba(255,255,255,0.25)", fontSize: 18 }}>›</span>
+            const href = hrefFor(item);
+            const linkStyle = {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "13px 0",
+              borderBottom: "1px solid rgba(255,255,255,0.05)",
+              color: "rgba(255,255,255,0.75)",
+              fontSize: 15,
+              fontWeight: 500,
+              textDecoration: "none",
+              transition: "color 0.2s ease",
+              animationDelay: i * 50 + "ms",
+            };
+            const inner = <>{item}<span style={{ color: "rgba(255,255,255,0.25)", fontSize: 18 }}>›</span></>;
+            const hoverIn = (e) => { e.currentTarget.style.color = "#fff"; };
+            const hoverOut = (e) => { e.currentTarget.style.color = "rgba(255,255,255,0.75)"; };
+            return isRoute(item) ? (
+              <Link key={item} to={href} onClick={() => setIsOpen(false)} style={linkStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+                {inner}
+              </Link>
+            ) : (
+              <a key={item} href={href} onClick={() => setIsOpen(false)} style={linkStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+                {inner}
               </a>
             );
           })}

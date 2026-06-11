@@ -5,14 +5,15 @@ export type CustomerDocument = Customer & Document;
 
 @Schema({ timestamps: true })
 export class Customer {
+  @Prop({ required: true }) userId: string;
   @Prop({ required: true }) brandId: string;
-  @Prop({ required: true }) firstName: string;
-  @Prop({ required: true }) lastName: string;
+  @Prop({ required: true }) name: string;
   @Prop({ required: true }) email: string;
   @Prop() phone: string;
-  @Prop({ default: 'manual', enum: ['manual', 'csv', 'shopify'] }) source: string;
-  @Prop({ default: false }) reviewRequested: boolean;
-  @Prop() reviewRequestedAt: Date;
+  @Prop({ default: 'pending', enum: ['pending', 'sent', 'completed'] }) reviewStatus: string;
+  @Prop({ default: 'manual', enum: ['manual', 'csv', 'website', 'shopify', 'referral'] }) source: string;
+  @Prop({ default: 'pending', enum: ['pending', 'active', 'inactive'] }) status: string;
 }
+
 
 export const CustomerSchema = SchemaFactory.createForClass(Customer);

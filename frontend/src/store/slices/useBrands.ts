@@ -38,17 +38,17 @@ export const useBrands = (userId?: string) => {
   const dispatch = useDispatch<any>();
 
   // ── Selectors ────────────────────────────────────────────
-  const brands           = useSelector(selectAllBrands);
-  const activeBrand      = useSelector(selectActiveBrand);
-  const activeBrandId    = useSelector(selectActiveBrandId);
-  const activeBrandLogo  = useSelector(selectActiveBrandLogo);
+  const brands = useSelector(selectAllBrands);
+  const activeBrand = useSelector(selectActiveBrand);
+  const activeBrandId = useSelector(selectActiveBrandId);
+  const activeBrandLogo = useSelector(selectActiveBrandLogo);
   const activeBrandColors = useSelector(selectActiveBrandColors);
-  const isLoading        = useSelector(selectIsFetchingBrands);
-  const brandsLoaded     = useSelector(selectBrandsLoaded);
-  const hasBrands        = useSelector(selectHasBrands);
-  const fetchStatus      = useSelector(selectFetchStatus);
-  const saveStatus       = useSelector(selectSaveStatus);
-  const error            = useSelector(selectWorkspaceError);
+  const isLoading = useSelector(selectIsFetchingBrands);
+  const brandsLoaded = useSelector(selectBrandsLoaded);
+  const hasBrands = useSelector(selectHasBrands);
+  const fetchStatus = useSelector(selectFetchStatus);
+  const saveStatus = useSelector(selectSaveStatus);
+  const error = useSelector(selectWorkspaceError);
 
   // ── Auto-fetch on mount (once per userId) ────────────────
   useEffect(() => {
