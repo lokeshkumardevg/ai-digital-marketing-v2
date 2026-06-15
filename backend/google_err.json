@@ -2,18 +2,10 @@
   "errors": [
     {
       "error_code": {
-        "context_error": "OPERATION_NOT_PERMITTED_FOR_CONTEXT"
+        "authorization_error": "USER_PERMISSION_DENIED"
       },
-      "message": "The operation is not allowed for the given context.",
-      "location": {
-        "field_path_elements": [
-          {
-            "field_name": "operations",
-            "index": 0
-          }
-        ]
-      }
+      "message": "User doesn't have permission to access customer. Note: If you're accessing a client customer, the manager's customer id must be set in the 'login-customer-id' header. See https://developers.google.com/google-ads/api/docs/concepts/call-structure#cid"
     }
   ],
-  "request_id": "mBK28U2Z5GPjCGLQvwTygw"
+  "request_id": "52Ia1TU5e0L7HPVMBm1r1A"
 }

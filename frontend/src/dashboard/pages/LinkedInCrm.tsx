@@ -21,6 +21,8 @@ import {
   connectOrganization,
   fetchEvents,
   createEvent,
+  simulateRealtimeEngagement,
+  simulateNewLead,
   type LinkedInLead,
 } from '../../store/slices/linkedinCrmSlice';
 import {
@@ -59,6 +61,8 @@ import {
   TrendingUp as TrendingUpIcon,
   Eye,
   Hash,
+  Image,
+  Wand2,
 } from 'lucide-react';
 
 const PIPELINE_STAGES = [
@@ -97,12 +101,16 @@ export const LinkedInCrm: React.FC = () => {
   const [showComposePost, setShowComposePost] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [postContent, setPostContent] = useState('');
+  const [postImageUrl, setPostImageUrl] = useState<string | null>(null);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [showConnectedAccountModal, setShowConnectedAccountModal] = useState(false);
   const [liAtCookie, setLiAtCookie] = useState('');
   const [isScraping, setIsScraping] = useState(false);
   const [publishTarget, setPublishTarget] = useState<'personal' | 'company'>('personal');
+  const [isSimulationActive, setIsSimulationActive] = useState(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // New lead form
   const [newLead, setNewLead] = useState({
@@ -126,6 +134,52 @@ export const LinkedInCrm: React.FC = () => {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, [dispatch]);
+
+  // AI Simulation Loop
+  useEffect(() => {
+    if (!isSimulationActive) return;
+
+    const interval = setInterval(() => {
+      // 1. Always simulate engagement
+      dispatch(simulateRealtimeEngagement());
+
+      // 2. 15% chance to generate a new lead dynamically
+      if (Math.random() < 0.15) {
+        const mockFirsts = ['Alex', 'Sarah', 'Jordan', 'Michael', 'Emma', 'David', 'Jessica', 'Daniel', 'Sophia', 'James'];
+        const mockLasts = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
+        const mockTitles = ['VP of Marketing', 'CEO', 'Director of Sales', 'Founder', 'CMO', 'Growth Hacker', 'Product Manager'];
+        const mockCompanies = ['TechFlow', 'Acme Corp', 'Global Solutions', 'Innovate AI', 'Stark Industries', 'Wayne Enterprises'];
+
+        const f = mockFirsts[Math.floor(Math.random() * mockFirsts.length)];
+        const l = mockLasts[Math.floor(Math.random() * mockLasts.length)];
+        const t = mockTitles[Math.floor(Math.random() * mockTitles.length)];
+        const c = mockCompanies[Math.floor(Math.random() * mockCompanies.length)];
+
+        const generatedLead = {
+          _id: 'sim_' + Date.now().toString(),
+          name: `${f} ${l}`,
+          headline: t,
+          company: c,
+          email: `${f.toLowerCase()}.${l.toLowerCase()}@${c.toLowerCase().replace(' ', '')}.com`,
+          stage: 'new',
+          aiLeadScore: Math.floor(Math.random() * 60) + 40,
+          priority: Math.random() > 0.8 ? 'high' : 'medium',
+          source: 'linkedin_inbound',
+          tags: ['AI Sourced'],
+          notes: [],
+          activityLog: [{ action: 'created', timestamp: new Date().toISOString(), details: 'Lead captured by AI Agent from LinkedIn Activity.' }],
+        };
+
+        dispatch(simulateNewLead(generatedLead));
+
+        // Show Toast
+        setToastMessage(`🚀 AI Captured New Lead: ${f} ${l} (${c})`);
+        setTimeout(() => setToastMessage(null), 4000);
+      }
+    }, 5000); // Runs every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [isSimulationActive, dispatch]);
 
   const filteredLeads = useMemo(() => {
     let result = leads;
@@ -206,7 +260,7 @@ export const LinkedInCrm: React.FC = () => {
       });
       const data = await res.json();
       console.log('AI Response:', data);
-      
+
       if (data.success && data.data) {
         const generatedText = typeof data.data === 'string' ? data.data : (data.data.content || JSON.stringify(data.data));
         setPostContent(generatedText);
@@ -222,15 +276,36 @@ export const LinkedInCrm: React.FC = () => {
     }
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const url = URL.createObjectURL(e.target.files[0]);
+      setPostImageUrl(url);
+    }
+  };
+
+  const handleGenerateImage = () => {
+    if (!aiPrompt.trim()) {
+      alert("Please enter a prompt in the AI box above to generate an image.");
+      return;
+    }
+    setIsGeneratingImage(true);
+    setTimeout(() => {
+      const randomId = Math.floor(Math.random() * 1000);
+      setPostImageUrl(`https://picsum.photos/seed/${randomId}/800/500`);
+      setIsGeneratingImage(false);
+    }, 2000);
+  };
+
   const handlePublishPost = async () => {
     if (!postContent.trim()) return;
     try {
       const authorUrn = publishTarget === 'company' && connectedAccount?.connectedOrganizationUrn
         ? connectedAccount.connectedOrganizationUrn
         : undefined;
-      await dispatch(publishLinkedInPost({ text: postContent, authorUrn })).unwrap();
+      await dispatch(publishLinkedInPost({ text: postContent, authorUrn, imageUrl: postImageUrl || undefined })).unwrap();
       setShowComposePost(false);
       setPostContent('');
+      setPostImageUrl(null);
       alert('Post published successfully to LinkedIn!');
     } catch (err: any) {
       alert(`Failed to publish post: ${err.message || 'Unknown error'}`);
@@ -284,8 +359,24 @@ export const LinkedInCrm: React.FC = () => {
   return (
     <div style={{ width: '100%', boxSizing: 'border-box', padding: '24px 28px', minHeight: '100vh', background: '#0a0f1e', color: '#e5e5e5', fontFamily: "'Inter', 'Outfit', sans-serif", overflowX: 'hidden' }}>
 
+      {/* ============= LIVE AI TOAST ============= */}
+      <div style={{
+        position: 'fixed', bottom: '30px', right: '30px', zIndex: 9999,
+        background: 'linear-gradient(135deg, rgba(34,197,94,0.9), rgba(21,128,61,0.95))',
+        color: '#fff', padding: '14px 20px', borderRadius: '12px',
+        boxShadow: '0 8px 32px rgba(34,197,94,0.3)', fontWeight: 600, fontSize: '0.9rem',
+        transform: toastMessage ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
+        opacity: toastMessage ? 1 : 0, pointerEvents: toastMessage ? 'auto' : 'none',
+        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        display: 'flex', alignItems: 'center', gap: '10px'
+      }}>
+        <div style={{ width: '8px', height: '8px', background: '#fff', borderRadius: '50%', boxShadow: '0 0 8px #fff', animation: 'pulse 1s infinite' }} />
+        {toastMessage}
+      </div>
+
       {/* ============= HEADER ============= */}
-      <div style={{        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         marginBottom: '24px', flexWrap: 'wrap', gap: '16px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -298,17 +389,35 @@ export const LinkedInCrm: React.FC = () => {
             <Briefcase size={26} color="#fff" />
           </div>
           <div>
-            <h1 style={{ margin: 0, fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.5px',
+            <h1 style={{
+              margin: 0, fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.5px',
               background: 'linear-gradient(135deg, #0077B5, #00A0DC, #6366f1)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            }}>LinkedIn AI CRM</h1>
+              display: 'flex', alignItems: 'center', gap: '12px'
+            }}>
+              LinkedIn AI CRM
+              <button
+                onClick={() => setIsSimulationActive(!isSimulationActive)}
+                title={isSimulationActive ? 'Disable Live AI Simulation' : 'Enable Live AI Simulation'}
+                style={{
+                  background: isSimulationActive ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)',
+                  border: isSimulationActive ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(255,255,255,0.1)',
+                  color: isSimulationActive ? '#22c55e' : '#94a3b8',
+                  padding: '4px 8px', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase',
+                  display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.3s'
+                }}
+              >
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isSimulationActive ? '#22c55e' : '#64748b', boxShadow: isSimulationActive ? '0 0 6px #22c55e' : 'none', animation: isSimulationActive ? 'pulse 1.5s infinite' : 'none' }} />
+                LIVE AI
+              </button>
+            </h1>
             <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Manage leads, analyze profiles & automate outreach</p>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           {connectedAccount ? (
-            <div 
+            <div
               onClick={() => setShowConnectedAccountModal(true)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '10px',
@@ -427,94 +536,94 @@ export const LinkedInCrm: React.FC = () => {
         <>
           {/* ============= STATS CARDS ============= */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        {statsCards.map((card) => (
-          <div key={card.label} style={{
-            background: card.gradient,
-            border: `1px solid ${card.color}22`,
-            borderRadius: '16px', padding: '20px',
-            position: 'relative', overflow: 'hidden',
-          }}>
-            <div style={{ position: 'absolute', top: '16px', right: '16px', opacity: 0.15 }}>
-              <card.icon size={42} color={card.color} />
-            </div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
-              {card.label}
-            </div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: card.color, letterSpacing: '-1px' }}>
-              {card.value}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ============= TOOLBAR ============= */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: '20px', gap: '12px', flexWrap: 'wrap'
-      }}>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '8px',
-          background: 'rgba(255,255,255,0.04)', borderRadius: '12px',
-          padding: '6px 14px', flex: '1 1 250px', maxWidth: '400px',
-          border: '1px solid rgba(255,255,255,0.08)',
-        }}>
-          <Search size={16} color="#64748b" />
-          <input
-            type="text"
-            placeholder="Search leads by name, company, headline..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              background: 'transparent', border: 'none', outline: 'none',
-              color: '#e5e5e5', fontSize: '0.85rem', width: '100%',
-            }}
-          />
-          {searchQuery && (
-            <button onClick={() => setSearchQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 0 }}>
-              <X size={14} />
-            </button>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <select
-            value={stageFilter}
-            onChange={(e) => setStageFilter(e.target.value)}
-            style={{
-              background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '10px', padding: '8px 12px', color: '#e5e5e5',
-              fontSize: '0.8rem', cursor: 'pointer', outline: 'none',
-            }}
-          >
-            <option value="">All Stages</option>
-            {PIPELINE_STAGES.map((s) => (
-              <option key={s.key} value={s.key}>{s.label}</option>
+            {statsCards.map((card) => (
+              <div key={card.label} style={{
+                background: card.gradient,
+                border: `1px solid ${card.color}22`,
+                borderRadius: '16px', padding: '20px',
+                position: 'relative', overflow: 'hidden',
+              }}>
+                <div style={{ position: 'absolute', top: '16px', right: '16px', opacity: 0.15 }}>
+                  <card.icon size={42} color={card.color} />
+                </div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+                  {card.label}
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 800, color: card.color, letterSpacing: '-1px' }}>
+                  {card.value}
+                </div>
+              </div>
             ))}
-          </select>
+          </div>
 
+          {/* ============= TOOLBAR ============= */}
           <div style={{
-            display: 'flex', background: 'rgba(255,255,255,0.04)',
-            borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)',
-            overflow: 'hidden',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '20px', gap: '12px', flexWrap: 'wrap'
           }}>
-            {(['pipeline', 'table'] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'rgba(255,255,255,0.04)', borderRadius: '12px',
+              padding: '6px 14px', flex: '1 1 250px', maxWidth: '400px',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}>
+              <Search size={16} color="#64748b" />
+              <input
+                type="text"
+                placeholder="Search leads by name, company, headline..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
-                  padding: '8px 16px', border: 'none', cursor: 'pointer',
-                  background: view === v ? 'rgba(99,102,241,0.2)' : 'transparent',
-                  color: view === v ? '#818cf8' : '#64748b',
-                  fontSize: '0.8rem', fontWeight: 600,
-                  transition: 'all 0.15s ease',
+                  background: 'transparent', border: 'none', outline: 'none',
+                  color: '#e5e5e5', fontSize: '0.85rem', width: '100%',
+                }}
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 0 }}>
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <select
+                value={stageFilter}
+                onChange={(e) => setStageFilter(e.target.value)}
+                style={{
+                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '10px', padding: '8px 12px', color: '#e5e5e5',
+                  fontSize: '0.8rem', cursor: 'pointer', outline: 'none',
                 }}
               >
-                {v === 'pipeline' ? 'Pipeline' : 'Table'}
-              </button>
-            ))}
+                <option value="">All Stages</option>
+                {PIPELINE_STAGES.map((s) => (
+                  <option key={s.key} value={s.key}>{s.label}</option>
+                ))}
+              </select>
+
+              <div style={{
+                display: 'flex', background: 'rgba(255,255,255,0.04)',
+                borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)',
+                overflow: 'hidden',
+              }}>
+                {(['pipeline', 'table'] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    style={{
+                      padding: '8px 16px', border: 'none', cursor: 'pointer',
+                      background: view === v ? 'rgba(99,102,241,0.2)' : 'transparent',
+                      color: view === v ? '#818cf8' : '#64748b',
+                      fontSize: '0.8rem', fontWeight: 600,
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    {v === 'pipeline' ? 'Pipeline' : 'Table'}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
           {leadsLoading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px' }}>
@@ -604,10 +713,10 @@ export const LinkedInCrm: React.FC = () => {
         <Modal title="My LinkedIn Profile" onClose={() => setShowConnectedAccountModal(false)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <img 
-                src={connectedAccount.profilePicture || connectedAccount.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(connectedAccount.name || connectedAccount.profileName)}`} 
-                alt="Profile" 
-                style={{ width: '64px', height: '64px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }} 
+              <img
+                src={connectedAccount.profilePicture || connectedAccount.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(connectedAccount.name || connectedAccount.profileName)}`}
+                alt="Profile"
+                style={{ width: '64px', height: '64px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }}
               />
               <div>
                 <h3 style={{ margin: '0 0 4px', fontSize: '1.2rem', color: '#e5e5e5' }}>{connectedAccount.name || connectedAccount.profileName}</h3>
@@ -637,7 +746,7 @@ export const LinkedInCrm: React.FC = () => {
                       <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{connectedAccount.connectedOrganizationName}</div>
                       <div style={{ fontSize: '0.65rem', color: '#64748b', fontFamily: 'monospace', marginTop: '2px' }}>{connectedAccount.connectedOrganizationUrn}</div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => dispatch(connectOrganization({ orgUrn: '', orgName: '' }))}
                       style={{ background: 'rgba(239,68,68,0.1)', border: 'none', borderRadius: '6px', padding: '6px 10px', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}
                     >
@@ -854,21 +963,71 @@ export const LinkedInCrm: React.FC = () => {
               onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
             />
           </div>
+          <div style={{ marginBottom: '16px', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: postImageUrl ? '16px' : '0' }}>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <label style={{
+                  display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
+                  padding: '8px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)',
+                  fontSize: '0.8rem', fontWeight: 600, color: '#e5e5e5', border: '1px solid rgba(255,255,255,0.1)',
+                  transition: 'background 0.2s'
+                }}>
+                  <Image size={14} color="#0ea5e9" /> Upload Image
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
+                </label>
+                
+                <button
+                  onClick={handleGenerateImage}
+                  disabled={isGeneratingImage || !aiPrompt.trim()}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px', cursor: (isGeneratingImage || !aiPrompt.trim()) ? 'not-allowed' : 'pointer',
+                    padding: '8px 14px', borderRadius: '8px', background: 'rgba(139,92,246,0.15)',
+                    fontSize: '0.8rem', fontWeight: 600, color: '#c084fc', border: '1px solid rgba(139,92,246,0.3)',
+                    transition: 'all 0.2s', opacity: (isGeneratingImage || !aiPrompt.trim()) ? 0.6 : 1
+                  }}
+                >
+                  {isGeneratingImage ? <Loader2 size={14} className="spin" /> : <Wand2 size={14} />}
+                  {isGeneratingImage ? 'Generating...' : 'AI Generate Image'}
+                </button>
+              </div>
+            </div>
+
+            {postImageUrl && (
+              <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <img src={postImageUrl} alt="Post Attachment" style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '300px', objectFit: 'cover' }} />
+                <button
+                  onClick={() => setPostImageUrl(null)}
+                  style={{
+                    position: 'absolute', top: '8px', right: '8px',
+                    background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%',
+                    width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', color: '#fff'
+                  }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
             <button
-              onClick={() => setShowComposePost(false)}
+              onClick={() => {
+                setShowComposePost(false);
+                setPostImageUrl(null);
+              }}
               style={{ padding: '10px 20px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94a3b8', cursor: 'pointer', fontWeight: 600 }}
             >
               Cancel
             </button>
             <button
               onClick={handlePublishPost}
-              disabled={!postContent.trim()}
+              disabled={!postContent.trim() && !postImageUrl}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '10px 24px', borderRadius: '10px',
-                background: postContent.trim() ? 'linear-gradient(135deg, #0077B5, #00A0DC)' : 'rgba(255,255,255,0.06)',
-                border: 'none', color: '#fff', cursor: postContent.trim() ? 'pointer' : 'not-allowed',
+                background: (postContent.trim() || postImageUrl) ? 'linear-gradient(135deg, #0077B5, #00A0DC)' : 'rgba(255,255,255,0.06)',
+                border: 'none', color: '#fff', cursor: (postContent.trim() || postImageUrl) ? 'pointer' : 'not-allowed',
                 fontWeight: 600, fontSize: '0.85rem',
               }}
             >
@@ -909,140 +1068,140 @@ const PipelineView: React.FC<{
         gap: '12px',
         minWidth: 'max-content',
       }}>
-      {PIPELINE_STAGES.map((stage) => {
-        const stageLeads = leads.filter((l) => l.stage === stage.key);
-        const StageIcon = stage.icon;
-        return (
-          <div key={stage.key} style={{
-            background: 'rgba(255,255,255,0.02)',
-            borderRadius: '16px',
-            border: '1px solid rgba(255,255,255,0.06)',
-            minHeight: '400px',
-            display: 'flex',
-            flexDirection: 'column',
-          }}>
-            {/* Stage Header */}
-            <div style={{
-              padding: '14px 16px',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        {PIPELINE_STAGES.map((stage) => {
+          const stageLeads = leads.filter((l) => l.stage === stage.key);
+          const StageIcon = stage.icon;
+          return (
+            <div key={stage.key} style={{
+              background: 'rgba(255,255,255,0.02)',
+              borderRadius: '16px',
+              border: '1px solid rgba(255,255,255,0.06)',
+              minHeight: '400px',
+              display: 'flex',
+              flexDirection: 'column',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <StageIcon size={15} color={stage.color} />
-                <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#e5e5e5' }}>{stage.label}</span>
-              </div>
-              <span style={{
-                background: `${stage.color}22`,
-                color: stage.color,
-                borderRadius: '8px',
-                padding: '2px 8px',
-                fontSize: '0.7rem',
-                fontWeight: 700,
+              {/* Stage Header */}
+              <div style={{
+                padding: '14px 16px',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
-                {stageLeads.length}
-              </span>
-            </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <StageIcon size={15} color={stage.color} />
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#e5e5e5' }}>{stage.label}</span>
+                </div>
+                <span style={{
+                  background: `${stage.color}22`,
+                  color: stage.color,
+                  borderRadius: '8px',
+                  padding: '2px 8px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                }}>
+                  {stageLeads.length}
+                </span>
+              </div>
 
-            {/* Lead Cards */}
-            <div style={{ padding: '8px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {stageLeads.map((lead) => (
-                <div
-                  key={lead._id}
-                  onClick={() => onLeadClick(lead)}
-                  style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    borderRadius: '12px',
-                    padding: '12px',
-                    cursor: 'pointer',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = `${stage.color}44`;
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <div style={{
-                      width: '32px', height: '32px', borderRadius: '10px',
-                      background: `${stage.color}15`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '0.75rem', fontWeight: 700, color: stage.color,
-                    }}>
-                      {lead.profileImageUrl ? (
-                        <img src={lead.profileImageUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '10px', objectFit: 'cover' }} />
-                      ) : (
-                        lead.name.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#e5e5e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {lead.name}
-                      </div>
-                      {lead.company && (
-                        <div style={{ fontSize: '0.65rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {lead.company}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {lead.headline && (
-                    <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                      {lead.headline}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    {lead.aiLeadScore > 0 && (
+              {/* Lead Cards */}
+              <div style={{ padding: '8px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {stageLeads.map((lead) => (
+                  <div
+                    key={lead._id}
+                    onClick={() => onLeadClick(lead)}
+                    style={{
+                      background: 'rgba(255,255,255,0.03)',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      cursor: 'pointer',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = `${stage.color}44`;
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                       <div style={{
-                        display: 'flex', alignItems: 'center', gap: '4px',
-                        fontSize: '0.65rem', fontWeight: 600,
-                        color: lead.aiLeadScore >= 70 ? '#22c55e' : lead.aiLeadScore >= 40 ? '#f59e0b' : '#64748b',
+                        width: '32px', height: '32px', borderRadius: '10px',
+                        background: `${stage.color}15`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '0.75rem', fontWeight: 700, color: stage.color,
                       }}>
-                        <Zap size={10} /> {lead.aiLeadScore}
+                        {lead.profileImageUrl ? (
+                          <img src={lead.profileImageUrl} alt="" style={{ width: '100%', height: '100%', borderRadius: '10px', objectFit: 'cover' }} />
+                        ) : (
+                          lead.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#e5e5e5', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {lead.name}
+                        </div>
+                        {lead.company && (
+                          <div style={{ fontSize: '0.65rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {lead.company}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {lead.headline && (
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        {lead.headline}
                       </div>
                     )}
-                    <div style={{
-                      width: '8px', height: '8px', borderRadius: '50%',
-                      background: PRIORITY_COLORS[lead.priority] || '#64748b',
-                    }} title={`Priority: ${lead.priority}`} />
-                  </div>
 
-                  {lead.tags.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
-                      {lead.tags.slice(0, 2).map((tag) => (
-                        <span key={tag} style={{
-                          fontSize: '0.6rem', padding: '2px 6px', borderRadius: '6px',
-                          background: 'rgba(99,102,241,0.1)', color: '#818cf8', fontWeight: 600,
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      {lead.aiLeadScore > 0 && (
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: '4px',
+                          fontSize: '0.65rem', fontWeight: 600,
+                          color: lead.aiLeadScore >= 70 ? '#22c55e' : lead.aiLeadScore >= 40 ? '#f59e0b' : '#64748b',
                         }}>
-                          {tag}
-                        </span>
-                      ))}
-                      {lead.tags.length > 2 && (
-                        <span style={{ fontSize: '0.6rem', color: '#64748b' }}>+{lead.tags.length - 2}</span>
+                          <Zap size={10} /> {lead.aiLeadScore}
+                        </div>
                       )}
+                      <div style={{
+                        width: '8px', height: '8px', borderRadius: '50%',
+                        background: PRIORITY_COLORS[lead.priority] || '#64748b',
+                      }} title={`Priority: ${lead.priority}`} />
                     </div>
-                  )}
-                </div>
-              ))}
 
-              {stageLeads.length === 0 && (
-                <div style={{
-                  textAlign: 'center', padding: '30px 12px', color: '#475569',
-                  fontSize: '0.75rem', fontStyle: 'italic',
-                }}>
-                  No leads in this stage
-                </div>
-              )}
+                    {lead.tags.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                        {lead.tags.slice(0, 2).map((tag) => (
+                          <span key={tag} style={{
+                            fontSize: '0.6rem', padding: '2px 6px', borderRadius: '6px',
+                            background: 'rgba(99,102,241,0.1)', color: '#818cf8', fontWeight: 600,
+                          }}>
+                            {tag}
+                          </span>
+                        ))}
+                        {lead.tags.length > 2 && (
+                          <span style={{ fontSize: '0.6rem', color: '#64748b' }}>+{lead.tags.length - 2}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {stageLeads.length === 0 && (
+                  <div style={{
+                    textAlign: 'center', padding: '30px 12px', color: '#475569',
+                    fontSize: '0.75rem', fontStyle: 'italic',
+                  }}>
+                    No leads in this stage
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
       </div>
     </div>
   );
@@ -1281,178 +1440,178 @@ const LeadDetailPanel: React.FC<{
           <>
             {/* Quick Info */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-          {[
-            { icon: Building2, label: 'Company', value: lead.company },
-            { icon: Mail, label: 'Email', value: lead.email },
-            { icon: Phone, label: 'Phone', value: lead.phone },
-            { icon: MapPin, label: 'Location', value: lead.location },
-            { icon: Briefcase, label: 'Industry', value: lead.industry },
-            { icon: ExternalLink, label: 'LinkedIn', value: lead.linkedinProfileUrl ? 'View Profile' : null },
-          ].filter((f) => f.value).map((field) => (
-            <div key={field.label} style={{
-              padding: '10px 12px', borderRadius: '10px',
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
-            }}>
-              <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <field.icon size={10} /> {field.label}
-              </div>
-              {field.label === 'LinkedIn' && lead.linkedinProfileUrl ? (
-                <a href={lead.linkedinProfileUrl} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: '0.8rem', color: '#0077B5', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                  View <ExternalLink size={10} />
-                </a>
-              ) : (
-                <div style={{ fontSize: '0.8rem', color: '#e5e5e5', marginTop: '2px' }}>{field.value}</div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* AI Scores */}
-        <div style={{
-          padding: '16px', borderRadius: '14px', marginBottom: '20px',
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.05))',
-          border: '1px solid rgba(99,102,241,0.15)',
-        }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#818cf8', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Zap size={14} /> AI INSIGHTS
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-            {[
-              { label: 'Lead Score', value: lead.aiLeadScore, color: lead.aiLeadScore >= 70 ? '#22c55e' : lead.aiLeadScore >= 40 ? '#f59e0b' : '#64748b' },
-              { label: 'Networking', value: lead.networkingScore, color: '#0ea5e9' },
-              { label: 'Hiring', value: lead.hiringScore, color: '#ec4899' },
-            ].map((score) => (
-              <div key={score.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: score.color }}>{score.value}</div>
-                <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600 }}>{score.label}</div>
-              </div>
-            ))}
-          </div>
-          {lead.aiSummary && (
-            <div style={{ marginTop: '12px', padding: '10px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
-              {lead.aiSummary}
-            </div>
-          )}
-        </div>
-
-        {/* Stage Selector */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px' }}>PIPELINE STAGE</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-            {PIPELINE_STAGES.map((s) => (
-              <button
-                key={s.key}
-                onClick={() => onStageChange(s.key)}
-                style={{
-                  padding: '6px 12px', borderRadius: '8px',
-                  background: lead.stage === s.key ? `${s.color}22` : 'rgba(255,255,255,0.04)',
-                  color: lead.stage === s.key ? s.color : '#64748b',
-                  fontWeight: 600, fontSize: '0.7rem', cursor: 'pointer',
-                  border: lead.stage === s.key ? `1px solid ${s.color}44` : '1px solid transparent',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Tags */}
-        {lead.tags.length > 0 && (
-          <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Tag size={12} /> TAGS
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {lead.tags.map((tag) => (
-                <span key={tag} style={{
-                  fontSize: '0.7rem', padding: '4px 10px', borderRadius: '8px',
-                  background: 'rgba(99,102,241,0.1)', color: '#818cf8', fontWeight: 600,
-                }}>
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Add Note */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <MessageSquare size={12} /> ADD NOTE
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <input
-              type="text"
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              placeholder="Write a note..."
-              onKeyDown={(e) => e.key === 'Enter' && onAddNote()}
-              style={{
-                flex: 1, padding: '10px 12px', borderRadius: '10px',
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-                color: '#e5e5e5', fontSize: '0.8rem', outline: 'none',
-              }}
-            />
-            <button
-              onClick={onAddNote}
-              style={{
-                padding: '10px 14px', borderRadius: '10px',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                border: 'none', color: '#fff', cursor: 'pointer',
-              }}
-            >
-              <ArrowUpRight size={16} />
-            </button>
-          </div>
-        </div>
-
-        {/* Activity Log */}
-        {lead.activityLog.length > 0 && (
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Clock size={12} /> ACTIVITY
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {lead.activityLog.slice(-5).reverse().map((log, i) => (
-                <div key={i} style={{
-                  padding: '8px 12px', borderRadius: '8px',
-                  background: 'rgba(255,255,255,0.02)',
-                  borderLeft: '3px solid rgba(99,102,241,0.3)',
-                }}>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{log.details}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#475569', marginTop: '2px' }}>
-                    {new Date(log.timestamp).toLocaleString()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Notes */}
-        {lead.notes.length > 0 && (
-          <div style={{ marginTop: '20px' }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px' }}>NOTES</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {lead.notes.slice(-5).reverse().map((note, i) => (
-                <div key={i} style={{
+              {[
+                { icon: Building2, label: 'Company', value: lead.company },
+                { icon: Mail, label: 'Email', value: lead.email },
+                { icon: Phone, label: 'Phone', value: lead.phone },
+                { icon: MapPin, label: 'Location', value: lead.location },
+                { icon: Briefcase, label: 'Industry', value: lead.industry },
+                { icon: ExternalLink, label: 'LinkedIn', value: lead.linkedinProfileUrl ? 'View Profile' : null },
+              ].filter((f) => f.value).map((field) => (
+                <div key={field.label} style={{
                   padding: '10px 12px', borderRadius: '10px',
                   background: 'rgba(255,255,255,0.03)',
                   border: '1px solid rgba(255,255,255,0.06)',
                 }}>
-                  <div style={{ fontSize: '0.8rem', color: '#e5e5e5' }}>{note.message}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#475569', marginTop: '4px' }}>
-                    {note.type} · {new Date(note.timestamp).toLocaleString()}
+                  <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <field.icon size={10} /> {field.label}
                   </div>
+                  {field.label === 'LinkedIn' && lead.linkedinProfileUrl ? (
+                    <a href={lead.linkedinProfileUrl} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: '0.8rem', color: '#0077B5', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      View <ExternalLink size={10} />
+                    </a>
+                  ) : (
+                    <div style={{ fontSize: '0.8rem', color: '#e5e5e5', marginTop: '2px' }}>{field.value}</div>
+                  )}
                 </div>
               ))}
             </div>
-          </div>
-        )}
+
+            {/* AI Scores */}
+            <div style={{
+              padding: '16px', borderRadius: '14px', marginBottom: '20px',
+              background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.05))',
+              border: '1px solid rgba(99,102,241,0.15)',
+            }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#818cf8', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Zap size={14} /> AI INSIGHTS
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                {[
+                  { label: 'Lead Score', value: lead.aiLeadScore, color: lead.aiLeadScore >= 70 ? '#22c55e' : lead.aiLeadScore >= 40 ? '#f59e0b' : '#64748b' },
+                  { label: 'Networking', value: lead.networkingScore, color: '#0ea5e9' },
+                  { label: 'Hiring', value: lead.hiringScore, color: '#ec4899' },
+                ].map((score) => (
+                  <div key={score.label} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 800, color: score.color }}>{score.value}</div>
+                    <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600 }}>{score.label}</div>
+                  </div>
+                ))}
+              </div>
+              {lead.aiSummary && (
+                <div style={{ marginTop: '12px', padding: '10px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                  {lead.aiSummary}
+                </div>
+              )}
+            </div>
+
+            {/* Stage Selector */}
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px' }}>PIPELINE STAGE</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {PIPELINE_STAGES.map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => onStageChange(s.key)}
+                    style={{
+                      padding: '6px 12px', borderRadius: '8px',
+                      background: lead.stage === s.key ? `${s.color}22` : 'rgba(255,255,255,0.04)',
+                      color: lead.stage === s.key ? s.color : '#64748b',
+                      fontWeight: 600, fontSize: '0.7rem', cursor: 'pointer',
+                      border: lead.stage === s.key ? `1px solid ${s.color}44` : '1px solid transparent',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tags */}
+            {lead.tags.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Tag size={12} /> TAGS
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {lead.tags.map((tag) => (
+                    <span key={tag} style={{
+                      fontSize: '0.7rem', padding: '4px 10px', borderRadius: '8px',
+                      background: 'rgba(99,102,241,0.1)', color: '#818cf8', fontWeight: 600,
+                    }}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add Note */}
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <MessageSquare size={12} /> ADD NOTE
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  placeholder="Write a note..."
+                  onKeyDown={(e) => e.key === 'Enter' && onAddNote()}
+                  style={{
+                    flex: 1, padding: '10px 12px', borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#e5e5e5', fontSize: '0.8rem', outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={onAddNote}
+                  style={{
+                    padding: '10px 14px', borderRadius: '10px',
+                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    border: 'none', color: '#fff', cursor: 'pointer',
+                  }}
+                >
+                  <ArrowUpRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Activity Log */}
+            {lead.activityLog.length > 0 && (
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Clock size={12} /> ACTIVITY
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {lead.activityLog.slice(-5).reverse().map((log, i) => (
+                    <div key={i} style={{
+                      padding: '8px 12px', borderRadius: '8px',
+                      background: 'rgba(255,255,255,0.02)',
+                      borderLeft: '3px solid rgba(99,102,241,0.3)',
+                    }}>
+                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{log.details}</div>
+                      <div style={{ fontSize: '0.65rem', color: '#475569', marginTop: '2px' }}>
+                        {new Date(log.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            {lead.notes.length > 0 && (
+              <div style={{ marginTop: '20px' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px' }}>NOTES</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {lead.notes.slice(-5).reverse().map((note, i) => (
+                    <div key={i} style={{
+                      padding: '10px 12px', borderRadius: '10px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                    }}>
+                      <div style={{ fontSize: '0.8rem', color: '#e5e5e5' }}>{note.message}</div>
+                      <div style={{ fontSize: '0.65rem', color: '#475569', marginTop: '4px' }}>
+                        {note.type} · {new Date(note.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -1536,6 +1695,7 @@ const MyPostsView: React.FC<{
   eventsLoading: boolean;
   onCreateEvent: (eventData: any) => void;
 }> = ({ posts, loading, account, events, eventsLoading, onCreateEvent }) => {
+  const dispatch = useDispatch<AppDispatch>();
   const [subTab, setSubTab] = useState<'posts' | 'events'>('posts');
   const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [newEvent, setNewEvent] = useState({
@@ -1545,6 +1705,29 @@ const MyPostsView: React.FC<{
     onlineMeetingUrl: '',
     format: 'AUDIO', // 'AUDIO' or 'VIDEO'
   });
+
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+  const [commentText, setCommentText] = useState<Record<string, string>>({});
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
+  const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
+
+  const handlePostComment = (postId: string) => {
+    const text = commentText[postId];
+    if (text && text.trim()) {
+      dispatch(addPostComment({ postId, text, author: account?.profileName || 'You' }));
+      setCommentText(prev => ({ ...prev, [postId]: '' }));
+    }
+  };
+
+  const handlePostReply = (postId: string, commentId: string) => {
+    const text = replyText[commentId];
+    if (text && text.trim()) {
+      dispatch(addPostReply({ postId, commentId, text, author: account?.profileName || 'You' }));
+      setReplyText(prev => ({ ...prev, [commentId]: '' }));
+      setActiveReplyId(null);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -1561,10 +1744,10 @@ const MyPostsView: React.FC<{
   return (
     <div>
       {/* Profile Overview Banner */}
-      <div style={{ 
-        display: 'flex', alignItems: 'center', gap: '20px', 
-        background: 'rgba(255,255,255,0.03)', borderRadius: '16px', 
-        padding: '24px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '24px' 
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '20px',
+        background: 'rgba(255,255,255,0.03)', borderRadius: '16px',
+        padding: '24px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '24px'
       }}>
         <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           {account?.profileImageUrl ? <img src={account.profileImageUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Users size={32} color="#64748b" />}
@@ -1651,8 +1834,8 @@ const MyPostsView: React.FC<{
                 const impressions = post.impressions || 0;
                 const engRate = impressions > 0 ? ((post.likes + post.comments) / impressions) * 100 : 0;
                 return (
-                  <div key={post._id} style={{ 
-                    background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '20px', 
+                  <div key={post._id} style={{
+                    background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '20px',
                     border: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '24px', flexWrap: 'wrap'
                   }}>
                     <div style={{ flex: '1 1 300px' }}>
@@ -1672,8 +1855,15 @@ const MyPostsView: React.FC<{
                           ))}
                         </div>
                       )}
+
+                      {/* Display Image if it exists */}
+                      {post.imageUrl && (
+                        <div style={{ marginTop: '16px', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <img src={post.imageUrl} alt="Post content" style={{ width: '100%', height: 'auto', display: 'block' }} />
+                        </div>
+                      )}
                     </div>
-                    
+
                     <div style={{ width: '250px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '16px', border: '1px solid rgba(255,255,255,0.03)' }}>
                       <h4 style={{ margin: '0 0 12px', fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase' }}>Performance Insights</h4>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -1696,6 +1886,119 @@ const MyPostsView: React.FC<{
                           </span>
                         </div>
                       </div>
+                    </div>
+
+                    {/* COMMENTS SECTION TOGGLE */}
+                    <div style={{ width: '100%', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px', marginTop: '8px' }}>
+                      <button
+                        onClick={() => setExpandedComments(prev => ({ ...prev, [post._id]: !prev[post._id] }))}
+                        style={{
+                          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                          color: '#e5e5e5', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
+                          fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px',
+                          transition: 'all 0.2s', width: '100%', justifyContent: 'center'
+                        }}
+                      >
+                        <MessageCircle size={14} />
+                        {expandedComments[post._id] ? 'Hide Comments' : `View Comments (${post.liveComments?.length || 0})`}
+                      </button>
+
+                      {/* COMMENTS THREAD */}
+                      {expandedComments[post._id] && (
+                        <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.03)' }}>
+
+                          {/* New Comment Input */}
+                          <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#1e293b', flexShrink: 0, overflow: 'hidden' }}>
+                              {account?.profileImageUrl ? <img src={account.profileImageUrl} alt="You" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Users size={16} color="#64748b" style={{ margin: '8px' }} />}
+                            </div>
+                            <div style={{ flex: 1, display: 'flex', gap: '8px' }}>
+                              <input
+                                type="text"
+                                placeholder="Add a comment..."
+                                value={commentText[post._id] || ''}
+                                onChange={(e) => setCommentText(prev => ({ ...prev, [post._id]: e.target.value }))}
+                                onKeyDown={(e) => e.key === 'Enter' && handlePostComment(post._id)}
+                                style={{ flex: 1, padding: '10px 14px', borderRadius: '20px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+                              />
+                              <button
+                                onClick={() => handlePostComment(post._id)}
+                                disabled={!commentText[post._id]?.trim()}
+                                style={{ background: commentText[post._id]?.trim() ? '#00A0DC' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '20px', padding: '0 16px', cursor: commentText[post._id]?.trim() ? 'pointer' : 'not-allowed', fontSize: '0.8rem', fontWeight: 600 }}
+                              >
+                                Post
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Existing Comments */}
+                          {post.liveComments && post.liveComments.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                              {post.liveComments.map((comment: any) => (
+                                <div key={comment.id} style={{ display: 'flex', gap: '12px' }}>
+                                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#818cf8', fontWeight: 700, fontSize: '0.8rem', flexShrink: 0 }}>
+                                    {comment.author.charAt(0)}
+                                  </div>
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 14px', borderRadius: '12px', display: 'inline-block' }}>
+                                      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#e5e5e5', marginBottom: '2px' }}>{comment.author}</div>
+                                      <div style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>{comment.text}</div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '12px', marginTop: '4px', paddingLeft: '4px' }}>
+                                      <button onClick={() => setActiveReplyId(activeReplyId === comment.id ? null : comment.id)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>Reply</button>
+                                      <span style={{ color: '#64748b', fontSize: '0.75rem' }}>{new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </div>
+
+                                    {/* Replies */}
+                                    {comment.replies && comment.replies.length > 0 && (
+                                      <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        {comment.replies.map((reply: any) => (
+                                          <div key={reply.id} style={{ display: 'flex', gap: '10px' }}>
+                                            <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(34,197,94,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e', fontWeight: 700, fontSize: '0.7rem', flexShrink: 0 }}>
+                                              {reply.author.charAt(0)}
+                                            </div>
+                                            <div>
+                                              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: '10px', display: 'inline-block' }}>
+                                                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#e5e5e5', marginBottom: '2px' }}>{reply.author}</div>
+                                                <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>{reply.text}</div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {/* Reply Input Box */}
+                                    {activeReplyId === comment.id && (
+                                      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                                        <input
+                                          type="text"
+                                          placeholder={`Reply to ${comment.author}...`}
+                                          value={replyText[comment.id] || ''}
+                                          onChange={(e) => setReplyText(prev => ({ ...prev, [comment.id]: e.target.value }))}
+                                          onKeyDown={(e) => e.key === 'Enter' && handlePostReply(post._id, comment.id)}
+                                          style={{ flex: 1, padding: '8px 12px', borderRadius: '16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.8rem', outline: 'none' }}
+                                        />
+                                        <button
+                                          onClick={() => handlePostReply(post._id, comment.id)}
+                                          disabled={!replyText[comment.id]?.trim()}
+                                          style={{ background: replyText[comment.id]?.trim() ? '#22c55e' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '16px', padding: '0 12px', cursor: replyText[comment.id]?.trim() ? 'pointer' : 'not-allowed', fontSize: '0.75rem', fontWeight: 600 }}
+                                        >
+                                          Send
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '0.85rem' }}>
+                              Be the first to comment on this post!
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

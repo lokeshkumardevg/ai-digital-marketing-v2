@@ -820,22 +820,69 @@ const Billing: React.FC = () => {
     }
   };
 
-  // ── Recharge wallet ────────────────────────────────────────
-  // Calls: POST /billing/wallet/recharge { userId, amount, description }
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) return resolve(true);
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleRecharge = async () => {
     setLoadingRecharge(true);
     try {
-      const res = await api.post<WalletBalance>('/billing/wallet/recharge', {
-        userId,
-        amount: rechargeAmt,
-        description: 'Wallet Recharge',
+      const isLoaded = await loadRazorpay();
+      if (!isLoaded) {
+        throw new Error('Razorpay SDK failed to load. Are you online?');
+      }
+
+      // 1. Create Order
+      const orderRes = await api.post<any>('/wallet/razorpay/create-order', {
+        amountInRupees: rechargeAmt,
       });
-      // Backend returns { balance } — update immediately
-      setBalance(res.balance ?? balance + rechargeAmt);
-      showToast(`${fmtINR(rechargeAmt)} added to your wallet!`);
-      // Refresh transactions to show the new CREDIT entry
-      setTxnPage(1);
-      fetchTxns(1);
+
+      // 2. Open Razorpay Checkout
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_dummy', // Set this in your frontend .env
+        amount: orderRes.amount,
+        currency: orderRes.currency,
+        name: 'Digital Ads Dashboard',
+        description: 'Wallet Recharge for Ads',
+        order_id: orderRes.id,
+        handler: async function (response: any) {
+          try {
+            // 3. Verify Payment
+            const verifyRes = await api.post<any>('/wallet/razorpay/verify', {
+              userId,
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+              amountInRupees: rechargeAmt,
+            });
+            setBalance(verifyRes.balance);
+            showToast(`${fmtINR(rechargeAmt)} added to your wallet successfully!`);
+            setTxnPage(1);
+            fetchTxns(1);
+          } catch (err: any) {
+            showToast('Payment verification failed.', 'error');
+          }
+        },
+        prefill: {
+          name: 'Dashboard User',
+        },
+        theme: {
+          color: '#3b82f6',
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (response: any) {
+        showToast(response.error.description || 'Payment failed', 'error');
+      });
+      rzp.open();
     } catch (err: any) {
       showToast(err.message || 'Recharge failed.', 'error');
     } finally {

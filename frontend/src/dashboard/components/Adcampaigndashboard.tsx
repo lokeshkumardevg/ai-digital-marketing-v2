@@ -491,7 +491,7 @@ function Sidebar({ platforms, campaigns, activePlatformId, activeCampaignId, ena
                 }}
                 title={!enabled ? `Click to add ${p.name} to this campaign` : p.name}
                 style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "10px 4px", borderRadius: 10, border: `1px solid ${active ? "var(--blue-bdr)" : "var(--bdr)"}`, cursor: "pointer", transition: "all .15s", background: active ? "var(--blue-lt)" : "transparent", opacity: enabled ? 1 : 0.6, position: "relative" }}>
-                
+
                 <div style={{ position: "absolute", top: 6, left: 6 }}>
                   <input type="checkbox" checked={enabled} onChange={() => onTogglePlatform(p.id)} onClick={(e) => e.stopPropagation()} style={{ cursor: "pointer", transform: "scale(1.1)" }} />
                 </div>
@@ -540,7 +540,7 @@ function Sidebar({ platforms, campaigns, activePlatformId, activeCampaignId, ena
 /* ─── TOP BAR ─────────────────────────────────────────────── */
 export const PLATFORM_FIELDS: Record<string, { label: string; placeholder: string }[]> = {
   meta: [{ label: "Business", placeholder: "Select business" }, { label: "Ad Account", placeholder: "Select ad account" }, { label: "Facebook Page", placeholder: "Select page" }, { label: "Pixel", placeholder: "Select pixel" }],
-  google: [{ label: "Manager Account", placeholder: "Select MCC" }, { label: "Google Ads Account", placeholder: "Select account" }, { label: "GA4 Property", placeholder: "Select GA4" }, { label: "Conversion Action", placeholder: "Select conversion" }],
+  google: [], // SaaS model: Accounts are auto-provisioned via MCC, no user selection needed.
   linkedin: [{ label: "Company Page", placeholder: "Select page" }, { label: "Ad Account", placeholder: "Select account" }, { label: "Insight Tag", placeholder: "Select tag" }],
   x: [{ label: "Ad Account", placeholder: "Select account" }, { label: "X Profile", placeholder: "Select profile" }, { label: "Pixel", placeholder: "Select pixel" }],
 };
@@ -582,15 +582,13 @@ export function TopBar({
   const [selectedXAccount, setSelectedXAccount] = useState<string>("");
   const [selectedXProfile, setSelectedXProfile] = useState<string>("");
   const [selectedXPixel, setSelectedXPixel] = useState<string>("");
-  
+
   const [xAccounts, setXAccounts] = useState<any[]>([]);
 
   // Local states for LinkedIn dropdown choices
   const [selectedLiPage, setSelectedLiPage] = useState<string>("");
-  const [selectedLiAccount, setSelectedLiAccount] = useState<string>("");
   const [selectedLiTag, setSelectedLiTag] = useState<string>("");
-  
-  const [liAccounts, setLiAccounts] = useState<any[]>([]);
+
   const [liPages, setLiPages] = useState<any[]>([]);
 
   // Real connected account profile data
@@ -603,7 +601,7 @@ export function TopBar({
         api.get('/auth/meta/pages').then(res => {
           if (res.data?.data) setMetaPages(res.data.data);
         }).catch(e => console.error("Pages error", e));
-        
+
         api.get('/auth/meta/pixels').then(res => {
           if (res.data?.data) setMetaPixels(res.data.data);
         }).catch(e => console.error("Pixels error", e));
@@ -658,13 +656,6 @@ export function TopBar({
             setLiPages(pages);
           }
         }).catch(e => console.error("LinkedIn pages error", e));
-
-        // Fetch real LinkedIn Ad Accounts
-        api.get('/linkedin-crm/ad-accounts').then(res => {
-          if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-            setLiAccounts(res.data);
-          }
-        }).catch(e => console.error("LinkedIn ad accounts error", e));
       });
     }
   }, [activePlatformId, user?.metaAccessToken, user?.googleAccessToken, user?.linkedinAccessToken, user?.twitterAccessToken]);
@@ -740,7 +731,6 @@ export function TopBar({
       else if (fieldLabel === 'Pixel') setSelectedXPixel(val);
     } else if (platform === 'linkedin') {
       if (fieldLabel === 'Company Page') setSelectedLiPage(val);
-      else if (fieldLabel === 'Ad Account') setSelectedLiAccount(val);
       else if (fieldLabel === 'Insight Tag') setSelectedLiTag(val);
     }
   };
@@ -784,7 +774,7 @@ export function TopBar({
         );
       }
     }
-    
+
     if (activePlatformId === 'google') {
       if (f.label === 'Google Ads Account' || f.label === 'Manager Account') {
         const hasAccounts = googleAccounts.length > 0;
@@ -811,7 +801,7 @@ export function TopBar({
           </select>
         );
       }
-      
+
       if (f.label === 'Ad Account') {
         const hasAccounts = xAccounts.length > 0;
         return (
@@ -821,7 +811,7 @@ export function TopBar({
           </select>
         );
       }
-      
+
       if (f.label === 'Pixel (Optional)') {
         const hasAccounts = xAccounts.length > 0;
         return (
@@ -834,28 +824,6 @@ export function TopBar({
     }
 
     if (activePlatformId === 'linkedin') {
-      if (f.label === 'Ad Account') {
-        const hasAccounts = liAccounts.length > 0;
-        if (!hasAccounts) {
-          return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%' }}>
-              <span style={{ fontSize: 11, color: 'var(--t3)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>No ad account found</span>
-              <span
-                onClick={() => window.open('https://www.linkedin.com/campaignmanager/', '_blank')}
-                style={{ fontSize: 10, color: 'var(--blue)', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', textDecoration: 'underline', flexShrink: 0 }}
-              >
-                Create ↗
-              </span>
-            </div>
-          );
-        }
-        return (
-          <select value={selectedLiAccount} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: '#111', cursor: 'pointer', appearance: 'none' }}>
-            <option value="">{f.placeholder}</option>
-            {liAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
-          </select>
-        );
-      }
       if (f.label === 'Company Page') {
         const hasPages = liPages.length > 0;
         const profileName = liProfile?.name;
@@ -1231,15 +1199,15 @@ interface PublishPlanModalProps { isOpen: boolean; onClose: () => void; onSelect
 function PublishPlanModal({ isOpen, onClose, onSelectPlan }: PublishPlanModalProps) {
   const [billing, setBilling] = useState<BillingCycle>("monthly");
   const plans: Plan[] = [
-    { id: "free", name: "Free", price: "$0", features: ["1 campaign/month", "Basic analytics", "Email support", "Standard publishing", "Limited AI images"], color: "#64748b" },
+    { id: "free", name: "3-Day Trial", price: "$0", features: ["Valid for 3 days only", "1 campaign/month", "Basic analytics", "Standard publishing", "Limited AI images"], color: "#64748b" },
     { id: "silver", name: "Silver", price: billing === "monthly" ? "$29" : "$290", features: ["10 campaigns/month", "Advanced analytics", "Priority support", "Scheduled publishing", "Unlimited AI images", "A/B testing"], color: "#2563EB", popular: true },
     { id: "gold", name: "Gold", price: billing === "monthly" ? "$79" : "$790", features: ["Unlimited campaigns", "Real-time analytics", "24/7 support", "Advanced scheduling", "Unlimited AI images", "A/B testing", "Multi-platform", "Custom integrations"], color: "#D97706" },
   ];
   if (!isOpen) return null;
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,51,.45)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000, animation: "fadeIn .2s ease" }} onClick={onClose}>
-      <div style={{ background: "#fff", border: "1px solid var(--bdr)", borderRadius: 20, maxWidth: 860, width: "92%", maxHeight: "88vh", overflow: "auto", padding: 28, position: "relative", animation: "slideUp .25s ease", boxShadow: "0 20px 60px rgba(37,99,235,.12)" }} onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "var(--surface2)", border: "1px solid var(--bdr)", color: "var(--t3)", width: 28, height: 28, borderRadius: 8, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(15,23,51,.65)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999999, animation: "fadeIn .2s ease" }} onClick={onClose}>
+      <div style={{ background: "#fff", border: "1px solid var(--bdr)", borderRadius: 20, maxWidth: 860, width: "92%", maxHeight: "90vh", overflowY: "auto", padding: 28, position: "relative", animation: "slideUp .25s ease", boxShadow: "0 20px 60px rgba(0,0,0,.3)" }} onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: "var(--surface2)", border: "1px solid var(--bdr)", color: "var(--t3)", width: 32, height: 32, borderRadius: 8, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
         <div style={{ textAlign: "center", marginBottom: 28 }}>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "var(--t1)", marginBottom: 6, fontFamily: "'Space Grotesk', sans-serif" }}>Choose Publishing Plan</h2>
           <p style={{ fontSize: 13, color: "var(--t2)" }}>Select the plan that fits your campaign needs</p>
@@ -1270,7 +1238,9 @@ function PublishPlanModal({ isOpen, onClose, onSelectPlan }: PublishPlanModalPro
                   </li>
                 ))}
               </ul>
-              <button style={{ width: "100%", padding: "9px", borderRadius: 8, border: `1.5px solid ${plan.color}`, background: plan.popular ? plan.color : "transparent", color: plan.popular ? "#fff" : plan.color, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>Select {plan.name}</button>
+              <button style={{ width: "100%", padding: "9px", borderRadius: 8, border: `1.5px solid ${plan.color}`, background: plan.popular ? plan.color : "transparent", color: plan.popular ? "#fff" : plan.color, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
+                {plan.id === 'free' ? 'Start 3-Day Free Trial' : `Select ${plan.name}`}
+              </button>
             </div>
           ))}
         </div>
@@ -1410,8 +1380,8 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
 
   const [platformCreatives, setPlatformCreatives] = useState<Record<string, PlatformCreative>>(() => {
     const init: Record<string, PlatformCreative> = {};
-    enabledPlatforms.forEach(pid => { 
-      init[pid] = buildDefaultCreative(initialDraftData?.[pid] || (initialDraftData?.platform === pid ? initialDraftData : null)); 
+    enabledPlatforms.forEach(pid => {
+      init[pid] = buildDefaultCreative(initialDraftData?.[pid] || (initialDraftData?.platform === pid ? initialDraftData : null));
     });
     return init;
   });
@@ -1508,7 +1478,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     try {
       const activePlatData = platformCreatives[activePid];
       let targetCid = campaignId || activeCid;
-      if (targetCid && activePid !== 'All' && !targetCid.endsWith(`_${activePid}`)) {
+      if (targetCid && (activePid as string) !== 'All' && !targetCid.endsWith(`_${activePid}`)) {
         targetCid = `${targetCid}_${activePid}`;
       }
 
@@ -1656,9 +1626,9 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     <>
       <style>{GLOBAL_CSS}</style>
       <div className="dash-root">
-        <TopBar 
-          activePlatformId={activePid} 
-          isEnabled={isCurrentPlatformEnabled} 
+        <TopBar
+          activePlatformId={activePid}
+          isEnabled={isCurrentPlatformEnabled}
           selectedMetaPage={selectedMetaPage}
           setSelectedMetaPage={setSelectedMetaPage}
           selectedMetaPixel={selectedMetaPixel}
@@ -1740,10 +1710,9 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
             <BottomBar onBack={onBack} onPublish={handlePublish} onSaveDraft={handleDraft} loading={loading} activePlatformName={activePlat.name} />
           </div>
         </div>
+        {toast && <Toast message={toast.message} type={toast.type} />}
+        <PublishPlanModal isOpen={showPlanModal} onClose={() => setShowPlanModal(false)} onSelectPlan={handleSelectPlan} />
       </div>
-
-      {toast && <Toast message={toast.message} type={toast.type} />}
-      <PublishPlanModal isOpen={showPlanModal} onClose={() => setShowPlanModal(false)} onSelectPlan={handleSelectPlan} />
     </>
   );
 }

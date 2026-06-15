@@ -47,4 +47,23 @@ export class WalletController {
     if (!userId) throw new BadRequestException('userId is required');
     return this.walletService.getTransactions(userId, +page, +limit);
   }
+
+  // --- RAZORPAY INTEGRATION ---
+
+  @Post('razorpay/create-order')
+  createRazorpayOrder(@Body() body: { amountInRupees: number }) {
+    if (!body.amountInRupees) throw new BadRequestException('amountInRupees is required');
+    return this.walletService.createRazorpayOrder(body.amountInRupees);
+  }
+
+  @Post('razorpay/verify')
+  verifyPayment(
+    @Body() body: { userId: string; orderId: string; paymentId: string; signature: string; amountInRupees: number }
+  ) {
+    const { userId, orderId, paymentId, signature, amountInRupees } = body;
+    if (!userId || !orderId || !paymentId || !signature || !amountInRupees) {
+      throw new BadRequestException('Missing required payment verification fields');
+    }
+    return this.walletService.verifyPayment(userId, orderId, paymentId, signature, amountInRupees);
+  }
 }

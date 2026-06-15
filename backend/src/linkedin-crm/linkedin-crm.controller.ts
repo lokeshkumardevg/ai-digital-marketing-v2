@@ -229,11 +229,11 @@ export class LinkedInCrmController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post('posts/publish')
-  async publishPost(@Request() req: any, @Body() body: { text: string; authorUrn?: string }) {
+  async publishPost(@Request() req: any, @Body() body: { text: string; authorUrn?: string; imageUrl?: string }) {
     if (!body.text) {
       throw new Error('Post text is required');
     }
-    return this.linkedinCrmService.publishPostToLinkedIn(req.user.id, body.text, body.authorUrn);
+    return this.linkedinCrmService.publishPostToLinkedIn(req.user.id, body.text, body.authorUrn, body.imageUrl);
   }
 
   @UseGuards(AuthGuard('jwt'))

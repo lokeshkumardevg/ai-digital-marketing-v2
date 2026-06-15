@@ -32,8 +32,11 @@ import { ReputationModule } from './reputation/reputation.module';
 import { CallingModule } from './calling/calling.module';
 import { GoogleBusinessModule } from './google-business/google-business.module';
 
+import { ScheduleModule } from '@nestjs/schedule';
+
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
@@ -56,7 +59,7 @@ import { GoogleBusinessModule } from './google-business/google-business.module';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('mongodb+srv://devclientg:SCpLNaejWusV7mcR@cluster0.vyinynw.mongodb.net/ai_digital?retryWrites=true&w=majority') || 'mongodb+srv://devclientg:SCpLNaejWusV7mcR@cluster0.vyinynw.mongodb.net/ai_digital?retryWrites=true&w=majority',
+        uri: configService.get<string>('MONGO_URI') || 'mongodb://localhost:27017/ai_digital',
       }),
       inject: [ConfigService],
     }),
@@ -89,5 +92,5 @@ import { GoogleBusinessModule } from './google-business/google-business.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
 

@@ -52,6 +52,21 @@ export interface LinkedInLead {
   updatedAt: string;
 }
 
+export interface LiveReply {
+  id: string;
+  author: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface LiveComment {
+  id: string;
+  author: string;
+  text: string;
+  timestamp: string;
+  replies: LiveReply[];
+}
+
 export interface LinkedInPost {
   _id: string;
   content: string;
@@ -67,6 +82,8 @@ export interface LinkedInPost {
   ctaAnalysis?: string;
   aiRewriteSuggestion?: string;
   createdAt: string;
+  imageUrl?: string;
+  liveComments?: LiveComment[];
 }
 
 export interface LeadStats {
@@ -258,8 +275,8 @@ export const fetchLeadPosts = createAsyncThunk(
 
 export const publishLinkedInPost = createAsyncThunk(
   'linkedinCrm/publishLinkedInPost',
-  async ({ text, authorUrn }: { text: string; authorUrn?: string }) => {
-    const res = await api.post(`/linkedin-crm/posts/publish`, { text, authorUrn });
+  async ({ text, authorUrn, imageUrl }: { text: string; authorUrn?: string; imageUrl?: string }) => {
+    const res = await api.post(`/linkedin-crm/posts/publish`, { text, authorUrn, imageUrl });
     return res.data;
   },
 );
@@ -322,6 +339,91 @@ const linkedinCrmSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    simulateRealtimeEngagement: (state) => {
+      if (state.posts && state.posts.length > 0) {
+        const numPostsToUpdate = Math.floor(Math.random() * 2) + 1;
+        for (let i = 0; i < numPostsToUpdate; i++) {
+          const randIdx = Math.floor(Math.random() * state.posts.length);
+          const p = state.posts[randIdx];
+          if (p) {
+            p.likes += Math.floor(Math.random() * 3) + 1;
+            p.impressions = (p.impressions || 0) + Math.floor(Math.random() * 50) + 10;
+            if (Math.random() > 0.7) {
+              p.comments += 1;
+              // Occasionally add a real AI comment
+              if (Math.random() > 0.5) {
+                if (!p.liveComments) p.liveComments = [];
+                const mockAuthors = ['Sarah Jenkins', 'Mike Ross', 'Alex Mercer', 'Diana Prince', 'John Doe'];
+                const mockTexts = ['Great insight! Totally agree.', 'Thanks for sharing this.', 'Very interesting perspective.', 'Love this approach 🚀', 'Can you elaborate more on this?'];
+                p.liveComments.push({
+                  id: 'c_' + Date.now().toString() + Math.random(),
+                  author: mockAuthors[Math.floor(Math.random() * mockAuthors.length)],
+                  text: mockTexts[Math.floor(Math.random() * mockTexts.length)],
+                  timestamp: new Date().toISOString(),
+                  replies: []
+                });
+              }
+            }
+          }
+        }
+      }
+      if (state.adCampaigns && state.adCampaigns.length > 0) {
+        const randIdx = Math.floor(Math.random() * state.adCampaigns.length);
+        const c = state.adCampaigns[randIdx];
+        if (c && c.metrics) {
+          c.metrics.impressions += Math.floor(Math.random() * 100) + 20;
+          c.metrics.spend += Math.random() * 2;
+          if (Math.random() > 0.8) c.metrics.clicks += 1;
+        }
+      }
+    },
+    simulateNewLead: (state, action: PayloadAction<any>) => {
+      const newLead = action.payload;
+      state.leads.unshift(newLead);
+      state.leadsTotal += 1;
+      if (state.leadStats) {
+        state.leadStats.totalLeads += 1;
+        if (newLead.aiLeadScore >= 70) state.leadStats.highValueLeads += 1;
+        const stageIdx = state.leadStats.stageBreakdown.findIndex((s: any) => s._id === newLead.stage);
+        if (stageIdx !== -1) {
+          state.leadStats.stageBreakdown[stageIdx].count += 1;
+        } else {
+          state.leadStats.stageBreakdown.push({ _id: newLead.stage, count: 1, avgScore: newLead.aiLeadScore });
+        }
+      }
+    },
+    addPostComment: (state, action: PayloadAction<{ postId: string; text: string; author: string }>) => {
+      const { postId, text, author } = action.payload;
+      const post = state.posts.find(p => p._id === postId);
+      if (post) {
+        if (!post.liveComments) post.liveComments = [];
+        post.liveComments.push({
+          id: 'c_' + Date.now().toString(),
+          author,
+          text,
+          timestamp: new Date().toISOString(),
+          replies: []
+        });
+        post.comments += 1;
+      }
+    },
+    addPostReply: (state, action: PayloadAction<{ postId: string; commentId: string; text: string; author: string }>) => {
+      const { postId, commentId, text, author } = action.payload;
+      const post = state.posts.find(p => p._id === postId);
+      if (post && post.liveComments) {
+        const comment = post.liveComments.find(c => c.id === commentId);
+        if (comment) {
+          if (!comment.replies) comment.replies = [];
+          comment.replies.push({
+            id: 'r_' + Date.now().toString(),
+            author,
+            text,
+            timestamp: new Date().toISOString()
+          });
+          post.comments += 1;
+        }
+      }
     },
   },
   extraReducers: (builder) => {
@@ -416,8 +518,12 @@ const linkedinCrmSlice = createSlice({
 
     // Publish Post
     builder.addCase(publishLinkedInPost.pending, (state) => { state.publishPostLoading = true; });
-    builder.addCase(publishLinkedInPost.fulfilled, (state) => {
+    builder.addCase(publishLinkedInPost.fulfilled, (state, action) => {
       state.publishPostLoading = false;
+      if (action.payload && action.payload._id) {
+        state.posts.unshift(action.payload);
+        state.postsTotal += 1;
+      }
     });
     builder.addCase(publishLinkedInPost.rejected, (state) => {
       state.publishPostLoading = false;
@@ -484,5 +590,5 @@ const linkedinCrmSlice = createSlice({
   },
 });
 
-export const { setSelectedLead, clearError } = linkedinCrmSlice.actions;
+export const { setSelectedLead, clearError, simulateRealtimeEngagement, simulateNewLead, addPostComment, addPostReply } = linkedinCrmSlice.actions;
 export const linkedinCrmReducer = linkedinCrmSlice.reducer;

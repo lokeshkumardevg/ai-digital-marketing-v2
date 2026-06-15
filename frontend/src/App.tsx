@@ -18,6 +18,9 @@ import Tutorial from "./landing/pages/tutorial";
 import Help from './landing/pages/Help';
 import PricingPage from './landing/pages/PricingPage';
 import Resources from './landing/pages/Resources';
+import ApiDocGoogle from './landing/pages/ApiDocGoogle';
+import ApiDocLinkedIn from './landing/pages/ApiDocLinkedIn';
+import ApiDocMeta from './landing/pages/ApiDocMeta';
 import Register from './landing/pages/Register';
 import { Settings } from './dashboard/pages/Settings';
 import { Seo } from './dashboard/pages/Seo';
@@ -198,6 +201,9 @@ const App: React.FC = () => {
         <Route path="/tutorial" element={<Tutorial />} />
         <Route path="/pricing" element={<PricingPage />} />\
         <Route path="/resources" element={<Resources />} />
+        <Route path="/api-docs/google" element={<ApiDocGoogle />} />
+        <Route path="/api-docs/linkedin" element={<ApiDocLinkedIn />} />
+        <Route path="/api-docs/meta" element={<ApiDocMeta />} />
         <Route path="/help" element={<Help />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Register />} />

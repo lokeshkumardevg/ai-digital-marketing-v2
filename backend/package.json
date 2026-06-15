@@ -43,7 +43,6 @@
     "cheerio": "^1.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "color-thief-node": "^1.0.4",
     "google-ads-api": "^23.0.0",
     "google-auth-library": "^10.6.2",
     "ioredis": "^5.10.1",

@@ -517,15 +517,14 @@ export const Settings: React.FC = () => {
 
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                         <button
-                          onClick={connectGoogle}
-                          disabled={!user?.id}
+                          disabled={true}
                           style={{
                             padding: '12px',
-                            background: user?.googleRefreshToken ? '#d1d5db' : 'linear-gradient(135deg, #4285f4, #34a853)',
-                            color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.googleRefreshToken ? 'default' : 'pointer'
+                            background: 'linear-gradient(135deg, #4285f4, #34a853)',
+                            color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'default'
                           }}
                         >
-                          🔗 {user?.googleRefreshToken ? 'Google Ads Connected ✓' : 'Connect Google Ads'}
+                          🔗 Google Ads Auto-System Active ✓
                         </button>
 
                         <button

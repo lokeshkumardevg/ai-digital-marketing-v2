@@ -113,7 +113,7 @@ export class SocialService {
         headers: {
           Authorization: `Bearer ${user.linkedinAccessToken}`,
           'X-Restli-Protocol-Version': '2.0.0',
-          'LinkedIn-Version': '202306',
+          'LinkedIn-Version': '202605',
         },
       });
       return response.data?.id || response.headers['x-restli-id'];

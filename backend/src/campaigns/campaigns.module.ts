@@ -1,4 +1,5 @@
 import { UsersModule } from '../users/users.module';
+import { WalletModule } from '../wallet/wallet.module';
 import { Module } from '@nestjs/common';
 import { CampaignService } from './campaigns.service';
 import { CampaignController } from './campaigns.controller';
@@ -10,7 +11,8 @@ import { CampaigndSchema } from './schemas/campaind.schema';
 @Module({
   imports: [
     UsersModule,
-MongooseModule.forFeature([
+    WalletModule,
+    MongooseModule.forFeature([
   {
     name: 'Session',
     schema: SessionSchema,
