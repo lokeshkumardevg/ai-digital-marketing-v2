@@ -12,22 +12,23 @@ export const Products: React.FC = () => {
     fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/products`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
     })
-    .then(res => res.json())
-    .then(json => {
-      const mapped = json.map((p: any, i: number) => ({
-        id: p._id || Date.now().toString() + i,
-        name: p.name,
-        source: p.source || 'Manual',
-        updated: new Date().toISOString().split('T')[0],
-        img: p.category === 'Software' ? '🛠️' : '📦'
-      }));
-      setProducts(mapped);
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error('Products fetch failed', err);
-      setLoading(false);
-    });
+      .then(res => res.json())
+      .then(json => {
+        const mapped = json.map((p: any, i: number) => ({
+          id: p._id || Date.now().toString() + i,
+          name: p.name,
+          source: p.source || 'Manual',
+          updated: new Date().toISOString().split('T')[0],
+          img: p.category === 'Software' ? '🛠️' : '📦'
+        }));
+        console.log(mapped, 'mapped')
+        setProducts(mapped);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Products fetch failed', err);
+        setLoading(false);
+      });
   }, []);
 
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));

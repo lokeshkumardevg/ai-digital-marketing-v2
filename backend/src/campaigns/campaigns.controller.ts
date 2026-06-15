@@ -259,6 +259,11 @@ getDrafts(
     return this.service.publishLinkedinCampaign(body.userId, body);
   }
 
+  @Get('linkedin/status/:userId')
+  async linkedinStatus(@Param('userId') userId: string) {
+    return this.service.getLinkedinStatus(userId);
+  }
+
   @Get('user/:userId')
   async getCampaigns(@Param('userId') userId: string) {
     return this.service.getCampaignsByUser(userId);

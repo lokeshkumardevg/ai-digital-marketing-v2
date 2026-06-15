@@ -4,7 +4,7 @@ async function run() {
   const client = new MongoClient(uri);
   await client.connect();
   const db = client.db();
-  const user = await db.collection('users').findOne({ email: 'wheedletechnologis@gmail.com' });
+  const user = await db.collection('users').findOne({ email: 'Wheedletechnologis@gmail.com' });
   const token = user.linkedinAccessToken;
   
   // Try fetching LinkedIn Ad Accounts

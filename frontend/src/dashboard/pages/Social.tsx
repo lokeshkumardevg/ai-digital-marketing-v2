@@ -21,6 +21,7 @@ export const Social: React.FC = () => {
     (state: RootState) => state.social,
   );
   const { activeWebsiteId } = useSelector((state: RootState) => state.workspace);
+  const { user } = useSelector((state: RootState) => state.auth);
 
   const [content, setContent] = useState('');
   const [media, setMedia] = useState<string[]>([]);
@@ -68,6 +69,9 @@ export const Social: React.FC = () => {
     { id: 'instagram', label: 'Instagram', badge: 'ig', color: '#ec4899' },
   ];
 
+  const [linkedinStatus, setLinkedinStatus] = useState<any>(null);
+  const [checkingLinkedin, setCheckingLinkedin] = useState(false);
+
   const handleConnect = async (platform: 'linkedin' | 'twitter' | 'facebook' | 'instagram') => {
     try {
       const result = await dispatch(connectPlatform(platform)).unwrap();
@@ -79,7 +83,33 @@ export const Social: React.FC = () => {
 
   const handleDisconnect = async (platform: 'linkedin' | 'twitter' | 'facebook' | 'instagram') => {
     await dispatch(disconnectPlatform(platform));
+    if (platform === 'linkedin') setLinkedinStatus(null);
     toast.success(`${platform} disconnected.`);
+  };
+
+  const checkLinkedinStatus = async () => {
+    const uid = user?._id || user?.id;
+    if (!uid) { toast.error('Please log in first.'); return; }
+    setCheckingLinkedin(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const res = await fetch(`${API_BASE}/campaign/linkedin/status/${uid}`);
+      const data = await res.json();
+      setLinkedinStatus(data);
+      if (data.readyToPublish) {
+        toast.success(`✅ LinkedIn OK! Logged in as: ${data.liveUserInfo?.name || 'User'}`);
+      } else if (data.liveError) {
+        toast.error(`❌ LinkedIn token error: ${data.liveError}`);
+      } else if (!data.hasUrn) {
+        toast.error('❌ LinkedIn URN missing. Disconnect then reconnect LinkedIn!');
+      } else {
+        toast.error('❌ LinkedIn not ready to publish.');
+      }
+    } catch (e: any) {
+      toast.error(`Status check failed: ${e.message}`);
+    } finally {
+      setCheckingLinkedin(false);
+    }
   };
 
   const togglePlatform = (platform: string) => {
@@ -235,7 +265,7 @@ export const Social: React.FC = () => {
                     <span style={{ fontWeight: 600 }}>{platform.label}</span>
                   </div>
                   {connections[platform.id as keyof typeof connections] ? (
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                       <span
                         style={{
                           fontSize: '0.8rem',
@@ -248,6 +278,16 @@ export const Social: React.FC = () => {
                       >
                         Connected
                       </span>
+                      {platform.id === 'linkedin' && (
+                        <button
+                          className="btn-secondary"
+                          style={{ padding: '4px 10px', fontSize: '0.72rem', background: 'rgba(0,119,181,0.1)', color: '#0077b5', border: '1px solid #0077b5' }}
+                          onClick={(event) => { event.stopPropagation(); checkLinkedinStatus(); }}
+                          disabled={checkingLinkedin}
+                        >
+                          {checkingLinkedin ? 'Checking...' : '🔍 Check Status'}
+                        </button>
+                      )}
                       <button
                         className="btn-secondary"
                         style={{ padding: '6px 10px', fontSize: '0.75rem'}}
@@ -277,6 +317,31 @@ export const Social: React.FC = () => {
               ))}
             </div>
           </GlassCard>
+
+          {/* LinkedIn Status Debug Panel */}
+          {linkedinStatus && (
+            <GlassCard style={{ border: linkedinStatus.readyToPublish ? '1.5px solid #10b981' : '1.5px solid #f59e0b', background: linkedinStatus.readyToPublish ? 'rgba(16,185,129,0.05)' : 'rgba(245,158,11,0.05)' }}>
+              <h4 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                {linkedinStatus.readyToPublish ? '✅' : '⚠️'} LinkedIn Status Check
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.82rem' }}>
+                <div>Access Token: <strong style={{ color: linkedinStatus.hasToken ? '#10b981' : '#ef4444' }}>{linkedinStatus.hasToken ? '✅ Present' : '❌ Missing'}</strong></div>
+                <div>Person URN: <strong style={{ color: linkedinStatus.hasUrn ? '#10b981' : '#ef4444' }}>{linkedinStatus.hasUrn ? `✅ ${linkedinStatus.urnValue}` : '❌ Missing'}</strong></div>
+                <div>Token Valid: <strong style={{ color: linkedinStatus.tokenValid ? '#10b981' : '#ef4444' }}>{linkedinStatus.tokenValid ? '✅ Yes' : '❌ No'}</strong></div>
+                <div>Logged in as: <strong>{linkedinStatus.liveUserInfo?.name || '—'}</strong></div>
+              </div>
+              {linkedinStatus.liveError && (
+                <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, fontSize: '0.8rem', color: '#ef4444' }}>
+                  Error: {linkedinStatus.liveError}
+                </div>
+              )}
+              {!linkedinStatus.readyToPublish && (
+                <div style={{ marginTop: 10, padding: '10px 14px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, fontSize: '0.82rem', color: '#f59e0b', lineHeight: 1.6 }}>
+                  <strong>Action Required:</strong> Please click <strong>✕ Disconnect</strong> on LinkedIn above, then click <strong>Link Account</strong> again to reconnect. This will save your correct account details.
+                </div>
+              )}
+            </GlassCard>
+          )}
 
           <GlassCard style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: 'fit-content' }}>
             <div>

@@ -82,7 +82,7 @@ const btnClass = isScrolled
                 }}>
                   <img
                     src={logo}
-                    alt="heedle logo"
+                    alt="Wheedle logo"
                     style={{ width: "100%", height: "150%", objectFit: "contain" }}
                   />
                 </div>
@@ -96,7 +96,7 @@ const btnClass = isScrolled
                   WebkitTextFillColor: "transparent",
                   transition: "font-size 0.5s ease",
                 }}>
-                  heedle.Ai
+                  Wheedle Technologies.ai
                 </span>
               </div>
             </Link>
@@ -193,7 +193,7 @@ const btnClass = isScrolled
               display: "flex", alignItems: "center", justifyContent: "center",
               overflow: "hidden",
             }}>
-              <img src={logo} alt="heedle logo" style={{ width: "100%", height: "150%", objectFit: "contain" }} />
+              <img src={logo} alt="Wheedle logo" style={{ width: "100%", height: "150%", objectFit: "contain" }} />
             </div>
             <span style={{
               fontFamily: "'Figtree', sans-serif",
@@ -203,7 +203,7 @@ const btnClass = isScrolled
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}>
-              heedle.Ai
+              Wheedle Technologies.ai
             </span>
           </Link>
           <button

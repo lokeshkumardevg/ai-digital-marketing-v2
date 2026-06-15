@@ -65,7 +65,7 @@ function Footer() {
                 }}>
                   <img
                     src={logo}
-                    alt="heedle logo"
+                    alt="Wheedle logo"
                     style={{ width: "100%", height: "150%", objectFit: "contain" }}
                   />
                 </div>
@@ -79,7 +79,7 @@ function Footer() {
                   WebkitTextFillColor: "transparent",
                   transition: "font-size 0.5s ease",
                 }}>
-                  heedle.Ai
+                  Wheedle Technologies.ai
                 </span>
               </div>
             </Link>

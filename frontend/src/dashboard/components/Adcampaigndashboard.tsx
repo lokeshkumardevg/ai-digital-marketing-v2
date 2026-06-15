@@ -1531,16 +1531,24 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
       const { api } = await import('../../api/axios');
       if (activePid === 'google') {
         const res = await api.post('/campaign/google/publish', payload);
-        showToast(res.data?.message || 'Published to Google Ads successfully!', "success");
+        if (res.data?.success === false) {
+          showToast(`❌ Google Ads: ${res.data?.error || res.data?.message || 'Publish failed. Check your Google Ads credentials.'}`, 'error');
+          return;
+        }
+        showToast(res.data?.message || '✅ Published to Google Ads successfully!', 'success');
       } else if (activePid === 'meta') {
         const res = await api.post('/campaign/meta/publish', payload);
-        showToast(res.data?.message || 'Published to Meta Ads successfully!', "success");
+        showToast(res.data?.message || '✅ Published to Meta Ads successfully!', 'success');
       } else if (activePid === 'linkedin') {
         const res = await api.post('/campaign/linkedin/publish', payload);
-        showToast(res.data?.message || 'Published to LinkedIn successfully!', "success");
+        if (res.data?.success === false) {
+          showToast(`❌ LinkedIn: ${res.data?.error || res.data?.message || 'Publish failed. Check your LinkedIn connection.'}`, 'error');
+          return;
+        }
+        showToast(res.data?.message || '✅ Published to LinkedIn successfully!', 'success');
       } else {
         const res = await api.post('/campaign/publish', { ...payload, platform: activePid });
-        showToast(res.data?.message || `Published with ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan!`, "success");
+        showToast(res.data?.message || `✅ Published with ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan!`, 'success');
       }
       setTimeout(() => onPublish({ success: true }, planId), 1500);
     } catch (err: any) {

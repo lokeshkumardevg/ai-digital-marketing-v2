@@ -643,9 +643,9 @@ function Register() {
           display: "flex", alignItems: "center", justifyContent: "center",
           overflow: "hidden", flexShrink: 0,
         }}>
-          <img src={logo} alt="heedle logo" style={{ width: "100%", height: "150%", objectFit: "contain" }} />
+          <img src={logo} alt="Wheedle logo" style={{ width: "100%", height: "150%", objectFit: "contain" }} />
         </div>
-        <span className="logo-wordmark">heedle.Ai</span>
+        <span className="logo-wordmark">Wheedle Technologies.ai</span>
       </div>
 
       {/* Back to home */}
@@ -907,7 +907,7 @@ function Register() {
                   lineHeight: 1.8,
                 }}>
                   Having trouble?{" "}
-                  <a href="mailto:info@wheedletechnologies.ai" style={{ color: "rgba(238,238,245,0.48)", textDecoration: "underline" }}>
+                  <a href="mailto:info@Wheedletechnologies.ai" style={{ color: "rgba(238,238,245,0.48)", textDecoration: "underline" }}>
                     Send us an email.
                   </a>
                   <br />

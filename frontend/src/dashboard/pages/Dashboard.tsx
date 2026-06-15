@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { GlassCard } from '../components/GlassCard';
-import { 
+import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area
 } from 'recharts';
-import { 
-  TrendingUp, Target, MousePointerClick, 
+import {
+  TrendingUp, Target, MousePointerClick,
   ArrowUpRight, BrainCircuit, Wand2
 } from 'lucide-react';
 
@@ -48,9 +48,9 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         gap: '24px',
         marginBottom: '32px'
       }}>
@@ -60,7 +60,7 @@ export const Dashboard: React.FC = () => {
           { label: 'Active Campaigns', value: data?.campaigns || 0, change: '0', icon: Target, color: 'var(--warning)' },
           { label: 'Total Conversions', value: data?.summary?.conversions || 0, change: '0%', icon: MousePointerClick, color: 'var(--info)' },
         ].map((stat, i) => (
-          <GlassCard key={i} onClick={() => {}}>
+          <GlassCard key={i} onClick={() => { }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '8px' }}>{stat.label}</div>
@@ -68,19 +68,19 @@ export const Dashboard: React.FC = () => {
                   {stat.value}
                 </div>
               </div>
-              <div style={{ 
-                padding: '10px', 
-                borderRadius: '12px', 
+              <div style={{
+                padding: '10px',
+                borderRadius: '12px',
                 background: `rgba(${stat.color === 'var(--accent-primary)' ? '139, 92, 246' : stat.color === 'var(--success)' ? '16, 185, 129' : stat.color === 'var(--warning)' ? '245, 158, 11' : '59, 130, 246'}, 0.1)`,
                 color: stat.color
               }}>
                 <stat.icon size={24} />
               </div>
             </div>
-            <div style={{ 
-              marginTop: '16px', display: 'flex', alignItems: 'center', gap: '4px', 
-              color: stat.change.startsWith('+') ? 'var(--success)' : 'var(--error)', 
-              fontSize: '0.85rem' 
+            <div style={{
+              marginTop: '16px', display: 'flex', alignItems: 'center', gap: '4px',
+              color: stat.change.startsWith('+') ? 'var(--success)' : 'var(--error)',
+              fontSize: '0.85rem'
             }}>
               <ArrowUpRight size={16} />
               <span>{stat.change} from last week</span>
@@ -97,18 +97,18 @@ export const Dashboard: React.FC = () => {
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorTraffic" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--accent-primary)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--accent-primary)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--accent-primary)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--accent-primary)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorConversion" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--success)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--success)" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--success)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--success)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--glass-border)" vertical={false} />
                 <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
                 <YAxis stroke="var(--text-secondary)" tick={{ fill: 'var(--text-secondary)' }} axisLine={false} tickLine={false} />
-                <Tooltip 
+                <Tooltip
                   contentStyle={{ background: 'var(--bg-secondary)', border: '1px solid var(--glass-border)', borderRadius: '8px' }}
                   itemStyle={{ color: 'var(--text-primary)' }}
                 />
@@ -123,8 +123,8 @@ export const Dashboard: React.FC = () => {
           <h3 style={{ marginBottom: '24px', fontSize: '1.2rem' }}>AI Orchestrator Status</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {(data?.orchestratorStatus || []).map((model: any, i: number) => (
-              <div key={i} style={{ 
-                background: 'rgba(255,255,255,0.02)', 
+              <div key={i} style={{
+                background: 'rgba(255,255,255,0.02)',
                 padding: '16px', borderRadius: '12px', border: '1px solid var(--glass-border)',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center'
               }}>

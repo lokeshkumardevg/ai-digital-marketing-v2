@@ -165,7 +165,7 @@ export const Crm: React.FC = () => {
   //           toast.error('Payment verification failed');
   //         }
   //       },
-  //       prefill: { name: 'Wheedle User', email: 'user@wheedle.ai' },
+  //       prefill: { name: 'Wheedle User', email: 'user@Wheedle.ai' },
   //      theme: { color: '#0665ff' },
   //     };
   // 

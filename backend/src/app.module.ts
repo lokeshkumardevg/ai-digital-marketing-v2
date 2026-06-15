@@ -29,11 +29,8 @@ import { LinkedInCrmModule } from './linkedin-crm/linkedin-crm.module';
 import { LinkedinScraperModule } from './linkedin-scraper/linkedin-scraper.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ReputationModule } from './reputation/reputation.module';
-<<<<<<< HEAD
 import { CallingModule } from './calling/calling.module';
-=======
 import { GoogleBusinessModule } from './google-business/google-business.module';
->>>>>>> e135aff4d65e77a0dc4a999e3066f5f0af3293e2
 
 @Module({
   imports: [
@@ -86,11 +83,8 @@ import { GoogleBusinessModule } from './google-business/google-business.module';
     LinkedinScraperModule,
     ReviewsModule,
     ReputationModule,
-<<<<<<< HEAD
     CallingModule,
-=======
     GoogleBusinessModule,
->>>>>>> e135aff4d65e77a0dc4a999e3066f5f0af3293e2
   ],
   controllers: [AppController],
   providers: [AppService],

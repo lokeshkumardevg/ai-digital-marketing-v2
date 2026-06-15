@@ -488,7 +488,7 @@ export const Agents: React.FC = () => {
 </div>
         </div>
         <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, letterSpacing: '-0.8px', color: '#f5f5f5', fontFamily: 'Outfit', whiteSpace: 'nowrap' }}>
-          heedle.Ai
+          Wheedle Technologies.ai
         </h2>
       </div>
           <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>Agent Ecosystem</p>

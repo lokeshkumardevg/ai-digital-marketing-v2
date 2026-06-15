@@ -13,6 +13,8 @@ export class Customer {
   @Prop({ default: 'pending', enum: ['pending', 'sent', 'completed'] }) reviewStatus: string;
   @Prop({ default: 'manual', enum: ['manual', 'csv', 'website', 'shopify', 'referral'] }) source: string;
   @Prop({ default: 'pending', enum: ['pending', 'active', 'inactive'] }) status: string;
+  @Prop() lastPurchase?: Date;
+  @Prop() totalSpent?: number;
 }
 
 

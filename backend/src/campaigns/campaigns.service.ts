@@ -1891,10 +1891,15 @@ Return ONLY JSON.
         developer_token: developerToken,
       });
 
-      const customer = client.Customer({
+      const customerConfig: any = {
         customer_id: customerId,
         refresh_token: user.googleRefreshToken,
-      });
+      };
+      const managerId = user.googleCustomerId ? user.googleCustomerId.replace(/-/g, '') : null;
+      if (managerId && managerId !== customerId) {
+        customerConfig.login_customer_id = managerId;
+      }
+      const customer = client.Customer(customerConfig);
 
       // 1. Create Campaign Budget
       const budgetResult = await customer.campaignBudgets.create([
@@ -1920,7 +1925,8 @@ Return ONLY JSON.
           },
           manual_cpc: {
             enhanced_cpc_enabled: false
-          }
+          },
+          contains_eu_political_advertising: enums.EuPoliticalAdvertisingStatus.DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING,
         }
       ]);
       const campaignResourceName = campaignResult.results[0].resource_name;
@@ -1979,96 +1985,328 @@ Return ONLY JSON.
     );
 
     return {
-      success: true,
-      message: errorMsg ? 'Campaign saved locally, but Google API failed.' : 'Campaign saved locally (Google API bypassed).',
-      error: errorMsg,
-      campaignResourceName: `mock_google_camp_${Date.now()}`,
-      adGroupResourceName: `mock_google_adgroup_${Date.now()}`
+      success: !errorMsg, // false if Google API actually failed, true if just bypassed
+      message: errorMsg ? 'Google Ads API failed. Campaign saved locally as draft.' : 'Campaign saved locally (Google API credentials not configured).',
+      error: errorMsg || null,
+      campaignResourceName: `local_camp_${Date.now()}`,
+      adGroupResourceName: `local_adgroup_${Date.now()}`
     };
   }
 
-  async publishLinkedinCampaign(userId: string, data: any) {
-    this.logger.log(`Publishing LinkedIn Campaign (Organic Post) for ${userId}`);
+  async publishLinkedinCampaign(userId: string, payload: any) {
+    this.logger.log(`Publishing LinkedIn Campaign for ${userId}`);
     const user = await this.usersService.findById(userId);
     if (!user) throw new BadRequestException('User not found');
     if (!user.linkedinAccessToken || !user.linkedinPersonUrn) {
-      throw new BadRequestException('LinkedIn Account not fully connected or Person URN missing.');
+      return {
+        success: false,
+        error: 'LinkedIn Account not fully connected. Please disconnect and reconnect LinkedIn from the Social Hub page.',
+      };
     }
 
-    const { campaignName, caption, imageUrl } = data;
-    const authorUrn = user.linkedinPersonUrn;
-    
-    // To publish a post we use the /v2/ugcPosts endpoint
-    // We will post it as an organic post since ads api requires enterprise access
-    
-    const postPayload: any = {
-      author: `urn:li:person:${authorUrn}`,
-      lifecycleState: 'PUBLISHED',
-      specificContent: {
-        'com.linkedin.ugc.ShareContent': {
-          shareCommentary: {
-            text: caption || 'Check out my new campaign!'
-          },
-          shareMediaCategory: 'NONE'
-        }
-      },
-      visibility: {
-        'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
-      }
-    };
+    const { name: campaignName, data: platformsData } = payload;
+    const linkedinData = platformsData?.linkedin || payload;
+    const caption = linkedinData.primaryText || linkedinData.caption || campaignName || 'Check out my new campaign!';
+    const headline = linkedinData.headline || 'AI Ad Campaign';
+    const finalUrl = linkedinData.finalUrl || 'https://www.wheedle.ai';
+    const budget = linkedinData.budget || 10;
 
+    const authorUrn = user.linkedinPersonUrn?.startsWith('urn:li:')
+      ? user.linkedinPersonUrn
+      : `urn:li:person:${user.linkedinPersonUrn}`;
+
+    let isAdCampaignSuccess = false;
+    let linkedinPostId = null;
+    let apiError = null;
+    let responseText = '';
+
+    // ==========================================
+    // 1. ATTEMPT LINKEDIN MARKETING API (ADS)
+    // ==========================================
     try {
-      // If there's an image we might need to upload it first or just post as a link
-      // For simplicity, we just post text if image upload isn't pre-configured
-      const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
-        method: 'POST',
+      this.logger.log('Attempting to create Paid Ad Campaign via LinkedIn Marketing API...');
+      
+      // Step A: Fetch Ad Accounts (Removing filters to catch all types and statuses)
+      const adAccRes = await fetch('https://api.linkedin.com/v2/adAccountsV2?q=search&count=5', {
         headers: {
           'Authorization': `Bearer ${user.linkedinAccessToken}`,
           'X-Restli-Protocol-Version': '2.0.0',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(postPayload),
+          'LinkedIn-Version': '202401',
+        }
       });
-
-      const responseData = await res.json();
-      if (!res.ok) {
-        throw new Error(responseData.message || 'Failed to publish to LinkedIn');
-      }
-
-      if (data.campaignId) {
-        await this.markCampaignActive(data.campaignId, 'linkedin');
-      }
-
-      return {
-        success: true,
-        message: 'Successfully published Organic Post on LinkedIn!',
-        postId: responseData.id
-      };
-    } catch (err: any) {
-      this.logger.error('LinkedIn API Error', err.message);
       
-      const newCampaignId = data.campaignId || `CMP_${Date.now()}_linkedin`;
-      await this.campaignModel.findOneAndUpdate(
-        { campaignId: newCampaignId },
-        {
-          $set: {
-            userId: userId,
-            campaignId: newCampaignId,
-            name: campaignName || 'LinkedIn AI Campaign',
-            platform: 'linkedin',
-            data: data,
-            status: 'ACTIVE'
+      if (adAccRes.ok) {
+        const adAccData = await adAccRes.json();
+        this.logger.log(`Ad Accounts Raw Response: ${JSON.stringify(adAccData)}`);
+        const adAccount = adAccData.elements?.[0];
+        
+        if (adAccount) {
+          const adAccountUrn = `urn:li:sponsoredAccount:${adAccount.id}`;
+          this.logger.log(`Found Ad Account: ${adAccountUrn} (Status: ${adAccount.status}, Type: ${adAccount.type})`);
+          
+          // Step B: Fetch or Create Campaign Group
+          let campaignGroupUrn = '';
+          const groupSearchRes = await fetch(`https://api.linkedin.com/rest/adCampaignGroups?q=search&search.account.values[0]=${encodeURIComponent(adAccountUrn)}&search.status.values[0]=ACTIVE&count=1`, {
+            headers: {
+              'Authorization': `Bearer ${user.linkedinAccessToken}`,
+              'LinkedIn-Version': '202401',
+              'X-Restli-Protocol-Version': '2.0.0',
+            }
+          });
+          
+          if (groupSearchRes.ok) {
+            const groupData = await groupSearchRes.json();
+            if (groupData.elements?.length > 0) {
+              campaignGroupUrn = groupData.elements[0].id || `urn:li:sponsoredCampaignGroup:${groupData.elements[0].id}`;
+              if (!campaignGroupUrn.startsWith('urn:li:')) {
+                campaignGroupUrn = `urn:li:sponsoredCampaignGroup:${campaignGroupUrn}`;
+              }
+            }
+          }
+          
+          if (!campaignGroupUrn) {
+            // Create a new Campaign Group
+            const createGroupRes = await fetch('https://api.linkedin.com/rest/adCampaignGroups', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${user.linkedinAccessToken}`,
+                'LinkedIn-Version': '202401',
+                'X-Restli-Protocol-Version': '2.0.0',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                account: adAccountUrn,
+                name: 'AI Generated Campaign Group',
+                status: 'ACTIVE'
+              })
+            });
+            if (createGroupRes.ok) {
+              const locationHeader = createGroupRes.headers.get('x-restli-id');
+              campaignGroupUrn = `urn:li:sponsoredCampaignGroup:${locationHeader}`;
+            } else {
+              const err = await createGroupRes.text();
+              this.logger.warn(`Failed to create Campaign Group. Reason: ${err}`);
+              apiError = `Failed to create Campaign Group: ${err}`;
+            }
+          }
+          
+          if (campaignGroupUrn) {
+            // Step C: Create the Campaign
+            const createCampRes = await fetch('https://api.linkedin.com/rest/adCampaigns', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${user.linkedinAccessToken}`,
+                'LinkedIn-Version': '202401',
+                'X-Restli-Protocol-Version': '2.0.0',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                account: adAccountUrn,
+                campaignGroup: campaignGroupUrn,
+                name: campaignName || 'LinkedIn AI Campaign',
+                objectiveType: 'BRAND_AWARENESS',
+                type: 'TEXT_AD',
+                dailyBudget: { amount: budget.toString(), currencyCode: 'USD' },
+                status: 'ACTIVE',
+                runSchedule: {
+                  start: Date.now() + 86400000 // Starts in 24 hours
+                },
+                targetingCriteria: {
+                  include: {
+                    and: [
+                      {
+                        or: {
+                          "urn:li:adTargetingFacet:locations": [
+                            "urn:li:geo:103644278" // United States
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              })
+            });
+            
+            if (createCampRes.ok) {
+              const campId = createCampRes.headers.get('x-restli-id');
+              const campaignUrn = `urn:li:sponsoredCampaign:${campId}`;
+              
+              // Step D: Create Creative
+              await fetch('https://api.linkedin.com/rest/adCreatives', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${user.linkedinAccessToken}`,
+                  'LinkedIn-Version': '202401',
+                  'X-Restli-Protocol-Version': '2.0.0',
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  campaign: campaignUrn,
+                  status: 'ACTIVE',
+                  variables: {
+                    data: {
+                      "com.linkedin.ads.TextAdCreativeVariables": {
+                        text: caption.substring(0, 75), // Max 75 chars
+                        title: headline.substring(0, 25), // Max 25 chars
+                        clickUri: finalUrl
+                      }
+                    }
+                  }
+                })
+              });
+              
+              linkedinPostId = campaignUrn;
+              isAdCampaignSuccess = true;
+              this.logger.log(`Successfully created LinkedIn Ad Campaign: ${campaignUrn}`);
+            } else {
+              const err = await createCampRes.text();
+              this.logger.warn(`Failed to create Ad Campaign. Reason: ${err}`);
+              apiError = `Failed to create Ad Campaign: ${err}`;
+            }
+          } else if (!apiError) {
+             apiError = 'Failed to obtain a valid Campaign Group URN.';
+          }
+        } else {
+          this.logger.warn('No active Business Ad Accounts found for this user.');
+          apiError = 'No active Business Ad Accounts found on your LinkedIn profile. Please create one at LinkedIn Campaign Manager.';
+        }
+      } else {
+        const err = await adAccRes.text();
+        this.logger.warn(`User does not have active Ad Accounts or missing rw_ads scope (${adAccRes.status}). ${err}`);
+        apiError = `Ad Account Fetch Failed (${adAccRes.status}): ${err}`;
+      }
+    } catch (err: any) {
+      this.logger.warn(`Marketing API attempt failed: ${err.message}.`);
+      apiError = `LinkedIn Marketing API Error: ${err.message}`;
+    }
+
+    // ==========================================
+    // 2. FALLBACK TO ORGANIC POST (UGC POSTS)
+    // ==========================================
+    if (!isAdCampaignSuccess && !apiError) {
+      const postPayload: any = {
+        author: authorUrn,
+        lifecycleState: 'PUBLISHED',
+        specificContent: {
+          'com.linkedin.ugc.ShareContent': {
+            shareCommentary: { text: caption },
+            shareMediaCategory: 'NONE'
           }
         },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      );
+        visibility: {
+          'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
+        }
+      };
 
+      try {
+        const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${user.linkedinAccessToken}`,
+            'X-Restli-Protocol-Version': '2.0.0',
+            'Content-Type': 'application/json',
+            'LinkedIn-Version': '202306',
+          },
+          body: JSON.stringify(postPayload),
+        });
+
+        responseText = await res.text();
+        let responseData: any;
+        try { responseData = JSON.parse(responseText); } catch { responseData = { raw: responseText }; }
+
+        if (!res.ok) {
+          apiError = responseData?.message || responseData?.serviceErrorCode || responseData?.status || responseText;
+          this.logger.error(`LinkedIn Organic API failed [${res.status}]: ${apiError}`);
+        } else {
+          linkedinPostId = responseData.id;
+        }
+      } catch (err: any) {
+        apiError = err.message;
+      }
+    }
+
+    // Save campaign locally in DB regardless of API success
+    const newCampaignId = payload.campaignId || `CMP_${Date.now()}_linkedin`;
+    await this.campaignModel.findOneAndUpdate(
+      { campaignId: newCampaignId },
+      {
+        $set: {
+          userId: userId,
+          campaignId: newCampaignId,
+          name: campaignName || 'LinkedIn AI Campaign',
+          platform: 'linkedin',
+          data: { ...payload, linkedinPostId },
+          status: apiError ? 'DRAFT' : 'ACTIVE'
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    if (apiError) {
+      if (typeof apiError === 'string' && apiError.includes('duplicate')) {
+         return {
+           success: false,
+           message: "Campaign saved locally, but LinkedIn API failed to publish.",
+           error: "LinkedIn detected duplicate content. Please slightly modify your caption before publishing again."
+         };
+      }
       return {
-        success: true, // Mark success for UI to proceed
-        message: 'Campaign saved locally, but LinkedIn API failed to publish.',
-        error: err.message
+        success: false,
+        message: "Campaign saved locally, but LinkedIn API failed to publish.",
+        error: apiError
       };
     }
+
+    return {
+      success: true,
+      message: isAdCampaignSuccess 
+        ? 'Successfully created Paid Ad Campaign via LinkedIn Marketing API!' 
+        : 'Successfully published Organic Post on LinkedIn!',
+      postId: linkedinPostId
+    };
+  }
+
+  async getLinkedinStatus(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) return { error: 'User not found' };
+
+    const hasToken = Boolean(user.linkedinAccessToken);
+    const hasUrn = Boolean(user.linkedinPersonUrn);
+    const urnValue = user.linkedinPersonUrn || null;
+    const tokenPreview = user.linkedinAccessToken ? user.linkedinAccessToken.slice(0, 20) + '...' : null;
+
+    // Try to validate the token live
+    let tokenValid = false;
+    let liveUserInfo: any = null;
+    let liveError: string | null = null;
+
+    if (hasToken) {
+      try {
+        const r = await fetch('https://api.linkedin.com/v2/userinfo', {
+          headers: { Authorization: `Bearer ${user.linkedinAccessToken}` }
+        });
+        const data = await r.json();
+        if (r.ok) {
+          tokenValid = true;
+          liveUserInfo = { sub: data.sub, name: data.name, email: data.email };
+        } else {
+          liveError = `LinkedIn token invalid: ${data.message || JSON.stringify(data)}`;
+        }
+      } catch (e: any) {
+        liveError = `Token check failed: ${e.message}`;
+      }
+    }
+
+    return {
+      hasToken,
+      hasUrn,
+      urnValue,
+      tokenPreview,
+      tokenValid,
+      liveUserInfo,
+      liveError,
+      readyToPublish: hasToken && hasUrn && tokenValid,
+    };
   }
 
   async getCampaignsByUser(userId: string) {

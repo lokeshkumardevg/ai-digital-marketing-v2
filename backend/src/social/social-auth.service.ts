@@ -26,7 +26,7 @@ export class SocialAuthService {
     if (normalized === 'linkedin') {
       const clientId = this.getEnv('LINKEDIN_CLIENT_ID');
       const scope =
-        this.configService.get<string>('LINKEDIN_SCOPES') || 'openid profile w_member_social email';
+        this.configService.get<string>('LINKEDIN_SCOPES') || 'openid profile w_member_social email rw_ads r_ads r_organization_admin w_organization_social';
       return `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}&scope=${encodeURIComponent(scope)}`;
     }
 
@@ -84,7 +84,7 @@ export class SocialAuthService {
       await this.usersService.update(String(user._id), {
         linkedinAccessToken: tokenResponse.data.access_token,
         linkedinRefreshToken: tokenResponse.data.refresh_token || null,
-        linkedinPersonId: person.data?.sub || person.data?.id || null,
+        linkedinPersonUrn: person.data?.sub || person.data?.id || null, // FIXED: was incorrectly saving as linkedinPersonId
       });
 
       return { platform: 'linkedin', connected: true };
@@ -179,6 +179,32 @@ export class SocialAuthService {
       facebook: Boolean(user.metaAccessToken),
       instagram: Boolean(user.instagramAccessToken && user.instagramUserId),
     };
+  }
+
+  async disconnectPlatform(userId: string, platform: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    const updates: any = {};
+    if (platform === 'linkedin') {
+      updates.linkedinAccessToken = null;
+      updates.linkedinRefreshToken = null;
+      updates.linkedinPersonUrn = null;
+    } else if (platform === 'twitter') {
+      updates.twitterAccessToken = null;
+      updates.twitterRefreshToken = null;
+      updates.twitterUserId = null;
+    } else if (platform === 'facebook') {
+      updates.metaAccessToken = null;
+    } else if (platform === 'instagram') {
+      updates.instagramAccessToken = null;
+      updates.instagramUserId = null;
+    }
+
+    await this.usersService.update(String(user._id), updates);
+    return this.getConnections(userId);
   }
 
   async refreshToken(userId: string, platform: SocialPlatform): Promise<string | null> {

@@ -5,7 +5,7 @@ async function run() {
   const client = new MongoClient(uri);
   await client.connect();
   const db = client.db();
-  const user = await db.collection('users').findOne({ email: 'wheedletechnologis@gmail.com' });
+  const user = await db.collection('users').findOne({ email: 'Wheedletechnologis@gmail.com' });
   
   if (!user) return process.exit(0);
 

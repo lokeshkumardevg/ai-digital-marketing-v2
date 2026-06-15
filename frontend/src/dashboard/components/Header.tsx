@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReplaceBrandModal from './content/ReplaceBrandModal';
 import {
   Bell, Search as SearchIcon, LogOut, CheckCircle2,
-  X, Sparkles, Wallet, RefreshCw, Globe, PlusCircle, ChevronDown
+  X, Sparkles, Wallet, RefreshCw, Globe, PlusCircle, ChevronDown, Send, Bot
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +16,7 @@ import {
 import { markAllReadAsync, markOneReadAsync, deleteOneAsync, fetchNotifications } from '../../store/slices/notificationSlice';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import { api } from '../../api/axios';
 import './Header.css';
 
 
@@ -58,6 +59,51 @@ export const Header: React.FC = () => {
   const [newSiteUrl, setNewSiteUrl] = useState('');
   const [walletBalance, setWalletBalance] = useState(0);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+
+  // ── Ask W-AI Modal State ──
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiMessages, setAiMessages] = useState<{ role: 'user' | 'bot'; text: string }[]>([
+    {
+      role: 'bot',
+      text: 'Hello! I am W-AI, your advanced digital marketing agent. Ask me about your campaigns, brand profile, competitor analysis, or customer reviews, and I will analyze them for you!',
+    },
+  ]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiIsTyping, setAiIsTyping] = useState(false);
+
+  const handleSendAiMessage = async () => {
+    if (!aiInput.trim()) return;
+
+    const currentInput = aiInput;
+    setAiMessages((prev) => [...prev, { role: 'user', text: currentInput }]);
+    setAiInput('');
+    setAiIsTyping(true);
+
+    try {
+      const res = await api.post(`/chatbot/global/chat`, {
+        message: currentInput,
+        systemPrompt: 'You are W-AI, the advanced AdsGo.ai platform assistant.',
+        history: aiMessages.map((m) => ({ role: m.role, content: m.text })),
+      });
+
+      setAiMessages((prev) => [
+        ...prev,
+        { role: 'bot', text: res.data.response || res.data.reply || '' },
+      ]);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to get response from W-AI.');
+      setAiMessages((prev) => [
+        ...prev,
+        {
+          role: 'bot',
+          text: "I'm having trouble connecting to the server. Please check your connection and try again.",
+        },
+      ]);
+    } finally {
+      setAiIsTyping(false);
+    }
+  };
   const [showReplaceModal, setShowReplaceModal] = useState(false);
 
   const [pendingBrand, setPendingBrand] = useState<any>(null);
@@ -779,7 +825,7 @@ export const Header: React.FC = () => {
           </div>
 
           {/* ── Ask AI ── */}
-          <button className="btn-ask-ai" onClick={() => navigate('/chatbot')}>
+          <button className="btn-ask-ai" onClick={() => setShowAiModal(true)}>
             <Sparkles size={15} />
             <span>Ask W-AI</span>
           </button>
@@ -990,6 +1036,252 @@ export const Header: React.FC = () => {
         onCancel={handleCancelReplace}
         onConfirm={handleConfirmReplace}
       />
+
+      {/* ── Ask W-AI Modal ── */}
+      {showAiModal && (
+        <div 
+          className="modal-overlay" 
+          onClick={e => { if (e.target === e.currentTarget) setShowAiModal(false); }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+        >
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes scaleUp {
+              from { transform: scale(0.95); opacity: 0; }
+              to { transform: scale(1); opacity: 1; }
+            }
+          `}</style>
+          <div 
+            className="glass-modal-container"
+            style={{
+              width: '90%',
+              maxWidth: '560px',
+              height: '80vh',
+              maxHeight: '680px',
+              background: 'rgba(15, 23, 42, 0.85)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '24px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              animation: 'scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+            }}
+          >
+            {/* Header */}
+            <div 
+              style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(0, 0, 0, 0.15)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div 
+                  style={{
+                    background: 'rgba(99, 102, 241, 0.15)',
+                    padding: '10px',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  <Sparkles size={20} color="#8b5cf6" />
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc', fontFamily: 'Outfit' }}>Ask W-AI Strategic Agent</h3>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Always synchronized with your campaigns & reviews</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowAiModal(false)}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#94a3b8',
+                  transition: '0.2s'
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div 
+              style={{
+                flex: 1,
+                padding: '24px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+              }}
+            >
+              {aiMessages.map((m, i) => (
+                <div 
+                  key={i} 
+                  style={{
+                    display: 'flex',
+                    gap: '12px',
+                    alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
+                    maxWidth: '85%',
+                    flexDirection: m.role === 'user' ? 'row-reverse' : 'row'
+                  }}
+                >
+                  {m.role === 'bot' && (
+                    <div 
+                      style={{
+                        background: 'rgba(99, 102, 241, 0.15)',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                      }}
+                    >
+                      <Bot size={16} color="#8b5cf6" />
+                    </div>
+                  )}
+                  <div 
+                    style={{
+                      background: m.role === 'user' ? '#635bff' : 'rgba(255, 255, 255, 0.04)',
+                      color: '#f8fafc',
+                      padding: '12px 16px',
+                      borderRadius: '16px',
+                      borderTopRightRadius: m.role === 'user' ? '2px' : '16px',
+                      borderTopLeftRadius: m.role === 'user' ? '16px' : '2px',
+                      fontSize: '0.88rem',
+                      lineHeight: 1.5,
+                      border: m.role === 'user' ? 'none' : '1px solid rgba(255, 255, 255, 0.05)',
+                      boxShadow: m.role === 'user' ? '0 4px 12px rgba(99, 102, 241, 0.3)' : 'none',
+                      whiteSpace: 'pre-wrap',
+                      textAlign: 'left'
+                    }}
+                  >
+                    {m.text}
+                  </div>
+                </div>
+              ))}
+              {aiIsTyping && (
+                <div style={{ display: 'flex', gap: '12px', alignSelf: 'flex-start' }}>
+                  <div 
+                    style={{
+                      background: 'rgba(99, 102, 241, 0.15)',
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}
+                  >
+                    <Bot size={16} color="#8b5cf6" />
+                  </div>
+                  <div 
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      color: '#94a3b8',
+                      padding: '12px 16px',
+                      borderRadius: '16px',
+                      borderTopLeftRadius: '2px',
+                      fontSize: '0.8rem',
+                      fontStyle: 'italic',
+                      border: '1px solid rgba(255, 255, 255, 0.05)',
+                      textAlign: 'left'
+                    }}
+                  >
+                    W-AI is analyzing your project details...
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Input Box */}
+            <div 
+              style={{
+                padding: '18px 24px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+                background: 'rgba(0, 0, 0, 0.15)',
+                display: 'flex',
+                gap: '12px'
+              }}
+            >
+              <input 
+                type="text" 
+                placeholder="Ask W-AI to check campaigns, errors, or brand insights..." 
+                value={aiInput}
+                onChange={e => setAiInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleSendAiMessage(); }}
+                disabled={aiIsTyping}
+                style={{
+                  flex: 1,
+                  background: 'rgba(0, 0, 0, 0.3)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '12px',
+                  padding: '12px 16px',
+                  color: '#f8fafc',
+                  fontSize: '0.88rem',
+                  outline: 'none',
+                  transition: 'border-color 0.2s'
+                }}
+              />
+              <button 
+                onClick={handleSendAiMessage}
+                disabled={aiIsTyping || !aiInput.trim()}
+                style={{
+                  background: 'linear-gradient(135deg, #635bff 0%, #4f46e5 100%)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#fff',
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Send size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

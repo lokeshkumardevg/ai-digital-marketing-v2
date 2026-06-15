@@ -21,7 +21,7 @@ const SIZE = {
   lg: 76,
 };
 
-const STYLE_ID = 'wheedle-ai-loader-styles';
+const STYLE_ID = 'Wheedle-ai-loader-styles';
 
 const styles = `
 /* ──────────────────────────────────────────

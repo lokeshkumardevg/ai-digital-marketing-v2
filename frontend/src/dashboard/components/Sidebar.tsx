@@ -354,7 +354,7 @@ export const Sidebar: React.FC = () => {
                 animation: 'fadeInRight 0.5s ease both',
               }}
             >
-              heedle.Ai
+              Wheedle Technologies.ai
             </h2>
             <Sparkles
               size={13}
@@ -696,7 +696,7 @@ export const Sidebar: React.FC = () => {
                 whiteSpace: 'nowrap',
               }}
             >
-              heedle Technologies
+              Wheedle Technologies
             </span>
           </div>
         </div>

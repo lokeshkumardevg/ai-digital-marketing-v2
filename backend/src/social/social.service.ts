@@ -85,11 +85,18 @@ export class SocialService {
   async postToLinkedIn(userId: string, content: string, media: string[] = []) {
     const user = await this.usersService.findById(userId);
     if (!user?.linkedinAccessToken || !user.linkedinPersonUrn) {
-      throw new NotFoundException('LinkedIn is not connected.');
+      throw new NotFoundException('LinkedIn is not connected. Please reconnect LinkedIn from the Social Hub page.');
     }
 
+    // linkedinPersonUrn may be just the ID or the full URN
+    const authorUrn = user.linkedinPersonUrn.startsWith('urn:li:')
+      ? user.linkedinPersonUrn
+      : `urn:li:person:${user.linkedinPersonUrn}`;
+
+    this.logger.log(`LinkedIn postToLinkedIn authorUrn: ${authorUrn}`);
+
     const body = {
-      author: `urn:li:person:${user.linkedinPersonUrn}`,
+      author: authorUrn,
       lifecycleState: 'PUBLISHED',
       specificContent: {
         'com.linkedin.ugc.ShareContent': {
@@ -106,6 +113,7 @@ export class SocialService {
         headers: {
           Authorization: `Bearer ${user.linkedinAccessToken}`,
           'X-Restli-Protocol-Version': '2.0.0',
+          'LinkedIn-Version': '202306',
         },
       });
       return response.data?.id || response.headers['x-restli-id'];

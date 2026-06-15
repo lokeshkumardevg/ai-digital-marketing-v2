@@ -333,6 +333,9 @@ export class AuthService {
     LIMIT 10
   `;
 
+  const managerId = user.googleCustomerId ? user.googleCustomerId.replace(/-/g, '') : null;
+  const loginCustomerId = (managerId && managerId !== cleanCustomerId) ? managerId : cleanCustomerId;
+
   const res = await fetch(
     `https://googleads.googleapis.com/v16/customers/${cleanCustomerId}/googleAds:search`,
     {
@@ -343,7 +346,7 @@ export class AuthService {
         'Content-Type': 'application/json',
 
         // ✅ VERY IMPORTANT (fix for many accounts)
-        'login-customer-id': cleanCustomerId,
+        'login-customer-id': loginCustomerId,
       },
       body: JSON.stringify({ query }),
     },

@@ -988,7 +988,13 @@ export function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showTo
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || 'Publish failed');
-      showToast(`Published on ${activePlat.name} with ${planId} plan!`, 'success');
+      // Also check result.success - Google API may return 200 but with success:false when API fails
+      if (result.success === false) {
+        const errMsg = result.error || result.message || 'Publish failed on platform API.';
+        showToast(`❌ ${activePlat.name}: ${errMsg}`, 'error');
+        return;
+      }
+      showToast(`✅ Published on ${activePlat.name}!`, 'success');
       onSaved();
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Publish failed', 'error');

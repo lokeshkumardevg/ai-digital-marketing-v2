@@ -605,7 +605,9 @@ export class LinkedInCrmService {
       'email',
       'w_member_social',
       'r_organization_admin', // Needed to fetch Company Pages
-      'w_organization_social' // Needed to post as Company Page
+      'w_organization_social', // Needed to post as Company Page
+      'rw_ads', // Required to create Ad Campaigns
+      'r_ads' // Required to read Ad Accounts
     ].join(' ');
 
     return `https://www.linkedin.com/oauth/v2/authorization?` +

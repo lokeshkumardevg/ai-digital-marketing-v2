@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Post,
   Param,
   Query,
   Req,
@@ -63,6 +64,19 @@ export class SocialAuthController {
     return {
       status: 'success',
       data: await this.socialAuthService.getConnections(userId),
+    };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('auth/:platform/disconnect')
+  async disconnectPlatform(@Param('platform') platform: string, @Req() req: Request & { user?: any }) {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new UnauthorizedException();
+    }
+    return {
+      status: 'success',
+      data: await this.socialAuthService.disconnectPlatform(userId, platform),
     };
   }
 }

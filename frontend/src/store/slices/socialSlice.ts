@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api/axios';
+import { hydrateSession } from './authSlice';
 
 interface PlatformConnections {
   linkedin: boolean;
@@ -51,8 +52,9 @@ export const connectPlatform = createAsyncThunk(
 
 export const disconnectPlatform = createAsyncThunk(
   'social/disconnectPlatform',
-  async (platform: 'linkedin' | 'twitter' | 'facebook' | 'instagram') => {
-    // Placeholder for API support; state updates immediately for UX.
+  async (platform: 'linkedin' | 'twitter' | 'facebook' | 'instagram', thunkAPI) => {
+    await api.post(`/social/auth/${platform}/disconnect`);
+    thunkAPI.dispatch(hydrateSession());
     return platform;
   },
 );
