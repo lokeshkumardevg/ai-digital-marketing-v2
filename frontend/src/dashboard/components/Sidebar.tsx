@@ -312,7 +312,7 @@ export const Sidebar: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '3px',
+            gap: '0px',
             borderBottom: '1px solid rgba(255,255,255,0.06)',
             zIndex: 10,
             flexShrink: 0,
@@ -354,7 +354,7 @@ export const Sidebar: React.FC = () => {
                 animation: 'fadeInRight 0.5s ease both',
               }}
             >
-              Wheedle Technologies.ai
+              heedleTechnologies.Ai
             </h2>
             <Sparkles
               size={13}
@@ -637,7 +637,7 @@ export const Sidebar: React.FC = () => {
         </nav>
 
         {/* Bottom branding */}
-        <div
+        {/* <div
           style={{
             margin: '12px',
             marginTop: '16px',
@@ -699,7 +699,7 @@ export const Sidebar: React.FC = () => {
               Wheedle Technologies
             </span>
           </div>
-        </div>
+        </div> */}
       </div>
     </>
   );

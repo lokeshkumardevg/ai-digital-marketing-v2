@@ -529,8 +529,6 @@ async createLeadsBulk(dtos: CreateLeadDto[]) {
     name:            dto.name,
     email:           dto.email,
     phone:           dto.phone    || '',
-    lastPurchase:    dto.lastPurchase,
-    totalSpent:      dto.totalSpent,
   }));
 
   const customers = await this.customerModel.insertMany(docs, { ordered: false });

@@ -74,7 +74,7 @@ const btnClass = isScrolled
 
             {/* Logo */}
             <Link to="/" className="flex items-center relative z-10 shrink-0">
-              <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <div style={{ display: "flex", alignItems: "center"}}>
                 <div style={{
                   width: 44, height: 36, borderRadius: 10,
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -96,7 +96,7 @@ const btnClass = isScrolled
                   WebkitTextFillColor: "transparent",
                   transition: "font-size 0.5s ease",
                 }}>
-                  Wheedle Technologies.ai
+                  heedleTechnologies.Ai
                 </span>
               </div>
             </Link>

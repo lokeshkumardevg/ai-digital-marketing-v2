@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { GoogleBusinessService } from './google-business.service';
 
 @Controller('google-business')
@@ -7,55 +16,48 @@ export class GoogleBusinessController {
     private readonly googleBusinessService: GoogleBusinessService,
   ) {}
 
-  // 🔐 OAuth callback -> get tokens
-  @Post('oauth/token')
-  async getTokens(@Body('code') code: string) {
-    return this.googleBusinessService.getTokens(code);
-  }
-
-  // 🏢 Get accounts
   @Get('accounts')
-  async getAccounts(@Query('accessToken') accessToken: string) {
-    return this.googleBusinessService.getAccounts(accessToken);
+  @UseGuards(AuthGuard('jwt'))
+  getAccounts(@Request() req: any) {
+    const userId = req.user.sub || req.user.userId || req.user._id;
+    return this.googleBusinessService.getAccounts(userId);
   }
 
-  // 📍 Get locations
   @Get('locations')
-  async getLocations(
-    @Query('accessToken') accessToken: string,
+  @UseGuards(AuthGuard('jwt'))
+  getLocations(
+    @Request() req: any,
     @Query('accountId') accountId: string,
   ) {
-    return this.googleBusinessService.getLocations(accessToken, accountId);
+    const userId = req.user.sub || req.user.userId || req.user._id;
+    return this.googleBusinessService.getLocations(userId, accountId);
   }
 
-  // ⭐ Get reviews
   @Get('reviews')
-  async getReviews(
-    @Query('accessToken') accessToken: string,
+  @UseGuards(AuthGuard('jwt'))
+  getReviews(
+    @Request() req: any,
     @Query('accountId') accountId: string,
     @Query('locationId') locationId: string,
   ) {
-    return this.googleBusinessService.getReviews(
-      accessToken,
-      accountId,
-      locationId,
-    );
+    const userId = req.user.sub || req.user.userId || req.user._id;
+    return this.googleBusinessService.getReviews(userId, accountId, locationId);
   }
 
-  // 💬 Reply to review
   @Post('reviews/reply')
-  async reply(
-    @Body()
-    body: {
-      accessToken: string;
+  @UseGuards(AuthGuard('jwt'))
+  reply(
+    @Request() req: any,
+    @Body() body: {
       accountId: string;
       locationId: string;
       reviewId: string;
       comment: string;
     },
   ) {
+    const userId = req.user.sub || req.user.userId || req.user._id;
     return this.googleBusinessService.replyToReview(
-      body.accessToken,
+      userId,
       body.accountId,
       body.locationId,
       body.reviewId,

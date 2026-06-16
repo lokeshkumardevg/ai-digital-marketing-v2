@@ -1,4 +1,4 @@
- 
+
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -14,7 +14,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {}
+  ) { }
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
@@ -77,68 +77,103 @@ export class AuthService {
 
   // ================= GOOGLE =================
 
-  async loginWithGoogleIdToken(token: string) {
+  async loginWithGoogleCode(code: string) {
     const clientId = this.configService.get('GOOGLE_CLIENT_ID');
-    if (!clientId) {
-      throw new UnauthorizedException('GOOGLE_CLIENT_ID not configured');
+    const clientSecret = this.configService.get('GOOGLE_CLIENT_SECRET');
+
+    if (!clientId || !clientSecret) {
+      throw new UnauthorizedException('Google credentials not configured');
     }
 
+    // Step 1: Exchange code for tokens
+    const params = new URLSearchParams({
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: 'postmessage', // required for auth-code flow from browser
+      grant_type: 'authorization_code',
+    });
+
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    const tokens = await tokenRes.json() as any;
+
+    if (tokens.error) {
+      console.error('[Google Login] Token exchange failed:', tokens);
+      throw new UnauthorizedException(tokens.error_description || 'Google login failed');
+    }
+
+    // Step 2: Get user info
+    const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    });
+    const userInfo = await userInfoRes.json() as any;
+
+    if (!userInfo.email) {
+      throw new UnauthorizedException('Could not get user info from Google');
+    }
+
+    // Step 3: Find or create user
+    let user = await this.usersService.findByEmail(userInfo.email);
+
+    if (!user) {
+      const randomPass = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(randomPass, salt);
+      user = await this.usersService.create({
+        name: userInfo.name || userInfo.email.split('@')[0],
+        email: userInfo.email,
+        passwordHash: hash,
+      });
+    }
+
+    // Step 4: Save tokens to DB so GoogleBusinessService can use them
+    const updateData: any = {
+      googleAccessToken: tokens.access_token,
+      googleTokenExpiry: Date.now() + (tokens.expires_in || 3600) * 1000,
+    };
+
+    // refresh_token only comes on first login or when prompt=consent
+    if (tokens.refresh_token) {
+      updateData.googleRefreshToken = tokens.refresh_token;
+      console.log('[Google Login] Refresh token saved ✓');
+    } else {
+      console.log('[Google Login] No refresh token in response (user already consented before)');
+    }
+
+    await this.usersService.update(user._id.toString(), updateData);
+
+    return this.login(user);
+  }
+
+  // Kept as fallback — can remove later
+  async loginWithGoogleIdToken(token: string) {
     let email = '';
     let name = '';
 
     try {
-      // First try to verify as an ID Token
-      const client = new OAuth2Client(clientId);
-      const ticket = await client.verifyIdToken({
-        idToken: token,
-        audience: clientId,
+      const userInfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      const payload = ticket.getPayload();
-      
-      if (!payload || !payload.email) {
-        throw new Error('Invalid Google token payload');
-      }
-
-      email = payload.email;
-      name = payload.name || email.split('@')[0];
-    } catch (e: any) {
-      // If verification fails, it might be an access token from the implicit flow
-      try {
-        const userInfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!userInfoRes.data || !userInfoRes.data.email) {
-          throw new Error('Invalid Google userinfo response');
-        }
-        email = userInfoRes.data.email;
-        name = userInfoRes.data.name || email.split('@')[0];
-      } catch (err: any) {
-        console.error('Google token verification failed (both ID and Access token formats)', err.message);
-        throw new UnauthorizedException('Invalid Google token');
-      }
+      if (!userInfoRes.data?.email) throw new Error('Invalid response');
+      email = userInfoRes.data.email;
+      name = userInfoRes.data.name || email.split('@')[0];
+    } catch (err: any) {
+      throw new UnauthorizedException('Invalid Google token');
     }
 
-    try {
-      let user = await this.usersService.findByEmail(email);
-      
-      if (!user) {
-        // Create user with a random placeholder password
-        const randomPass = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(randomPass, salt);
-        
-        user = await this.usersService.create({
-          name: name,
-          email: email,
-          passwordHash: hash
-        });
-      }
-
-      return this.login(user);
-    } catch (e: any) {
-      console.error('Failed to create or login Google user', e);
-      throw new UnauthorizedException('Login failed');
+    let user = await this.usersService.findByEmail(email);
+    if (!user) {
+      const randomPass = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(randomPass, salt);
+      user = await this.usersService.create({ name, email, passwordHash: hash });
     }
+    return this.login(user);
   }
 
   async getGoogleAuthUrl(userId: string) {
@@ -166,7 +201,7 @@ export class AuthService {
       `&access_type=offline` +
       `&prompt=consent` +
       `&state=${userId}`;
-}
+  }
 
   getMetaAuthUrl(userId: string) {
     const appId = this.configService.get('META_APP_ID');
@@ -248,7 +283,7 @@ export class AuthService {
         });
 
         const customerData = await client.listAccessibleCustomers(tokens.refresh_token);
-        
+
         if (customerData.resource_names && customerData.resource_names.length > 0) {
           // Format is "customers/1234567890"
           customerId = customerData.resource_names[0].split('/')[1];
@@ -298,29 +333,29 @@ export class AuthService {
   }
 
   async getGoogleAdsInsights(userId: string, customerId: string) {
-  const user = await this.usersService.findById(userId);
+    const user = await this.usersService.findById(userId);
 
-  if (!user?.googleRefreshToken) {
-    throw new UnauthorizedException('Google not connected');
-  }
+    if (!user?.googleRefreshToken) {
+      throw new UnauthorizedException('Google not connected');
+    }
 
-  const accessToken = await this.getGoogleAccessToken(
-    userId,
-    user.googleRefreshToken
-  );
+    const accessToken = await this.getGoogleAccessToken(
+      userId,
+      user.googleRefreshToken
+    );
 
-  const developerToken =
-    user.googleDeveloperToken ||
-    this.configService.get('GOOGLE_DEVELOPER_TOKEN');
+    const developerToken =
+      user.googleDeveloperToken ||
+      this.configService.get('GOOGLE_DEVELOPER_TOKEN');
 
-  if (!developerToken) {
-    throw new UnauthorizedException('Google developer token not configured');
-  }
+    if (!developerToken) {
+      throw new UnauthorizedException('Google developer token not configured');
+    }
 
-  // ✅ CLEAN customer ID (remove dashes)
-  const cleanCustomerId = customerId.replace(/-/g, '');
+    // ✅ CLEAN customer ID (remove dashes)
+    const cleanCustomerId = customerId.replace(/-/g, '');
 
-  const query = `
+    const query = `
     SELECT
       campaign.id,
       campaign.name,
@@ -333,43 +368,43 @@ export class AuthService {
     LIMIT 10
   `;
 
-  const managerId = user.googleCustomerId ? user.googleCustomerId.replace(/-/g, '') : null;
-  const loginCustomerId = (managerId && managerId !== cleanCustomerId) ? managerId : cleanCustomerId;
+    const managerId = user.googleCustomerId ? user.googleCustomerId.replace(/-/g, '') : null;
+    const loginCustomerId = (managerId && managerId !== cleanCustomerId) ? managerId : cleanCustomerId;
 
-  const res = await fetch(
-    `https://googleads.googleapis.com/v16/customers/${cleanCustomerId}/googleAds:search`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'developer-token': developerToken,
-        'Content-Type': 'application/json',
+    const res = await fetch(
+      `https://googleads.googleapis.com/v16/customers/${cleanCustomerId}/googleAds:search`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'developer-token': developerToken,
+          'Content-Type': 'application/json',
 
-        // ✅ VERY IMPORTANT (fix for many accounts)
-        'login-customer-id': loginCustomerId,
+          // ✅ VERY IMPORTANT (fix for many accounts)
+          'login-customer-id': loginCustomerId,
+        },
+        body: JSON.stringify({ query }),
       },
-      body: JSON.stringify({ query }),
-    },
-  );
-
-  const data = await res.json();
-
-  if (data.error) {
-    console.error('Google Ads Error:', data);
-    throw new UnauthorizedException(
-      data.error.message || 'Google Ads API failed',
     );
-  }
 
-  return data;
-}
+    const data = await res.json();
+
+    if (data.error) {
+      console.error('Google Ads Error:', data);
+      throw new UnauthorizedException(
+        data.error.message || 'Google Ads API failed',
+      );
+    }
+
+    return data;
+  }
 
   async checkGoogleAccounts(userId: string) {
     const user = await this.usersService.findById(userId);
     if (!user || !user.googleRefreshToken) {
       throw new UnauthorizedException('User not found or Google refresh token missing. Please connect Google first.');
     }
-    
+
     try {
       const devToken = this.configService.get<string>('GOOGLE_DEVELOPER_TOKEN') || 'lcZ3RRE00HWy2i4quLMNuQ';
       const clientId = user.googleClientId || this.configService.get<string>('GOOGLE_CLIENT_ID');
@@ -405,127 +440,127 @@ export class AuthService {
 
   // ================= META =================
 
-async handleMetaCallback(userId: string, code: string) {
-  try {
-    console.log('===== META CALLBACK START =====');
-    console.log('USER ID:', userId);
-    console.log('CODE:', code);
-
-    const user = await this.usersService.findById(userId);
-
-    if (!user) {
-      console.log('USER NOT FOUND');
-      throw new UnauthorizedException('User not found');
-    }
-
-    const appId =
-      user.metaAppId || this.configService.get('META_APP_ID');
-
-    const appSecret =
-      user.metaAppSecret || this.configService.get('META_APP_SECRET');
-
-    console.log('APP ID:', appId);
-    console.log('APP SECRET EXISTS:', !!appSecret);
-
-    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
-    const redirectUri = `${backendUrl}/auth/meta/callback`;
-
-    console.log('REDIRECT URI:', redirectUri);
-
-    // ================= SHORT TOKEN =================
-
-    const shortUrl =
-      `https://graph.facebook.com/v20.0/oauth/access_token` +
-      `?client_id=${appId}` +
-      `&client_secret=${appSecret}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&code=${code}`;
-
-    console.log('SHORT TOKEN URL:', shortUrl);
-
-    const shortRes = await fetch(shortUrl);
-
-    const shortToken = await shortRes.json();
-
-    console.log('SHORT TOKEN RESPONSE:', shortToken);
-
-    if (shortToken.error) {
-      console.log('SHORT TOKEN ERROR');
-      throw new UnauthorizedException(
-        shortToken.error.message,
-      );
-    }
-
-    // ================= LONG TOKEN =================
-
-    const longUrl =
-      `https://graph.facebook.com/v20.0/oauth/access_token` +
-      `?grant_type=fb_exchange_token` +
-      `&client_id=${appId}` +
-      `&client_secret=${appSecret}` +
-      `&fb_exchange_token=${shortToken.access_token}`;
-
-    console.log('LONG TOKEN URL:', longUrl);
-
-    const longRes = await fetch(longUrl);
-
-    const longToken = await longRes.json();
-
-    console.log('LONG TOKEN RESPONSE:', longToken);
-
-    if (longToken.error) {
-      console.log('LONG TOKEN ERROR');
-      throw new UnauthorizedException(
-        longToken.error.message,
-      );
-    }
-
-    let metaAdAccountId = user.metaAdAccountId;
-    let metaAdAccountName = user.metaAdAccountName;
-
+  async handleMetaCallback(userId: string, code: string) {
     try {
-      const accessToken = encodeURIComponent(longToken.access_token);
-      const accountRes = await fetch(
-        `https://graph.facebook.com/v20.0/me/adaccounts?fields=account_id,name&access_token=${accessToken}`
-      );
-      const accountJson = await accountRes.json();
-      
-      if (accountRes.ok && !accountJson.error && accountJson.data && accountJson.data.length > 0) {
-        // Automatically save the first ad account found
-        const firstAccount = accountJson.data[0];
-        // Facebook requires the 'act_' prefix for ad account IDs in most API calls
-        metaAdAccountId = firstAccount.account_id.startsWith('act_') ? firstAccount.account_id : `act_${firstAccount.account_id}`;
-        metaAdAccountName = firstAccount.name;
-        console.log(`Automatically fetched and saved Meta Ad Account: ${metaAdAccountName} (${metaAdAccountId})`);
-      } else {
-        console.warn('Could not fetch Meta ad accounts automatically:', accountJson.error || 'No accounts found');
+      console.log('===== META CALLBACK START =====');
+      console.log('USER ID:', userId);
+      console.log('CODE:', code);
+
+      const user = await this.usersService.findById(userId);
+
+      if (!user) {
+        console.log('USER NOT FOUND');
+        throw new UnauthorizedException('User not found');
       }
-    } catch (e) {
-      console.error('Failed to auto-fetch Meta Ad Account', e);
+
+      const appId =
+        user.metaAppId || this.configService.get('META_APP_ID');
+
+      const appSecret =
+        user.metaAppSecret || this.configService.get('META_APP_SECRET');
+
+      console.log('APP ID:', appId);
+      console.log('APP SECRET EXISTS:', !!appSecret);
+
+      const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+      const redirectUri = `${backendUrl}/auth/meta/callback`;
+
+      console.log('REDIRECT URI:', redirectUri);
+
+      // ================= SHORT TOKEN =================
+
+      const shortUrl =
+        `https://graph.facebook.com/v20.0/oauth/access_token` +
+        `?client_id=${appId}` +
+        `&client_secret=${appSecret}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&code=${code}`;
+
+      console.log('SHORT TOKEN URL:', shortUrl);
+
+      const shortRes = await fetch(shortUrl);
+
+      const shortToken = await shortRes.json();
+
+      console.log('SHORT TOKEN RESPONSE:', shortToken);
+
+      if (shortToken.error) {
+        console.log('SHORT TOKEN ERROR');
+        throw new UnauthorizedException(
+          shortToken.error.message,
+        );
+      }
+
+      // ================= LONG TOKEN =================
+
+      const longUrl =
+        `https://graph.facebook.com/v20.0/oauth/access_token` +
+        `?grant_type=fb_exchange_token` +
+        `&client_id=${appId}` +
+        `&client_secret=${appSecret}` +
+        `&fb_exchange_token=${shortToken.access_token}`;
+
+      console.log('LONG TOKEN URL:', longUrl);
+
+      const longRes = await fetch(longUrl);
+
+      const longToken = await longRes.json();
+
+      console.log('LONG TOKEN RESPONSE:', longToken);
+
+      if (longToken.error) {
+        console.log('LONG TOKEN ERROR');
+        throw new UnauthorizedException(
+          longToken.error.message,
+        );
+      }
+
+      let metaAdAccountId = user.metaAdAccountId;
+      let metaAdAccountName = user.metaAdAccountName;
+
+      try {
+        const accessToken = encodeURIComponent(longToken.access_token);
+        const accountRes = await fetch(
+          `https://graph.facebook.com/v20.0/me/adaccounts?fields=account_id,name&access_token=${accessToken}`
+        );
+        const accountJson = await accountRes.json();
+
+        if (accountRes.ok && !accountJson.error && accountJson.data && accountJson.data.length > 0) {
+          // Automatically save the first ad account found
+          const firstAccount = accountJson.data[0];
+          // Facebook requires the 'act_' prefix for ad account IDs in most API calls
+          metaAdAccountId = firstAccount.account_id.startsWith('act_') ? firstAccount.account_id : `act_${firstAccount.account_id}`;
+          metaAdAccountName = firstAccount.name;
+          console.log(`Automatically fetched and saved Meta Ad Account: ${metaAdAccountName} (${metaAdAccountId})`);
+        } else {
+          console.warn('Could not fetch Meta ad accounts automatically:', accountJson.error || 'No accounts found');
+        }
+      } catch (e) {
+        console.error('Failed to auto-fetch Meta Ad Account', e);
+      }
+
+      await this.usersService.update(userId, {
+        metaAccessToken: longToken.access_token,
+        metaAdAccountId,
+        metaAdAccountName,
+      });
+
+      console.log('META CONNECT SUCCESS');
+
+      return { success: true };
+
+    } catch (error) {
+      console.log('===== META CALLBACK ERROR =====');
+
+      console.log(
+        error?.response?.data ||
+        error?.message ||
+        error,
+      );
+
+      throw error;
     }
-
-    await this.usersService.update(userId, {
-      metaAccessToken: longToken.access_token,
-      metaAdAccountId,
-      metaAdAccountName,
-    });
-
-    console.log('META CONNECT SUCCESS');
-
-    return { success: true };
-
-  } catch (error) {
-    console.log('===== META CALLBACK ERROR =====');
-
-    console.log(
-      error?.response?.data ||
-      error?.message ||
-      error,
-    );
-
-    throw error;
   }
-}
 
   async getMetaPages(userId: string) {
     const user = await this.usersService.findById(userId);

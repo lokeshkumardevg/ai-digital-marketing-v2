@@ -18,15 +18,11 @@ import Tutorial from "./landing/pages/tutorial";
 import Help from './landing/pages/Help';
 import PricingPage from './landing/pages/PricingPage';
 import Resources from './landing/pages/Resources';
-import ApiDocGoogle from './landing/pages/ApiDocGoogle';
-import ApiDocLinkedIn from './landing/pages/ApiDocLinkedIn';
-import ApiDocMeta from './landing/pages/ApiDocMeta';
 import Register from './landing/pages/Register';
 import { Settings } from './dashboard/pages/Settings';
 import { Seo } from './dashboard/pages/Seo';
 import { Social } from './dashboard/pages/Social';
 import { Agents } from './dashboard/pages/Agents';
-import { CallingAgent } from './dashboard/pages/CallingAgent';
 import { Roles } from './dashboard/pages/Roles';
 import { Users } from './dashboard/pages/Users';
 import { Workflows } from './dashboard/pages/Workflows';
@@ -56,6 +52,7 @@ import AnalyticsPage from './dashboard/pages/AnalyticsPage';
 import CustomersPage from './dashboard/pages/CustomersPage';
 import InboxPage from './dashboard/pages/InboxPage';
 import DashboardPage from './dashboard/pages/DashboardPage';
+import GoogleBusinessTester from './dashboard/pages/Googlebusinesstester';
 
 const ProtectedRoute = ({ children, requiredPermission }: { children: React.ReactNode, requiredPermission?: string }) => {
   const { isAuthenticated, status, user } = useSelector((state: any) => state.auth);
@@ -201,9 +198,6 @@ const App: React.FC = () => {
         <Route path="/tutorial" element={<Tutorial />} />
         <Route path="/pricing" element={<PricingPage />} />\
         <Route path="/resources" element={<Resources />} />
-        <Route path="/api-docs/google" element={<ApiDocGoogle />} />
-        <Route path="/api-docs/linkedin" element={<ApiDocLinkedIn />} />
-        <Route path="/api-docs/meta" element={<ApiDocMeta />} />
         <Route path="/help" element={<Help />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Register />} />
@@ -225,7 +219,6 @@ const App: React.FC = () => {
         <Route path="/seo/:view" element={<ProtectedRoute><DashboardLayout><Seo /></DashboardLayout></ProtectedRoute>} />
         <Route path="/social" element={<ProtectedRoute><DashboardLayout><Social /></DashboardLayout></ProtectedRoute>} />
         <Route path="/ai-agents" element={<ProtectedRoute><DashboardLayout><Agents /></DashboardLayout></ProtectedRoute>} />
-        <Route path="/calling-agent" element={<ProtectedRoute><DashboardLayout><CallingAgent /></DashboardLayout></ProtectedRoute>} />
         <Route path="/roles" element={<ProtectedRoute requiredPermission="superadmin"><DashboardLayout><Roles /></DashboardLayout></ProtectedRoute>} />
         <Route path="/users" element={<ProtectedRoute><DashboardLayout><Users /></DashboardLayout></ProtectedRoute>} />
         <Route path="/workflows" element={<ProtectedRoute><DashboardLayout><Workflows /></DashboardLayout></ProtectedRoute>} />
@@ -253,7 +246,7 @@ const App: React.FC = () => {
         <Route path="/reputation/customers" element={<ProtectedRoute><DashboardLayoutFull><CustomersPage /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/reputation/analytics" element={<ProtectedRoute><DashboardLayoutFull><AnalyticsPage /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/reputation/recommendations" element={<ProtectedRoute><DashboardLayoutFull><RecommendationsPage /></DashboardLayoutFull></ProtectedRoute>} />
-
+        <Route path="/google-business/tester" element={<ProtectedRoute><DashboardLayoutFull><GoogleBusinessTester /></DashboardLayoutFull></ProtectedRoute>} />
       </Routes>
     </Router>
   );
