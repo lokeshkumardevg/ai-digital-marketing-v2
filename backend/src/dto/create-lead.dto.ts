@@ -1,33 +1,67 @@
-import { IsString, IsNotEmpty, IsEmail, IsOptional, IsNumber, IsDate, Min, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  IsOptional,
+  IsArray,
+  ArrayMinSize,
+  ValidateNested,
+  IsEnum,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { IsArray, ArrayMinSize, ValidateNested } from 'class-validator';
+
+export enum ReviewStatus {
+  PENDING = 'pending',
+  SENT = 'sent',
+  COMPLETED = 'completed',
+}
+
+export enum LeadSource {
+  MANUAL = 'manual',
+  CSV = 'csv',
+  WEBSITE = 'website',
+  SHOPIFY = 'shopify',
+  REFERRAL = 'referral',
+}
+
+export enum LeadStatus {
+  PENDING = 'pending',
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+}
 
 export class CreateLeadDto {
-  @IsString() @IsNotEmpty() userId: string;
-  @IsString() @IsNotEmpty() brandId: string;
-  @IsString() @IsNotEmpty() name: string;
-  @IsEmail()  @IsNotEmpty() email: string;
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
 
-  @IsString() @IsOptional() phone?: string;
+  @IsString()
+  @IsNotEmpty()
+  brandId: string;
 
-  @IsEnum(['pending', 'sent', 'completed'])
-  @IsOptional() reviewStatus?: string;
+  @IsString()
+  @IsNotEmpty()
+  name: string;
 
-  @IsEnum(['manual', 'csv', 'website', 'shopify', 'referral'])
-  @IsOptional() source?: string;
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
 
-  @IsEnum(['pending', 'active', 'inactive'])
-  @IsOptional() status?: string;
-
+  @IsString()
   @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  lastPurchase?: Date;
+  phone?: string;
 
+  @IsEnum(ReviewStatus)
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  totalSpent?: number;
+  reviewStatus?: ReviewStatus;
+
+  @IsEnum(LeadSource)
+  @IsOptional()
+  source?: LeadSource;
+
+  @IsEnum(LeadStatus)
+  @IsOptional()
+  status?: LeadStatus;
 }
 
 export class CreateLeadsBulkDto {

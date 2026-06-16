@@ -19,15 +19,17 @@ export class AuthController {
   async register(@Body() registerDto: any) {
     return this.authService.register(registerDto);
   }
-
-  @Post('google/login')
-  async googleLoginAuth(@Body() body: { credential?: string, idToken?: string, access_token?: string }) {
-    const token = body.credential || body.idToken || body.access_token;
-    if (!token) {
-      throw new UnauthorizedException('Missing Google token');
-    }
-    return this.authService.loginWithGoogleIdToken(token);
+@Post('google/login')
+async googleLogin(@Body() body: { code?: string; access_token?: string }) {
+  if (body.code) {
+    return this.authService.loginWithGoogleCode(body.code);
   }
+  if (!body.access_token) {
+    throw new UnauthorizedException('No code or access_token provided');
+  }
+  return this.authService.loginWithGoogleIdToken(body.access_token);
+}
+
 
   @UseGuards(AuthGuard('jwt'))
   @Get('profile')
@@ -230,18 +232,6 @@ export class AuthController {
     }
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @Get('x/profile')
-  async getXProfile(@Request() req: any) {
-    return this.authService.getXProfile(req.user.id);
-  }
-
-  @UseGuards(AuthGuard('jwt'))
-  @Get('x/ad-accounts')
-  async getXAdAccounts(@Request() req: any) {
-    return this.authService.getXAdAccounts(req.user.id);
-  }
-
   // ================= LINKEDIN =================
 
   @UseGuards(AuthGuard('jwt'))
@@ -269,12 +259,6 @@ export class AuthController {
       console.log('[AuthController] linkedinCallback error', e?.message || e);
       return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?linkedinConnected=error" /></head><body>Redirecting...</body></html>`;
     }
-  }
-
-  @UseGuards(AuthGuard('jwt'))
-  @Get('linkedin/profile')
-  async getLinkedInProfile(@Request() req: any) {
-    return this.authService.getLinkedInProfile(req.user.id);
   }
 }
 
