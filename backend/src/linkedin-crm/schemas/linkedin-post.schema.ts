@@ -32,6 +32,9 @@ export class LinkedInPost {
   @Prop({ type: [String], default: [] })
   mediaUrls: string[];
 
+  @Prop()
+  imageUrl?: string;
+
   @Prop({ default: 'text', enum: ['text', 'image', 'video', 'article', 'poll', 'carousel'] })
   postType: string;
 
@@ -81,6 +84,12 @@ export class LinkedInPost {
 
   @Prop()
   postedAt?: Date;
+
+  @Prop()
+  status?: string;
+
+  @Prop()
+  author?: string;
 
   @Prop({ default: 'scraped', enum: ['scraped', 'api', 'manual'] })
   source: string;

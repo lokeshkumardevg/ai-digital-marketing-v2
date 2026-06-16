@@ -507,7 +507,6 @@ export class LinkedInCrmService {
       impressions: 0,
       author: account.profileName || 'Unknown',
       hashtags: text.match(/#[\w]+/g) || [],
-      createdAt: new Date(),
     });
 
     return savedPost;
