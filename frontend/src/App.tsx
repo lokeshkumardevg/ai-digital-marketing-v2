@@ -52,6 +52,7 @@ import AnalyticsPage from './dashboard/pages/AnalyticsPage';
 import CustomersPage from './dashboard/pages/CustomersPage';
 import InboxPage from './dashboard/pages/InboxPage';
 import DashboardPage from './dashboard/pages/DashboardPage';
+import GoogleBusinessTester from './dashboard/pages/Googlebusinesstester';
 
 const ProtectedRoute = ({ children, requiredPermission }: { children: React.ReactNode, requiredPermission?: string }) => {
   const { isAuthenticated, status, user } = useSelector((state: any) => state.auth);
@@ -245,7 +246,7 @@ const App: React.FC = () => {
         <Route path="/reputation/customers" element={<ProtectedRoute><DashboardLayoutFull><CustomersPage /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/reputation/analytics" element={<ProtectedRoute><DashboardLayoutFull><AnalyticsPage /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/reputation/recommendations" element={<ProtectedRoute><DashboardLayoutFull><RecommendationsPage /></DashboardLayoutFull></ProtectedRoute>} />
-
+        <Route path="/google-business/tester" element={<ProtectedRoute><DashboardLayoutFull><GoogleBusinessTester /></DashboardLayoutFull></ProtectedRoute>} />
       </Routes>
     </Router>
   );

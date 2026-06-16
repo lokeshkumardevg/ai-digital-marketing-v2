@@ -19,15 +19,17 @@ export class AuthController {
   async register(@Body() registerDto: any) {
     return this.authService.register(registerDto);
   }
-
-  @Post('google/login')
-  async googleLoginAuth(@Body() body: { credential?: string, idToken?: string, access_token?: string }) {
-    const token = body.credential || body.idToken || body.access_token;
-    if (!token) {
-      throw new UnauthorizedException('Missing Google token');
-    }
-    return this.authService.loginWithGoogleIdToken(token);
+@Post('google/login')
+async googleLogin(@Body() body: { code?: string; access_token?: string }) {
+  if (body.code) {
+    return this.authService.loginWithGoogleCode(body.code);
   }
+  if (!body.access_token) {
+    throw new UnauthorizedException('No code or access_token provided');
+  }
+  return this.authService.loginWithGoogleIdToken(body.access_token);
+}
+
 
   @UseGuards(AuthGuard('jwt'))
   @Get('profile')
