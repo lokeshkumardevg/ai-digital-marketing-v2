@@ -31,7 +31,7 @@ export class SocialAuthService {
     }
 
     if (normalized === 'twitter') {
-      const clientId = this.getEnv('TWITTER_CLIENT_ID');
+      const { clientId } = this.getTwitterCredentials();
       console.log('Generating Twitter auth URL with clientId:', clientId);
       const scope =
         this.configService.get<string>('TWITTER_SCOPES') ||
@@ -91,13 +91,14 @@ export class SocialAuthService {
     }
 
     if (normalized === 'twitter') {
+      const { clientId, clientSecret } = this.getTwitterCredentials();
       const tokenResponse = await axios.post(
         'https://api.twitter.com/2/oauth2/token',
         new URLSearchParams({
           grant_type: 'authorization_code',
           code,
           redirect_uri: this.getRedirectUri('twitter'),
-          client_id: this.getEnv('TWITTER_CLIENT_ID'),
+          client_id: clientId,
           code_verifier: this.buildCodeVerifier(decoded.userId),
         }).toString(),
         {
@@ -105,8 +106,8 @@ export class SocialAuthService {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           auth: {
-            username: this.getEnv('TWITTER_CLIENT_ID'),
-            password: this.getEnv('TWITTER_CLIENT_SECRET'),
+            username: clientId,
+            password: clientSecret,
           },
         },
       );
@@ -214,18 +215,19 @@ export class SocialAuthService {
     }
 
     if (platform === 'twitter' && user.twitterRefreshToken) {
+      const { clientId, clientSecret } = this.getTwitterCredentials();
       const tokenResponse = await axios.post(
         'https://api.twitter.com/2/oauth2/token',
         new URLSearchParams({
           grant_type: 'refresh_token',
           refresh_token: user.twitterRefreshToken,
-          client_id: this.getEnv('TWITTER_CLIENT_ID'),
+          client_id: clientId,
         }).toString(),
         {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           auth: {
-            username: this.getEnv('TWITTER_CLIENT_ID'),
-            password: this.getEnv('TWITTER_CLIENT_SECRET'),
+            username: clientId,
+            password: clientSecret,
           },
         },
       );
@@ -309,5 +311,14 @@ export class SocialAuthService {
   private buildCodeVerifier(userId: string): string {
     const key = this.configService.get<string>('TWITTER_CODE_VERIFIER_SECRET') || 'twitter-verifier-secret';
     return createHmac('sha256', key).update(userId).digest('hex').slice(0, 64);
+  }
+
+  private getTwitterCredentials(): { clientId: string; clientSecret: string } {
+    const clientId = this.configService.get<string>('TWITTER_CLIENT_ID') || this.configService.get<string>('X_CLIENT_ID');
+    const clientSecret = this.configService.get<string>('TWITTER_CLIENT_SECRET') || this.configService.get<string>('X_CLIENT_SECRET');
+    if (!clientId || !clientSecret) {
+      throw new InternalServerErrorException('Twitter/X credentials (TWITTER_CLIENT_ID/X_CLIENT_ID and TWITTER_CLIENT_SECRET/X_CLIENT_SECRET) are not fully configured.');
+    }
+    return { clientId, clientSecret };
   }
 }

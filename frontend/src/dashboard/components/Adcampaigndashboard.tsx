@@ -28,6 +28,8 @@ interface PromoData {
   businessGoal?: string;
   targetLocations?: string;
   targetLocation?: string;
+  includeLocations?: string[];
+  excludeLocations?: string[];
   platform?: string;
   platforms?: string[];
   promotionType?: string;
@@ -206,6 +208,24 @@ const GLOBAL_CSS = `
   .gen-img-skeleton { aspect-ratio: 1; border-radius: 7px; border: 2px solid var(--bdr); overflow: hidden; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: var(--surface2); }
   .gen-img-skeleton .skel-bar { height: 6px; border-radius: 4px; background: linear-gradient(90deg,#E2E8F4 25%,#BFDBFE 50%,#E2E8F4 75%); background-size: 800px 100%; animation: shimmer 1.4s infinite; }
   @keyframes loadbar { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
+
+  .loc-dropdown-item:hover {
+    background: var(--blue-lt) !important;
+    color: var(--blue) !important;
+  }
+  .loc-pill {
+    transition: all 0.15s ease;
+  }
+  .loc-pill:hover {
+    transform: scale(1.03);
+  }
+  .preset-btn:hover {
+    border-color: var(--blue-bdr) !important;
+    background: var(--blue-lt) !important;
+    color: var(--blue) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(37,99,235,0.08);
+  }
 `;
 
 /* ─── API ────────────────────────────────────────────────── */
@@ -936,17 +956,230 @@ function AdSettingCard({ event, budget, schedule, finalUrl, enabled, onEventChan
 }
 
 /* ─── TARGET AUDIENCE CARD ───────────────────────────────── */
-interface TargetAudienceCardProps { location: string; advantagePlus: boolean; enabled: boolean; onLocationChange: (v: string) => void; onAdvantageToggle: () => void; }
+interface TargetAudienceCardProps {
+  includeLocations: string[];
+  excludeLocations: string[];
+  advantagePlus: boolean;
+  enabled: boolean;
+  onIncludeLocationsChange: (v: string[]) => void;
+  onExcludeLocationsChange: (v: string[]) => void;
+  onAdvantageToggle: () => void;
+}
 
-function TargetAudienceCard({ location, advantagePlus, enabled, onLocationChange, onAdvantageToggle }: TargetAudienceCardProps) {
+const LOCATION_SUGGESTIONS = [
+  'India', 'United States', 'United Kingdom', 'Canada', 'Australia', 'Germany',
+  'Maharashtra', 'Karnataka', 'Delhi', 'California', 'New York', 'Texas',
+  'Mumbai', 'Bangalore', 'London', 'Dubai'
+];
+
+function TargetAudienceCard({
+  includeLocations,
+  excludeLocations,
+  advantagePlus,
+  enabled,
+  onIncludeLocationsChange,
+  onExcludeLocationsChange,
+  onAdvantageToggle
+}: TargetAudienceCardProps) {
+  const [incQuery, setIncQuery] = useState('');
+  const [excQuery, setExcQuery] = useState('');
+  const [showIncDrop, setShowIncDrop] = useState(false);
+  const [showExcDrop, setShowExcDrop] = useState(false);
+
+  const incRef = useRef<HTMLDivElement>(null);
+  const excRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (incRef.current && !incRef.current.contains(e.target as Node)) setShowIncDrop(false);
+      if (excRef.current && !excRef.current.contains(e.target as Node)) setShowExcDrop(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const addInclude = (loc: string) => {
+    const clean = loc.trim();
+    if (!clean || includeLocations.includes(clean)) return;
+    onIncludeLocationsChange([...includeLocations, clean]);
+    setIncQuery('');
+    setShowIncDrop(false);
+  };
+
+  const removeInclude = (loc: string) => {
+    onIncludeLocationsChange(includeLocations.filter(l => l !== loc));
+  };
+
+  const addExclude = (loc: string) => {
+    const clean = loc.trim();
+    if (!clean || excludeLocations.includes(clean)) return;
+    onExcludeLocationsChange([...excludeLocations, clean]);
+    setExcQuery('');
+    setShowExcDrop(false);
+  };
+
+  const removeExclude = (loc: string) => {
+    onExcludeLocationsChange(excludeLocations.filter(l => l !== loc));
+  };
+
+  const filteredIncSuggestions = LOCATION_SUGGESTIONS.filter(l =>
+    l.toLowerCase().includes(incQuery.toLowerCase()) && !includeLocations.includes(l)
+  );
+
+  const filteredExcSuggestions = LOCATION_SUGGESTIONS.filter(l =>
+    l.toLowerCase().includes(excQuery.toLowerCase()) && !excludeLocations.includes(l)
+  );
+
+  const presets = ['India', 'Maharashtra', 'Delhi', 'Mumbai', 'Bangalore'];
+
   return (
-    <div style={{ ...card(), borderTop: "3px solid var(--green)" }}>
+    <div style={{ ...card(), borderTop: "3px solid var(--green)", display: "flex", flexDirection: "column", gap: 14 }}>
       <div style={sLabel("var(--green)")}><I.Users /> Target Audience</div>
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}><I.Edit /> Location</div>
-        <input className="editable-input" value={location} onChange={e => onLocationChange(e.target.value)} placeholder="e.g. United States" />
+
+      {/* Target Inclusion */}
+      <div ref={incRef} style={{ position: "relative" }}>
+        <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--blue)" }} />
+          Target Locations (Include)
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ position: "relative" }}>
+            <input
+              className="editable-input"
+              value={incQuery}
+              onChange={e => { setIncQuery(e.target.value); setShowIncDrop(true); }}
+              onFocus={() => setShowIncDrop(true)}
+              onKeyDown={e => { if (e.key === 'Enter') { addInclude(incQuery); } }}
+              placeholder="Search or type target location..."
+              style={{ paddingRight: 30 }}
+            />
+            {incQuery && (
+              <button 
+                onClick={() => setIncQuery('')} 
+                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", color: "var(--t3)", fontSize: 11, cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {showIncDrop && filteredIncSuggestions.length > 0 && (
+            <div className="loc-dropdown" style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid var(--bdr)", borderRadius: 8, zIndex: 100, maxHeight: 150, overflowY: "auto", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: 4 }}>
+              {filteredIncSuggestions.map(loc => (
+                <div key={loc} onClick={() => addInclude(loc)} className="loc-dropdown-item" style={{ padding: "8px 12px", cursor: "pointer", fontSize: 12, transition: "background .15s" }}>
+                  {loc}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            {includeLocations.length === 0 ? (
+              <div style={{ fontSize: 10, color: "var(--t3)", fontStyle: "italic" }}>No targeted locations. All regions targeted by default.</div>
+            ) : (
+              includeLocations.map(loc => (
+                <div key={loc} className="loc-pill include-pill" style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.25)", color: "var(--blue)", padding: "3px 8px", borderRadius: 20, fontSize: 11, fontWeight: 500 }}>
+                  {loc}
+                  <button onClick={() => removeInclude(loc)} style={{ border: "none", background: "transparent", color: "var(--blue)", cursor: "pointer", padding: 0, fontSize: 10, display: "flex", alignItems: "center" }}>✕</button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
-      <div onClick={onAdvantageToggle} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: advantagePlus ? "var(--green)" : "var(--t3)", background: advantagePlus ? "var(--green-lt)" : "var(--surface2)", border: `1px solid ${advantagePlus ? "var(--green-bdr)" : "var(--bdr)"}`, padding: "5px 12px", borderRadius: 20, cursor: "pointer", transition: "all .2s", userSelect: "none" }}>
+
+      {/* Target Exclusion */}
+      <div ref={excRef} style={{ position: "relative" }}>
+        <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500, display: "flex", alignItems: "center", gap: 4 }}>
+          <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "var(--red)" }} />
+          Exclude Locations
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ position: "relative" }}>
+            <input
+              className="editable-input"
+              value={excQuery}
+              onChange={e => { setExcQuery(e.target.value); setShowExcDrop(true); }}
+              onFocus={() => setShowExcDrop(true)}
+              onKeyDown={e => { if (e.key === 'Enter') { addExclude(excQuery); } }}
+              placeholder="Search or type excluded location..."
+              style={{ paddingRight: 30 }}
+            />
+            {excQuery && (
+              <button 
+                onClick={() => setExcQuery('')} 
+                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", color: "var(--t3)", fontSize: 11, cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {showExcDrop && filteredExcSuggestions.length > 0 && (
+            <div className="loc-dropdown" style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid var(--bdr)", borderRadius: 8, zIndex: 100, maxHeight: 150, overflowY: "auto", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: 4 }}>
+              {filteredExcSuggestions.map(loc => (
+                <div key={loc} onClick={() => addExclude(loc)} className="loc-dropdown-item" style={{ padding: "8px 12px", cursor: "pointer", fontSize: 12, transition: "background .15s" }}>
+                  {loc}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+            {excludeLocations.length === 0 ? (
+              <div style={{ fontSize: 10, color: "var(--t3)", fontStyle: "italic" }}>No exclusions.</div>
+            ) : (
+              excludeLocations.map(loc => (
+                <div key={loc} className="loc-pill exclude-pill" style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "var(--red)", padding: "3px 8px", borderRadius: 20, fontSize: 11, fontWeight: 500 }}>
+                  {loc}
+                  <button onClick={() => removeExclude(loc)} style={{ border: "none", background: "transparent", color: "var(--red)", cursor: "pointer", padding: 0, fontSize: 10, display: "flex", alignItems: "center" }}>✕</button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Preset suggestions */}
+      <div>
+        <div style={{ fontSize: 9, fontWeight: 700, color: "var(--t3)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Popular Presets</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+          {presets.map(loc => {
+            const isIncluded = includeLocations.includes(loc);
+            const isExcluded = excludeLocations.includes(loc);
+            return (
+              <button
+                key={loc}
+                onClick={() => {
+                  if (isIncluded) {
+                    removeInclude(loc);
+                  } else {
+                    addInclude(loc);
+                    if (isExcluded) removeExclude(loc);
+                  }
+                }}
+                className={`preset-btn ${isIncluded ? 'active' : ''}`}
+                style={{
+                  fontSize: 10,
+                  padding: "4px 8px",
+                  borderRadius: 6,
+                  border: isIncluded ? "1px solid var(--blue-bdr)" : "1px solid var(--bdr)",
+                  background: isIncluded ? "var(--blue-lt)" : "var(--surface2)",
+                  color: isIncluded ? "var(--blue)" : "var(--t2)",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontWeight: isIncluded ? 600 : 400,
+                  transition: "all 0.15s"
+                }}
+              >
+                {isIncluded ? `✓ ${loc}` : `+ ${loc}`}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div onClick={onAdvantageToggle} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, color: advantagePlus ? "var(--green)" : "var(--t3)", background: advantagePlus ? "var(--green-lt)" : "var(--surface2)", border: `1px solid ${advantagePlus ? "var(--green-bdr)" : "var(--bdr)"}`, padding: "5px 12px", borderRadius: 20, cursor: "pointer", transition: "all .2s", userSelect: "none" }}>
         {advantagePlus ? "✦" : "○"} Advantage+ {advantagePlus ? "on" : "off"}
         <span style={{ width: 15, height: 15, borderRadius: "50%", border: `1px solid ${advantagePlus ? "var(--green-bdr)" : "var(--bdr)"}`, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 8 }}>i</span>
       </div>
@@ -1354,7 +1587,17 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
   const [adBudget, setAdBudget] = useState<string>(globalDraftData?.budget || budgetStr);
   const [adSchedule, setAdSchedule] = useState<string>(globalDraftData?.schedule || promoData?.schedule || SEED.schedule);
   const [adFinalUrl, setAdFinalUrl] = useState<string>(globalDraftData?.finalUrl || promoData?.finalUrl || "");
-  const [adLocation, setAdLocation] = useState<string>(globalDraftData?.location || locationStr);
+  const [adIncludeLocations, setAdIncludeLocations] = useState<string[]>(() => {
+    if (globalDraftData?.includeLocations) return globalDraftData.includeLocations;
+    if (promoData?.includeLocations) return promoData.includeLocations;
+    const loc = globalDraftData?.location || locationStr || "";
+    return loc ? loc.split(',').map((s: string) => s.trim()).filter(Boolean) : ["India"];
+  });
+  const [adExcludeLocations, setAdExcludeLocations] = useState<string[]>(() => {
+    if (globalDraftData?.excludeLocations) return globalDraftData.excludeLocations;
+    if (promoData?.excludeLocations) return promoData.excludeLocations;
+    return [];
+  });
   const [adAdvantage, setAdAdvantage] = useState<boolean>(globalDraftData?.advantagePlus ?? promoData?.advantagePlus ?? SEED.advantagePlus);
   const [adEstimated] = useState<string>(promoData?.estimatedAudience || SEED.estimatedAudience);
 
@@ -1495,7 +1738,9 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
         pageId: selectedMetaPage,
         pixelId: selectedMetaPixel,
         googleAccountId: selectedGoogleAccount,
-        location: adLocation,
+        location: adIncludeLocations.join(', '),
+        includeLocations: adIncludeLocations,
+        excludeLocations: adExcludeLocations,
       };
 
       const { api } = await import('../../api/axios');
@@ -1527,7 +1772,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     } finally {
       setLoading(null);
     }
-  }, [onPublish, showToast, activePid, platformCreatives, userId, campaignId, activeCid, brandName, adBudget, adEvent, adFinalUrl, selectedMetaPage, selectedMetaPixel, selectedGoogleAccount, adLocation]);
+  }, [onPublish, showToast, activePid, platformCreatives, userId, campaignId, activeCid, brandName, adBudget, adEvent, adFinalUrl, selectedMetaPage, selectedMetaPixel, selectedGoogleAccount, adIncludeLocations, adExcludeLocations]);
 
   const campaignTitle = `${brandName}_${promoData?.businessGoal || promoData?.objective || "OUTCOME_SALES"}_${activePlat.name}_${new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}`;
 
@@ -1549,7 +1794,9 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
           event: adEvent,
           schedule: adSchedule,
           finalUrl: adFinalUrl,
-          location: adLocation,
+          location: adIncludeLocations.join(', '),
+          includeLocations: adIncludeLocations,
+          excludeLocations: adExcludeLocations,
           advantagePlus: adAdvantage,
         };
       });
@@ -1577,7 +1824,9 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
           businessGoal: promoData?.businessGoal,
           objective: promoData?.objective,
           promotionType: promoData?.promotionType,
-          targetLocations: promoData?.targetLocations ?? promoData?.targetLocation,
+          targetLocations: adIncludeLocations.join(', '),
+          includeLocations: adIncludeLocations,
+          excludeLocations: adExcludeLocations,
           estimatedAudience: adEstimated,
           originalHeadlines: promoData?.headlines ?? SEED.headlines,
           originalPrimaryTexts: promoData?.primaryTexts ?? SEED.primaryTexts,
@@ -1608,7 +1857,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     }
   }, [
     enabledPlatforms, platformCreatives,
-    adBudget, adEvent, adSchedule, adFinalUrl, adLocation, adAdvantage, adEstimated,
+    adBudget, adEvent, adSchedule, adFinalUrl, adIncludeLocations, adExcludeLocations, adAdvantage, adEstimated,
     campaignTitle, userId, campaignId, activeCid,
     brandName, logoUrl, brandDetails,
     promoData,
@@ -1680,9 +1929,12 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
                     onScheduleChange={setAdSchedule} onFinalUrlChange={setAdFinalUrl}
                   />
                   <TargetAudienceCard
-                    location={adLocation} advantagePlus={adAdvantage}
+                    includeLocations={adIncludeLocations}
+                    excludeLocations={adExcludeLocations}
+                    advantagePlus={adAdvantage}
                     enabled={isCurrentPlatformEnabled}
-                    onLocationChange={setAdLocation}
+                    onIncludeLocationsChange={setAdIncludeLocations}
+                    onExcludeLocationsChange={setAdExcludeLocations}
                     onAdvantageToggle={() => setAdAdvantage(p => !p)}
                   />
                 </div>

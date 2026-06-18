@@ -1584,12 +1584,22 @@ Return ONLY JSON.
       throw new BadRequestException('Meta Account not fully connected or Ad Account missing.');
     }
 
-    const { campaignName, dailyBudget, objective, pageId, pixelId, imageUrl, caption, headline, finalUrl, location } = data;
+    const { campaignName, dailyBudget, objective, pageId, pixelId, imageUrl, caption, headline, finalUrl, location, includeLocations, excludeLocations } = data;
     const adAccountId = user.metaAdAccountId;
     const token = user.metaAccessToken;
 
     // Resolve geo locations dynamically from free-text location query
-    const geoLocations = await this.resolveMetaTargeting(location, token);
+    let geoLocations = null;
+    if (includeLocations && includeLocations.length > 0) {
+      geoLocations = await this.resolveMetaTargetingList(includeLocations, token);
+    }
+    if (!geoLocations) {
+      geoLocations = await this.resolveMetaTargeting(location, token);
+    }
+
+    const excludedGeoLocations = excludeLocations && excludeLocations.length > 0
+      ? await this.resolveMetaTargetingList(excludeLocations, token)
+      : null;
 
     // Normalize free-text campaign goals to Meta Graph API valid objective enums
     let metaObjective = 'OUTCOME_TRAFFIC';
@@ -1669,6 +1679,7 @@ Return ONLY JSON.
         optimization_goal: optimizationGoal,
         targeting: {
           geo_locations: geoLocations,
+          ...(excludedGeoLocations ? { excluded_geo_locations: excludedGeoLocations } : {}),
           publisher_platforms: ['facebook', 'instagram']
         },
         access_token: token,
@@ -1870,7 +1881,9 @@ Return ONLY JSON.
       });
 
       // 1. Check if user already has an isolated Client Account, if not create one!
-      let customerId = user.googleCustomerId;
+      let customerId = data.googleAccountId || user.googleCustomerId;
+      let loginCustomerId = systemMccId.replace(/-/g, '');
+
       if (!customerId) {
         this.logger.log(`Creating new Google Ads Client Account for user ${user.email} under MCC ${systemMccId}`);
         const mccCustomer = clientAuth.Customer({
@@ -1893,15 +1906,33 @@ Return ONLY JSON.
         // Save to user
         await this.usersService.update(userId, { googleCustomerId: customerId });
         this.logger.log(`Successfully created Client Account: ${customerId}`);
+      } else {
+        customerId = customerId.replace(/-/g, '');
+        if (customerId !== user.googleCustomerId) {
+          await this.usersService.update(userId, { googleCustomerId: customerId });
+        }
+
+        try {
+          const listRes = await clientAuth.listAccessibleCustomers(systemRefreshToken);
+          const accessibleCids = (listRes.resource_names || []).map((rn: string) => rn.split('/')[1]);
+          if (accessibleCids.includes(customerId)) {
+            loginCustomerId = customerId;
+            this.logger.log(`Target customer ${customerId} is in accessible customers. Setting loginCustomerId = ${loginCustomerId}`);
+          } else {
+            loginCustomerId = systemMccId.replace(/-/g, '');
+            this.logger.log(`Target customer ${customerId} is NOT in accessible customers. Setting loginCustomerId = MCC ID (${loginCustomerId})`);
+          }
+        } catch (e: any) {
+          this.logger.warn(`Failed to list accessible customers, defaulting loginCustomerId to systemMccId: ${e.message}`);
+          loginCustomerId = systemMccId.replace(/-/g, '');
+        }
       }
 
-      customerId = (customerId || '').replace(/-/g, '');
-
-      // 2. Setup the target client account using the MCC auth
+      // 2. Setup the target client account using the MCC auth or self login
       const workingCustomer = clientAuth.Customer({
         customer_id: customerId,
         refresh_token: systemRefreshToken,
-        login_customer_id: systemMccId.replace(/-/g, ''),
+        login_customer_id: loginCustomerId,
       });
 
       // 3. Create Campaign Budget
@@ -1933,6 +1964,47 @@ Return ONLY JSON.
         }
       ]);
       const campaignResourceName = campaignResult.results[0].resource_name;
+
+      // 4. Create Location Criteria (Target/Exclude)
+      const googleCriteria: any[] = [];
+      const includeLocs = data.includeLocations || (data.location ? [data.location] : []);
+      const excludeLocs = data.excludeLocations || [];
+
+      if (includeLocs.length > 0) {
+        const includeGeoIds = await this.resolveGoogleLocationList(includeLocs, workingCustomer);
+        for (const geoId of includeGeoIds) {
+          googleCriteria.push({
+            campaign: campaignResourceName,
+            location: {
+              geo_target_constant: `geoTargetConstants/${geoId}`,
+            },
+            negative: false,
+          });
+        }
+      }
+
+      if (excludeLocs.length > 0) {
+        const excludeGeoIds = await this.resolveGoogleLocationList(excludeLocs, workingCustomer);
+        for (const geoId of excludeGeoIds) {
+          googleCriteria.push({
+            campaign: campaignResourceName,
+            location: {
+              geo_target_constant: `geoTargetConstants/${geoId}`,
+            },
+            negative: true,
+          });
+        }
+      }
+
+      if (googleCriteria.length > 0) {
+        try {
+          this.logger.log(`Creating ${googleCriteria.length} campaign location criteria in Google Ads`);
+          await workingCustomer.campaignCriteria.create(googleCriteria);
+        } catch (criteriaErr: any) {
+          const criteriaErrorMsg = criteriaErr.errors?.[0]?.message || criteriaErr.message || JSON.stringify(criteriaErr);
+          this.logger.error(`Failed to create campaign location criteria: ${criteriaErrorMsg}`);
+        }
+      }
 
       // 3. Create AdGroup
       const adGroupResult = await workingCustomer.adGroups.create([
@@ -2017,6 +2089,8 @@ Return ONLY JSON.
     const { name: campaignName, data: platformsData } = payload;
     const linkedinData = platformsData?.linkedin || payload;
     const caption = linkedinData.primaryText || linkedinData.caption || campaignName || 'Check out my new campaign!';
+    const linkedinIncludeLocs = linkedinData.includeLocations || (linkedinData.location ? [linkedinData.location] : []);
+    const linkedinExcludeLocs = linkedinData.excludeLocations || [];
     const headline = linkedinData.headline || 'AI Ad Campaign';
     const finalUrl = linkedinData.finalUrl || 'https://www.wheedle.ai';
     const budget = linkedinData.budget || 10;
@@ -2160,19 +2234,34 @@ Return ONLY JSON.
                 runSchedule: {
                   start: Date.now() + 86400000 // Starts in 24 hours
                 },
-                targetingCriteria: {
-                  include: {
-                    and: [
-                      {
-                        or: {
-                          "urn:li:adTargetingFacet:locations": [
-                            "urn:li:geo:103644278" // United States
-                          ]
-                        }
-                      }
-                    ]
+                targetingCriteria: await (async () => {
+                  const includeUrns = await this.resolveLinkedinLocationList(linkedinIncludeLocs, user.linkedinAccessToken!);
+                  if (includeUrns.length === 0) {
+                    includeUrns.push('urn:li:geo:103644278'); // Default to United States
                   }
-                }
+                  const excludeUrns = await this.resolveLinkedinLocationList(linkedinExcludeLocs, user.linkedinAccessToken!);
+
+                  const targetCrit: any = {
+                    include: {
+                      and: [
+                        {
+                          or: {
+                            "urn:li:adTargetingFacet:locations": includeUrns
+                          }
+                        }
+                      ]
+                    }
+                  };
+
+                  if (excludeUrns.length > 0) {
+                    targetCrit.exclude = {
+                      or: {
+                        "urn:li:adTargetingFacet:locations": excludeUrns
+                      }
+                    };
+                  }
+                  return targetCrit;
+                })()
               })
             });
 
@@ -2714,6 +2803,161 @@ Return ONLY JSON.
       geo.countries = ['IN'];
     }
     return geo;
+  }
+
+  private async resolveMetaTargetingList(locations: string[], token: string): Promise<any> {
+    if (!locations || locations.length === 0) {
+      return null;
+    }
+    const geo: any = {};
+    const countriesList: string[] = [];
+    const regionsList: any[] = [];
+    const citiesList: any[] = [];
+
+    for (const loc of locations) {
+      const cleanLoc = loc.trim().toUpperCase();
+      if (!cleanLoc) continue;
+
+      const countryMap: Record<string, string> = {
+        'INDIA': 'IN',
+        'UNITED STATES': 'US',
+        'USA': 'US',
+        'UNITED STATES OF AMERICA': 'US',
+        'UNITED KINGDOM': 'GB',
+        'UK': 'GB',
+        'CANADA': 'CA',
+        'AUSTRALIA': 'AU',
+        'GERMANY': 'DE',
+        'FRANCE': 'FR',
+        'JAPAN': 'JP',
+        'SINGAPORE': 'SG',
+        'UNITED ARAB EMIRATES': 'AE',
+        'UAE': 'AE',
+      };
+
+      if (countryMap[cleanLoc]) {
+        countriesList.push(countryMap[cleanLoc]);
+        continue;
+      }
+      if (cleanLoc.length === 2) {
+        countriesList.push(cleanLoc);
+        continue;
+      }
+
+      try {
+        this.logger.log(`Searching Meta adgeolocation for: "${loc}"`);
+        const response = await axios.get('https://graph.facebook.com/v20.0/search', {
+          params: {
+            type: 'adgeolocation',
+            q: loc,
+            access_token: token,
+          }
+        });
+        const matches = response.data?.data;
+        if (matches && matches.length > 0) {
+          const match = matches[0];
+          this.logger.log(`Found Meta location match: name="${match.name}", type="${match.type}", key="${match.key}"`);
+          if (match.type === 'city') {
+            citiesList.push({ key: match.key, radius: 10, distance_unit: 'mile' });
+          } else if (match.type === 'region' || match.type === 'state') {
+            regionsList.push({ key: match.key });
+          } else if (match.type === 'country') {
+            countriesList.push(match.key);
+          }
+        } else {
+          this.logger.warn(`No Meta location match found for: "${loc}"`);
+        }
+      } catch (err: any) {
+        this.logger.error(`Error resolving location matching "${loc}": ${err.message}`);
+      }
+    }
+
+    if (countriesList.length > 0) geo.countries = countriesList;
+    if (regionsList.length > 0) geo.regions = regionsList;
+    if (citiesList.length > 0) geo.cities = citiesList;
+
+    return Object.keys(geo).length > 0 ? geo : null;
+  }
+
+  private async resolveGoogleLocationList(locations: string[], workingCustomer: any): Promise<string[]> {
+    const geoIds: string[] = [];
+    if (!locations || locations.length === 0) return geoIds;
+
+    for (const loc of locations) {
+      const cleanLoc = loc.trim().toUpperCase();
+      if (!cleanLoc) continue;
+
+      let queryName = loc.trim();
+      if (cleanLoc === 'USA') queryName = 'United States';
+      if (cleanLoc === 'UK') queryName = 'United Kingdom';
+      if (cleanLoc === 'INDIA') queryName = 'India';
+      if (cleanLoc === 'BANGALORE') queryName = 'Bengaluru';
+
+      try {
+        const results = await workingCustomer.query(`
+          SELECT geo_target_constant.id, geo_target_constant.name
+          FROM geo_target_constant
+          WHERE geo_target_constant.name = '${queryName.replace(/'/g, "\\'")}'
+          LIMIT 1
+        `);
+        if (results && results.length > 0) {
+          geoIds.push(results[0].geo_target_constant.id);
+        }
+      } catch (err: any) {
+        this.logger.error(`Error resolving Google location for "${loc}": ${err.message}`);
+      }
+    }
+    return geoIds;
+  }
+
+  private async resolveLinkedinLocationList(locations: string[], token: string): Promise<string[]> {
+    const geoUrns: string[] = [];
+    if (!locations || locations.length === 0) return geoUrns;
+
+    for (const loc of locations) {
+      const cleanLoc = loc.trim().toUpperCase();
+      if (!cleanLoc) continue;
+
+      if (cleanLoc === 'INDIA') {
+        geoUrns.push('urn:li:geo:102713980');
+        continue;
+      }
+      if (cleanLoc === 'UNITED STATES' || cleanLoc === 'USA') {
+        geoUrns.push('urn:li:geo:103644278');
+        continue;
+      }
+      if (cleanLoc === 'UNITED KINGDOM' || cleanLoc === 'UK') {
+        geoUrns.push('urn:li:geo:101165590');
+        continue;
+      }
+
+      try {
+        this.logger.log(`Searching LinkedIn geoTypeahead for: "${loc}"`);
+        const response = await fetch(`https://api.linkedin.com/rest/geoTypeahead?q=search&query=${encodeURIComponent(loc)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'X-Restli-Protocol-Version': '2.0.0',
+            'LinkedIn-Version': '202605',
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const matches = data.elements || [];
+          if (matches.length > 0) {
+            const urn = matches[0].entity;
+            this.logger.log(`Found LinkedIn URN: "${urn}" for "${loc}"`);
+            if (urn) {
+              geoUrns.push(urn);
+              continue;
+            }
+          }
+        }
+        this.logger.warn(`No LinkedIn URN found for: "${loc}"`);
+      } catch (err: any) {
+        this.logger.error(`Error resolving LinkedIn location for "${loc}": ${err.message}`);
+      }
+    }
+    return geoUrns;
   }
 
   @Cron(CronExpression.EVERY_HOUR)

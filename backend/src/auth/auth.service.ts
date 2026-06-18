@@ -222,7 +222,10 @@ export class AuthService {
   }
 
   getXAuthUrl(userId: string) {
-    const clientId = this.configService.get('X_CLIENT_ID');
+    const clientId = this.configService.get('X_CLIENT_ID') || this.configService.get('TWITTER_CLIENT_ID');
+    if (!clientId) {
+      throw new Error('X (Twitter) Client ID not configured.');
+    }
     const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
     const redirectUri = `${backendUrl}/auth/x/callback`;
     // Use only basic scopes — ads.read requires special Twitter Ads API access
@@ -625,11 +628,11 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('User not found');
 
     // X (Twitter) OAuth 2.0 PKCE flow
-    const clientId = this.configService.get('X_CLIENT_ID');
-    const clientSecret = this.configService.get('X_CLIENT_SECRET');
+    const clientId = this.configService.get('X_CLIENT_ID') || this.configService.get('TWITTER_CLIENT_ID');
+    const clientSecret = this.configService.get('X_CLIENT_SECRET') || this.configService.get('TWITTER_CLIENT_SECRET');
 
     if (!clientId || !clientSecret) {
-      throw new UnauthorizedException('X credentials not configured. Please add X_CLIENT_ID and X_CLIENT_SECRET to .env');
+      throw new UnauthorizedException('X (Twitter) credentials not configured. Please add X_CLIENT_ID and X_CLIENT_SECRET to .env');
     }
 
     const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
