@@ -230,10 +230,13 @@ export class AuthService {
     const redirectUri = `${backendUrl}/auth/x/callback`;
     // Use only basic scopes — ads.read requires special Twitter Ads API access
     const scope = encodeURIComponent('tweet.read users.read offline.access');
-    const codeChallenge = 'challengechallengechallengechallengechallenge'; // 43 chars, PKCE plain method
+    const codeVerifier = 'challengechallengechallengechallengechallenge'; // 43 chars
+    const crypto = require('crypto');
+    const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
 
-    return `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${userId}&code_challenge=${codeChallenge}&code_challenge_method=plain`;
+    return `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${userId}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
   }
+
 
   getLinkedInAuthUrl(userId: string) {
     const clientId = this.configService.get('LINKEDIN_CLIENT_ID');
@@ -640,7 +643,6 @@ export class AuthService {
     const params = new URLSearchParams({
       code,
       grant_type: 'authorization_code',
-      client_id: clientId,
       redirect_uri: `${backendUrl}/auth/x/callback`,
       code_verifier: 'challengechallengechallengechallengechallenge', // Must match code_challenge sent in getXAuthUrl
     });
@@ -651,7 +653,7 @@ export class AuthService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(`${encodeURIComponent(clientId)}:${encodeURIComponent(clientSecret)}`).toString('base64')}`,
       },
       body: params.toString(),
     });

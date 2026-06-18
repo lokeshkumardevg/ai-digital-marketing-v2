@@ -53,6 +53,25 @@ interface PlatformCreative {
   primaryText: string;
   cta: string;
   image: string | null;
+
+  // Meta specific
+  metaObjective?: string;
+  metaBuyingType?: string;
+  metaSpecialAdCategory?: string;
+  metaPlacements?: string;
+
+  // Google specific
+  googleObjective?: string;
+  googleNetworks?: string[];
+  googleBiddingStrategy?: string;
+  googleKeywords?: string[];
+
+  // LinkedIn specific
+  liObjective?: string;
+  liAdFormat?: string;
+  liJobTitles?: string[];
+  liSeniority?: string[];
+  liCompanySize?: string[];
 }
 
 interface Campaign {
@@ -1197,6 +1216,140 @@ function DisabledOverlay() {
   );
 }
 
+/* ─── PLATFORM SPECIFIC SETTINGS CARD ────────────────────── */
+interface PlatformSpecificSettingsCardProps {
+  activePlatformId: PlatformId;
+  creative: PlatformCreative;
+  onCreativeChange: (patch: Partial<PlatformCreative>) => void;
+  enabled: boolean;
+}
+
+function PlatformSpecificSettingsCard({ activePlatformId, creative, onCreativeChange, enabled }: PlatformSpecificSettingsCardProps) {
+  if (activePlatformId === 'meta') {
+    return (
+      <div style={{ ...card(), borderTop: "3px solid #2563eb", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={sLabel("#2563eb")}><I.Settings /> Meta Ads Settings</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Objective</div>
+            <select className="editable-input" value={creative.metaObjective || "SALES"} onChange={e => onCreativeChange({ metaObjective: e.target.value })}>
+              <option value="AWARENESS">Awareness</option>
+              <option value="TRAFFIC">Traffic</option>
+              <option value="ENGAGEMENT">Engagement</option>
+              <option value="LEADS">Leads</option>
+              <option value="APP_PROMOTION">App Promotion</option>
+              <option value="SALES">Sales</option>
+            </select>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Buying Type</div>
+            <select className="editable-input" value={creative.metaBuyingType || "AUCTION"} onChange={e => onCreativeChange({ metaBuyingType: e.target.value })}>
+              <option value="AUCTION">Auction</option>
+              <option value="RESERVATION">Reservation</option>
+            </select>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Special Ad Category</div>
+            <select className="editable-input" value={creative.metaSpecialAdCategory || "NONE"} onChange={e => onCreativeChange({ metaSpecialAdCategory: e.target.value })}>
+              <option value="NONE">None</option>
+              <option value="CREDIT">Credit</option>
+              <option value="EMPLOYMENT">Employment</option>
+              <option value="HOUSING">Housing</option>
+              <option value="ISSUES_ELECTIONS_POLITICS">Social Issues, Elections or Politics</option>
+            </select>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Placements</div>
+            <select className="editable-input" value={creative.metaPlacements || "ADVANTAGE_PLUS"} onChange={e => onCreativeChange({ metaPlacements: e.target.value })}>
+              <option value="ADVANTAGE_PLUS">Advantage+ Placements</option>
+              <option value="MANUAL">Manual Placements</option>
+            </select>
+          </div>
+        </div>
+        {!enabled && <DisabledOverlay />}
+      </div>
+    );
+  }
+  if (activePlatformId === 'google') {
+    return (
+      <div style={{ ...card(), borderTop: "3px solid #34a853", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={sLabel("#34a853")}><I.Settings /> Google Ads Settings</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Objective</div>
+            <select className="editable-input" value={creative.googleObjective || "SALES"} onChange={e => onCreativeChange({ googleObjective: e.target.value })}>
+              <option value="SALES">Sales</option>
+              <option value="LEADS">Leads</option>
+              <option value="WEBSITE_TRAFFIC">Website Traffic</option>
+              <option value="BRAND_AWARENESS">Brand Awareness</option>
+              <option value="APP_PROMOTION">App Promotion</option>
+            </select>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Bidding Strategy</div>
+            <select className="editable-input" value={creative.googleBiddingStrategy || "MAXIMIZE_CONVERSIONS"} onChange={e => onCreativeChange({ googleBiddingStrategy: e.target.value })}>
+              <option value="MAXIMIZE_CLICKS">Maximize Clicks</option>
+              <option value="MAXIMIZE_CONVERSIONS">Maximize Conversions</option>
+              <option value="TARGET_CPA">Target CPA</option>
+              <option value="TARGET_ROAS">Target ROAS</option>
+              <option value="MANUAL_CPC">Manual CPC</option>
+            </select>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Networks</div>
+            <input className="editable-input" value={(creative.googleNetworks || ["SEARCH"]).join(', ')} onChange={e => onCreativeChange({ googleNetworks: e.target.value.split(',').map(s=>s.trim()).filter(Boolean) })} placeholder="SEARCH, DISPLAY" />
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Keywords</div>
+            <input className="editable-input" value={(creative.googleKeywords || []).join(', ')} onChange={e => onCreativeChange({ googleKeywords: e.target.value.split(',').map(s=>s.trim()).filter(Boolean) })} placeholder="e.g. digital marketing, software" />
+          </div>
+        </div>
+        {!enabled && <DisabledOverlay />}
+      </div>
+    );
+  }
+  if (activePlatformId === 'linkedin') {
+    return (
+      <div style={{ ...card(), borderTop: "3px solid #0a66c2", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div style={sLabel("#0a66c2")}><I.Settings /> LinkedIn Ads Settings</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Objective</div>
+            <select className="editable-input" value={creative.liObjective || "BRAND_AWARENESS"} onChange={e => onCreativeChange({ liObjective: e.target.value })}>
+              <option value="BRAND_AWARENESS">Brand Awareness</option>
+              <option value="WEBSITE_VISITS">Website Visits</option>
+              <option value="ENGAGEMENT">Engagement</option>
+              <option value="VIDEO_VIEWS">Video Views</option>
+              <option value="LEAD_GENERATION">Lead Generation</option>
+              <option value="WEBSITE_CONVERSIONS">Website Conversions</option>
+            </select>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Ad Format</div>
+            <select className="editable-input" value={creative.liAdFormat || "SINGLE_IMAGE"} onChange={e => onCreativeChange({ liAdFormat: e.target.value })}>
+              <option value="SINGLE_IMAGE">Single Image Ad</option>
+              <option value="CAROUSEL">Carousel Image Ad</option>
+              <option value="VIDEO">Video Ad</option>
+              <option value="TEXT">Text Ad</option>
+              <option value="SPOTLIGHT">Spotlight Ad</option>
+            </select>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Job Titles (Comma separated)</div>
+            <input className="editable-input" value={(creative.liJobTitles || []).join(', ')} onChange={e => onCreativeChange({ liJobTitles: e.target.value.split(',').map(s=>s.trim()).filter(Boolean) })} placeholder="e.g. Marketing Manager, CEO" />
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Seniority (Comma separated)</div>
+            <input className="editable-input" value={(creative.liSeniority || []).join(', ')} onChange={e => onCreativeChange({ liSeniority: e.target.value.split(',').map(s=>s.trim()).filter(Boolean) })} placeholder="e.g. CXO, Director, Manager" />
+          </div>
+        </div>
+        {!enabled && <DisabledOverlay />}
+      </div>
+    );
+  }
+  return null;
+}
+
 /* ─── BRAND IMAGE SKELETONS ──────────────────────────────── */
 function BrandImageSkeletons({ count = 4 }: { count?: number }) {
   return (
@@ -1619,6 +1772,22 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     primaryText: draftPlatformData?.primaryText || draftPlatformData?.caption || defaultPrimaryText,
     cta: draftPlatformData?.cta || defaultCta,
     image: draftPlatformData?.image || draftPlatformData?.imageUrl || null,
+
+    metaObjective: draftPlatformData?.metaObjective || "SALES",
+    metaBuyingType: draftPlatformData?.metaBuyingType || "AUCTION",
+    metaSpecialAdCategory: draftPlatformData?.metaSpecialAdCategory || "NONE",
+    metaPlacements: draftPlatformData?.metaPlacements || "ADVANTAGE_PLUS",
+
+    googleObjective: draftPlatformData?.googleObjective || "SALES",
+    googleNetworks: draftPlatformData?.googleNetworks || ["SEARCH"],
+    googleBiddingStrategy: draftPlatformData?.googleBiddingStrategy || "MAXIMIZE_CONVERSIONS",
+    googleKeywords: draftPlatformData?.googleKeywords || [],
+
+    liObjective: draftPlatformData?.liObjective || "BRAND_AWARENESS",
+    liAdFormat: draftPlatformData?.liAdFormat || "SINGLE_IMAGE",
+    liJobTitles: draftPlatformData?.liJobTitles || [],
+    liSeniority: draftPlatformData?.liSeniority || [],
+    liCompanySize: draftPlatformData?.liCompanySize || [],
   });
 
   const [platformCreatives, setPlatformCreatives] = useState<Record<string, PlatformCreative>>(() => {
@@ -1741,6 +1910,19 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
         location: adIncludeLocations.join(', '),
         includeLocations: adIncludeLocations,
         excludeLocations: adExcludeLocations,
+        metaObjective: activePlatData?.metaObjective,
+        metaBuyingType: activePlatData?.metaBuyingType,
+        metaSpecialAdCategory: activePlatData?.metaSpecialAdCategory,
+        metaPlacements: activePlatData?.metaPlacements,
+        googleObjective: activePlatData?.googleObjective,
+        googleNetworks: activePlatData?.googleNetworks,
+        googleBiddingStrategy: activePlatData?.googleBiddingStrategy,
+        googleKeywords: activePlatData?.googleKeywords,
+        liObjective: activePlatData?.liObjective,
+        liAdFormat: activePlatData?.liAdFormat,
+        liJobTitles: activePlatData?.liJobTitles,
+        liSeniority: activePlatData?.liSeniority,
+        liCompanySize: activePlatData?.liCompanySize,
       };
 
       const { api } = await import('../../api/axios');
@@ -1798,6 +1980,19 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
           includeLocations: adIncludeLocations,
           excludeLocations: adExcludeLocations,
           advantagePlus: adAdvantage,
+          metaObjective: c.metaObjective,
+          metaBuyingType: c.metaBuyingType,
+          metaSpecialAdCategory: c.metaSpecialAdCategory,
+          metaPlacements: c.metaPlacements,
+          googleObjective: c.googleObjective,
+          googleNetworks: c.googleNetworks,
+          googleBiddingStrategy: c.googleBiddingStrategy,
+          googleKeywords: c.googleKeywords,
+          liObjective: c.liObjective,
+          liAdFormat: c.liAdFormat,
+          liJobTitles: c.liJobTitles,
+          liSeniority: c.liSeniority,
+          liCompanySize: c.liCompanySize,
         };
       });
 
@@ -1936,6 +2131,12 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
                     onIncludeLocationsChange={setAdIncludeLocations}
                     onExcludeLocationsChange={setAdExcludeLocations}
                     onAdvantageToggle={() => setAdAdvantage(p => !p)}
+                  />
+                  <PlatformSpecificSettingsCard
+                    activePlatformId={activePid}
+                    creative={activeCreative}
+                    onCreativeChange={patch => updateCreative(activePid, patch)}
+                    enabled={isCurrentPlatformEnabled}
                   />
                 </div>
 

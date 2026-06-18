@@ -228,7 +228,8 @@ async googleLogin(@Body() body: { code?: string; access_token?: string }) {
       return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?xConnected=success" /></head><body>Redirecting...</body></html>`;
     } catch (e: any) {
       console.log('[AuthController] xCallback error', e?.message || e);
-      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?xConnected=error" /></head><body>Redirecting...</body></html>`;
+      const errorReason = encodeURIComponent(e?.message || 'unknown_error');
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?xConnected=error&reason=${errorReason}" /></head><body>Redirecting...</body></html>`;
     }
   }
 
