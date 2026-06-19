@@ -16,6 +16,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { chromium } from 'playwright';
 import { ConfigService } from '@nestjs/config';
+import sharp from 'sharp';
 
 @Injectable()
 export class CampaignService {
@@ -1716,11 +1717,56 @@ Return ONLY JSON.
           base64Bytes = imageUrl.split(',')[1] || null;
         } else if (imageUrl.startsWith('http') && !imageUrl.includes('blob:')) {
           this.logger.log(`Step 3: Downloading external image to base64: ${imageUrl}`);
-          const downloadResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+          const downloadResponse = await axios.get(imageUrl, {
+            responseType: 'arraybuffer',
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+              'Accept-Language': 'en-US,en;q=0.9',
+            },
+            timeout: 15000,
+          });
           base64Bytes = Buffer.from(downloadResponse.data).toString('base64');
         }
 
         if (base64Bytes) {
+          try {
+            // Optimize image using sharp to ensure compatibility with Meta requirements
+            const inputBuffer = Buffer.from(base64Bytes, 'base64');
+            const metadata = await sharp(inputBuffer).metadata();
+            
+            this.logger.log(`Step 3: Optimizing image - format: ${metadata.format || 'unknown'}, size: ${inputBuffer.length} bytes`);
+            
+            const isSupported = ['jpeg', 'jpg', 'png'].includes(metadata.format || '');
+            const isTooLarge = inputBuffer.length > 2 * 1024 * 1024; // > 2MB
+            const isTooWideOrTall = (metadata.width && metadata.width > 2048) || (metadata.height && metadata.height > 2048);
+            
+            if (!isSupported || isTooLarge || isTooWideOrTall) {
+              this.logger.log(`Step 3: Image requires conversion/compression (isSupported: ${isSupported}, isTooLarge: ${isTooLarge}, isTooWideOrTall: ${isTooWideOrTall})`);
+              let pipeline = sharp(inputBuffer);
+              
+              // Downscale if width/height is greater than 2048px (maintaining aspect ratio)
+              if ((metadata.width && metadata.width > 2048) || (metadata.height && metadata.height > 2048)) {
+                pipeline = pipeline.resize({
+                  width: 2048,
+                  height: 2048,
+                  fit: 'inside',
+                  withoutEnlargement: true
+                });
+              }
+              
+              // Convert to sRGB, output as JPEG with 80% quality
+              const optimizedBuffer = await pipeline
+                .toFormat('jpeg', { quality: 80 })
+                .toBuffer();
+              
+              base64Bytes = optimizedBuffer.toString('base64');
+              this.logger.log(`Step 3: Image optimization completed. New size: ${optimizedBuffer.length} bytes`);
+            }
+          } catch (sharpErr: any) {
+            this.logger.warn(`Step 3: Sharp optimization failed, falling back to original image. Error: ${sharpErr.message}`);
+          }
+
           this.logger.log(`Step 3: Uploading image to /adimages`);
           const imgResponse = await axios.post(
             `https://graph.facebook.com/v20.0/${adAccountId}/adimages`,
@@ -1744,8 +1790,83 @@ Return ONLY JSON.
           this.logger.warn(`Step 3 Skipped: Image URL could not be converted to base64 (could be a local blob URL: ${imageUrl})`);
         }
       } catch (err: any) {
-        const errDetail = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-        this.logger.error(`Step 3 Failed - Meta AdImage Upload Error (non-fatal, will fallback): ${errDetail}`);
+        const statusText = err.response?.status ? `status code ${err.response.status}` : err.message;
+        this.logger.warn(`Step 3 Failed - Meta AdImage Process Error: ${statusText}. Generating solid-color placeholder fallback.`);
+        try {
+          // Generate a solid indigo/purple 800x800 placeholder image using sharp
+          const placeholderBuffer = await sharp({
+            create: {
+              width: 800,
+              height: 800,
+              channels: 4,
+              background: { r: 79, g: 70, b: 229, alpha: 1 } // #4F46E5
+            }
+          })
+          .png()
+          .toBuffer();
+          const fallbackBase64 = placeholderBuffer.toString('base64');
+
+          this.logger.log(`Step 3 Fallback: Uploading placeholder image to /adimages`);
+          const imgResponse = await axios.post(
+            `https://graph.facebook.com/v20.0/${adAccountId}/adimages`,
+            { bytes: fallbackBase64, access_token: token }
+          );
+          const imgData = imgResponse.data;
+          if (imgData.images) {
+            const firstKey = Object.keys(imgData.images)[0];
+            if (firstKey) {
+              imageHash = imgData.images[firstKey].hash;
+            }
+          } else {
+            const firstKey = Object.keys(imgData)[0];
+            if (firstKey && imgData[firstKey]?.hash) {
+              imageHash = imgData[firstKey].hash;
+            }
+          }
+          this.logger.log(`Step 3 Fallback Success: Placeholder uploaded. Hash=${imageHash}`);
+        } catch (fallbackErr: any) {
+          this.logger.error(`Step 3 Fallback Failed: ${fallbackErr.message}`);
+          imageHash = null;
+        }
+      }
+    }
+
+    // Ensure we always have a valid image hash (to prevent Meta from crawling target website's invalid og:image)
+    if (!imageHash) {
+      try {
+        this.logger.log(`Step 3 Fallback: Generating solid-color placeholder image since no valid image hash is available`);
+        const placeholderBuffer = await sharp({
+          create: {
+            width: 800,
+            height: 800,
+            channels: 4,
+            background: { r: 79, g: 70, b: 229, alpha: 1 } // #4F46E5
+          }
+        })
+        .png()
+        .toBuffer();
+        const fallbackBase64 = placeholderBuffer.toString('base64');
+
+        this.logger.log(`Step 3 Fallback: Uploading placeholder image to /adimages`);
+        const imgResponse = await axios.post(
+          `https://graph.facebook.com/v20.0/${adAccountId}/adimages`,
+          { bytes: fallbackBase64, access_token: token }
+        );
+        const imgData = imgResponse.data;
+        if (imgData.images) {
+          const firstKey = Object.keys(imgData.images)[0];
+          if (firstKey) {
+            imageHash = imgData.images[firstKey].hash;
+          }
+        } else {
+          const firstKey = Object.keys(imgData)[0];
+          if (firstKey && imgData[firstKey]?.hash) {
+            imageHash = imgData[firstKey].hash;
+          }
+        }
+        this.logger.log(`Step 3 Fallback Success: Placeholder uploaded. Hash=${imageHash}`);
+      } catch (fallbackErr: any) {
+        this.logger.error(`Step 3 Fallback Failed: ${fallbackErr.message}`);
       }
     }
 
@@ -1786,8 +1907,6 @@ Return ONLY JSON.
 
       if (imageHash) {
         creativePayload.object_story_spec.link_data.image_hash = imageHash;
-      } else if (imageUrl && imageUrl.startsWith('http') && !imageUrl.includes('blob:')) {
-        creativePayload.object_story_spec.link_data.picture = imageUrl;
       }
 
       this.logger.log(`Step 4: Creating Ad Creative with payload: ${JSON.stringify(creativePayload)}`);
