@@ -31,8 +31,8 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { ReputationModule } from './reputation/reputation.module';
 import { CallingModule } from './calling/calling.module';
 import { GoogleBusinessModule } from './google-business/google-business.module';
-
 import { ScheduleModule } from '@nestjs/schedule';
+import { MetaReviewsModule } from './meta-reviews/meta-reviews.module';
 
 @Module({
   imports: [
@@ -88,6 +88,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ReputationModule,
     CallingModule,
     GoogleBusinessModule,
+    MetaReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

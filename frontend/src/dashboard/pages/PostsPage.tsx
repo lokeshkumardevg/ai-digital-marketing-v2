@@ -1,1092 +1,961 @@
-// ─── PostAdReviewsPage.tsx (DEMO VERSION — no Redux) ──────────
-// All Redux/store imports removed. Uses local state + demo data.
-
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  Search, RefreshCw, MessageSquare, CheckCircle, Clock,
-  AlertCircle, Inbox, Bot, Sparkles, Send, Shield,
-  X, Grid, List, Filter as FilterIcon, ChevronDown,
-  FileText, Megaphone,
+  Inbox, Clock, Search, Grid3x3, List,
+  ChevronDown, Reply, Send, X, RefreshCw, AlertCircle,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
 
-// ─── Demo GlassCard (replaces imported component) ────────────
-const GlassCard: React.FC<{ children: React.ReactNode; style?: React.CSSProperties }> = ({ children, style }) => (
-  <div style={{
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: '12px',
-    ...style,
-  }}>
-    {children}
-  </div>
-);
+// ─────────────────────────────────────────────────────────────────────────
+// API helper — reads JWT from localStorage, calls your NestJS backend
+// ─────────────────────────────────────────────────────────────────────────
+const API_BASE = 'http://localhost:3000';
 
-// ─── Demo helper components (replaces Reviewhelpers imports) ──
-const SentimentBadge: React.FC<{ sentiment: string }> = ({ sentiment }) => {
-  const map: Record<string, { color: string; bg: string }> = {
-    positive : { color: '#10b981', bg: 'rgba(16,185,129,0.12)'  },
-    negative : { color: '#ef4444', bg: 'rgba(239,68,68,0.12)'   },
-    neutral  : { color: '#60a5fa', bg: 'rgba(96,165,250,0.12)'  },
-    mixed    : { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)'  },
-  };
-  const s = map[sentiment] ?? { color: '#9ca3af', bg: 'rgba(156,163,175,0.12)' };
-  return (
-    <span style={{
-      fontSize: '0.68rem', fontWeight: 600, padding: '3px 9px',
-      borderRadius: 999, color: s.color, background: s.bg,
-    }}>
-      {sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}
-    </span>
-  );
-};
-
-// ─── Types ───────────────────────────────────────────────────
-type PlatformTab = 'all' | 'meta' | 'x' | 'linkedin';
-type SourceType  = 'post' | 'campaign';
-
-interface PostComment {
-  _id           : string;
-  reviewerName  : string;
-  content       : string;
-  reviewDate    : string;
-  isReplied     : boolean;
-  isResolved    : boolean;
-  sentiment     : string;
-  topics        : string[];
-  postId        : string;
-  postTitle     : string;
-  sourceType    : SourceType;
-  source        : 'meta' | 'x' | 'linkedin';
-  status        : string;
-  generatedReply?: string;
-  publishedReply?: string;
+async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = localStorage.getItem('access_token') || '';
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    ...options,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(err.message || 'API error');
+  }
+  return res.json();
 }
 
-interface PostRef {
-  id          : string;
-  source      : 'meta' | 'x' | 'linkedin';
-  sourceType  : SourceType;
-  title       : string;
+// ─────────────────────────────────────────────────────────────────────────
+// Types — match exactly what MetaReviewsService returns
+// ─────────────────────────────────────────────────────────────────────────
+interface MetaPage {
+  pageId: string;
+  pageName: string;
+  pageAccessToken: string;
+  picture: string | null;
+}
+
+interface MetaPost {
+  postId: string;
+  title: string;
+  message: string;
+  createdAt: string;
+  permalink: string | null;
+  thumbnail: string | null;
   commentCount: number;
 }
 
-interface LocalFilters {
-  search     : string;
-  platform   : string;
-  sentiment  : string;
-  status     : string;
-  sourceType : string;
-  postId     : string;
+interface MetaComment {
+  commentId: string;
+  sourceRefId: string;   // used by postTitleFor()
+  authorName: string;
+  authorInitial: string;
+  text: string;
+  createdAt: string;
+  likeCount: number;
+  replyCount: number;
+  canReply: boolean;
 }
 
-// ─── Demo data ────────────────────────────────────────────────
-const DEMO_POSTS: PostRef[] = [
-  { id: 'p1', source: 'meta',     sourceType: 'post',     title: 'Summer Sale Launch',       commentCount: 4 },
-  { id: 'p2', source: 'meta',     sourceType: 'campaign', title: 'Brand Awareness Q3',       commentCount: 2 },
-  { id: 'p3', source: 'x',        sourceType: 'post',     title: 'Product Announcement',     commentCount: 3 },
-  { id: 'p4', source: 'linkedin', sourceType: 'post',     title: 'Company Milestone Update', commentCount: 2 },
-  { id: 'p5', source: 'linkedin', sourceType: 'campaign', title: 'Talent Acquisition Drive', commentCount: 1 },
-];
+type PlatformTabKey = 'meta' | 'x' | 'linkedin';
+type ViewMode = 'grid' | 'list';
 
-const DEMO_COMMENTS: PostComment[] = [
-  {
-    _id: 'c1', reviewerName: 'Alice Johnson', source: 'meta', sourceType: 'post',
-    postId: 'p1', postTitle: 'Summer Sale Launch',
-    content: 'Absolutely love the new summer collection! The quality is top notch and shipping was faster than expected. Will definitely be ordering again.',
-    reviewDate: new Date(Date.now() - 2 * 3600000).toISOString(),
-    isReplied: false, isResolved: false, sentiment: 'positive', status: 'pending',
-    topics: ['quality', 'shipping', 'collection'],
-  },
-  {
-    _id: 'c2', reviewerName: 'Bob Martinez', source: 'meta', sourceType: 'post',
-    postId: 'p1', postTitle: 'Summer Sale Launch',
-    content: 'The discount codes never worked at checkout. Really frustrating experience.',
-    reviewDate: new Date(Date.now() - 5 * 3600000).toISOString(),
-    isReplied: true, isResolved: false, sentiment: 'negative', status: 'replied',
-    topics: ['checkout', 'discount'],
-    publishedReply: 'Hi Bob! We are so sorry about the checkout issue. Our team has fixed this — please DM us and we will apply your discount manually.',
-  },
-  {
-    _id: 'c3', reviewerName: 'Carol White', source: 'meta', sourceType: 'campaign',
-    postId: 'p2', postTitle: 'Brand Awareness Q3',
-    content: 'Never heard of this brand before but the ad caught my eye. Checking out the website now!',
-    reviewDate: new Date(Date.now() - 24 * 3600000).toISOString(),
-    isReplied: false, isResolved: false, sentiment: 'neutral', status: 'pending',
-    topics: ['discovery', 'ad'],
-  },
-  {
-    _id: 'c4', reviewerName: 'David Lee', source: 'meta', sourceType: 'campaign',
-    postId: 'p2', postTitle: 'Brand Awareness Q3',
-    content: 'Great brand, really impressed by the new direction. Looking forward to more campaigns like this.',
-    reviewDate: new Date(Date.now() - 36 * 3600000).toISOString(),
-    isReplied: true, isResolved: true, sentiment: 'positive', status: 'replied',
-    topics: ['brand', 'campaign'],
-    publishedReply: 'Thank you David! More exciting campaigns coming your way. Stay tuned!',
-  },
-  {
-    _id: 'c5', reviewerName: 'Emma Chen', source: 'x', sourceType: 'post',
-    postId: 'p3', postTitle: 'Product Announcement',
-    content: 'This looks like exactly what I have been waiting for. The features are insane. Is there a beta signup?',
-    reviewDate: new Date(Date.now() - 1 * 3600000).toISOString(),
-    isReplied: false, isResolved: false, sentiment: 'positive', status: 'pending',
-    topics: ['features', 'beta', 'product'],
-  },
-  {
-    _id: 'c6', reviewerName: 'Frank Nguyen', source: 'x', sourceType: 'post',
-    postId: 'p3', postTitle: 'Product Announcement',
-    content: 'Seen this kind of announcement before and nothing came of it. Hope this one is actually real.',
-    reviewDate: new Date(Date.now() - 3 * 3600000).toISOString(),
-    isReplied: false, isResolved: false, sentiment: 'neutral', status: 'pending',
-    topics: ['credibility'],
-  },
-  {
-    _id: 'c7', reviewerName: 'Grace Kim', source: 'x', sourceType: 'post',
-    postId: 'p3', postTitle: 'Product Announcement',
-    content: 'The pricing is way too high compared to alternatives. You are losing customers before launch.',
-    reviewDate: new Date(Date.now() - 6 * 3600000).toISOString(),
-    isReplied: false, isResolved: false, sentiment: 'negative', status: 'pending',
-    topics: ['pricing', 'competition'],
-  },
-  {
-    _id: 'c8', reviewerName: 'Henry Patel', source: 'linkedin', sourceType: 'post',
-    postId: 'p4', postTitle: 'Company Milestone Update',
-    content: 'Congratulations on reaching this milestone! The team has worked incredibly hard and it truly shows. Excited for what comes next.',
-    reviewDate: new Date(Date.now() - 12 * 3600000).toISOString(),
-    isReplied: true, isResolved: true, sentiment: 'positive', status: 'replied',
-    topics: ['milestone', 'teamwork'],
-    publishedReply: 'Thank you so much, Henry! The journey has been amazing and we cannot wait to share the next chapter.',
-  },
-  {
-    _id: 'c9', reviewerName: 'Isabel Torres', source: 'linkedin', sourceType: 'post',
-    postId: 'p4', postTitle: 'Company Milestone Update',
-    content: 'Great news but I would love to see more transparency around the numbers. What does this milestone actually represent?',
-    reviewDate: new Date(Date.now() - 18 * 3600000).toISOString(),
-    isReplied: false, isResolved: false, sentiment: 'neutral', status: 'pending',
-    topics: ['transparency', 'metrics'],
-  },
-  {
-    _id: 'c10', reviewerName: 'Jake Wilson', source: 'linkedin', sourceType: 'campaign',
-    postId: 'p5', postTitle: 'Talent Acquisition Drive',
-    content: 'Applied through this campaign and the process was super smooth. Great team culture from day one of interviews.',
-    reviewDate: new Date(Date.now() - 48 * 3600000).toISOString(),
-    isReplied: false, isResolved: false, sentiment: 'positive', status: 'pending',
-    topics: ['hiring', 'culture', 'process'],
-  },
-  {
-    _id: 'c11', reviewerName: 'Karen Singh', source: 'meta', sourceType: 'post',
-    postId: 'p1', postTitle: 'Summer Sale Launch',
-    content: 'Sizes run really small. Please update your size guide so customers know before buying.',
-    reviewDate: new Date(Date.now() - 8 * 3600000).toISOString(),
-    isReplied: false, isResolved: false, sentiment: 'negative', status: 'pending',
-    topics: ['sizing', 'guide'],
-  },
-  {
-    _id: 'c12', reviewerName: 'Leo Park', source: 'meta', sourceType: 'post',
-    postId: 'p1', postTitle: 'Summer Sale Launch',
-    content: 'The packaging is beautiful. Really elevated unboxing experience. Will share on my story!',
-    reviewDate: new Date(Date.now() - 10 * 3600000).toISOString(),
-    isReplied: false, isResolved: false, sentiment: 'positive', status: 'pending',
-    topics: ['packaging', 'unboxing'],
-  },
-];
-
-// ─── Platform display config ──────────────────────────────────
-const PLATFORM_CFG = {
-  meta     : { label: 'Meta',     dotColor: '#1877F2', badgeColor: '#3B82F6', badgeBg: 'rgba(59,130,246,0.12)'  },
-  x        : { label: 'X',        dotColor: '#e5e7eb', badgeColor: '#E5E7EB', badgeBg: 'rgba(229,231,235,0.10)' },
-  linkedin : { label: 'LinkedIn', dotColor: '#0A66C2', badgeColor: '#0A66C2', badgeBg: 'rgba(10,102,194,0.14)'  },
+// ─────────────────────────────────────────────────────────────────────────
+// Static config
+// ─────────────────────────────────────────────────────────────────────────
+const PLATFORM_CONFIG: Record<PlatformTabKey, { label: string; color: string; bg: string }> = {
+  meta:     { label: 'Meta',     color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
+  x:        { label: 'X',        color: '#E5E7EB', bg: 'rgba(229,231,235,0.10)' },
+  linkedin: { label: 'LinkedIn', color: '#0A66C2', bg: 'rgba(10,102,194,0.14)' },
 };
 
-// ─── Small reusable pieces ────────────────────────────────────
-function PlatformTabBtn({
-  active, label, source, onClick,
+// ─────────────────────────────────────────────────────────────────────────
+// Pure helpers
+// ─────────────────────────────────────────────────────────────────────────
+function timeAgo(iso?: string): string {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Presentational components
+// ─────────────────────────────────────────────────────────────────────────
+function Pill({ label, color, bg }: { label: string; color: string; bg: string }) {
+  return (
+    <span className="par-pill" style={{ color, background: bg }}>
+      {label}
+    </span>
+  );
+}
+
+function StatCard({
+  icon: Icon, label, value, tint,
 }: {
-  active: boolean; label: string; source: PlatformTab; onClick: () => void;
+  icon: React.ElementType; label: string; value: number | string; tint: string;
 }) {
-  const dotColor = source !== 'all' ? PLATFORM_CFG[source].dotColor : '#9CA3AF';
+  return (
+    <div className="par-stat-card">
+      <div className="par-stat-icon" style={{ background: tint }}>
+        <Icon size={17} color="#fff" />
+      </div>
+      <div className="par-stat-text">
+        <p className="par-stat-label">{label}</p>
+        <p className="par-stat-value">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function PlatformTab({
+  active, label, onClick,
+}: {
+  active: boolean; label: string; onClick: () => void;
+}) {
   return (
     <button
       onClick={onClick}
-      style={{
-        display: 'flex', alignItems: 'center', gap: '7px',
-        padding: '8px 18px', borderRadius: 999, fontSize: 13, fontWeight: 600,
-        border    : active ? '1px solid rgba(91,110,245,0.5)' : '1px solid rgba(255,255,255,0.08)',
-        background: active ? 'rgba(91,110,245,0.16)' : 'transparent',
-        color     : active ? '#A5B4FC' : '#9CA3AF',
-        cursor    : 'pointer', transition: 'all .15s ease', whiteSpace: 'nowrap',
-      }}
+      className={`par-tab-btn${active ? ' is-active' : ''}`}
     >
-      <span style={{
-        width: 8, height: 8, borderRadius: '50%',
-        background: dotColor, flexShrink: 0,
-        opacity: active ? 1 : 0.5,
-      }} />
       {label}
     </button>
   );
 }
 
-function Pill({ label, color, bg }: { label: string; color: string; bg: string }) {
+function SelectBox({
+  value, onChange, disabled, children, label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+  label?: string;
+}) {
   return (
-    <span style={{
-      fontSize: 11, fontWeight: 600, padding: '3px 9px',
-      borderRadius: 999, color, background: bg, whiteSpace: 'nowrap',
-    }}>
-      {label}
-    </span>
+    <div className="par-select-wrap">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        aria-label={label}
+        className="par-select"
+      >
+        {children}
+      </select>
+      <ChevronDown size={15} className="par-select-chevron" aria-hidden="true" />
+    </div>
   );
 }
 
-function SourceTypePill({ sourceType }: { sourceType: SourceType }) {
-  const isCampaign = sourceType === 'campaign';
+function ErrorBanner({ message }: { message: string }) {
   return (
-    <span style={{
-      display: 'flex', alignItems: 'center', gap: 4,
-      fontSize: 11, fontWeight: 500, padding: '3px 9px', borderRadius: 999,
-      color     : isCampaign ? '#FBBF24' : '#60A5FA',
-      background: isCampaign ? 'rgba(251,191,36,0.10)' : 'rgba(96,165,250,0.10)',
-    }}>
-      {isCampaign ? <Megaphone size={10} /> : <FileText size={10} />}
-      {isCampaign ? 'Campaign' : 'Post'}
-    </span>
+    <div className="par-banner par-banner-error" role="alert">
+      <AlertCircle size={15} style={{ flexShrink: 0 }} />
+      {message}
+    </div>
   );
 }
 
-// ─── Comment Card ─────────────────────────────────────────────
-const CommentCard: React.FC<{
-  comment  : PostComment;
-  index    : number;
-  onClick  : () => void;
-  viewMode : 'grid' | 'list';
-}> = ({ comment, index, onClick, viewMode }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+function ComingSoonBanner({ platform }: { platform: string }) {
+  return (
+    <div className="par-banner par-banner-warning">
+      {platform} post review integration is coming soon. Connect it in Settings to activate.
+    </div>
+  );
+}
 
-  useEffect(() => {
-    const t = setTimeout(() => setIsVisible(true), index * 60);
-    return () => clearTimeout(t);
-  }, [index]);
+// ─────────────────────────────────────────────────────────────────────────
+// CommentCard — each comment with inline reply
+// ─────────────────────────────────────────────────────────────────────────
+function CommentCard({
+  comment,
+  postTitle,
+  pageAccessToken,
+  onReplySuccess,
+}: {
+  comment: MetaComment;
+  postTitle: string;
+  pageAccessToken: string;
+  onReplySuccess?: () => void;
+}) {
+  const [replying, setReplying]     = useState(false);
+  const [message, setMessage]       = useState('');
+  const [sending, setSending]       = useState(false);
+  const [sent, setSent]             = useState(false);
+  const [replyError, setReplyError] = useState('');
 
-  const getSentimentColor = (s: string) => {
-    switch (s) {
-      case 'positive': return { bg: 'rgba(16,185,129,0.15)',  border: 'rgba(16,185,129,0.4)',  glow: 'rgba(16,185,129,0.2)'  };
-      case 'negative': return { bg: 'rgba(239,68,68,0.15)',   border: 'rgba(239,68,68,0.4)',   glow: 'rgba(239,68,68,0.2)'   };
-      case 'neutral':  return { bg: 'rgba(59,130,246,0.15)',  border: 'rgba(59,130,246,0.4)',  glow: 'rgba(59,130,246,0.2)'  };
-      default:         return { bg: 'rgba(107,114,128,0.15)', border: 'rgba(107,114,128,0.4)', glow: 'rgba(107,114,128,0.2)' };
+  const submit = async () => {
+    if (!message.trim() || sending) return;
+    setSending(true);
+    setReplyError('');
+    try {
+      // POST /meta-reviews/comments/:commentId/reply
+      await apiFetch<{ success: boolean; commentId: string }>(
+        `/meta-reviews/comments/${comment.commentId}/reply`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ message: message.trim(), pageAccessToken }),
+        },
+      );
+      setSent(true);
+      setReplying(false);
+      setMessage('');
+      onReplySuccess?.();
+    } catch (e: any) {
+      setReplyError(e.message || 'Failed to send reply');
+    } finally {
+      setSending(false);
     }
   };
 
-  const timeSince = (dateStr: string) => {
-    if (!dateStr) return '';
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const h = Math.floor(diff / 3600000);
-    const d = Math.floor(h / 24);
-    if (d > 0) return `${d}d ago`;
-    if (h > 0) return `${h}h ago`;
-    return 'Just now';
+  const toggleReply = () => {
+    setReplying((r) => !r);
+    setReplyError('');
   };
 
-  const colors     = getSentimentColor(comment.sentiment);
-  const isListView = viewMode === 'list';
-  const platform   = PLATFORM_CFG[comment.source];
-
   return (
-    <div
-      onClick={onClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        background  : isHovered ? colors.bg : 'rgba(255,255,255,0.02)',
-        border      : `1px solid ${isHovered ? colors.border : 'rgba(255,255,255,0.06)'}`,
-        borderRadius: '16px',
-        padding     : 'clamp(16px, 2vw, 24px)',
-        cursor      : 'pointer',
-        transition  : 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-        transform   : isVisible
-          ? `translateY(0) scale(${isHovered ? 1.02 : 1})`
-          : 'translateY(30px) scale(0.95)',
-        opacity     : isVisible ? 1 : 0,
-        boxShadow   : isHovered
-          ? `0 8px 32px ${colors.glow}, 0 2px 8px rgba(0,0,0,0.3)`
-          : '0 2px 8px rgba(0,0,0,0.2)',
-        position    : 'relative', overflow: 'hidden',
-        ...(isListView && { display: 'flex', alignItems: 'center', gap: '16px' }),
-      }}
-    >
-      {/* Accent bar on hover */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-        background: `linear-gradient(90deg, ${colors.border}, transparent)`,
-        opacity: isHovered ? 1 : 0, transition: 'opacity 0.3s ease',
-      }} />
-
-      <div style={{
-        display      : 'flex',
-        flexDirection: isListView ? 'row' : 'column',
-        gap          : '12px',
-        flex         : 1,
-        ...(isListView && { alignItems: 'center' }),
-      }}>
-        {/* Avatar + name */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '10px',
-          ...(isListView && { flex: '0 0 220px' }),
-        }}>
-          <div style={{
-            width: '40px', height: '40px', borderRadius: '12px',
-            background: 'linear-gradient(135deg, #7033f5, #4f46e5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 700, fontSize: '0.9rem', flexShrink: 0,
-            transition: 'transform 0.3s ease, border-radius 0.3s ease',
-            transform: isHovered ? 'scale(1.1) rotate(-5deg)' : 'scale(1) rotate(0deg)',
-          }}>
-            {comment.reviewerName.charAt(0)}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '2px', color: '#f5f5f5' }}>
-              {comment.reviewerName}
-            </div>
-            <div style={{ fontSize: '0.7rem', color: '#6B7280' }}>
-              {timeSince(comment.reviewDate)}
-              {comment.postTitle && (
-                <> · <span style={{ color: '#7C86FF' }}>{comment.postTitle}</span></>
-              )}
-            </div>
+    <div className="par-comment-card">
+      {/* Author row */}
+      <div className="par-comment-header">
+        <div className="par-comment-author">
+          <div className="par-avatar">{comment.authorInitial}</div>
+          <div className="par-author-meta">
+            <p className="par-author-name">{comment.authorName}</p>
+            <p className="par-author-sub">
+              {timeAgo(comment.createdAt)} · {postTitle}
+            </p>
           </div>
         </div>
+        <Pill
+          label={PLATFORM_CONFIG.meta.label}
+          color={PLATFORM_CONFIG.meta.color}
+          bg={PLATFORM_CONFIG.meta.bg}
+        />
+      </div>
 
-        {/* Platform + source type */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '8px',
-          ...(isListView && { flex: '0 0 160px' }),
-        }}>
-          {platform && (
-            <Pill label={platform.label} color={platform.badgeColor} bg={platform.badgeBg} />
-          )}
-          <SourceTypePill sourceType={comment.sourceType} />
+      {/* Comment body */}
+      <p className="par-comment-text">{comment.text}</p>
+
+      {/* Footer */}
+      <div className="par-comment-footer">
+        <div className="par-comment-counts">
+          {comment.likeCount > 0 && <span>👍 {comment.likeCount}</span>}
+          {comment.replyCount > 0 && <span>💬 {comment.replyCount} replies</span>}
         </div>
-
-        {/* Comment text */}
-        <p style={{
-          margin: 0, fontSize: '0.82rem', color: '#9CA3AF', lineHeight: 1.5,
-          overflow: 'hidden',
-          display: '-webkit-box',
-          WebkitLineClamp: isListView ? 2 : 3,
-          WebkitBoxOrient: 'vertical',
-          flex: 1,
-        }}>
-          {comment.content
-            ? `"${comment.content}"`
-            : <em style={{ opacity: 0.4 }}>No comment</em>
-          }
-        </p>
-
-        {/* Status badges */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap',
-          ...(isListView && { flex: '0 0 auto' }),
-        }}>
-          {comment.sentiment && <SentimentBadge sentiment={comment.sentiment} />}
-
-          {comment.isReplied && (
-            <span style={{
-              display: 'flex', alignItems: 'center', gap: '4px',
-              fontSize: '0.7rem', color: '#10b981',
-              background: 'rgba(16,185,129,0.1)',
-              padding: '3px 10px', borderRadius: '20px', fontWeight: 500,
-            }}>
-              <CheckCircle size={10} /> Replied
-            </span>
-          )}
-
-          {!comment.isReplied && comment.status === 'pending' && (
-            <span style={{
-              display: 'flex', alignItems: 'center', gap: '4px',
-              fontSize: '0.7rem', color: '#f59e0b',
-              background: 'rgba(245,158,11,0.1)',
-              padding: '3px 10px', borderRadius: '20px', fontWeight: 500,
-            }}>
-              <Clock size={10} /> Pending
-            </span>
-          )}
-        </div>
-
-        {/* Topics */}
-        {comment.topics.length > 0 && (
-          <div style={{
-            display: 'flex', gap: '6px', flexWrap: 'wrap',
-            ...(isListView && { flex: '0 0 auto' }),
-          }}>
-            {comment.topics.slice(0, isListView ? 5 : 3).map((t) => (
-              <span key={t} style={{
-                background: 'rgba(112,51,245,0.1)',
-                color     : '#A78BFA',
-                padding   : '2px 8px', borderRadius: '12px',
-                fontSize  : '0.68rem', fontWeight: 500,
-              }}>
-                #{t}
-              </span>
-            ))}
-            {comment.topics.length > (isListView ? 5 : 3) && (
-              <span style={{ fontSize: '0.68rem', color: '#6B7280' }}>
-                +{comment.topics.length - (isListView ? 5 : 3)}
-              </span>
-            )}
-          </div>
+        {sent ? (
+          <Pill label="✓ Replied" color="#34D399" bg="rgba(52,211,153,0.10)" />
+        ) : (
+          <button onClick={toggleReply} className="par-reply-toggle">
+            {replying ? <X size={13} /> : <Reply size={13} />}
+            {replying ? 'Cancel' : 'Reply'}
+          </button>
         )}
       </div>
-    </div>
-  );
-};
 
-// ─── Side Panel ───────────────────────────────────────────────
-const CommentSidePanel: React.FC<{
-  comment  : PostComment;
-  comments : PostComment[];
-  onClose  : () => void;
-  onUpdate : (updated: PostComment) => void;
-}> = ({ comment, onClose, onUpdate }) => {
-  const [isVisible, setIsVisible]         = useState(false);
-  const [editableReply, setEditableReply] = useState(comment.generatedReply || '');
-  const [isGenerating, setIsGenerating]   = useState(false);
-  const [isPublishing, setIsPublishing]   = useState(false);
-  const [isResolving, setIsResolving]     = useState(false);
-
-  const isPublished = comment.isReplied;
-  const platform    = PLATFORM_CFG[comment.source];
-
-  useEffect(() => {
-    requestAnimationFrame(() => setIsVisible(true));
-    return () => setIsVisible(false);
-  }, []);
-
-  useEffect(() => {
-    setEditableReply(comment.generatedReply || '');
-  }, [comment._id, comment.generatedReply]);
-
-  const handleGenerateReply = async () => {
-    setIsGenerating(true);
-    // Simulate AI generation delay
-    await new Promise(r => setTimeout(r, 1200));
-    const replies: Record<string, string> = {
-      positive : `Thank you so much for the kind words! We truly appreciate your support and are thrilled you had a great experience. Looking forward to connecting with you again soon!`,
-      negative : `We're really sorry to hear this wasn't the experience you expected. Your feedback matters to us — please DM us directly and we'll make this right for you as quickly as possible.`,
-      neutral  : `Thanks for sharing your thoughts! We'd love to hear more about your experience. Feel free to reach out directly if there's anything we can help with.`,
-      mixed    : `Thank you for taking the time to share your feedback! We're glad some parts worked well, and we'd love to address the areas that didn't. Please reach out so we can assist further.`,
-    };
-    const generated = replies[comment.sentiment] ?? replies.neutral;
-    setEditableReply(generated);
-    onUpdate({ ...comment, generatedReply: generated });
-    setIsGenerating(false);
-    toast.success('AI reply generated!');
-  };
-
-  const handlePublish = async () => {
-    if (!editableReply.trim()) { toast.error('Reply cannot be empty'); return; }
-    setIsPublishing(true);
-    await new Promise(r => setTimeout(r, 800));
-    onUpdate({ ...comment, isReplied: true, publishedReply: editableReply, status: 'replied' });
-    setIsPublishing(false);
-    toast.success('Reply published!');
-  };
-
-  const handleResolve = async () => {
-    setIsResolving(true);
-    await new Promise(r => setTimeout(r, 600));
-    onUpdate({ ...comment, isResolved: true });
-    setIsResolving(false);
-    toast.success('Marked as resolved');
-  };
-
-  return (
-    <>
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-          zIndex: 998, opacity: isVisible ? 1 : 0, transition: 'opacity 0.4s ease',
-        }}
-      />
-      <div style={{
-        position: 'fixed', top: 0, right: 0,
-        width: 'min(520px, 100vw)', height: '100vh',
-        background: 'linear-gradient(135deg, rgba(15,23,42,0.98), rgba(30,41,59,0.98))',
-        backdropFilter: 'blur(20px)',
-        borderLeft: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '-8px 0 40px rgba(0,0,0,0.5)',
-        zIndex: 999,
-        transform : isVisible ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-        display: 'flex', flexDirection: 'column', overflow: 'hidden',
-      }}>
-        {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '42px', height: '42px', borderRadius: '12px',
-              background: 'linear-gradient(135deg, #7033f5, #4f46e5)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontWeight: 700, fontSize: '0.95rem',
-            }}>
-              {comment.reviewerName.charAt(0)}
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: '0.95rem', color: '#f5f5f5' }}>{comment.reviewerName}</div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '4px' }}>
-                {platform && <Pill label={platform.label} color={platform.badgeColor} bg={platform.badgeBg} />}
-                <SourceTypePill sourceType={comment.sourceType} />
-              </div>
-              {comment.postTitle && (
-                <div style={{ fontSize: '0.7rem', color: '#7C86FF', marginTop: '3px' }}>{comment.postTitle}</div>
-              )}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            {comment.sentiment && <SentimentBadge sentiment={comment.sentiment} />}
-            <button
-              onClick={onClose}
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px', padding: '6px',
-                color: '#9ca3af', cursor: 'pointer',
-                display: 'flex', alignItems: 'center',
+      {/* Inline reply input */}
+      {replying && (
+        <div className="par-reply-box">
+          <div className="par-reply-row">
+            <input
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  submit();
+                }
               }}
+              placeholder="Write your reply…"
+              autoFocus
+              className="par-reply-input"
+            />
+            <button
+              onClick={submit}
+              disabled={sending || !message.trim()}
+              title="Send reply"
+              aria-label="Send reply"
+              className="par-send-btn"
             >
-              <X size={18} />
+              <Send size={14} />
             </button>
           </div>
+          {replyError && <p className="par-reply-error">{replyError}</p>}
         </div>
-
-        {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-            {/* Comment text */}
-            <GlassCard style={{ padding: '18px' }}>
-              <p style={{ margin: 0, lineHeight: 1.7, color: '#e5e7eb', fontSize: '0.9rem', fontStyle: 'italic' }}>
-                {comment.content ? `"${comment.content}"` : <em style={{ opacity: 0.4 }}>No comment provided</em>}
-              </p>
-              {comment.topics.length > 0 && (
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '12px' }}>
-                  {comment.topics.map((t) => (
-                    <span key={t} style={{
-                      background: 'rgba(112,51,245,0.12)', color: '#A78BFA',
-                      padding: '3px 10px', borderRadius: '20px',
-                      fontSize: '0.72rem', fontWeight: 500,
-                    }}>
-                      #{t}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </GlassCard>
-
-            {/* AI Reply section */}
-            <div>
-              <div style={{
-                display: 'flex', alignItems: 'center',
-                justifyContent: 'space-between', marginBottom: '12px',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Bot size={16} color="#7033f5" />
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#f5f5f5' }}>AI Reply</span>
-                </div>
-                <button
-                  onClick={handleGenerateReply}
-                  disabled={isGenerating}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    background: 'linear-gradient(135deg, #7033f5, #4f46e5)',
-                    color: '#fff', border: 'none', borderRadius: '8px',
-                    padding: '8px 16px', fontSize: '0.78rem', fontWeight: 600,
-                    cursor: isGenerating ? 'not-allowed' : 'pointer',
-                    opacity: isGenerating ? 0.7 : 1, transition: 'all 0.3s ease',
-                  }}
-                >
-                  {isGenerating ? <RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={13} />}
-                  {isGenerating ? 'Generating...' : 'Generate'}
-                </button>
-              </div>
-
-              <textarea
-                value={editableReply}
-                onChange={e => setEditableReply(e.target.value)}
-                placeholder="Click Generate to create an AI reply, or type your own..."
-                rows={5}
-                style={{
-                  width: '100%', maxWidth: '100%', boxSizing: 'border-box',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '10px', padding: '14px',
-                  color: '#e5e7eb', fontSize: '0.85rem', lineHeight: 1.6,
-                  resize: 'vertical', outline: 'none', fontFamily: 'inherit',
-                }}
-                onFocus={e  => { e.currentTarget.style.borderColor = 'rgba(112,51,245,0.5)'; }}
-                onBlur={e   => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
-              />
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-                <button
-                  onClick={handlePublish}
-                  disabled={isPublishing || isPublished || !editableReply.trim()}
-                  style={{
-                    flex: 1,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                    background  : isPublished ? 'rgba(16,185,129,0.15)' : 'linear-gradient(135deg, #7033f5, #4f46e5)',
-                    color       : isPublished ? '#10b981' : '#fff',
-                    border      : isPublished ? '1px solid rgba(16,185,129,0.3)' : 'none',
-                    borderRadius: '10px', padding: '12px',
-                    fontSize: '0.85rem', fontWeight: 600,
-                    cursor: (isPublishing || isPublished) ? 'not-allowed' : 'pointer',
-                    opacity: isPublishing ? 0.7 : 1, transition: 'all 0.3s ease',
-                  }}
-                >
-                  {isPublishing
-                    ? <><RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} /> Publishing...</>
-                    : isPublished
-                      ? <><CheckCircle size={14} /> Published ✓</>
-                      : <><Send size={14} /> Publish Reply</>
-                  }
-                </button>
-
-                {!comment.isResolved && (
-                  <button
-                    onClick={handleResolve}
-                    disabled={isResolving}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '6px',
-                      background: 'rgba(255,255,255,0.05)',
-                      color: '#9CA3AF',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      borderRadius: '10px', padding: '12px 18px',
-                      fontSize: '0.85rem',
-                      cursor: isResolving ? 'not-allowed' : 'pointer',
-                      opacity: isResolving ? 0.7 : 1, transition: 'all 0.3s ease',
-                    }}
-                  >
-                    {isResolving ? <RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Shield size={14} />}
-                    {isResolving ? 'Resolving...' : 'Resolve'}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Published reply */}
-            {comment.publishedReply && (
-              <GlassCard style={{ padding: '14px', borderLeft: '3px solid #10b981', borderRadius: '0 12px 12px 0' }}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  marginBottom: '8px', color: '#10b981',
-                  fontSize: '0.78rem', fontWeight: 600,
-                }}>
-                  <CheckCircle size={13} /> Your Reply (Published)
-                </div>
-                <p style={{ margin: 0, fontSize: '0.85rem', color: '#9CA3AF', lineHeight: 1.6 }}>
-                  {comment.publishedReply}
-                </p>
-              </GlassCard>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-
-// ─── Post Selector ────────────────────────────────────────────
-function PostSelector({
-  posts, selectedPostId, onChange,
-}: {
-  posts: PostRef[]; selectedPostId: string; onChange: (id: string) => void;
-}) {
-  const totalComments = posts.reduce((s, p) => s + p.commentCount, 0);
-  return (
-    <div style={{ marginBottom: '18px' }}>
-      <p style={{
-        fontSize: '11px', fontWeight: 600, color: '#6B7280',
-        textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px',
-      }}>
-        Select post or campaign
-      </p>
-      <div style={{ position: 'relative', maxWidth: 460 }}>
-        <select
-          value={selectedPostId}
-          onChange={e => onChange(e.target.value)}
-          style={{
-            width: '100%', height: 42, borderRadius: 10,
-            border: '1px solid rgba(255,255,255,0.08)',
-            background: 'rgba(255,255,255,0.03)',
-            color: '#F5F5F5', fontSize: 13,
-            padding: '0 36px 0 14px',
-            appearance: 'none', cursor: 'pointer', outline: 'none',
-          }}
-        >
-          <option value="all" style={{ background: '#0f172a' }}>
-            All posts &amp; campaigns ({totalComments} comments)
-          </option>
-          {posts.map(p => (
-            <option key={p.id} value={p.id} style={{ background: '#0f172a' }}>
-              {PLATFORM_CFG[p.source].label} · {p.sourceType === 'campaign' ? 'Campaign' : 'Post'} — {p.title} ({p.commentCount})
-            </option>
-          ))}
-        </select>
-        <ChevronDown size={16} style={{ position: 'absolute', right: 12, top: 13, color: '#6B7280', pointerEvents: 'none' }} />
-      </div>
+      )}
     </div>
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────
-const PostAdReviewsPage: React.FC = () => {
-  // All state is local — no Redux
-  const [comments, setComments]     = useState<PostComment[]>(DEMO_COMMENTS);
-  const [activeId, setActiveId]     = useState<string | null>(null);
-  const [viewMode, setViewMode]     = useState<'grid' | 'list'>('grid');
-  const [platformTab, setPlatformTab] = useState<PlatformTab>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const PAGE_SIZE = 20;
+// ─────────────────────────────────────────────────────────────────────────
+// Main page
+// ─────────────────────────────────────────────────────────────────────────
+export default function PostAdReviews() {
+  const [tab, setTab] = useState<PlatformTabKey>('meta');
 
-  const [localFilters, setLocalFilters] = useState<LocalFilters>({
-    search: '', platform: 'all', sentiment: 'all',
-    status: 'all', sourceType: 'all', postId: 'all',
-  });
+  // ── Meta data ────────────────────────────────────────────────────────
+  const [pages, setPages]                   = useState<MetaPage[]>([]);
+  const [selectedPageId, setSelectedPageId] = useState<string>('');
+  const [posts, setPosts]                   = useState<MetaPost[]>([]);
+  const [selectedPostId, setSelectedPostId] = useState<string>('all');
+  const [comments, setComments]             = useState<MetaComment[]>([]);
 
-  const activeComment = comments.find(c => c._id === activeId) ?? null;
+  // ── UI ──────────────────────────────────────────────────────────────
+  const [loadingPages,    setLoadingPages]    = useState(false);
+  const [loadingPosts,    setLoadingPosts]    = useState(false);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [error,           setError]           = useState('');
+  const [search,          setSearch]          = useState('');
+  const [view,            setView]            = useState<ViewMode>('grid');
 
-  // Posts visible in selector based on active platform tab
-  const visiblePosts = useMemo(
-    () => platformTab === 'all' ? DEMO_POSTS : DEMO_POSTS.filter(p => p.source === platformTab),
-    [platformTab]
+  // ── Step 1: load Pages when Meta tab is active ──────────────────────
+  const loadPages = useCallback(async () => {
+    setError('');
+    setLoadingPages(true);
+    try {
+      // GET /meta-reviews/pages
+      const data = await apiFetch<MetaPage[]>('/meta-reviews/pages');
+      setPages(data);
+      // Auto-select first page only if nothing is selected yet
+      if (data.length > 0) {
+        setSelectedPageId((prev) => prev || data[0].pageId);
+      }
+    } catch (e: any) {
+      setError(e.message || 'Failed to load Pages. Make sure Meta is connected.');
+    } finally {
+      setLoadingPages(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'meta') {
+      loadPages();
+    }
+  }, [tab, loadPages]);
+
+  // Derive selected page object from selectedPageId
+  const selectedPage = useMemo(
+    () => pages.find((p) => p.pageId === selectedPageId) ?? null,
+    [pages, selectedPageId],
   );
 
-  const handlePlatformTab = (tab: PlatformTab) => {
-    setPlatformTab(tab);
-    setLocalFilters(prev => ({
-      ...prev,
-      platform: tab === 'all' ? 'all' : tab,
-      postId  : 'all',
-    }));
-  };
+  // ── Step 2: load posts when selectedPage changes ─────────────────────
+  const loadPosts = useCallback(async () => {
+    if (!selectedPage) return;
+    setError('');
+    setLoadingPosts(true);
+    setPosts([]);
+    setComments([]);
+    setSelectedPostId('all');
+    try {
+      // GET /meta-reviews/pages/:pageId/posts?pageAccessToken=xxx&limit=15
+      const data = await apiFetch<MetaPost[]>(
+        `/meta-reviews/pages/${selectedPage.pageId}/posts` +
+        `?pageAccessToken=${encodeURIComponent(selectedPage.pageAccessToken)}&limit=15`,
+      );
+      setPosts(data);
+    } catch (e: any) {
+      setError(e.message || 'Failed to load posts for this Page.');
+    } finally {
+      setLoadingPosts(false);
+    }
+  }, [selectedPage]);
 
-  const handleFilterChange = (key: string, value: string) => {
-    setLocalFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1);
-  };
+  useEffect(() => {
+    loadPosts();
+  }, [loadPosts]);
 
-  const handleUpdateComment = (updated: PostComment) => {
-    setComments(prev => prev.map(c => c._id === updated._id ? updated : c));
-    setActiveId(null);
-  };
+  // ── Step 3: load comments when selectedPostId or posts change ────────
+  const loadComments = useCallback(async () => {
+    if (!selectedPage || posts.length === 0) {
+      setComments([]);
+      return;
+    }
+    setError('');
+    setLoadingComments(true);
+    try {
+      const token = encodeURIComponent(selectedPage.pageAccessToken);
 
-  // Client-side filter
-  const filteredComments = useMemo(() => {
-    return comments.filter(c => {
-      if (localFilters.search.trim()) {
-        const q    = localFilters.search.toLowerCase();
-        const text = [c.reviewerName, c.content, c.postTitle, ...c.topics].join(' ').toLowerCase();
-        if (!text.includes(q)) return false;
+      if (selectedPostId === 'all') {
+        // GET /meta-reviews/posts/:postId/comments for each post in parallel
+        const results = await Promise.all(
+          posts.map((p) =>
+            apiFetch<MetaComment[]>(
+              `/meta-reviews/posts/${p.postId}/comments?pageAccessToken=${token}`,
+            ).catch(() => [] as MetaComment[]),
+          ),
+        );
+        setComments(results.flat());
+      } else {
+        // GET /meta-reviews/posts/:postId/comments for the selected post
+        const data = await apiFetch<MetaComment[]>(
+          `/meta-reviews/posts/${selectedPostId}/comments?pageAccessToken=${token}`,
+        );
+        setComments(data);
       }
-      if (platformTab             !== 'all' && c.source      !== platformTab)              return false;
-      if (localFilters.sentiment  !== 'all' && c.sentiment   !== localFilters.sentiment)   return false;
-      if (localFilters.status     !== 'all' && c.status      !== localFilters.status)      return false;
-      if (localFilters.sourceType !== 'all' && c.sourceType  !== localFilters.sourceType)  return false;
-      if (localFilters.postId     !== 'all' && c.postId      !== localFilters.postId)      return false;
-      return true;
-    });
-  }, [comments, localFilters, platformTab]);
+    } catch (e: any) {
+      setError(e.message || 'Failed to load comments.');
+    } finally {
+      setLoadingComments(false);
+    }
+  }, [selectedPage, posts, selectedPostId]);
 
-  const totalPages   = Math.ceil(filteredComments.length / PAGE_SIZE);
-  const pagedComments = filteredComments.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  useEffect(() => {
+    loadComments();
+  }, [loadComments]);
 
-  const pendingCount = comments.filter(c => c.status    === 'pending').length;
-  const flaggedCount = comments.filter(c => c.sentiment === 'negative' && !c.isResolved).length;
+  // ── Derived values ────────────────────────────────────────────────────
+  const postTitleFor = useCallback(
+    (refId: string) => posts.find((p) => p.postId === refId)?.title ?? refId,
+    [posts],
+  );
 
-  const FILTER_OPTIONS = {
-    sentiment  : ['all', 'positive', 'negative', 'neutral', 'mixed'],
-    status     : ['all', 'pending', 'replied'],
-    sourceType : ['all', 'post', 'campaign'],
-  };
+  const filteredComments = useMemo(
+    () =>
+      comments.filter((c) => {
+        if (!search) return true;
+        const q = search.toLowerCase();
+        return (
+          c.text?.toLowerCase().includes(q) ||
+          c.authorName?.toLowerCase().includes(q)
+        );
+      }),
+    [comments, search],
+  );
+
+  const totalCommentsInPage = posts.reduce<number>(
+    (sum, p) => sum + p.commentCount, 0,
+  );
 
   return (
-    <div style={{ padding: 'clamp(16px, 2.5vw, 32px)' }}>
+    <div className="par-page">
+      {/* ── Page header ── */}
+      <div className="par-header">
+        <h1 className="par-title">Post &amp; Ad Reviews</h1>
+        <p className="par-subtitle">
+          Track and reply to comments across your connected platforms, in one place.
+        </p>
+      </div>
 
       {/* ── Stat cards ── */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        {[
-          { icon: Inbox,       label: 'Total comments',  color: '#7033f5', value: comments.length },
-          { icon: Clock,       label: 'Pending',          color: '#f59e0b', value: pendingCount    },
-          { icon: AlertCircle, label: 'Needs attention',  color: '#ef4444', value: flaggedCount    },
-        ].map((s, i) => {
-          const Icon = s.icon;
-          return (
-            <div key={i} style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: '16px', padding: '16px 20px',
-              display: 'flex', alignItems: 'center', gap: '12px',
-              flex: '1 1 auto', minWidth: '180px',
-            }}>
-              <div style={{
-                width: '40px', height: '40px', borderRadius: '12px',
-                background: `${s.color}20`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Icon size={18} color={s.color} />
-              </div>
-              <div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: s.color, lineHeight: 1 }}>
-                  {s.value}
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '2px' }}>
-                  {s.label}
-                </div>
-              </div>
-            </div>
-          );
-        })}
+      <div className="par-stats">
+        <StatCard
+          icon={Inbox}
+          label="Comments loaded"
+          value={comments.length}
+          tint="linear-gradient(135deg,#5B6EF5,#7C6EF5)"
+        />
+        <StatCard
+          icon={Clock}
+          label="Posts loaded"
+          value={posts.length}
+          tint="linear-gradient(135deg,#FBBF24,#F59E0B)"
+        />
+        <StatCard
+          icon={Inbox}
+          label="Pages connected"
+          value={pages.length}
+          tint="linear-gradient(135deg,#34D399,#059669)"
+        />
       </div>
 
       {/* ── Platform tabs ── */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        <PlatformTabBtn active={platformTab === 'all'}      label="All"      source="all"      onClick={() => handlePlatformTab('all')}      />
-        <PlatformTabBtn active={platformTab === 'meta'}     label="Meta"     source="meta"     onClick={() => handlePlatformTab('meta')}     />
-        <PlatformTabBtn active={platformTab === 'x'}        label="X"        source="x"        onClick={() => handlePlatformTab('x')}        />
-        <PlatformTabBtn active={platformTab === 'linkedin'} label="LinkedIn" source="linkedin" onClick={() => handlePlatformTab('linkedin')} />
-      </div>
-
-      {/* ── Post selector ── */}
-      <PostSelector
-        posts={visiblePosts}
-        selectedPostId={localFilters.postId}
-        onChange={id => handleFilterChange('postId', id)}
-      />
-
-      {/* ── Search + filters + view toggle ── */}
-      <div style={{
-        display: 'flex', gap: '12px', marginBottom: '16px',
-        flexWrap: 'wrap', alignItems: 'center',
-      }}>
-        <div style={{ position: 'relative', flex: '1 1 300px' }}>
-          <Search size={16} style={{
-            position: 'absolute', left: '14px', top: '50%',
-            transform: 'translateY(-50%)', color: '#6b7280',
-          }} />
-          <input
-            placeholder="Search by name, comment, or post..."
-            value={localFilters.search}
-            onChange={e => handleFilterChange('search', e.target.value)}
-            style={{
-              width: '100%', boxSizing: 'border-box',
-              paddingLeft: '42px', paddingRight: '16px', height: '44px',
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '12px', color: '#e5e7eb',
-              fontSize: '0.85rem', outline: 'none',
-            }}
+      <div className="par-tabs" role="tablist" aria-label="Platform">
+        {(['meta', 'x', 'linkedin'] as PlatformTabKey[]).map((t) => (
+          <PlatformTab
+            key={t}
+            active={tab === t}
+            label={PLATFORM_CONFIG[t].label}
+            onClick={() => setTab(t)}
           />
-        </div>
-
-        {[
-          { key: 'sentiment',  options: FILTER_OPTIONS.sentiment,  label: 'Sentiment' },
-          { key: 'status',     options: FILTER_OPTIONS.status,     label: 'Status'    },
-          { key: 'sourceType', options: FILTER_OPTIONS.sourceType, label: 'Type'      },
-        ].map(f => (
-          <select
-            key={f.key}
-            value={localFilters[f.key as keyof LocalFilters]}
-            onChange={e => handleFilterChange(f.key, e.target.value)}
-            style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '12px', color: '#e5e7eb',
-              padding: '10px 14px', fontSize: '0.8rem',
-              outline: 'none', cursor: 'pointer', minWidth: '130px',
-            }}
-          >
-            {f.options.map(o => (
-              <option key={o} value={o} style={{ background: '#0f172a' }}>
-                {o === 'all' ? `All ${f.label}s` : o.charAt(0).toUpperCase() + o.slice(1)}
-              </option>
-            ))}
-          </select>
         ))}
-
-        {/* Grid / List toggle */}
-        <div style={{
-          display: 'flex', background: 'rgba(255,255,255,0.04)',
-          borderRadius: '12px', padding: '4px',
-          border: '1px solid rgba(255,255,255,0.08)',
-        }}>
-          {(['grid', 'list'] as const).map(mode => (
-            <button
-              key={mode}
-              onClick={() => setViewMode(mode)}
-              style={{
-                padding: '8px 12px', borderRadius: '10px',
-                background: viewMode === mode ? 'rgba(112,51,245,0.2)' : 'transparent',
-                color: viewMode === mode ? '#a78bfa' : '#6b7280',
-                border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center',
-              }}
-            >
-              {mode === 'grid' ? <Grid size={16} /> : <List size={16} />}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {/* ── Active filter tags ── */}
-      {(localFilters.sentiment !== 'all' || localFilters.status !== 'all' ||
-        localFilters.sourceType !== 'all' || localFilters.postId !== 'all' ||
-        localFilters.search) && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '8px',
-          marginBottom: '16px', flexWrap: 'wrap',
-        }}>
-          <FilterIcon size={14} color="#7033f5" />
-          <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>Active filters:</span>
-          {([
-            { key: 'sentiment',  active: localFilters.sentiment  !== 'all', label: `Sentiment: ${localFilters.sentiment}`,  reset: 'all' },
-            { key: 'status',     active: localFilters.status     !== 'all', label: `Status: ${localFilters.status}`,        reset: 'all' },
-            { key: 'sourceType', active: localFilters.sourceType !== 'all', label: `Type: ${localFilters.sourceType}`,      reset: 'all' },
-            { key: 'postId',     active: localFilters.postId     !== 'all', label: `Post: ${DEMO_POSTS.find(p => p.id === localFilters.postId)?.title ?? localFilters.postId}`, reset: 'all' },
-            { key: 'search',     active: !!localFilters.search,             label: `Search: "${localFilters.search}"`,      reset: '' },
-          ] as const).filter(f => f.active).map(f => (
-            <span key={f.key} style={{
-              background: 'rgba(112,51,245,0.15)', color: '#a78bfa',
-              padding: '4px 12px', borderRadius: '20px', fontSize: '0.72rem',
-              display: 'flex', alignItems: 'center', gap: '6px',
-            }}>
-              {f.label}
-              <button
-                onClick={() => handleFilterChange(f.key, f.reset)}
-                style={{ background: 'none', border: 'none', color: '#a78bfa', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
-              >
-                <X size={12} />
-              </button>
-            </span>
-          ))}
-        </div>
+      {/* ── Non-Meta platforms placeholder ── */}
+      {tab !== 'meta' && (
+        <ComingSoonBanner platform={PLATFORM_CONFIG[tab].label} />
       )}
 
-      {/* ── Count row ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <span style={{ fontSize: '0.8rem', color: '#6B7280' }}>
-          Showing {filteredComments.length} of {comments.length} comments
-        </span>
-      </div>
+      {/* ── Meta content ── */}
+      {tab === 'meta' && (
+        <>
+          {error && <ErrorBanner message={error} />}
 
-      {/* ── Comment grid / list ── */}
-      {filteredComments.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '80px 20px', color: '#6B7280' }}>
-          <MessageSquare size={64} style={{ marginBottom: '16px', opacity: 0.2 }} />
-          <p style={{ fontSize: '1rem', marginBottom: '8px', color: '#9CA3AF' }}>No comments found</p>
-          <p style={{ fontSize: '0.85rem', opacity: 0.6 }}>
-            {localFilters.postId !== 'all'
-              ? 'No comments for the selected post. Try another post or clear filters.'
-              : 'Try adjusting your filters or search terms.'
-            }
-          </p>
-        </div>
-      ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(320px, 1fr))' : '1fr',
-          gap: '16px',
-          paddingBottom: '24px',
-        }}>
-          {pagedComments.map((c, index) => (
-            <CommentCard
-              key={c._id}
-              comment={c}
-              index={index}
-              viewMode={viewMode}
-              onClick={() => setActiveId(c._id)}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* ── Pagination ── */}
-      {totalPages > 1 && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: '12px', paddingTop: '24px',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-        }}>
-          <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '10px', padding: '10px 18px',
-              color: '#9ca3af', cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-              fontSize: '0.82rem', fontWeight: 500,
-              opacity: currentPage === 1 ? 0.5 : 1,
-            }}
-          >
-            Previous
-          </button>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              const pageNum = i + 1;
-              return (
+          {/* Page + post selectors */}
+          <div className="par-selectors">
+            <div className="par-field">
+              <div className="par-field-label-row">
+                <p className="par-field-label">Facebook Page</p>
                 <button
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  style={{
-                    width: '38px', height: '38px', borderRadius: '10px',
-                    background: pageNum === currentPage ? 'linear-gradient(135deg, #7033f5, #4f46e5)' : 'rgba(255,255,255,0.05)',
-                    border: pageNum === currentPage ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                    color: pageNum === currentPage ? '#fff' : '#9ca3af',
-                    cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
-                  }}
+                  onClick={loadPages}
+                  disabled={loadingPages}
+                  className="par-refresh-btn"
+                  aria-label="Refresh pages"
                 >
-                  {pageNum}
+                  <RefreshCw
+                    size={12}
+                    className={loadingPages ? 'par-spin' : ''}
+                  />
+                  Refresh
                 </button>
-              );
-            })}
-          </div>
-          <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '10px', padding: '10px 18px',
-              color: '#9ca3af', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-              fontSize: '0.82rem', fontWeight: 500,
-              opacity: currentPage === totalPages ? 0.5 : 1,
-            }}
-          >
-            Next
-          </button>
-        </div>
-      )}
+              </div>
 
-      {/* ── Side panel ── */}
-      {activeComment && (
-        <CommentSidePanel
-          comment={activeComment}
-          comments={comments}
-          onClose={() => setActiveId(null)}
-          onUpdate={handleUpdateComment}
-        />
+              <SelectBox
+                label="Facebook Page"
+                value={selectedPageId}
+                onChange={(v) => {
+                  setSelectedPageId(v);
+                  setPosts([]);
+                  setComments([]);
+                  setSelectedPostId('all');
+                }}
+                disabled={loadingPages || pages.length === 0}
+              >
+                {loadingPages ? (
+                  <option>Loading Pages…</option>
+                ) : pages.length === 0 ? (
+                  <option>No Pages found — connect Facebook in Settings</option>
+                ) : (
+                  pages.map((p) => (
+                    <option key={p.pageId} value={p.pageId}>
+                      {p.pageName}
+                    </option>
+                  ))
+                )}
+              </SelectBox>
+            </div>
+
+            <div className="par-field">
+              <p className="par-field-label">Select post</p>
+              <SelectBox
+                label="Select post"
+                value={selectedPostId}
+                onChange={(v) => setSelectedPostId(v)}
+                disabled={loadingPosts || posts.length === 0}
+              >
+                {loadingPosts ? (
+                  <option>Loading posts…</option>
+                ) : posts.length === 0 ? (
+                  <option>No posts found for this Page</option>
+                ) : (
+                  <>
+                    <option value="all">
+                      All posts ({totalCommentsInPage} comments)
+                    </option>
+                    {posts.map((p) => (
+                      <option key={p.postId} value={p.postId}>
+                        {p.title} ({p.commentCount} comments)
+                      </option>
+                    ))}
+                  </>
+                )}
+              </SelectBox>
+            </div>
+          </div>
+
+          {/* Search + view toggle */}
+          <div className="par-search-row">
+            <div className="par-search-field">
+              <Search size={14} className="par-search-icon" aria-hidden="true" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name or comment…"
+                className="par-search-input"
+                aria-label="Search comments"
+              />
+            </div>
+
+            <div className="par-view-toggle" role="group" aria-label="View mode">
+              {(['grid', 'list'] as ViewMode[]).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  title={v === 'grid' ? 'Grid view' : 'List view'}
+                  aria-label={v === 'grid' ? 'Grid view' : 'List view'}
+                  aria-pressed={view === v}
+                  className={`par-view-btn${view === v ? ' is-active' : ''}`}
+                >
+                  {v === 'grid' ? <Grid3x3 size={14} /> : <List size={14} />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <p className="par-result-count">
+            {loadingComments
+              ? 'Loading comments…'
+              : `Showing ${filteredComments.length} of ${comments.length} comments`}
+          </p>
+
+          {/* Comment cards */}
+          {!loadingComments && filteredComments.length === 0 ? (
+            <div className="par-empty">
+              <p>
+                {pages.length === 0
+                  ? 'Connect your Facebook Page in Settings to get started.'
+                  : posts.length === 0
+                    ? 'No posts found for this Page.'
+                    : 'No comments match the current filter.'}
+              </p>
+            </div>
+          ) : (
+            <div className={`par-comments-grid par-${view}`}>
+              {filteredComments.map((c) => (
+                <CommentCard
+                  key={c.commentId}
+                  comment={c}
+                  postTitle={postTitleFor(c.sourceRefId)}
+                  pageAccessToken={selectedPage?.pageAccessToken ?? ''}
+                  onReplySuccess={loadComments}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        :root {
+          --par-accent-1: #5B6EF5;
+          --par-accent-2: #22D3EE;
+          --par-surface: rgba(255,255,255,0.03);
+          --par-surface-hover: rgba(255,255,255,0.05);
+          --par-border: rgba(255,255,255,0.07);
+          --par-border-strong: rgba(255,255,255,0.14);
+          --par-text-primary: #F5F5F5;
+          --par-text-secondary: #9CA3AF;
+          --par-text-tertiary: #6B7280;
+          --par-danger: #F87171;
+          --par-success: #34D399;
+          --par-warning: #FBBF24;
+        }
+
+        * { box-sizing: border-box; }
+
+        .par-page {
+          font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          color: var(--par-text-primary);
+          width: 100%;
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: 16px;
+        }
+        @media (min-width: 640px)  { .par-page { padding: 24px; } }
+        @media (min-width: 1024px) { .par-page { padding: 32px; } }
+
+        /* Header */
+        .par-header { margin-bottom: 22px; }
+        .par-title {
+          margin: 0 0 6px;
+          font-size: clamp(20px, 4vw, 28px);
+          font-weight: 700;
+          letter-spacing: -0.01em;
+        }
+        .par-subtitle {
+          margin: 0;
+          font-size: 13px;
+          color: var(--par-text-secondary);
+          max-width: 560px;
+        }
+
+        /* Stat cards */
+        .par-stats {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+          margin-bottom: 22px;
+        }
+        @media (max-width: 900px) { .par-stats { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { .par-stats { grid-template-columns: 1fr; } }
+
+        .par-stat-card {
+          background: var(--par-surface);
+          border: 1px solid var(--par-border);
+          border-radius: 16px;
+          padding: 16px 18px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          min-width: 0;
+          transition: border-color .15s ease, background .15s ease;
+        }
+        .par-stat-card:hover {
+          border-color: var(--par-border-strong);
+          background: var(--par-surface-hover);
+        }
+        .par-stat-icon {
+          width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .par-stat-text { min-width: 0; }
+        .par-stat-label { margin: 0; font-size: 12px; color: var(--par-text-secondary); }
+        .par-stat-value {
+          margin: 0; font-size: clamp(18px, 3vw, 22px); font-weight: 600;
+          color: var(--par-text-primary); line-height: 1.3;
+        }
+
+        /* Pills */
+        .par-pill {
+          font-size: 11px; font-weight: 600; padding: 3px 9px;
+          border-radius: 999px; white-space: nowrap; flex-shrink: 0;
+        }
+
+        /* Platform tabs */
+        .par-tabs {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 18px;
+          overflow-x: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          padding-bottom: 2px;
+        }
+        .par-tabs::-webkit-scrollbar { display: none; }
+        .par-tab-btn {
+          flex: 0 0 auto;
+          white-space: nowrap;
+          padding: 8px 18px;
+          border-radius: 999px;
+          font-size: 13px;
+          font-weight: 600;
+          border: 1px solid var(--par-border);
+          background: transparent;
+          color: var(--par-text-secondary);
+          cursor: pointer;
+          transition: all .15s ease;
+        }
+        .par-tab-btn:hover { border-color: var(--par-border-strong); color: var(--par-text-primary); }
+        .par-tab-btn.is-active {
+          border-color: rgba(91,110,245,0.5);
+          background: rgba(91,110,245,0.16);
+          color: #A5B4FC;
+        }
+        .par-tab-btn:focus-visible,
+        .par-refresh-btn:focus-visible,
+        .par-view-btn:focus-visible,
+        .par-reply-toggle:focus-visible,
+        .par-send-btn:focus-visible,
+        .par-select:focus-visible,
+        .par-search-input:focus-visible,
+        .par-reply-input:focus-visible {
+          outline: 2px solid var(--par-accent-2);
+          outline-offset: 2px;
+        }
+
+        /* Banners */
+        .par-banner {
+          padding: 12px 16px;
+          border-radius: 10px;
+          font-size: 13px;
+          margin-bottom: 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .par-banner-error {
+          background: rgba(248,113,113,0.08);
+          border: 1px solid rgba(248,113,113,0.2);
+          color: var(--par-danger);
+        }
+        .par-banner-warning {
+          background: rgba(251,191,36,0.08);
+          border: 1px solid rgba(251,191,36,0.2);
+          color: var(--par-warning);
+          padding: 14px 18px;
+          border-radius: 12px;
+        }
+
+        /* Selectors */
+        .par-selectors {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          margin-bottom: 18px;
+        }
+        @media (max-width: 640px) {
+          .par-selectors { grid-template-columns: 1fr; gap: 14px; }
+        }
+        .par-field { min-width: 0; }
+        .par-field-label-row {
+          display: flex; align-items: center; justify-content: space-between;
+          margin-bottom: 8px; gap: 8px;
+        }
+        .par-field-label {
+          margin: 0 0 8px;
+          font-size: 11px; font-weight: 600; color: var(--par-text-tertiary);
+          text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .par-field-label-row .par-field-label { margin: 0; }
+        .par-refresh-btn {
+          display: flex; align-items: center; gap: 4px;
+          font-size: 11px; color: var(--par-text-tertiary);
+          background: none; border: none; cursor: pointer;
+          padding: 4px; border-radius: 6px;
+          transition: color .15s ease;
+        }
+        .par-refresh-btn:hover:not(:disabled) { color: var(--par-text-primary); }
+        .par-refresh-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+
+        .par-select-wrap { position: relative; }
+        .par-select {
+          width: 100%; height: 42px; border-radius: 10px;
+          border: 1px solid var(--par-border);
+          background: var(--par-surface);
+          color: var(--par-text-primary);
+          font-size: 13px; padding: 0 36px 0 14px;
+          appearance: none; cursor: pointer;
+          transition: border-color .15s ease;
+        }
+        .par-select:disabled { color: var(--par-text-tertiary); cursor: not-allowed; }
+        .par-select:hover:not(:disabled) { border-color: var(--par-border-strong); }
+        .par-select-chevron {
+          position: absolute; right: 12px; top: 14px;
+          color: var(--par-text-tertiary); pointer-events: none;
+        }
+
+        /* Search row */
+        .par-search-row {
+          display: flex; gap: 10px; align-items: center;
+          margin-bottom: 14px; flex-wrap: wrap;
+        }
+        @media (max-width: 560px) {
+          .par-search-row { flex-direction: column; align-items: stretch; }
+        }
+        .par-search-field { position: relative; flex: 1; min-width: 0; }
+        @media (min-width: 561px) { .par-search-field { min-width: 220px; } }
+        .par-search-icon { position: absolute; left: 13px; top: 13px; color: var(--par-text-tertiary); }
+        .par-search-input {
+          width: 100%; height: 40px; border-radius: 10px;
+          border: 1px solid var(--par-border);
+          background: var(--par-surface);
+          color: var(--par-text-primary); font-size: 13px;
+          padding: 0 14px 0 36px; outline: none;
+          transition: border-color .15s ease;
+        }
+        .par-search-input:focus { border-color: rgba(91,110,245,0.5); }
+
+        .par-view-toggle {
+          display: flex; gap: 4px; flex-shrink: 0;
+          background: rgba(255,255,255,0.04);
+          border-radius: 10px; padding: 4px;
+          align-self: flex-start;
+        }
+        @media (max-width: 560px) { .par-view-toggle { align-self: flex-end; } }
+        .par-view-btn {
+          width: 32px; height: 32px; border-radius: 8px; border: none;
+          cursor: pointer; background: transparent; color: var(--par-text-tertiary);
+          display: flex; align-items: center; justify-content: center;
+          transition: all .15s ease;
+        }
+        .par-view-btn:hover { color: var(--par-text-primary); }
+        .par-view-btn.is-active { background: rgba(91,110,245,0.2); color: #A5B4FC; }
+
+        .par-result-count { font-size: 12px; color: var(--par-text-tertiary); margin: 0 0 12px; }
+
+        /* Empty state */
+        .par-empty {
+          text-align: center; padding: 48px 20px; color: var(--par-text-tertiary);
+          border: 1px dashed var(--par-border); border-radius: 14px;
+        }
+        .par-empty p { margin: 0; font-size: 14px; }
+
+        /* Comments grid */
+        .par-comments-grid.par-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 12px;
+        }
+        .par-comments-grid.par-list {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        @media (max-width: 480px) {
+          .par-comments-grid.par-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Comment card */
+        .par-comment-card {
+          background: var(--par-surface);
+          border: 1px solid var(--par-border);
+          border-radius: 14px;
+          padding: 16px 18px;
+          display: flex; flex-direction: column; gap: 10px;
+          min-width: 0;
+          transition: border-color .15s ease;
+        }
+        .par-comment-card:hover { border-color: var(--par-border-strong); }
+        .par-comment-header {
+          display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+        }
+        .par-comment-author { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .par-avatar {
+          width: 36px; height: 36px; border-radius: 50%;
+          background: linear-gradient(135deg, var(--par-accent-1), var(--par-accent-2));
+          display: flex; align-items: center; justify-content: center;
+          font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+        }
+        .par-author-meta { min-width: 0; }
+        .par-author-name {
+          margin: 0; font-size: 14px; font-weight: 600; color: var(--par-text-primary);
+          overflow-wrap: break-word; word-break: break-word;
+        }
+        .par-author-sub {
+          margin: 0; font-size: 11px; color: var(--par-text-tertiary);
+          overflow-wrap: break-word; word-break: break-word;
+        }
+        .par-comment-text {
+          margin: 0; font-size: 13px; color: #D1D5DB; line-height: 1.6;
+          overflow-wrap: break-word; word-break: break-word;
+        }
+        .par-comment-footer {
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 8px; flex-wrap: wrap;
+        }
+        .par-comment-counts { display: flex; gap: 12px; font-size: 11px; color: var(--par-text-tertiary); flex-wrap: wrap; }
+        .par-reply-toggle {
+          display: flex; align-items: center; gap: 5px;
+          font-size: 12px; font-weight: 600; color: #A5B4FC;
+          background: transparent; border: none; cursor: pointer;
+          padding: 4px 6px; border-radius: 6px;
+          transition: background .15s ease;
+        }
+        .par-reply-toggle:hover { background: rgba(165,180,252,0.08); }
+
+        /* Reply box */
+        .par-reply-box { display: flex; flex-direction: column; gap: 6px; }
+        .par-reply-row { display: flex; gap: 8px; }
+        .par-reply-input {
+          flex: 1; min-width: 0; height: 36px; border-radius: 8px;
+          border: 1px solid var(--par-border);
+          background: rgba(255,255,255,0.05);
+          color: var(--par-text-primary); font-size: 13px; padding: 0 12px; outline: none;
+          transition: border-color .15s ease;
+        }
+        .par-reply-input:focus { border-color: rgba(91,110,245,0.5); }
+        .par-send-btn {
+          width: 36px; height: 36px; border-radius: 8px; border: none;
+          background: linear-gradient(135deg, var(--par-accent-1), var(--par-accent-2));
+          color: #fff; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; transition: opacity .15s ease, transform .1s ease;
+        }
+        .par-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .par-send-btn:not(:disabled):hover { transform: translateY(-1px); }
+        .par-reply-error { margin: 0; font-size: 11px; color: var(--par-danger); }
+
+        .par-spin { animation: par-spin 1s linear infinite; }
+        @keyframes par-spin { to { transform: rotate(360deg); } }
+
+        @media (prefers-reduced-motion: reduce) {
+          .par-spin { animation: none; }
+          * { transition: none !important; }
+        }
       `}</style>
     </div>
   );
-};
-
-export default PostAdReviewsPage;
+}
