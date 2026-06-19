@@ -57,7 +57,7 @@ function Footer() {
           <div>
             <div className="flex items-center gap-2">
             <Link to="/" className="flex items-center relative z-10 shrink-0">
-              <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <div style={{ display: "flex", alignItems: "center"}}>
                 <div style={{
                   width: 44, height: 36, borderRadius: 10,
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -79,7 +79,7 @@ function Footer() {
                   WebkitTextFillColor: "transparent",
                   transition: "font-size 0.5s ease",
                 }}>
-                  Wheedle Technologies.ai
+                  heedle Technologies.ai
                 </span>
               </div>
             </Link>
