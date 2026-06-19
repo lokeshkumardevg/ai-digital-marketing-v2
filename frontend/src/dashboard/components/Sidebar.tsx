@@ -92,18 +92,19 @@ const BASE_MENU_ITEMS: MenuItem[] = [
       { path: '/seo/link-building', label: 'Link Building' },
     ],
   },
-  {
-    label: 'ReputationIQ',
-    icon: ThumbsUp,
-    permission: 'automation',
-    subItems: [
-      { path: '/reputation/dashboard', label: 'Dashboard', icon: BarChart2 },
-      { path: '/reputation/inbox', label: 'Reviews', icon: Star },
-      { path: '/reputation/customers', label: 'Customers', icon: Users },
-      { path: '/reputation/analytics', label: 'Analytics', icon: TrendingUp },
-      { path: '/reputation/recommendations', label: 'Recommendations', icon: Lightbulb, notifBadge: 3 },
-    ],
-  },
+{
+  label: 'ReputationIQ',
+  icon: ThumbsUp,
+  permission: 'automation',
+  subItems: [
+    { path: '/reputation/dashboard', label: 'Dashboard', icon: BarChart2 },
+    { path: '/reputation/inbox', label: 'Profile reviews', icon: Star },
+    { path: '/reputation/posts', label: 'Post & ad reviews', icon: Megaphone },
+    { path: '/reputation/customers', label: 'Customers', icon: Users },
+    { path: '/reputation/analytics', label: 'Analytics', icon: TrendingUp },
+    { path: '/reputation/recommendations', label: 'Recommendations', icon: Lightbulb, notifBadge: 3 },
+  ],
+},
   {
     label: 'More Tools',
     icon: GitBranch,
