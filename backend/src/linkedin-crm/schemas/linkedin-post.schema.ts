@@ -35,7 +35,7 @@ export class LinkedInPost {
   @Prop()
   imageUrl?: string;
 
-  @Prop({ default: 'text', enum: ['text', 'image', 'video', 'article', 'poll', 'carousel'] })
+  @Prop({ default: 'text', enum: ['text', 'image', 'video', 'article', 'poll', 'carousel', 'organic'] })
   postType: string;
 
   @Prop()

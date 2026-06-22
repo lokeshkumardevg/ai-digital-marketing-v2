@@ -22,11 +22,11 @@ export class AnalyticsService {
     private usersService: UsersService,
     private configService: ConfigService,
     @InjectRedis() private readonly redis: Redis,
-  ) {}
+  ) { }
 
   private getEmptyResponse() {
     return {
-      audiences: [],  
+      audiences: [],
       pages: [],
       creatives: [],
     };
@@ -129,15 +129,42 @@ export class AnalyticsService {
         LIMIT 10
       `;
 
+      const systemMccId = this.configService.get<string>('SYSTEM_GOOGLE_MCC_ID');
+      let managerId = (user as any).googleManagerId || this.configService.get<string>('GOOGLE_ADS_MANAGER_ID') || systemMccId;
+
+      try {
+        const listRes = await fetch('https://googleads.googleapis.com/v16/customers:listAccessibleCustomers', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'developer-token': developerToken,
+          }
+        });
+        const listData = await listRes.json();
+        const accessibleCids = (listData.resourceNames || []).map((rn: string) => rn.split('/')[1]);
+        if (accessibleCids.includes(resolvedCustomerId)) {
+          managerId = resolvedCustomerId;
+        } else if (accessibleCids.length > 0) {
+          managerId = accessibleCids[0];
+        }
+      } catch (e) {
+        this.logger.warn(`Failed to dynamically resolve manager ID: ${e}`);
+      }
+
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${accessToken}`,
+        'developer-token': developerToken,
+        'Content-Type': 'application/json',
+      };
+
+      if (managerId && managerId !== resolvedCustomerId) {
+        headers['login-customer-id'] = managerId.replace(/-/g, '');
+      }
+
       const response = await fetch(
         `https://googleads.googleapis.com/v16/customers/${resolvedCustomerId}/googleAds:search`,
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'developer-token': developerToken,
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: JSON.stringify({ query }),
         },
       );
@@ -333,7 +360,7 @@ export class AnalyticsService {
       // Twitter Ads API requires special developer access
       // We will return mock data for now instead of empty arrays
       const mockData = this.getMockData('Twitter');
-      
+
       // Let's try to add the user's Twitter handle to the pages array
       if (user.twitterUserId) {
         mockData.pages = [
@@ -584,16 +611,42 @@ export class AnalyticsService {
     ORDER BY segments.date ASC
   `;
 
+    const systemMccId = this.configService.get<string>('SYSTEM_GOOGLE_MCC_ID');
+    let managerId = (user as any).googleManagerId || this.configService.get<string>('GOOGLE_ADS_MANAGER_ID') || systemMccId;
+
+    try {
+      const listRes = await fetch('https://googleads.googleapis.com/v16/customers:listAccessibleCustomers', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'developer-token': developerToken,
+        }
+      });
+      const listData = await listRes.json();
+      const accessibleCids = (listData.resourceNames || []).map((rn: string) => rn.split('/')[1]);
+      if (accessibleCids.includes(customerId)) {
+        managerId = customerId;
+      } else if (accessibleCids.length > 0) {
+        managerId = accessibleCids[0];
+      }
+    } catch (e) {
+      this.logger.warn(`Failed to dynamically resolve manager ID: ${e}`);
+    }
+
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${accessToken}`,
+      'developer-token': developerToken,
+      'Content-Type': 'application/json',
+    };
+
+    if (managerId && managerId !== customerId) {
+      headers['login-customer-id'] = managerId.replace(/-/g, '');
+    }
+
     const res = await fetch(
       `https://googleads.googleapis.com/v16/customers/${customerId}/googleAds:search`,
       {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'developer-token': developerToken,
-          'Content-Type': 'application/json',
-          'login-customer-id': customerId,
-        },
+        headers,
         body: JSON.stringify({ query }),
       },
     );

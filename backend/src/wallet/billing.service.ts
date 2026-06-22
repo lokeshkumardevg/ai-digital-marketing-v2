@@ -1,9 +1,10 @@
 // billing.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { WalletService } from './wallet.service';
 import { Plan, PlanId, isPlanId } from './billing.types';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class BillingService {
@@ -42,14 +43,96 @@ export class BillingService {
 
     const plan = plans[planId]; // fully type-safe — no cast needed
 
-    // TODO: Replace with real Stripe/Razorpay checkout session
-    // const session = await stripe.checkout.sessions.create({ ... });
-    // return { id: session.id, url: session.url, plan };
-    return {
-      id: 'cs_' + Math.random().toString(36).substr(2, 9),
-      url: successUrl,
-      plan,
-    };
+    // If it's the free plan, upgrade the database immediately without charging
+    if (plan.price === 0) {
+      let subscription = await this.subscriptionModel.findOne({ userId });
+      if (!subscription) {
+        await this.subscriptionModel.create({
+          userId,
+          plan: planId,
+          status: 'active',
+          aiTokensUsedCurrentBillingCycle: 0,
+          aiTokenLimit: plan.limit,
+          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        });
+      } else {
+        subscription.plan = planId;
+        subscription.status = 'active';
+        subscription.aiTokenLimit = plan.limit;
+        subscription.currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        await subscription.save();
+      }
+      return {
+        id: 'free_upgrade',
+        url: successUrl,
+        plan,
+      };
+    }
+
+    // For paid plans, create a real Razorpay Order
+    // Convert USD to INR (e.g. 1 USD = 83 INR) for Razorpay paise
+    const amountInPaise = plan.price * 83 * 100;
+
+    try {
+      const order = await this.walletService.razorpay.orders.create({
+        amount: amountInPaise,
+        currency: 'INR',
+        receipt: `sub_${planId}_${Date.now().toString().slice(-6)}`,
+        notes: { userId, planId },
+      });
+
+      return {
+        id: order.id,
+        url: '', // Frontend will open Razorpay checkout modal using order.id
+        plan,
+      };
+    } catch (error: any) {
+      throw new BadRequestException(`Failed to create subscription order: ${error.message || error}`);
+    }
+  }
+
+  // POST /billing/subscription/verify
+  async verifySubscriptionPayment(
+    userId: string,
+    orderId: string,
+    paymentId: string,
+    signature: string,
+    planId: string,
+  ) {
+    const secret = process.env.RAZORPAY_KEY_SECRET || '';
+    const body = orderId + '|' + paymentId;
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(body.toString())
+      .digest('hex');
+
+    if (expectedSignature !== signature) {
+      throw new BadRequestException('Invalid payment signature');
+    }
+
+    const plans = await this.getPlans();
+    if (!isPlanId(planId)) throw new NotFoundException('Plan not found');
+    const plan = plans[planId];
+
+    let subscription = await this.subscriptionModel.findOne({ userId });
+    if (!subscription) {
+      subscription = await this.subscriptionModel.create({
+        userId,
+        plan: planId,
+        status: 'active',
+        aiTokensUsedCurrentBillingCycle: 0,
+        aiTokenLimit: plan.limit,
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      });
+    } else {
+      subscription.plan = planId;
+      subscription.status = 'active';
+      subscription.aiTokenLimit = plan.limit;
+      subscription.currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      await subscription.save();
+    }
+
+    return { success: true, plan: planId, subscription };
   }
 
   // POST /billing/subscription/cancel

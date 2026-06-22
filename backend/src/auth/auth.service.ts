@@ -222,7 +222,21 @@ export class AuthService {
   }
 
   getXAuthUrl(userId: string) {
-    const clientId = this.configService.get('X_CLIENT_ID') || this.configService.get('TWITTER_CLIENT_ID');
+    let clientId = this.configService.get('X_CLIENT_ID') || this.configService.get('TWITTER_CLIENT_ID');
+    console.log('[DEBUG] getXAuthUrl triggered');
+    console.log('[DEBUG] Initial resolved clientId:', clientId);
+    if (clientId && !clientId.includes(':')) {
+      try {
+        const decoded = Buffer.from(clientId, 'base64').toString('utf8');
+        if (decoded.includes(':')) {
+          console.log('[DEBUG] Decoded base64 clientId to raw:', decoded);
+          clientId = decoded;
+        }
+      } catch (e) {
+        console.error('[DEBUG] Failed to decode clientId as base64', e);
+      }
+    }
+    console.log('[DEBUG] Final clientId used:', clientId);
     if (!clientId) {
       throw new Error('X (Twitter) Client ID not configured.');
     }
@@ -631,7 +645,15 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('User not found');
 
     // X (Twitter) OAuth 2.0 PKCE flow
-    const clientId = this.configService.get('X_CLIENT_ID') || this.configService.get('TWITTER_CLIENT_ID');
+    let clientId = this.configService.get('X_CLIENT_ID') || this.configService.get('TWITTER_CLIENT_ID');
+    if (clientId && !clientId.includes(':')) {
+      try {
+        const decoded = Buffer.from(clientId, 'base64').toString('utf8');
+        if (decoded.includes(':')) {
+          clientId = decoded;
+        }
+      } catch (e) { }
+    }
     const clientSecret = this.configService.get('X_CLIENT_SECRET') || this.configService.get('TWITTER_CLIENT_SECRET');
 
     if (!clientId || !clientSecret) {
@@ -649,7 +671,7 @@ export class AuthService {
 
     console.log('[X OAuth] Exchanging code for token...');
 
-    const res = await fetch('https://api.twitter.com/2/oauth2/token', {
+    let res = await fetch('https://api.twitter.com/2/oauth2/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -658,11 +680,55 @@ export class AuthService {
       body: params.toString(),
     });
 
-    const tokens = await res.json() as any;
+    let responseText = await res.text();
+    let tokens: any = {};
+    try {
+      tokens = JSON.parse(responseText);
+    } catch (e) {
+      console.warn('[X OAuth] First token exchange attempt returned non-JSON:', responseText);
+    }
+
+    // If first attempt failed (e.g. invalid client due to Basic auth on public client), try public client flow
+    if (!res.ok || tokens.error === 'invalid_client' || tokens.error === 'unauthorized_client') {
+      console.log('[X OAuth] First attempt failed. Retrying with public client flow (client_id in body, no client_secret)...');
+
+      const publicParams = new URLSearchParams({
+        code,
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        redirect_uri: `${backendUrl}/auth/x/callback`,
+        code_verifier: 'challengechallengechallengechallengechallenge',
+      });
+
+      const publicRes = await fetch('https://api.twitter.com/2/oauth2/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: publicParams.toString(),
+      });
+
+      const publicResponseText = await publicRes.text();
+      try {
+        const publicTokens = JSON.parse(publicResponseText);
+        if (publicRes.ok && !publicTokens.error) {
+          res = publicRes;
+          tokens = publicTokens;
+          responseText = publicResponseText;
+          console.log('[X OAuth] Public client flow succeeded!');
+        } else {
+          console.error('[X OAuth] Public client flow also failed:', publicResponseText);
+        }
+      } catch (e) {
+        console.warn('[X OAuth] Public client flow attempt returned non-JSON:', publicResponseText);
+      }
+    }
+
     console.log(`[X OAuth] Token response:`, { error: tokens.error, has_access_token: !!tokens.access_token });
 
-    if (tokens.error) {
-      throw new UnauthorizedException(`X OAuth error: ${tokens.error_description || tokens.error}`);
+    if (tokens.error || !res.ok) {
+      console.error('[X OAuth] Final token exchange failure:', responseText);
+      throw new UnauthorizedException(`X OAuth error: ${tokens.error_description || tokens.error || responseText.slice(0, 200)}`);
     }
 
     // Get user info to save Twitter username for profile display

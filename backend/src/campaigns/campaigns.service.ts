@@ -1985,8 +1985,14 @@ Return ONLY JSON.
     const clientId = this.configService.get('GOOGLE_CLIENT_ID');
     const clientSecret = this.configService.get('GOOGLE_CLIENT_SECRET');
 
-    if (!systemRefreshToken || !systemMccId || systemRefreshToken === 'your_master_refresh_token_here') {
-      this.logger.warn(`System Google Ads credentials missing or not configured. systemMccId: ${systemMccId}, hasRefreshToken: ${!!systemRefreshToken}. Simulating success and saving to DB.`);
+    const isClientOwned = !!(user.googleRefreshToken && user.googleCustomerId);
+    const workingRefreshToken = isClientOwned ? user.googleRefreshToken : systemRefreshToken;
+    const workingClientId = isClientOwned ? (user.googleClientId || clientId) : clientId;
+    const workingClientSecret = isClientOwned ? (user.googleClientSecret || clientSecret) : clientSecret;
+    const workingDeveloperToken = isClientOwned ? (user.googleDeveloperToken || developerToken) : developerToken;
+
+    if (!workingRefreshToken || workingRefreshToken === 'your_master_refresh_token_here') {
+      this.logger.warn(`Google Ads credentials missing or not configured. Simulating success and saving to DB.`);
       return this.simulateGoogleCampaign(userId, data.campaignName, data);
     }
 
@@ -1994,16 +2000,16 @@ Return ONLY JSON.
 
     try {
       const clientAuth = new GoogleAdsApi({
-        client_id: clientId,
-        client_secret: clientSecret,
-        developer_token: developerToken,
+        client_id: workingClientId,
+        client_secret: workingClientSecret,
+        developer_token: workingDeveloperToken,
       });
 
       // 1. Check if user already has an isolated Client Account, if not create one!
       let customerId = data.googleAccountId || user.googleCustomerId;
-      let loginCustomerId = systemMccId.replace(/-/g, '');
+      let loginCustomerId = isClientOwned ? customerId.replace(/-/g, '') : systemMccId.replace(/-/g, '');
 
-      if (!customerId) {
+      if (!isClientOwned && !customerId) {
         this.logger.log(`Creating new Google Ads Client Account for user ${user.email} under MCC ${systemMccId}`);
         const mccCustomer = clientAuth.Customer({
           customer_id: systemMccId.replace(/-/g, ''),
@@ -2031,28 +2037,60 @@ Return ONLY JSON.
           await this.usersService.update(userId, { googleCustomerId: customerId });
         }
 
-        try {
-          const listRes = await clientAuth.listAccessibleCustomers(systemRefreshToken);
-          const accessibleCids = (listRes.resource_names || []).map((rn: string) => rn.split('/')[1]);
-          if (accessibleCids.includes(customerId)) {
-            loginCustomerId = customerId;
-            this.logger.log(`Target customer ${customerId} is in accessible customers. Setting loginCustomerId = ${loginCustomerId}`);
-          } else {
-            loginCustomerId = systemMccId.replace(/-/g, '');
-            this.logger.log(`Target customer ${customerId} is NOT in accessible customers. Setting loginCustomerId = MCC ID (${loginCustomerId})`);
+        if (isClientOwned) {
+          try {
+            const listRes = await clientAuth.listAccessibleCustomers(workingRefreshToken);
+            const accessibleCids = (listRes.resource_names || []).map((rn: string) => rn.split('/')[1]);
+            
+            if (accessibleCids.includes(customerId)) {
+              loginCustomerId = customerId;
+            } else if (accessibleCids.length > 0) {
+              loginCustomerId = accessibleCids[0];
+            } else {
+              loginCustomerId = customerId;
+            }
+          } catch (e) {
+            this.logger.warn(`Failed to dynamically resolve manager ID: ${e}`);
+            loginCustomerId = (user as any).googleManagerId || this.configService.get<string>('GOOGLE_ADS_MANAGER_ID') || customerId;
           }
-        } catch (e: any) {
-          this.logger.warn(`Failed to list accessible customers, defaulting loginCustomerId to systemMccId: ${e.message}`);
-          loginCustomerId = systemMccId.replace(/-/g, '');
+        } else {
+          try {
+            const listRes = await clientAuth.listAccessibleCustomers(systemRefreshToken);
+            const accessibleCids = (listRes.resource_names || []).map((rn: string) => rn.split('/')[1]);
+            if (accessibleCids.includes(customerId)) {
+              loginCustomerId = customerId;
+              this.logger.log(`Target customer ${customerId} is in accessible customers. Setting loginCustomerId = ${loginCustomerId}`);
+            } else {
+              loginCustomerId = systemMccId.replace(/-/g, '');
+              this.logger.log(`Target customer ${customerId} is NOT in accessible customers. Setting loginCustomerId = MCC ID (${loginCustomerId})`);
+            }
+          } catch (e: any) {
+            this.logger.warn(`Failed to list accessible customers, defaulting loginCustomerId to systemMccId: ${e.message}`);
+            loginCustomerId = systemMccId.replace(/-/g, '');
+          }
         }
       }
 
-      // 2. Setup the target client account using the MCC auth or self login
-      const workingCustomer = clientAuth.Customer({
+      // 2. Setup the target client account using the client's own auth or MCC auth
+      const customerOptions: any = {
         customer_id: customerId,
-        refresh_token: systemRefreshToken,
-        login_customer_id: loginCustomerId,
-      });
+        refresh_token: workingRefreshToken,
+      };
+      if (loginCustomerId && loginCustomerId !== customerId) {
+        customerOptions.login_customer_id = loginCustomerId;
+      }
+      const workingCustomer = clientAuth.Customer(customerOptions);
+      
+      const fs = require('fs');
+      try {
+        fs.writeFileSync('./google_debug.json', JSON.stringify({
+          isClientOwned,
+          workingRefreshToken,
+          customerId,
+          loginCustomerId,
+          customerOptions
+        }, null, 2));
+      } catch (e) {}
 
       // 3. Create Campaign Budget
       const budgetResult = await workingCustomer.campaignBudgets.create([
@@ -3103,6 +3141,10 @@ Return ONLY JSON.
     });
 
     for (const user of activeUsers) {
+      if (user.googleRefreshToken) {
+        this.logger.log(`Skipping spend sync deduction for client-owned Google Ads account: ${user.email}`);
+        continue;
+      }
       try {
         const childId = (user as any).googleCustomerId.replace(/-/g, '');
         const mccId = systemMccId.replace(/-/g, '');

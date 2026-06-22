@@ -66,7 +66,7 @@ export class LinkedInLead {
   @Prop({ type: [String], default: [] })
   tags: string[];
 
-  @Prop({ type: [{ message: String, type: String, timestamp: Date, author: String }], default: [] })
+  @Prop({ type: [{ message: String, type: { type: String }, timestamp: Date, author: String }], default: [] })
   notes: Array<{
     message: string;
     type: string; // 'note', 'call', 'email', 'meeting'

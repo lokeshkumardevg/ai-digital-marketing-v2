@@ -7,7 +7,7 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class WalletService {
-  private razorpay: any;
+  public razorpay: any;
 
   constructor(
     @InjectModel('Wallet') private walletModel: Model<any>,

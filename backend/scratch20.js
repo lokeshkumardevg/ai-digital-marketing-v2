@@ -1,26 +1,51 @@
-const { MongoClient } = require('mongodb');
-const dotenv = require('dotenv');
-dotenv.config({ path: 'backend/.env' });
+const mongoose = require('mongoose');
+
+const mongoUri = 'mongodb+srv://devclientg:SCpLNaejWusV7mcR@cluster0.vyinynw.mongodb.net/ai_digital';
+const userId = '6a1d324b5291a9f8db25ff2b';
+const token = 'EAAXh1v5Jy5QBR4NOE2VtvMZAAFNMK8AozCatIbYWqMwMfIeg4sZCAZBvVpmIg6R1gwaxFfFQBZCTeRV8igM2SEb1WMbbC5ZBZBVLH3DLJBTlIZBc9ftK7zmRBbptVvHtNPZBVrEsgjUPPqxhW7IxMZAigJWtHoVU3wGHxWEZALGlInGVbGraLAhWCZCmixjHksJTZBqv7HTDCo68G48mIkUAChXdLvLM0thvtqj6NwCQ4W3Q6nEpSuxaceeIGAZDZD';
 
 async function run() {
-  const uri = 'mongodb+srv://devclientg:SCpLNaejWusV7mcR@cluster0.vyinynw.mongodb.net/ai_digital?retryWrites=true&w=majority';
-  const client = new MongoClient(uri);
-  await client.connect();
-  const db = client.db();
+  console.log('Connecting to MongoDB...');
+  await mongoose.connect(mongoUri);
+  console.log('Connected.');
 
-  // Get the user and check what fields we have
-  const user = await db.collection('users').findOne({ twitterAccessToken: { $exists: true, $ne: null } });
-  console.log('Token type (first 10 chars):', user?.twitterAccessToken?.slice(0, 10));
-  
-  // The stored access token might be an OAuth 1.0a token, not OAuth 2.0
-  // Check if it looks like "userId-..." format 
-  console.log('Token starts with userId?', user?.twitterAccessToken?.startsWith(user?.twitterUserId));
-  
-  // Try with the token as-is using different authorization format  
-  // OAuth 1.0a user context tokens start with userId-<rest>
-  const tokenParts = user?.twitterAccessToken?.split('-');
-  console.log('Token parts count:', tokenParts?.length);
-  console.log('Full stored token value:', user?.twitterAccessToken);
-  process.exit(0);
+  console.log('Fetching Meta Ad Accounts using new token...');
+  let adAccountId = null;
+  let adAccountName = null;
+
+  try {
+    const res = await fetch(`https://graph.facebook.com/v20.0/me/adaccounts?fields=account_id,name&access_token=${encodeURIComponent(token)}`);
+    const data = await res.json();
+    if (res.ok && data.data && data.data.length > 0) {
+      const first = data.data[0];
+      adAccountId = first.account_id.startsWith('act_') ? first.account_id : `act_${first.account_id}`;
+      adAccountName = first.name;
+      console.log(`Found Ad Account: ${adAccountName} (${adAccountId})`);
+    } else {
+      console.log('No ad accounts found or error:', data);
+    }
+  } catch (err) {
+    console.error('Failed to fetch ad accounts:', err.message);
+  }
+
+  console.log('Updating user document...');
+  const userSchema = new mongoose.Schema({}, { strict: false });
+  const User = mongoose.model('User', userSchema, 'users');
+
+  const updateResult = await User.updateOne(
+    { _id: new mongoose.Types.ObjectId(userId) },
+    {
+      $set: {
+        metaAccessToken: token,
+        ...(adAccountId && { metaAdAccountId: adAccountId }),
+        ...(adAccountName && { metaAdAccountName: adAccountName }),
+      }
+    }
+  );
+
+  console.log('Update result:', updateResult);
+  await mongoose.disconnect();
+  console.log('Done.');
 }
-run();
+
+run().catch(console.error);

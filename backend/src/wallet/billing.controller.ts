@@ -12,7 +12,7 @@ import { BillingService } from './billing.service';
 
 @Controller('billing')
 export class BillingController {
-  constructor(private readonly billingService: BillingService) {}
+  constructor(private readonly billingService: BillingService) { }
 
   // GET /billing/plans
   @Get('plans')
@@ -47,6 +47,32 @@ export class BillingController {
       body.planId,
       body.successUrl,
       body.cancelUrl,
+    );
+  }
+
+  // POST /billing/subscription/verify
+  // Body: { userId, orderId, paymentId, signature, planId }
+  @Post('subscription/verify')
+  verifySubscription(
+    @Body()
+    body: {
+      userId: string;
+      orderId: string;
+      paymentId: string;
+      signature: string;
+      planId: string;
+    },
+  ) {
+    const { userId, orderId, paymentId, signature, planId } = body;
+    if (!userId || !orderId || !paymentId || !signature || !planId) {
+      throw new BadRequestException('Missing required subscription verification fields');
+    }
+    return this.billingService.verifySubscriptionPayment(
+      userId,
+      orderId,
+      paymentId,
+      signature,
+      planId,
     );
   }
 
