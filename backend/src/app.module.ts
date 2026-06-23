@@ -61,7 +61,7 @@ import { MetaReviewsModule } from './meta-reviews/meta-reviews.module';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI') || 'mongodb://localhost:27017/ai_digital',
+        uri: configService.get<string>('MONGO_URI') || 'mongodb+srv://devclientg:SCpLNaejWusV7mcR@cluster0.vyinynw.mongodb.net/ai_digital',
       }),
       inject: [ConfigService],
     }),
