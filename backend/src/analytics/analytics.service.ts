@@ -623,9 +623,13 @@ export class AnalyticsService {
       });
       const listData = await listRes.json();
       const accessibleCids = (listData.resourceNames || []).map((rn: string) => rn.split('/')[1]);
-      if (accessibleCids.includes(customerId)) {
-        managerId = customerId;
+      // If the manager (MCC) ID is among the accessible customers, keep it as managerId.
+      // Do NOT replace managerId with the client customer ID, because the login-customer-id header
+      // must contain the manager's ID when accessing a client account.
+      if (accessibleCids.includes(managerId)) {
+        // managerId already points to a valid MCC; keep it.
       } else if (accessibleCids.length > 0) {
+        // Fallback to the first accessible ID (assumed to be a manager).
         managerId = accessibleCids[0];
       }
     } catch (e) {

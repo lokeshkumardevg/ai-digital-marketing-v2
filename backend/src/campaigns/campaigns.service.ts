@@ -1734,17 +1734,17 @@ Return ONLY JSON.
             // Optimize image using sharp to ensure compatibility with Meta requirements
             const inputBuffer = Buffer.from(base64Bytes, 'base64');
             const metadata = await sharp(inputBuffer).metadata();
-            
+
             this.logger.log(`Step 3: Optimizing image - format: ${metadata.format || 'unknown'}, size: ${inputBuffer.length} bytes`);
-            
+
             const isSupported = ['jpeg', 'jpg', 'png'].includes(metadata.format || '');
             const isTooLarge = inputBuffer.length > 2 * 1024 * 1024; // > 2MB
             const isTooWideOrTall = (metadata.width && metadata.width > 2048) || (metadata.height && metadata.height > 2048);
-            
+
             if (!isSupported || isTooLarge || isTooWideOrTall) {
               this.logger.log(`Step 3: Image requires conversion/compression (isSupported: ${isSupported}, isTooLarge: ${isTooLarge}, isTooWideOrTall: ${isTooWideOrTall})`);
               let pipeline = sharp(inputBuffer);
-              
+
               // Downscale if width/height is greater than 2048px (maintaining aspect ratio)
               if ((metadata.width && metadata.width > 2048) || (metadata.height && metadata.height > 2048)) {
                 pipeline = pipeline.resize({
@@ -1754,12 +1754,12 @@ Return ONLY JSON.
                   withoutEnlargement: true
                 });
               }
-              
+
               // Convert to sRGB, output as JPEG with 80% quality
               const optimizedBuffer = await pipeline
                 .toFormat('jpeg', { quality: 80 })
                 .toBuffer();
-              
+
               base64Bytes = optimizedBuffer.toString('base64');
               this.logger.log(`Step 3: Image optimization completed. New size: ${optimizedBuffer.length} bytes`);
             }
@@ -1802,8 +1802,8 @@ Return ONLY JSON.
               background: { r: 79, g: 70, b: 229, alpha: 1 } // #4F46E5
             }
           })
-          .png()
-          .toBuffer();
+            .png()
+            .toBuffer();
           const fallbackBase64 = placeholderBuffer.toString('base64');
 
           this.logger.log(`Step 3 Fallback: Uploading placeholder image to /adimages`);
@@ -1843,8 +1843,8 @@ Return ONLY JSON.
             background: { r: 79, g: 70, b: 229, alpha: 1 } // #4F46E5
           }
         })
-        .png()
-        .toBuffer();
+          .png()
+          .toBuffer();
         const fallbackBase64 = placeholderBuffer.toString('base64');
 
         this.logger.log(`Step 3 Fallback: Uploading placeholder image to /adimages`);
@@ -2004,11 +2004,11 @@ Return ONLY JSON.
         client_secret: workingClientSecret,
         developer_token: workingDeveloperToken,
       });
+      let customerId = data.googleAccountId || user.googleCustomerId;
 
       // 1. Check if user already has an isolated Client Account, if not create one!
-      let customerId = data.googleAccountId || user.googleCustomerId;
-      let loginCustomerId = isClientOwned ? customerId.replace(/-/g, '') : systemMccId.replace(/-/g, '');
-
+      let loginCustomerId = !isClientOwned ? systemMccId.replace(/-/g, '') : undefined;
+      console.log(customerId, ' customerId', loginCustomerId, ' loginCustomerId', user, user.email);
       if (!isClientOwned && !customerId) {
         this.logger.log(`Creating new Google Ads Client Account for user ${user.email} under MCC ${systemMccId}`);
         const mccCustomer = clientAuth.Customer({
@@ -2031,6 +2031,8 @@ Return ONLY JSON.
         // Save to user
         await this.usersService.update(userId, { googleCustomerId: customerId });
         this.logger.log(`Successfully created Client Account: ${customerId}`);
+        // Ensure the manager (MCC) ID is used for the login header when we are not client‑owned
+        loginCustomerId = systemMccId.replace(/-/g, '');
       } else {
         customerId = customerId.replace(/-/g, '');
         if (customerId !== user.googleCustomerId) {
@@ -2041,7 +2043,7 @@ Return ONLY JSON.
           try {
             const listRes = await clientAuth.listAccessibleCustomers(workingRefreshToken);
             const accessibleCids = (listRes.resource_names || []).map((rn: string) => rn.split('/')[1]);
-            
+
             if (accessibleCids.includes(customerId)) {
               loginCustomerId = customerId;
             } else if (accessibleCids.length > 0) {
@@ -2051,7 +2053,7 @@ Return ONLY JSON.
             }
           } catch (e) {
             this.logger.warn(`Failed to dynamically resolve manager ID: ${e}`);
-            loginCustomerId = (user as any).googleManagerId || this.configService.get<string>('GOOGLE_ADS_MANAGER_ID') || customerId;
+            loginCustomerId = systemMccId.replace(/-/g, '');
           }
         } else {
           try {
@@ -2069,6 +2071,10 @@ Return ONLY JSON.
             loginCustomerId = systemMccId.replace(/-/g, '');
           }
         }
+        // Ensure loginCustomerId is set for manager flow
+        if (!loginCustomerId) {
+          loginCustomerId = systemMccId.replace(/-/g, '');
+        }
       }
 
       // 2. Setup the target client account using the client's own auth or MCC auth
@@ -2080,7 +2086,7 @@ Return ONLY JSON.
         customerOptions.login_customer_id = loginCustomerId;
       }
       const workingCustomer = clientAuth.Customer(customerOptions);
-      
+
       const fs = require('fs');
       try {
         fs.writeFileSync('./google_debug.json', JSON.stringify({
@@ -2090,36 +2096,46 @@ Return ONLY JSON.
           loginCustomerId,
           customerOptions
         }, null, 2));
-      } catch (e) {}
+      } catch (e) { }
 
       // 3. Create Campaign Budget
-      const budgetResult = await workingCustomer.campaignBudgets.create([
-        {
-          name: `${campaignName || 'AI Campaign'} Budget - ${Date.now()}`,
-          amount_micros: Math.max((dailyBudget || 10) * 1000000, 10000000), // Min $10
-          delivery_method: enums.BudgetDeliveryMethod.STANDARD,
-        }
-      ]);
+      let budgetResult;
+      try {
+        budgetResult = await workingCustomer.campaignBudgets.create([
+          {
+            name: `${campaignName || 'AI Campaign'} Budget - ${Date.now()}`,
+            amount_micros: Math.max((dailyBudget || 10) * 1000000, 10000000), // Min $10
+            delivery_method: enums.BudgetDeliveryMethod.STANDARD,
+          }
+        ]);
+      } catch (e) {
+        throw new Error(`Failed to create campaign budget: ${e.message}`);
+      }
       const budgetResourceName = budgetResult.results[0].resource_name;
 
       // 2. Create Campaign
-      const campaignResult = await workingCustomer.campaigns.create([
-        {
-          name: `${campaignName || 'AI Campaign'} - ${Date.now()}`,
-          status: enums.CampaignStatus.PAUSED, // Create as draft
-          advertising_channel_type: enums.AdvertisingChannelType.SEARCH,
-          campaign_budget: budgetResourceName,
-          network_settings: {
-            target_google_search: true,
-            target_search_network: true,
-            target_content_network: true,
-          },
-          manual_cpc: {
-            enhanced_cpc_enabled: false
-          },
-          contains_eu_political_advertising: enums.EuPoliticalAdvertisingStatus.DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING,
-        }
-      ]);
+      let campaignResult;
+      try {
+        campaignResult = await workingCustomer.campaigns.create([
+          {
+            name: `${campaignName || 'AI Campaign'} - ${Date.now()}`,
+            status: enums.CampaignStatus.PAUSED, // Create as draft
+            advertising_channel_type: enums.AdvertisingChannelType.SEARCH,
+            campaign_budget: budgetResourceName,
+            network_settings: {
+              target_google_search: true,
+              target_search_network: true,
+              target_content_network: true,
+            },
+            manual_cpc: {
+              enhanced_cpc_enabled: false
+            },
+            contains_eu_political_advertising: enums.EuPoliticalAdvertisingStatus.DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING,
+          }
+        ]);
+      } catch (e) {
+        throw new Error(`Failed to create campaign: ${e.message}`);
+      }
       const campaignResourceName = campaignResult.results[0].resource_name;
 
       // 4. Create Location Criteria (Target/Exclude)
@@ -2157,22 +2173,26 @@ Return ONLY JSON.
         try {
           this.logger.log(`Creating ${googleCriteria.length} campaign location criteria in Google Ads`);
           await workingCustomer.campaignCriteria.create(googleCriteria);
-        } catch (criteriaErr: any) {
-          const criteriaErrorMsg = criteriaErr.errors?.[0]?.message || criteriaErr.message || JSON.stringify(criteriaErr);
-          this.logger.error(`Failed to create campaign location criteria: ${criteriaErrorMsg}`);
+        } catch (e: any) {
+          throw new Error(`Failed to create campaign location criteria: ${e.message}`);
         }
       }
 
       // 3. Create AdGroup
-      const adGroupResult = await workingCustomer.adGroups.create([
-        {
-          name: `AdGroup - ${Date.now()}`,
-          status: enums.AdGroupStatus.PAUSED,
-          campaign: campaignResourceName,
-          type: enums.AdGroupType.SEARCH_STANDARD,
-          cpc_bid_micros: 1000000
-        }
-      ]);
+      let adGroupResult;
+      try {
+        adGroupResult = await workingCustomer.adGroups.create([
+          {
+            name: `AdGroup - ${Date.now()}`,
+            status: enums.AdGroupStatus.PAUSED,
+            campaign: campaignResourceName,
+            type: enums.AdGroupType.SEARCH_STANDARD,
+            cpc_bid_micros: 1000000
+          }
+        ]);
+      } catch (e) {
+        throw new Error(`Failed to create ad group: ${e.message}`);
+      }
       const adGroupResourceName = adGroupResult.results[0].resource_name;
 
       if (data.campaignId) {

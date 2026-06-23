@@ -39,3 +39,7 @@ prisma/migrations/
 # Uploads / generated
 uploads/
 .npm-cache/
+
+# Debug and Secrets
+*debug*.json
+*err*.json

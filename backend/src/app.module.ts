@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LinkedInModule } from './linkedin/linkedin.module';
 import { BullModule } from '@nestjs/bull';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisModule } from '@nestjs-modules/ioredis';
@@ -59,7 +60,7 @@ import { MetaReviewsModule } from './meta-reviews/meta-reviews.module';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI') || 'mongodb+srv://devclientg:SCpLNaejWusV7mcR@cluster0.vyinynw.mongodb.net/ai_digital',
+        uri: configService.get<string>('MONGO_URI') || 'mongodb://localhost:27017/ai_digital',
       }),
       inject: [ConfigService],
     }),
@@ -82,6 +83,7 @@ import { MetaReviewsModule } from './meta-reviews/meta-reviews.module';
     NotificationsModule,
     BrandModule,
     PlatformPostsModule,
+    LinkedInModule,
     LinkedInCrmModule,
     LinkedinScraperModule,
     ReviewsModule,
