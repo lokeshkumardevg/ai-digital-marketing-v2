@@ -409,11 +409,11 @@ export class LinkedInCrmService {
         console.warn(`[LinkedInCRM] Failed to fetch ad accounts for lead sync: ${e.message || e}`);
       }
 
+      let realLeadsSyncedCount = 0;
+
       if (!adAccounts || adAccounts.length === 0) {
         // Continue to connections sync instead of aborting
       } else {
-
-      let realLeadsSyncedCount = 0;
 
       for (const adAcc of adAccounts) {
         if (adAcc.id?.startsWith('li-mock-acc-')) {
@@ -783,7 +783,7 @@ export class LinkedInCrmService {
         
         if (res.ok) {
           const data = await res.json();
-          apiCampaigns.push(...(data.elements || []).map(el => ({
+          apiCampaigns.push(...(data.elements || []).map((el: any) => ({
             campaignId: el.id.toString(),
             name: el.name,
             status: el.status,
