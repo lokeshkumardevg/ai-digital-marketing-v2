@@ -144,7 +144,20 @@ export class AnalyticsService {
         if (accessibleCids.includes(resolvedCustomerId)) {
           managerId = resolvedCustomerId;
         } else if (accessibleCids.length > 0) {
-          managerId = accessibleCids[0];
+          const clientId = user.googleClientId || this.configService.get<string>('GOOGLE_CLIENT_ID');
+          const clientSecret = user.googleClientSecret || this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+          const { GoogleAdsApi } = require('google-ads-api');
+          const tempClient = new GoogleAdsApi({ client_id: clientId, client_secret: clientSecret, developer_token: developerToken });
+          for (const mccId of accessibleCids) {
+            try {
+              const tempCustomer = tempClient.Customer({ customer_id: mccId, login_customer_id: mccId, refresh_token: user.googleRefreshToken });
+              const accounts = await tempCustomer.query(`SELECT customer_client.id FROM customer_client WHERE customer_client.id = ${resolvedCustomerId}`);
+              if (accounts && accounts.length > 0) {
+                managerId = mccId;
+                break;
+              }
+            } catch (e) { continue; }
+          }
         }
       } catch (e) {
         this.logger.warn(`Failed to dynamically resolve manager ID: ${e}`);

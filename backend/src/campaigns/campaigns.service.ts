@@ -2047,7 +2047,29 @@ Return ONLY JSON.
             if (accessibleCids.includes(customerId)) {
               loginCustomerId = customerId;
             } else if (accessibleCids.length > 0) {
-              loginCustomerId = accessibleCids[0];
+              loginCustomerId = accessibleCids[0]; // Fallback
+              for (const mccId of accessibleCids) {
+                try {
+                  const tempCustomer = clientAuth.Customer({
+                    customer_id: mccId,
+                    login_customer_id: mccId,
+                    refresh_token: workingRefreshToken,
+                  });
+                  const accounts = await tempCustomer.query(`
+                    SELECT customer_client.id 
+                    FROM customer_client 
+                    WHERE customer_client.id = ${customerId} 
+                    AND customer_client.level <= 1
+                  `);
+                  if (accounts && accounts.length > 0) {
+                    loginCustomerId = mccId;
+                    this.logger.log(`Found exact Manager ID (${mccId}) for Client ID (${customerId})`);
+                    break;
+                  }
+                } catch (e) {
+                  continue;
+                }
+              }
             } else {
               loginCustomerId = customerId;
             }

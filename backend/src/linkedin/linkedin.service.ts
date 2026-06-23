@@ -11,12 +11,13 @@ export class LinkedInService {
   private readonly http: AxiosInstance;
   constructor(private readonly config: ConfigService) {
     const token = this.config.get<string>('LINKEDIN_ACCESS_TOKEN');
-    if (!token) {
-      throw new HttpException('LinkedIn access token not configured', 500);
-    }
-    this.accessToken = token;
+    this.accessToken = token || '';
     // Initialize axios instance with base config
-    this.http = axios.create({ baseURL: this.apiBase, headers: this.getHeaders() });
+    if (this.accessToken) {
+      this.http = axios.create({ baseURL: this.apiBase, headers: this.getHeaders() });
+    } else {
+      this.http = axios.create({ baseURL: this.apiBase });
+    }
   }
 
   private getHeaders() {
