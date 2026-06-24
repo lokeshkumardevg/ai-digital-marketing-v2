@@ -7,6 +7,7 @@ import {
   Query,
   Request,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MetaReviewsService } from './meta-reviews.service';
@@ -14,7 +15,7 @@ import { MetaReviewsService } from './meta-reviews.service';
 @Controller('meta-reviews')
 @UseGuards(AuthGuard('jwt'))
 export class MetaReviewsController {
-  constructor(private readonly svc: MetaReviewsService) {}
+  constructor(private readonly svc: MetaReviewsService) { }
 
   // ── GET /meta-reviews/pages ─────────────────────────────────────────
   // Step 1 — get all Pages this user manages
@@ -92,5 +93,19 @@ export class MetaReviewsController {
   ) {
     const userId = req.user.sub || req.user.userId || req.user._id;
     return this.svc.getPageFeedWithCommentCounts(userId, pageId, pageAccessToken);
+  }
+  @Get('comments/:commentId/replies')
+  async getCommentReplies(
+    @Request() req: any,
+    @Param('commentId') commentId: string,
+    @Query('pageAccessToken') pageAccessToken: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.svc.getCommentReplies(
+      req.user.id,
+      commentId,
+      pageAccessToken,
+      limit ? parseInt(limit, 10) : 25,
+    );
   }
 }

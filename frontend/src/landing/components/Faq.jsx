@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Plus, Minus } from "lucide-react";
 
 const defaultFaqs = [
@@ -26,15 +26,69 @@ const defaultFaqs = [
 
 export default function FAQ() {
   const [open, setOpen] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef(null);
+
+  // Intersection Observer for scroll effect
+  useEffect(() => {
+    const currentRef = sectionRef.current;
+    
+    // Check if element is already visible on load
+    const checkVisibility = () => {
+      if (currentRef) {
+        const rect = currentRef.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const isInView = rect.top < windowHeight && rect.bottom > 0;
+        if (isInView) {
+          setIsVisible(true);
+        }
+      }
+    };
+
+    // Check immediately
+    checkVisibility();
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '0px',
+      }
+    );
+
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    // Also check on scroll
+    window.addEventListener('scroll', checkVisibility);
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+      window.removeEventListener('scroll', checkVisibility);
+    };
+  }, []);
 
   return (
     <section
+      ref={sectionRef}
       className="relative py-24 overflow-hidden"
-      style={{ backgroundColor: "#050a12" }}
+      style={{
+        backgroundColor: "#050a12",
+        minHeight: "100vh",
+      }}
     >
       {/* Bottom-right radial blue glow */}
       <div
-        className="absolute pointer-events-none"
+        className="absolute pointer-events-none transition-all duration-1000 ease-out"
         style={{
           bottom: "-80px",
           right: "-80px",
@@ -43,35 +97,42 @@ export default function FAQ() {
           borderRadius: "50%",
           background:
             "radial-gradient(circle, rgba(29,78,216,0.38) 0%, transparent 70%)",
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible ? 'scale(1)' : 'scale(0.8)',
+          transition: 'opacity 1.2s ease-out 0.3s, transform 1.2s ease-out 0.3s',
         }}
       />
 
       <div className="relative max-w-5xl mx-auto px-6">
         {/* Heading */}
-<h2
-  className="
-    text-center
-    font-semibold
-    mb-14
-    bg-gradient-to-r
-    from-white
-    via-[#e8eaff]
-    to-[#8b93ff]
-    bg-clip-text
-    text-transparent
-  "
-  style={{
-    fontSize: "52px",
-    letterSpacing: "-0.5px",
-  }}
->
-  Frequently asked questions
-</h2>
+        <h2
+          className="
+            text-center
+            font-semibold
+            mb-14
+            bg-gradient-to-r
+            from-white
+            via-[#e8eaff]
+            to-[#8b93ff]
+            bg-clip-text
+            text-transparent
+          "
+          style={{
+            fontSize: "52px",
+            letterSpacing: "-0.5px",
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? 'translateY(0)' : 'translateY(-30px)',
+            transition: 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
+          }}
+        >
+          Frequently asked questions
+        </h2>
 
         {/* FAQ List */}
         <div className="flex flex-col gap-3">
           {defaultFaqs.map((item, index) => {
             const isOpen = open === index;
+            const delay = 0.3 + index * 0.15;
 
             return (
               <div
@@ -81,6 +142,9 @@ export default function FAQ() {
                   borderRadius: "8px",
                   border: "1px solid rgba(6,182,212,0.2)",
                   background: "rgba(0,0,0,0.55)",
+                  opacity: isVisible ? 1 : 0,
+                  transform: isVisible ? 'translateX(0)' : 'translateX(-40px)',
+                  transition: `opacity 0.6s ease-out ${delay}s, transform 0.6s ease-out ${delay}s`,
                 }}
               >
                 <button
