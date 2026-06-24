@@ -8,7 +8,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────
 // API helper — reads JWT from localStorage, calls your NestJS backend
 // ─────────────────────────────────────────────────────────────────────────
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('access_token') || '';
@@ -65,8 +65,8 @@ type ViewMode = 'grid' | 'list';
 // Static config
 // ─────────────────────────────────────────────────────────────────────────
 const PLATFORM_CONFIG: Record<PlatformTabKey, { label: string; color: string; bg: string }> = {
-  meta:     { label: 'Meta',     color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
-  x:        { label: 'X',        color: '#E5E7EB', bg: 'rgba(229,231,235,0.10)' },
+  meta: { label: 'Meta', color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
+  x: { label: 'X', color: '#E5E7EB', bg: 'rgba(229,231,235,0.10)' },
   linkedin: { label: 'LinkedIn', color: '#0A66C2', bg: 'rgba(10,102,194,0.14)' },
 };
 
@@ -244,10 +244,10 @@ function CommentCard({
   pageAccessToken: string;
   onReplySuccess?: () => void;
 }) {
-  const [replying, setReplying]     = useState(false);
-  const [message, setMessage]       = useState('');
-  const [sending, setSending]       = useState(false);
-  const [sentReply, setSentReply]   = useState<string | null>(null);
+  const [replying, setReplying] = useState(false);
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sentReply, setSentReply] = useState<string | null>(null);
   const [replyError, setReplyError] = useState('');
 
   const submit = async () => {
@@ -403,19 +403,19 @@ export default function PostAdReviews() {
   const [tab, setTab] = useState<PlatformTabKey>('meta');
 
   // ── Meta data ────────────────────────────────────────────────────────
-  const [pages, setPages]                   = useState<MetaPage[]>([]);
+  const [pages, setPages] = useState<MetaPage[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string>('');
-  const [posts, setPosts]                   = useState<MetaPost[]>([]);
+  const [posts, setPosts] = useState<MetaPost[]>([]);
   const [selectedPostId, setSelectedPostId] = useState<string>('all');
-  const [comments, setComments]             = useState<MetaComment[]>([]);
+  const [comments, setComments] = useState<MetaComment[]>([]);
 
   // ── UI ──────────────────────────────────────────────────────────────
-  const [loadingPages,    setLoadingPages]    = useState(false);
-  const [loadingPosts,    setLoadingPosts]    = useState(false);
+  const [loadingPages, setLoadingPages] = useState(false);
+  const [loadingPosts, setLoadingPosts] = useState(false);
   const [loadingComments, setLoadingComments] = useState(false);
-  const [error,           setError]           = useState('');
-  const [search,          setSearch]          = useState('');
-  const [view,            setView]            = useState<ViewMode>('list');
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [view, setView] = useState<ViewMode>('list');
 
   // ── Step 1: load Pages when Meta tab is active ──────────────────────
   const loadPages = useCallback(async () => {
