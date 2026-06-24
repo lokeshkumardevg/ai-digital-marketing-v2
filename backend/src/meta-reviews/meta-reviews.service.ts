@@ -6,7 +6,7 @@ import axios from 'axios';
 export class MetaReviewsService {
   private graph = 'https://graph.facebook.com/v20.0';
 
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService) { }
 
   // ─────────────────────────────────────────────────────────────────────
   // STEP 1 — Get all Pages this user manages (reuses existing getMetaPages logic)
@@ -109,6 +109,8 @@ export class MetaReviewsService {
         },
       });
 
+      console.log('🔍 raw comment[0]:', JSON.stringify(res.data, null, 2)); // TEMP DEBUG
+      
       return (res.data.data || []).map((c: any) => ({
         commentId: c.id,
         source: 'meta',
@@ -164,6 +166,53 @@ export class MetaReviewsService {
       console.error('❌ replyToComment failed:', e.response?.data);
       throw new UnauthorizedException(
         e.response?.data?.error?.message || 'Failed to post reply',
+      );
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // STEP 5 — Get replies to a specific comment
+  // GET /meta-reviews/comments/:commentId/replies?pageAccessToken=xxx&limit=25
+  //
+  // Facebook doesn't have a separate "replies" object — a reply IS just a
+  // comment posted on a comment (exactly what replyToComment above does).
+  // So fetching them uses the same {id}/comments edge as getPostComments,
+  // just rooted at the comment id instead of the post id.
+  //
+  // Returns: [{ replyId, parentCommentId, authorName, authorInitial, text, createdAt, likeCount }]
+  // ─────────────────────────────────────────────────────────────────────
+  async getCommentReplies(
+    userId: string,
+    commentId: string,
+    pageAccessToken: string,
+    limit = 25,
+  ) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    try {
+      const res = await axios.get(`${this.graph}/${commentId}/comments`, {
+        params: {
+          access_token: pageAccessToken,
+          fields: 'id,message,from,created_time,like_count',
+          limit,
+        },
+      });
+
+      return (res.data.data || []).map((r: any) => ({
+        replyId: r.id,
+        source: 'meta',
+        parentCommentId: commentId,
+        authorName: r.from?.name || 'Facebook user',
+        authorInitial: (r.from?.name || 'F').charAt(0).toUpperCase(),
+        text: r.message || '',
+        createdAt: r.created_time,
+        likeCount: r.like_count ?? 0,
+      }));
+    } catch (e: any) {
+      console.error('❌ getCommentReplies failed:', e.response?.data);
+      throw new UnauthorizedException(
+        e.response?.data?.error?.message || 'Failed to fetch replies',
       );
     }
   }
