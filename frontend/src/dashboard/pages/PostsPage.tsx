@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Inbox, Clock, Search, Grid3x3, List,
-  ChevronDown, Send, RefreshCw, AlertCircle,
-  Globe, MessageCircle, ExternalLink,
+  ChevronDown, ChevronUp, Send, RefreshCw, AlertCircle,
+  Globe, MessageCircle, ExternalLink, CornerDownRight,
 } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -56,6 +56,16 @@ interface MetaComment {
   likeCount: number;
   replyCount: number;
   canReply: boolean;
+}
+
+interface CommentReply {
+  replyId: string;
+  parentCommentId: string;
+  authorName: string;
+  authorInitial: string;
+  text: string;
+  createdAt: string;
+  likeCount: number;
 }
 
 type PlatformTabKey = 'meta' | 'x' | 'linkedin';
@@ -189,19 +199,26 @@ function ComingSoonBanner({ platform }: { platform: string }) {
 // page avatar + name, timestamp, message, image, then an engagement bar.
 // ─────────────────────────────────────────────────────────────────────────
 function PostCard({
-  post, pageName, pagePicture, commentCount,
+  post, pageName, pagePicture, commentCount, compact = false,
 }: {
   post: MetaPost;
   pageName: string;
   pagePicture: string | null;
   commentCount: number;
+  compact?: boolean;
 }) {
   return (
-    <div className="par-post-card">
+    <div className={`par-post-card${compact ? ' par-post-card-compact' : ''}`}>
       <div className="par-post-header">
-        <AvatarCircle src={pagePicture} fallback={pageName?.[0]?.toUpperCase() ?? 'P'} size={40} />
+        <AvatarCircle
+          src={pagePicture}
+          fallback={pageName?.[0]?.toUpperCase() ?? 'P'}
+          size={compact ? 30 : 40}
+        />
         <div className="par-post-meta">
-          <p className="par-post-page">{pageName || 'Page'}</p>
+          <p className={`par-post-page${compact ? ' par-post-page-compact' : ''}`}>
+            {pageName || 'Page'}
+          </p>
           <p className="par-post-sub">
             {timeAgo(post.createdAt)} ago
             <Globe size={11} className="par-post-globe" aria-hidden="true" />
@@ -209,15 +226,24 @@ function PostCard({
         </div>
       </div>
 
-      {post.message && <p className="par-post-message">{post.message}</p>}
-
-      {post.thumbnail && (
-        <img src={post.thumbnail} alt="" className="par-post-image" loading="lazy" />
+      {post.message && (
+        <p className={`par-post-message${compact ? ' par-post-message-compact' : ''}`}>
+          {post.message}
+        </p>
       )}
 
-      <div className="par-post-footer">
+      {post.thumbnail && (
+        <img
+          src={post.thumbnail}
+          alt=""
+          className={`par-post-image${compact ? ' par-post-image-compact' : ''}`}
+          loading="lazy"
+        />
+      )}
+
+      <div className={`par-post-footer${compact ? ' par-post-footer-compact' : ''}`}>
         <span className="par-post-footer-stat">
-          <MessageCircle size={13} />
+          <MessageCircle size={compact ? 12 : 13} />
           {commentCount} comment{commentCount === 1 ? '' : 's'}
         </span>
         {post.permalink && (
@@ -233,22 +259,52 @@ function PostCard({
 // ─────────────────────────────────────────────────────────────────────────
 // CommentCard — threaded bubble, the way comments look on Meta itself:
 // avatar + rounded bubble (bold name, then text), like/reply meta line below,
-// inline reply box, and the sent reply nested underneath as its own bubble.
+// inline reply box, and a "View replies" toggle that fetches the real
+// reply thread for that comment so every reply stays paired with it.
 // ─────────────────────────────────────────────────────────────────────────
 function CommentCard({
   comment,
   pageAccessToken,
   onReplySuccess,
+  compact = false,
 }: {
   comment: MetaComment;
   pageAccessToken: string;
   onReplySuccess?: () => void;
+  compact?: boolean;
 }) {
   const [replying, setReplying]     = useState(false);
   const [message, setMessage]       = useState('');
   const [sending, setSending]       = useState(false);
-  const [sentReply, setSentReply]   = useState<string | null>(null);
   const [replyError, setReplyError] = useState('');
+
+  const [showReplies, setShowReplies]     = useState(false);
+  const [replies, setReplies]             = useState<CommentReply[] | null>(null);
+  const [loadingReplies, setLoadingReplies] = useState(false);
+  const [repliesError, setRepliesError]   = useState('');
+
+  const fetchReplies = useCallback(async () => {
+    setLoadingReplies(true);
+    setRepliesError('');
+    try {
+      // GET /meta-reviews/comments/:commentId/replies
+      const data = await apiFetch<CommentReply[]>(
+        `/meta-reviews/comments/${comment.commentId}/replies` +
+        `?pageAccessToken=${encodeURIComponent(pageAccessToken)}`,
+      );
+      setReplies(data);
+    } catch (e: any) {
+      setRepliesError(e.message || 'Failed to load replies');
+    } finally {
+      setLoadingReplies(false);
+    }
+  }, [comment.commentId, pageAccessToken]);
+
+  const toggleReplies = () => {
+    const next = !showReplies;
+    setShowReplies(next);
+    if (next && replies === null) fetchReplies();
+  };
 
   const submit = async () => {
     if (!message.trim() || sending) return;
@@ -263,10 +319,11 @@ function CommentCard({
           body: JSON.stringify({ message: message.trim(), pageAccessToken }),
         },
       );
-      setSentReply(message.trim());
       setReplying(false);
       setMessage('');
-      onReplySuccess?.();
+      setShowReplies(true);
+      fetchReplies();        // pull the fresh thread so the new reply shows up for real
+      onReplySuccess?.();    // also refresh the comment's reply count up at the post level
     } catch (e: any) {
       setReplyError(e.message || 'Failed to send reply');
     } finally {
@@ -279,13 +336,16 @@ function CommentCard({
     setReplyError('');
   };
 
+  const replyCountKnown = replies !== null ? replies.length : comment.replyCount;
+  const hasOrHadReplies = replyCountKnown > 0 || showReplies;
+
   return (
     <div className="par-comment-thread">
       <div className="par-comment-row">
-        <AvatarCircle fallback={comment.authorInitial} size={32} />
+        <AvatarCircle fallback={comment.authorInitial} size={compact ? 26 : 32} />
 
         <div className="par-comment-col">
-          <div className="par-comment-bubble">
+          <div className={`par-comment-bubble${compact ? ' par-comment-bubble-compact' : ''}`}>
             <p className="par-bubble-author">{comment.authorName}</p>
             <p className="par-bubble-text">{comment.text}</p>
           </div>
@@ -298,10 +358,10 @@ function CommentCard({
             <button onClick={toggleReply} className="par-comment-action">
               {replying ? 'Cancel' : 'Reply'}
             </button>
-            {comment.replyCount > 0 && (
-              <span className="par-comment-meta-item">
-                {comment.replyCount} repl{comment.replyCount === 1 ? 'y' : 'ies'}
-              </span>
+            {hasOrHadReplies && (
+              <button onClick={toggleReplies} className="par-comment-action">
+                {showReplies ? 'Hide' : 'View'} {replyCountKnown} repl{replyCountKnown === 1 ? 'y' : 'ies'}
+              </button>
             )}
           </div>
 
@@ -334,18 +394,34 @@ function CommentCard({
           )}
           {replyError && <p className="par-reply-error">{replyError}</p>}
 
-          {sentReply && (
-            <div className="par-comment-row par-comment-row-nested">
-              <AvatarCircle fallback="Y" size={28} />
-              <div className="par-comment-col">
-                <div className="par-comment-bubble par-comment-bubble-own">
-                  <p className="par-bubble-author">You</p>
-                  <p className="par-bubble-text">{sentReply}</p>
+          {showReplies && (
+            <div className="par-replies-wrap">
+              {loadingReplies && <p className="par-replies-status">Loading replies…</p>}
+              {repliesError && <p className="par-reply-error">{repliesError}</p>}
+              {!loadingReplies && replies !== null && replies.length === 0 && (
+                <p className="par-replies-status">No replies yet for this comment.</p>
+              )}
+              {replies?.map((r) => (
+                <div key={r.replyId} className="par-comment-row par-comment-row-nested">
+                  <AvatarCircle fallback={r.authorInitial} size={compact ? 24 : 28} />
+                  <div className="par-comment-col">
+                    <p className="par-reply-indicator">
+                      <CornerDownRight size={11} aria-hidden="true" />
+                      Reply to {comment.authorName}
+                    </p>
+                    <div className={`par-comment-bubble${compact ? ' par-comment-bubble-compact' : ''}`}>
+                      <p className="par-bubble-author">{r.authorName}</p>
+                      <p className="par-bubble-text">{r.text}</p>
+                    </div>
+                    <div className="par-comment-meta-row">
+                      <span className="par-comment-time">{timeAgo(r.createdAt)}</span>
+                      {r.likeCount > 0 && (
+                        <span className="par-comment-meta-item">👍 {r.likeCount}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="par-comment-meta-row">
-                  <span className="par-comment-time">Just now</span>
-                </div>
-              </div>
+              ))}
             </div>
           )}
         </div>
@@ -355,8 +431,9 @@ function CommentCard({
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// FeedPostSection — one post followed by its own comment thread, the way
-// a Page's feed reads on Meta: post first, comments underneath it.
+// FeedPostSection — a post, with its comments tucked behind a clickable
+// accordion toggle. Clicking "N comments" drops the full thread down,
+// so each comment and the reply tied to it stay clearly paired.
 // ─────────────────────────────────────────────────────────────────────────
 function FeedPostSection({
   post, comments, pageAccessToken, pageName, pagePicture, view, onReplySuccess,
@@ -369,25 +446,48 @@ function FeedPostSection({
   view: ViewMode;
   onReplySuccess?: () => void;
 }) {
+  const compact = view === 'grid';
+  const [expanded, setExpanded] = useState(false);
+  const hasComments = comments.length > 0;
+
   return (
-    <div className="par-feed-section">
+    <div className={`par-feed-section${compact ? ' par-feed-section-compact' : ''}`}>
       <PostCard
         post={post}
         pageName={pageName}
         pagePicture={pagePicture}
         commentCount={comments.length}
+        compact={compact}
       />
 
-      {comments.length === 0 ? (
-        <p className="par-no-comments">No comments yet for this post.</p>
-      ) : (
-        <div className={`par-comments-list par-${view}`}>
+      <button
+        onClick={() => hasComments && setExpanded((e) => !e)}
+        disabled={!hasComments}
+        aria-expanded={expanded}
+        className={`par-comments-toggle${hasComments ? '' : ' is-disabled'}`}
+      >
+        <span className="par-comments-toggle-label">
+          <MessageCircle size={13} aria-hidden="true" />
+          {hasComments
+            ? `${comments.length} comment${comments.length === 1 ? '' : 's'}`
+            : 'No comments yet'}
+        </span>
+        {hasComments && (
+          expanded
+            ? <ChevronUp size={14} aria-hidden="true" />
+            : <ChevronDown size={14} aria-hidden="true" />
+        )}
+      </button>
+
+      {expanded && hasComments && (
+        <div className={`par-comments-list par-${compact ? 'compact' : 'list'} par-comments-reveal`}>
           {comments.map((c) => (
             <CommentCard
               key={c.commentId}
               comment={c}
               pageAccessToken={pageAccessToken}
               onReplySuccess={onReplySuccess}
+              compact={compact}
             />
           ))}
         </div>
@@ -415,7 +515,7 @@ export default function PostAdReviews() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [error,           setError]           = useState('');
   const [search,          setSearch]          = useState('');
-  const [view,            setView]            = useState<ViewMode>('list');
+  const [view,            setView]            = useState<ViewMode>('grid');
 
   // ── Step 1: load Pages when Meta tab is active ──────────────────────
   const loadPages = useCallback(async () => {
@@ -697,17 +797,17 @@ export default function PostAdReviews() {
               />
             </div>
 
-            <div className="par-view-toggle" role="group" aria-label="Comment layout">
-              {(['list', 'grid'] as ViewMode[]).map((v) => (
+            <div className="par-view-toggle" role="group" aria-label="Feed layout">
+              {(['grid', 'list'] as ViewMode[]).map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
-                  title={v === 'list' ? 'Single column (thread view)' : 'Multi-column'}
-                  aria-label={v === 'list' ? 'Single column' : 'Multi-column'}
+                  title={v === 'grid' ? 'Compact grid (3–4 posts per row)' : 'Full feed view'}
+                  aria-label={v === 'grid' ? 'Compact grid' : 'Full feed view'}
                   aria-pressed={view === v}
                   className={`par-view-btn${view === v ? ' is-active' : ''}`}
                 >
-                  {v === 'list' ? <List size={14} /> : <Grid3x3 size={14} />}
+                  {v === 'grid' ? <Grid3x3 size={14} /> : <List size={14} />}
                 </button>
               ))}
             </div>
@@ -726,7 +826,7 @@ export default function PostAdReviews() {
               <p>{emptyMessage}</p>
             </div>
           ) : (
-            <div className="par-feed">
+            <div className={`par-feed par-feed-${view}`}>
               {groupedFeed.map(({ post, comments: postComments }) => (
                 <FeedPostSection
                   key={post.postId}
@@ -986,17 +1086,44 @@ export default function PostAdReviews() {
         }
         .par-empty p { margin: 0; font-size: 14px; }
 
-        /* ── Feed: stacked post + comments sections, top to bottom ── */
-        .par-feed {
+        /* ── Feed: either a compact multi-column grid (3–4 per row) or a
+               full-width stacked list, depending on the view toggle ── */
+        .par-feed-list {
           display: flex;
           flex-direction: column;
           gap: 22px;
         }
+        .par-feed-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 14px;
+          align-items: start;
+        }
+        @media (max-width: 480px) {
+          .par-feed-grid { grid-template-columns: 1fr; }
+        }
+        @media (min-width: 760px) {
+          .par-feed-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (min-width: 1140px) {
+          .par-feed-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+
         .par-feed-section {
           display: flex;
           flex-direction: column;
           gap: 12px;
+          min-width: 0;
         }
+        .par-feed-section-compact {
+          background: var(--par-surface);
+          border: 1px solid var(--par-border);
+          border-radius: 14px;
+          padding: 12px;
+          gap: 10px;
+          transition: border-color .15s ease;
+        }
+        .par-feed-section-compact:hover { border-color: var(--par-border-strong); }
 
         /* ── Post card — mirrors how the post looks on Meta ── */
         .par-post-card {
@@ -1008,11 +1135,18 @@ export default function PostAdReviews() {
           flex-direction: column;
           gap: 10px;
         }
+        .par-post-card-compact {
+          background: transparent;
+          border: none;
+          padding: 0;
+          gap: 8px;
+        }
         .par-post-header { display: flex; align-items: center; gap: 10px; }
         .par-post-meta { min-width: 0; }
         .par-post-page {
           margin: 0; font-size: 14px; font-weight: 700; color: var(--par-text-primary);
         }
+        .par-post-page-compact { font-size: 12.5px; }
         .par-post-sub {
           margin: 0; font-size: 12px; color: var(--par-text-tertiary);
           display: flex; align-items: center; gap: 4px;
@@ -1022,20 +1156,28 @@ export default function PostAdReviews() {
           margin: 0; font-size: 14px; line-height: 1.55; color: #E5E7EB;
           white-space: pre-wrap; overflow-wrap: break-word; word-break: break-word;
         }
+        .par-post-message-compact {
+          font-size: 12.5px; line-height: 1.45;
+          display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+          overflow: hidden; white-space: normal;
+        }
         .par-post-image {
           width: 100%; max-height: 360px; object-fit: cover;
           border-radius: 10px; border: 1px solid var(--par-border);
           display: block;
         }
+        .par-post-image-compact { max-height: 130px; border-radius: 8px; }
         .par-post-footer {
           display: flex; align-items: center; justify-content: space-between;
           gap: 10px; flex-wrap: wrap;
           padding-top: 10px; border-top: 1px solid var(--par-border);
         }
+        .par-post-footer-compact { padding-top: 8px; }
         .par-post-footer-stat {
           display: flex; align-items: center; gap: 6px;
           font-size: 12px; color: var(--par-text-secondary);
         }
+        .par-post-footer-compact .par-post-footer-stat { font-size: 11px; }
         .par-post-link {
           display: flex; align-items: center; gap: 4px;
           font-size: 12px; font-weight: 600; color: #A5B4FC;
@@ -1043,28 +1185,63 @@ export default function PostAdReviews() {
         }
         .par-post-link:hover { text-decoration: underline; }
 
-        .par-no-comments {
-          margin: 0; padding: 0 4px; font-size: 12.5px; color: var(--par-text-tertiary);
+        /* ── Comments accordion toggle ── */
+        .par-comments-toggle {
+          display: flex; align-items: center; justify-content: space-between;
+          width: 100%;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid var(--par-border);
+          border-radius: 10px;
+          padding: 9px 12px;
+          cursor: pointer;
+          color: var(--par-text-secondary);
+          font-size: 12.5px; font-weight: 600;
+          transition: background .15s ease, border-color .15s ease, color .15s ease;
+        }
+        .par-comments-toggle:hover:not(.is-disabled) {
+          background: rgba(255,255,255,0.07);
+          border-color: var(--par-border-strong);
+          color: var(--par-text-primary);
+        }
+        .par-comments-toggle.is-disabled { cursor: default; opacity: 0.65; }
+        .par-comments-toggle-label { display: flex; align-items: center; gap: 6px; }
+
+        .par-comments-reveal { animation: par-reveal .18s ease; }
+        @keyframes par-reveal {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         /* ── Comments list under a post ── */
-        .par-comments-list.par-list {
+        .par-comments-list.par-list,
+        .par-comments-list.par-compact {
           display: flex; flex-direction: column; gap: 14px;
         }
-        .par-comments-list.par-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 14px;
-          align-items: start;
-        }
-        @media (max-width: 480px) {
-          .par-comments-list.par-grid { grid-template-columns: 1fr; }
-        }
+        .par-comments-list.par-compact { gap: 10px; }
 
         /* ── Comment thread — avatar + bubble, like Meta's comment UI ── */
         .par-comment-thread { min-width: 0; }
         .par-comment-row { display: flex; gap: 8px; align-items: flex-start; min-width: 0; }
-        .par-comment-row-nested { margin-top: 10px; margin-left: 6px; }
+        .par-comment-row-nested {
+          margin-top: 8px;
+          margin-left: 14px;
+          padding-left: 12px;
+          border-left: 2px solid rgba(165,180,252,0.3);
+        }
+        .par-reply-indicator {
+          margin: 0; padding-left: 12px;
+          display: flex; align-items: center; gap: 4px;
+          font-size: 10.5px; font-weight: 700; color: #A5B4FC;
+          text-transform: uppercase; letter-spacing: 0.03em;
+        }
+        .par-replies-wrap {
+          display: flex; flex-direction: column; gap: 8px;
+          margin-top: 6px;
+        }
+        .par-replies-status {
+          margin: 0; padding-left: 12px;
+          font-size: 11.5px; color: var(--par-text-tertiary);
+        }
         .par-comment-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 
         .par-avatar {
@@ -1082,6 +1259,7 @@ export default function PostAdReviews() {
           display: inline-block;
           max-width: 100%;
         }
+        .par-comment-bubble-compact { padding: 6px 10px; border-radius: 13px; }
         .par-comment-bubble-own { background: var(--par-bubble-bg-own); }
         .par-bubble-author {
           margin: 0 0 1px; font-size: 12.5px; font-weight: 700; color: var(--par-text-primary);
@@ -1131,6 +1309,7 @@ export default function PostAdReviews() {
 
         @media (prefers-reduced-motion: reduce) {
           .par-spin { animation: none; }
+          .par-comments-reveal { animation: none; }
           * { transition: none !important; }
         }
       `}</style>
