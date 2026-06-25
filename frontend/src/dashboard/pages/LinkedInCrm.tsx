@@ -109,7 +109,6 @@ export const LinkedInCrm: React.FC = () => {
   const [liAtCookie, setLiAtCookie] = useState('');
   const [isScraping, setIsScraping] = useState(false);
   const [publishTarget, setPublishTarget] = useState<'personal' | 'company'>('personal');
-  const [isSimulationActive, setIsSimulationActive] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // New lead form
@@ -135,51 +134,6 @@ export const LinkedInCrm: React.FC = () => {
     }
   }, [dispatch]);
 
-  // AI Simulation Loop
-  useEffect(() => {
-    if (!isSimulationActive) return;
-
-    const interval = setInterval(() => {
-      // 1. Always simulate engagement
-      dispatch(simulateRealtimeEngagement());
-
-      // 2. 15% chance to generate a new lead dynamically
-      if (Math.random() < 0.15) {
-        const mockFirsts = ['Alex', 'Sarah', 'Jordan', 'Michael', 'Emma', 'David', 'Jessica', 'Daniel', 'Sophia', 'James'];
-        const mockLasts = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
-        const mockTitles = ['VP of Marketing', 'CEO', 'Director of Sales', 'Founder', 'CMO', 'Growth Hacker', 'Product Manager'];
-        const mockCompanies = ['TechFlow', 'Acme Corp', 'Global Solutions', 'Innovate AI', 'Stark Industries', 'Wayne Enterprises'];
-
-        const f = mockFirsts[Math.floor(Math.random() * mockFirsts.length)];
-        const l = mockLasts[Math.floor(Math.random() * mockLasts.length)];
-        const t = mockTitles[Math.floor(Math.random() * mockTitles.length)];
-        const c = mockCompanies[Math.floor(Math.random() * mockCompanies.length)];
-
-        const generatedLead = {
-          _id: 'sim_' + Date.now().toString(),
-          name: `${f} ${l}`,
-          headline: t,
-          company: c,
-          email: `${f.toLowerCase()}.${l.toLowerCase()}@${c.toLowerCase().replace(' ', '')}.com`,
-          stage: 'new',
-          aiLeadScore: Math.floor(Math.random() * 60) + 40,
-          priority: Math.random() > 0.8 ? 'high' : 'medium',
-          source: 'linkedin_inbound',
-          tags: ['AI Sourced'],
-          notes: [],
-          activityLog: [{ action: 'created', timestamp: new Date().toISOString(), details: 'Lead captured by AI Agent from LinkedIn Activity.' }],
-        };
-
-        dispatch(simulateNewLead(generatedLead));
-
-        // Show Toast
-        setToastMessage(`🚀 AI Captured New Lead: ${f} ${l} (${c})`);
-        setTimeout(() => setToastMessage(null), 4000);
-      }
-    }, 5000); // Runs every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [isSimulationActive, dispatch]);
 
   const filteredLeads = useMemo(() => {
     let result = leads;
@@ -396,20 +350,6 @@ export const LinkedInCrm: React.FC = () => {
               display: 'flex', alignItems: 'center', gap: '12px'
             }}>
               LinkedIn AI CRM
-              <button
-                onClick={() => setIsSimulationActive(!isSimulationActive)}
-                title={isSimulationActive ? 'Disable Live AI Simulation' : 'Enable Live AI Simulation'}
-                style={{
-                  background: isSimulationActive ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.05)',
-                  border: isSimulationActive ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(255,255,255,0.1)',
-                  color: isSimulationActive ? '#22c55e' : '#94a3b8',
-                  padding: '4px 8px', borderRadius: '8px', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase',
-                  display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', transition: 'all 0.3s'
-                }}
-              >
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isSimulationActive ? '#22c55e' : '#64748b', boxShadow: isSimulationActive ? '0 0 6px #22c55e' : 'none', animation: isSimulationActive ? 'pulse 1.5s infinite' : 'none' }} />
-                LIVE AI
-              </button>
             </h1>
             <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Manage leads, analyze profiles & automate outreach</p>
           </div>

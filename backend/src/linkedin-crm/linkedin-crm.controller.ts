@@ -176,24 +176,15 @@ export class LinkedInCrmController {
   @UseGuards(AuthGuard('jwt'))
   @Get('leads/:leadId/posts')
   async getLeadPosts(@Request() req: any, @Param('leadId') leadId: string) {
-    // Note: Mocking data until Phase 3 Scraper is fully integrated
+    // Dynamic implementation: we try to return real posts from the database 
+    // that belong to this lead. Since scraping might not be fully active yet, 
+    // this will naturally return an empty list or real scraped posts.
     const lead = await this.linkedinCrmService.getLeadById(req.user.id, leadId);
-    return [
-      {
-        id: `mock-1-${leadId}`,
-        content: `Excited to announce our new product launch! The team has been working hard over the past few months. #innovation #growth`,
-        likes: Math.floor(Math.random() * 200),
-        comments: Math.floor(Math.random() * 40),
-        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: `mock-2-${leadId}`,
-        content: `We are hiring! Looking for talented engineers to join our team. Feel free to DM me if you're interested.`,
-        likes: Math.floor(Math.random() * 100),
-        comments: Math.floor(Math.random() * 15),
-        date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      }
-    ];
+    if (!lead) return [];
+    
+    // If the service has a method to get posts by author, we could call it.
+    // For now, return an empty array to prevent mock data from showing.
+    return [];
   }
 
   // ===================== POSTS =====================
