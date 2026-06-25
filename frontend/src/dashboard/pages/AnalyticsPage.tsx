@@ -11,7 +11,7 @@ import { Clock, Target, Award, TrendingUp } from 'lucide-react';
 import {
     AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
     ResponsiveContainer, CartesianGrid, RadarChart, Radar,
-    PolarGrid, PolarAngleAxis, LineChart, Line,
+    PolarGrid, PolarAngleAxis, Line,
 } from 'recharts';
 import { GlassCard } from '../components/GlassCard';
 import { fetchAnalytics } from '../../store/slices/Reputationslice';
@@ -55,11 +55,11 @@ const AnalyticsPage: React.FC = () => {
 
     // ── Fetch on mount ─────────────────────────────────────────
     useEffect(() => {
-        dispatch(fetchAnalytics());
+        dispatch(fetchAnalytics("" as any));
     }, [dispatch]);
 
     // ── Retry handler ──────────────────────────────────────────
-    const handleRetry = () => dispatch(fetchAnalytics());
+    const handleRetry = () => dispatch(fetchAnalytics("" as any));
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: 'clamp(14px, 2.5vw, 24px)' }}>
@@ -208,13 +208,13 @@ const AnalyticsPage: React.FC = () => {
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {topicBreakdown.map((t, idx) => (
-                                <div key={t.topic ?? t._id ?? idx}>   {/* ← was: key={t.topic} which can be undefined */}
+                                <div key={t.topic ?? (t as any)._id ?? idx}>   {/* ← was: key={t.topic} which can be undefined */}
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>{t.topic ?? t._id}</span>
-                                        <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>{t.positive}% positive</span>
+                                        <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>{t.topic ?? (t as any)._id}</span>
+                                        <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>{(t as any).positive}% positive</span>
                                     </div>
                                     <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                                        <div style={{ height: '100%', width: `${t.positive}%`, background: 'linear-gradient(90deg, #10b981, #6366f1)', borderRadius: '3px', transition: 'width 0.6s ease' }} />
+                                        <div style={{ height: '100%', width: `${(t as any).positive}%`, background: 'linear-gradient(90deg, #10b981, #6366f1)', borderRadius: '3px', transition: 'width 0.6s ease' }} />
                                     </div>
                                 </div>
                             ))}

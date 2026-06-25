@@ -12,10 +12,7 @@ async function bootstrap() {
   app.use(express.urlencoded({ limit: '15mb', extended: true }));
 
   // Enable Global CORS for React Frontend Client
-  const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174'];
-  if (process.env.FRONTEND_URL) {
-    allowedOrigins.push(process.env.FRONTEND_URL);
-  }
+  const allowedOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [];
 
   app.enableCors({
     origin: allowedOrigins,

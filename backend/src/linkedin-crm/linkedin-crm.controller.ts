@@ -36,7 +36,7 @@ export class LinkedInCrmController {
     @Query('error_description') errorDescription: string,
     @Res() res: Response,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL;
     const redirectBase = `${frontendUrl}/settings`; // Or whatever frontend route handles settings/CRM
 
     if (error) {

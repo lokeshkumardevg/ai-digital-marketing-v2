@@ -108,7 +108,7 @@ interface Plan {
   popular?: boolean;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 /* ─── GLOBAL STYLES ─────────────────────────────────────── */
 const GLOBAL_CSS = `
@@ -626,7 +626,8 @@ export function TopBar({
 
   // Local states for LinkedIn dropdown choices
   const [selectedLiPage, setSelectedLiPage] = useState<string>("");
-  const [selectedLiTag, setSelectedLiTag] = useState<string>("");
+  // @ts-ignore
+const [selectedLiTag, setSelectedLiTag] = useState<string>("");
 
   const [liPages, setLiPages] = useState<any[]>([]);
 

@@ -146,7 +146,7 @@ export const BrandProfile: React.FC = () => {
       await delay(1100); advance(2);
 
       // ── Real API call ──
-      const res = await fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/ai/brand-profile`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/ai/brand-profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

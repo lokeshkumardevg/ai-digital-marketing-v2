@@ -77,7 +77,7 @@ async googleLogin(@Body() body: { code?: string; access_token?: string }) {
     }
 
     const userId = state;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL;
     const redirectBase = `${frontendUrl}/settings`;
 
     try {
@@ -156,7 +156,7 @@ async googleLogin(@Body() body: { code?: string; access_token?: string }) {
     @Query('code') code: string,
     @Query('state') state: string,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL;
     const redirectBase = `${frontendUrl}/settings`;
 
     // eslint-disable-next-line no-console
@@ -216,7 +216,7 @@ async googleLogin(@Body() body: { code?: string; access_token?: string }) {
     @Query('code') code: string,
     @Query('state') state: string,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL;
     const redirectBase = `${frontendUrl}/settings`;
 
     if (!code || !state) {
@@ -246,7 +246,7 @@ async googleLogin(@Body() body: { code?: string; access_token?: string }) {
     @Query('code') code: string,
     @Query('state') state: string,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL;
     const redirectBase = `${frontendUrl}/settings`;
 
     if (!code || !state) {

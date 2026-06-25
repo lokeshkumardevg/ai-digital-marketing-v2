@@ -43,3 +43,6 @@ uploads/
 # Debug and Secrets
 *debug*.json
 *err*.json
+test-ad.js
+test-ad3.js
+test-ads-update.js
