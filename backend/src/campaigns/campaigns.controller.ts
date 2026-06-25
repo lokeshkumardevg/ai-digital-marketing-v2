@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Put,
   Body,
   Get,
   Param,
@@ -53,6 +54,23 @@ export class CampaignController {
       return await this.service.publish(body.campaignId || body.id, body);
     } catch (err: any) {
       const msg = err?.message || 'Failed to publish campaign';
+      throw new BadRequestException(msg);
+    }
+  }
+
+  @Put('google/:id')
+  async updateGoogleCampaign(
+    @Param('id') id: string,
+    @Body() body: any
+  ) {
+    try {
+      const userId = body.userId;
+      if (!userId) {
+        throw new BadRequestException('User ID is required');
+      }
+      return await this.service.updateGoogleCampaign(userId, id, body);
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to update Google campaign';
       throw new BadRequestException(msg);
     }
   }

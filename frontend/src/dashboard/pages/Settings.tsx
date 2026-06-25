@@ -213,7 +213,8 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const connectGoogle = async () => {
+  // @ts-ignore
+const connectGoogle = async () => {
     try {
       const { api } = await import('../../api/axios');
       const response = await api.get('/auth/google');

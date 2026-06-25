@@ -92,7 +92,7 @@ export const Social: React.FC = () => {
     if (!uid) { toast.error('Please log in first.'); return; }
     setCheckingLinkedin(true);
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const API_BASE = import.meta.env.VITE_API_URL;
       const res = await fetch(`${API_BASE}/campaign/linkedin/status/${uid}`);
       const data = await res.json();
       setLinkedinStatus(data);

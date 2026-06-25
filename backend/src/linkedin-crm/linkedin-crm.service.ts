@@ -825,7 +825,7 @@ export class LinkedInCrmService {
     const tokenParams = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      redirect_uri: `${this.configService.get('BACKEND_URL') || 'http://localhost:3000'}/linkedin-crm/oauth/callback`,
+      redirect_uri: `${this.configService.get<string>('BACKEND_URL')}/linkedin-crm/oauth/callback`,
       client_id: clientId,
       client_secret: clientSecret,
     });
@@ -874,7 +874,7 @@ export class LinkedInCrmService {
 
   getLinkedInOAuthUrl(userId: string): string {
     const clientId = this.configService.get('LINKEDIN_CLIENT_ID');
-    const redirectUri = `${this.configService.get('BACKEND_URL') || 'http://localhost:3000'}/linkedin-crm/oauth/callback`;
+    const redirectUri = `${this.configService.get<string>('BACKEND_URL')}/linkedin-crm/oauth/callback`;
 
     const scope = [
       'openid',

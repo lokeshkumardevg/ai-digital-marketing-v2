@@ -47,21 +47,21 @@ import { MetaReviewsModule } from './meta-reviews/meta-reviews.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'single',
-        url: configService.get('REDIS_URL') || 'redis://localhost:6379',
+        url: configService.get<string>('REDIS_URL'),
       }),
       inject: [ConfigService],
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        redis: configService.get<string>('REDIS_URL') || 'redis://localhost:6379',
+        redis: configService.get<string>('REDIS_URL'),
       }),
       inject: [ConfigService],
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI') || 'mongodb://localhost:27017/ai_digital',
+        uri: configService.get<string>('MONGO_URI'),
       }),
       inject: [ConfigService],
     }),

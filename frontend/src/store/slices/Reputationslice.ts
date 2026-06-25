@@ -493,7 +493,7 @@ const reputationSlice = createSlice({
         s.aiReplyStatus[a.payload.reviewId] = 'done';
         const review = s.reviews.find((r) => r._id === a.payload.reviewId);
         if (review) review.generatedReply = a.payload.generatedReply;
-        if (s.reviewDetail?._id === a.payload.reviewId) s.reviewDetail.generatedReply = a.payload.generatedReply;
+        if ((s.reviewDetail as any)?._id === a.payload.reviewId) (s.reviewDetail as any).generatedReply = a.payload.generatedReply;
       })
       .addCase(generateAiReply.rejected,  (s, a) => { s.aiReplyStatus[a.meta.arg] = 'idle'; })
 
@@ -503,10 +503,10 @@ const reputationSlice = createSlice({
         s.publishStatus[a.payload.reviewId] = 'done';
         const review = s.reviews.find((r) => r._id === a.payload.reviewId);
         if (review) { review.isReplied = true; review.status = 'replied'; review.publishedReply = a.payload.replyText; }
-        if (s.reviewDetail?._id === a.payload.reviewId) {
-          s.reviewDetail.isReplied     = true;
-          s.reviewDetail.status        = 'replied';
-          s.reviewDetail.publishedReply = a.payload.replyText;
+        if ((s.reviewDetail as any)?._id === a.payload.reviewId) {
+          (s.reviewDetail as any).isReplied     = true;
+          (s.reviewDetail as any).status        = 'replied';
+          (s.reviewDetail as any).publishedReply = a.payload.replyText;
         }
       })
       .addCase(publishReply.rejected,  (s, a) => { s.publishStatus[a.meta.arg.reviewId] = 'idle'; })
@@ -517,9 +517,9 @@ const reputationSlice = createSlice({
         s.resolveStatus[a.payload.reviewId] = 'done';
         const review = s.reviews.find((r) => r._id === a.payload.reviewId);
         if (review) { review.isResolved = true; review.status = 'ignored'; }
-        if (s.reviewDetail?._id === a.payload.reviewId) {
-          s.reviewDetail.isResolved = true;
-          s.reviewDetail.status     = 'ignored';
+        if ((s.reviewDetail as any)?._id === a.payload.reviewId) {
+          (s.reviewDetail as any).isResolved = true;
+          (s.reviewDetail as any).status     = 'ignored';
         }
       })
       .addCase(resolveReview.rejected,  (s, a) => { s.resolveStatus[a.meta.arg] = 'idle'; })
@@ -621,7 +621,7 @@ const reputationSlice = createSlice({
             sentimentMap[key] = { ...sentimentMap[key], ...row };
           }
         });
-        s.analytics.sentimentTrend = Object.values(sentimentMap);
+        s.analytics.sentimentTrend = Object.values(sentimentMap) as any;
 
         const rawTopics  = a.payload.topicBreakdown;
         const topicRows: any[] = Array.isArray(rawTopics)

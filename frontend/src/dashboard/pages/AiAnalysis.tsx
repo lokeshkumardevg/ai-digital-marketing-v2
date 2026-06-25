@@ -187,7 +187,7 @@ export const AiAnalysis: React.FC = () => {
 
     try {
       // Call the backend API
-      const response = await fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/ai/${selectedCard.apiType}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/${selectedCard.apiType}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -36,7 +36,7 @@ type FetchImagesResponse =
       message?: string;
     };
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const FETCH_IMAGES_ENDPOINT = `${API_BASE_URL}/content/fetch-url-images`;
 const MAX_SELECTABLE_IMAGES = 4;
 
