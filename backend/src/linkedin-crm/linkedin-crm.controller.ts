@@ -37,7 +37,7 @@ export class LinkedInCrmController {
     @Res() res: Response,
   ) {
     const frontendUrl = process.env.FRONTEND_URL;
-    const redirectBase = `${frontendUrl}/settings`; // Or whatever frontend route handles settings/CRM
+    const redirectBase = `${frontendUrl}/dashboard/crm`; // Or whatever frontend route handles settings/CRM
 
     if (error) {
       console.error('LinkedIn OAuth Error:', error, errorDescription);

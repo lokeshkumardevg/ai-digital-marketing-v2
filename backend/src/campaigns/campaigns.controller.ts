@@ -262,6 +262,11 @@ getDrafts(
   return this.service.getDraftsByUser(userId);
 }
 
+  @Post('x/publish')
+  async publishX(@Body() body: any) {
+    return this.service.publishXCampaign(body.userId, body);
+  }
+
   @Post('meta/publish')
   async publishMeta(@Body() body: any) {
     return this.service.publishMetaCampaign(body.userId, body);
