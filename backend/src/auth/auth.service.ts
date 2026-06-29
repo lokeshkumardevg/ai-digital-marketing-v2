@@ -214,6 +214,10 @@ export class AuthService {
       'email',
       'ads_management',
       'ads_read',
+      'business_management',
+      'pages_show_list',
+      'pages_read_engagement',
+      'pages_manage_ads'
     ].join(',');
 
     return `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}` +
@@ -227,7 +231,7 @@ export class AuthService {
     let clientId = this.configService.get('X_CLIENT_ID') || this.configService.get('TWITTER_CLIENT_ID');
     console.log('[DEBUG] getXAuthUrl triggered');
     console.log('[DEBUG] Final clientId used:', clientId);
-    
+
     if (!clientId) {
       throw new Error('X (Twitter) Client ID not configured.');
     }
@@ -383,7 +387,7 @@ export class AuthService {
     const loginCustomerId = (managerId && managerId !== cleanCustomerId) ? managerId : cleanCustomerId;
 
     const res = await fetch(
-      `https://googleads.googleapis.com/v16/customers/${cleanCustomerId}/googleAds:search`,
+      `https://googleads.googleapis.com/v19/customers/${cleanCustomerId}/googleAds:search`,
       {
         method: 'POST',
         headers: {
@@ -584,6 +588,54 @@ export class AuthService {
     } catch (e: any) {
       throw new UnauthorizedException(e.response?.data?.error?.message || 'Failed to fetch pages');
     }
+  }
+
+  async getMetaAdAccounts(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.metaAccessToken) throw new UnauthorizedException('No Meta token');
+    try {
+      const res = await axios.get(`https://graph.facebook.com/v20.0/me/adaccounts`, {
+        params: { access_token: user.metaAccessToken, fields: 'account_id,name,account_status' }
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new UnauthorizedException(e.response?.data?.error?.message || 'Failed to fetch ad accounts');
+    }
+  }
+
+  async updateMetaAdAccount(userId: string, adAccountId: string, adAccountName: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    if (!adAccountId) {
+      throw new UnauthorizedException('Ad Account ID is required');
+    }
+
+    // Ensure format starts with act_
+    const formattedAccountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
+
+    await this.usersService.update(userId, {
+      metaAdAccountId: formattedAccountId,
+      metaAdAccountName: adAccountName,
+    });
+
+    return { success: true, metaAdAccountId: formattedAccountId, metaAdAccountName: adAccountName };
+  }
+
+  async updateMetaBusiness(userId: string, businessId: string, businessName: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    if (!businessId) {
+      throw new UnauthorizedException('Business ID is required');
+    }
+
+    await this.usersService.update(userId, {
+      metaBusinessId: businessId,
+      metaBusinessName: businessName,
+    });
+
+    return { success: true, metaBusinessId: businessId, metaBusinessName: businessName };
   }
 
   async getMetaPixels(userId: string) {

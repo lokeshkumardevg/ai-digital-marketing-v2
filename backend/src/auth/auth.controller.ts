@@ -146,6 +146,30 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Get('meta/adaccounts')
+  async getMetaAdAccounts(@Request() req: any) {
+    return this.authService.getMetaAdAccounts(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('meta/adaccount')
+  async updateMetaAdAccount(
+    @Request() req: any,
+    @Body() body: { adAccountId: string; adAccountName: string }
+  ) {
+    return this.authService.updateMetaAdAccount(req.user.id, body.adAccountId, body.adAccountName);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('meta/business')
+  async updateMetaBusiness(
+    @Request() req: any,
+    @Body() body: { businessId: string; businessName: string }
+  ) {
+    return this.authService.updateMetaBusiness(req.user.id, body.businessId, body.businessName);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Get('meta/businesses')
   async getMetaBusinesses(@Request() req: any) {
     return this.authService.getMetaBusinesses(req.user.id);

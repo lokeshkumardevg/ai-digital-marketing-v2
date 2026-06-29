@@ -324,20 +324,20 @@ export class CampaignService {
             name: platName,
             platform: plat,
             data: {
-              image: campaignDataToSave.data?.image || 
-                     campaignDataToSave.assets?.images?.[0] || 
-                     campaignDataToSave.brandDetails?.assets?.images?.[0] || '',
+              image: campaignDataToSave.data?.image ||
+                campaignDataToSave.assets?.images?.[0] ||
+                campaignDataToSave.brandDetails?.assets?.images?.[0] || '',
               ...platData,
             },
             status: 'PROCESSING',
             aiGeneratedContent: {
               ...(campaignDataToSave.aiGeneratedContent || {}),
               ...(campaignDataToSave.promoData || {}),
-              imageUrl: campaignDataToSave.aiGeneratedContent?.imageUrl || 
-                        campaignDataToSave.promoData?.imageUrl || 
-                        campaignDataToSave.data?.image || 
-                        campaignDataToSave.assets?.images?.[0] || 
-                        campaignDataToSave.brandDetails?.assets?.images?.[0] || ''
+              imageUrl: campaignDataToSave.aiGeneratedContent?.imageUrl ||
+                campaignDataToSave.promoData?.imageUrl ||
+                campaignDataToSave.data?.image ||
+                campaignDataToSave.assets?.images?.[0] ||
+                campaignDataToSave.brandDetails?.assets?.images?.[0] || ''
             },
           },
         },
@@ -486,10 +486,10 @@ export class CampaignService {
       });
       const page = await context.newPage();
       await page.goto(normalizedUrl, { waitUntil: 'domcontentloaded', timeout: 12000 });
-      
+
       const title = await page.title();
       const metaDesc = await page.$eval('meta[name="description"]', (el: any) => el.getAttribute('content')).catch(() => '');
-      
+
       const bodyText = await page.evaluate(() => {
         const scripts = document.querySelectorAll('script, style, noscript, iframe, nav, footer');
         scripts.forEach(s => s.remove());
@@ -497,7 +497,7 @@ export class CampaignService {
       });
 
       await browser.close();
-      
+
       return {
         title: title || '',
         metaDesc: metaDesc || '',
@@ -506,7 +506,7 @@ export class CampaignService {
     } catch (err: any) {
       this.logger.warn(`Playwright scrape failed: ${err.message}. Falling back to Axios/Cheerio.`);
       if (browser) {
-        try { await browser.close(); } catch {}
+        try { await browser.close(); } catch { }
       }
     }
 
@@ -523,7 +523,7 @@ export class CampaignService {
       const $ = cheerio.load(response.data);
       const title = $('title').text() || '';
       const metaDesc = $('meta[name="description"]').attr('content') || '';
-      
+
       $('script, style, noscript, iframe, nav, footer').remove();
       const bodyText = $('body').text() || '';
 
@@ -948,7 +948,7 @@ Return ONLY JSON.
       } catch (err: any) {
         this.logger.warn(`Playwright asset load failed: ${err.message}. Trying Axios fallback.`);
         if (browser) {
-          try { await browser.close(); } catch {}
+          try { await browser.close(); } catch { }
         }
       }
 
@@ -1857,7 +1857,7 @@ Return ONLY JSON.
       // 1. Create a Campaign
       try {
         this.logger.log(`Step 1: Creating Campaign: name=${campaignName}, objective=${metaObjective}`);
-        
+
         // Dynamically fetch account currency to avoid USD budget multipliers mismatch
         let currency = 'USD';
         try {
@@ -1878,8 +1878,8 @@ Return ONLY JSON.
         }
 
         const isZeroDecimal = ['JPY', 'KRW', 'CLP', 'VND'].includes(currency);
-        const budgetSubunits = isZeroDecimal 
-          ? Math.round(Number(dailyBudget || 10)) 
+        const budgetSubunits = isZeroDecimal
+          ? Math.round(Number(dailyBudget || 10))
           : Math.round(Number(dailyBudget || 10) * 100);
 
         const finalDailyBudget = Math.max(budgetSubunits, minBudgetSubunits);
@@ -2209,7 +2209,7 @@ Return ONLY JSON.
     } catch (err: any) {
       // Graceful fallback to mock active campaign for Sandbox / Development mode app tokens
       this.logger.warn(`Meta Campaign live publish failed: ${err.message}. Falling back to simulated local active campaign.`);
-      
+
       const mockCampaignId = `meta_camp_${Date.now()}`;
       const mockAdSetId = `meta_adset_${Date.now()}`;
       const mockAdId = `meta_ad_${Date.now()}`;
@@ -2417,7 +2417,7 @@ Return ONLY JSON.
             }
           }
         ]);
-        
+
         if (updates.headline) campaign.data.headline = updates.headline;
         if (updates.caption) campaign.data.caption = updates.caption;
         if (updates.finalUrl) campaign.data.finalUrl = updates.finalUrl;
@@ -2883,45 +2883,45 @@ Return ONLY JSON.
 
       let tweetId = null;
       if (!response.ok) {
-          let errorData: any = {};
-          try {
-            errorData = await response.json();
-          } catch (parseErr) {}
-          this.logger.warn(`X Post failed (Twitter API Error): ${JSON.stringify(errorData)}`);
-          
-          // Check for duplicate content (403 Forbidden or duplicate message detail)
-          const isDuplicate = response.status === 403 || 
-                              JSON.stringify(errorData).toLowerCase().includes('duplicate');
-          if (isDuplicate) {
-            this.logger.log('Duplicate content detected. Retrying with unique code suffix...');
-            const randomSuffix = `\n\n[Ref: ${Math.random().toString(36).substring(2, 7).toUpperCase()}]`;
-            const uniqueTweetContent = `${tweetContent}${randomSuffix}`;
+        let errorData: any = {};
+        try {
+          errorData = await response.json();
+        } catch (parseErr) { }
+        this.logger.warn(`X Post failed (Twitter API Error): ${JSON.stringify(errorData)}`);
 
-            const retryResponse = await fetch('https://api.twitter.com/2/tweets', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${user.twitterAccessToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ text: uniqueTweetContent })
-            });
+        // Check for duplicate content (403 Forbidden or duplicate message detail)
+        const isDuplicate = response.status === 403 ||
+          JSON.stringify(errorData).toLowerCase().includes('duplicate');
+        if (isDuplicate) {
+          this.logger.log('Duplicate content detected. Retrying with unique code suffix...');
+          const randomSuffix = `\n\n[Ref: ${Math.random().toString(36).substring(2, 7).toUpperCase()}]`;
+          const uniqueTweetContent = `${tweetContent}${randomSuffix}`;
 
-            if (retryResponse.ok) {
-              try {
-                const resData = await retryResponse.json();
-                tweetId = resData.data?.id || null;
-                this.logger.log(`Successfully posted organic tweet after retry. ID: ${tweetId}`);
-              } catch (e: any) {
-                this.logger.warn(`Failed to parse retry response: ${e.message}`);
-              }
-            } else {
-              let retryErrorData = {};
-              try {
-                retryErrorData = await retryResponse.json();
-              } catch (pErr) {}
-              this.logger.warn(`X Post retry also failed: ${JSON.stringify(retryErrorData)}`);
+          const retryResponse = await fetch('https://api.twitter.com/2/tweets', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${user.twitterAccessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: uniqueTweetContent })
+          });
+
+          if (retryResponse.ok) {
+            try {
+              const resData = await retryResponse.json();
+              tweetId = resData.data?.id || null;
+              this.logger.log(`Successfully posted organic tweet after retry. ID: ${tweetId}`);
+            } catch (e: any) {
+              this.logger.warn(`Failed to parse retry response: ${e.message}`);
             }
+          } else {
+            let retryErrorData = {};
+            try {
+              retryErrorData = await retryResponse.json();
+            } catch (pErr) { }
+            this.logger.warn(`X Post retry also failed: ${JSON.stringify(retryErrorData)}`);
           }
+        }
       } else {
         try {
           const resData = await response.json();
@@ -3066,7 +3066,7 @@ Return ONLY JSON.
 
           // Step B: Fetch or Create Campaign Group
           let campaignGroupUrn = '';
-          const groupSearchRes = await fetch(`https://api.linkedin.com/rest/adAccounts/${adAccount.id}/adCampaignGroups?q=search&count=1`, {
+          const groupSearchRes = await fetch(`https://api.linkedin.com/rest/adAccounts/${adAccount.id}/adCampaignGroups?q=search&count=50`, {
             headers: {
               'Authorization': `Bearer ${user.linkedinAccessToken}`,
               'LinkedIn-Version': '202605',
@@ -3077,9 +3077,13 @@ Return ONLY JSON.
           if (groupSearchRes.ok) {
             const groupData = await groupSearchRes.json();
             if (groupData.elements?.length > 0) {
-              campaignGroupUrn = String(groupData.elements[0].id);
-              if (!campaignGroupUrn.startsWith('urn:li:')) {
-                campaignGroupUrn = `urn:li:sponsoredCampaignGroup:${campaignGroupUrn}`;
+              // Strictly match ACTIVE or DRAFT to avoid undefined status matching a REMOVED group
+              const activeGroup = groupData.elements.find((g: any) => g.status === 'ACTIVE' || g.status === 'DRAFT');
+              if (activeGroup) {
+                campaignGroupUrn = String(activeGroup.id);
+                if (!campaignGroupUrn.startsWith('urn:li:')) {
+                  campaignGroupUrn = `urn:li:sponsoredCampaignGroup:${campaignGroupUrn}`;
+                }
               }
             }
           }
@@ -3176,8 +3180,8 @@ Return ONLY JSON.
               const campId = createCampRes.headers.get('x-restli-id');
               const campaignUrn = `urn:li:sponsoredCampaign:${campId}`;
 
-              // Step D: Create Creative
-              await fetch(`https://api.linkedin.com/rest/adAccounts/${adAccount.id}/adCreatives`, {
+              // Step D: Create Creative using REST API
+              const creativeRes = await fetch(`https://api.linkedin.com/rest/adCreatives`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${user.linkedinAccessToken}`,
@@ -3192,18 +3196,25 @@ Return ONLY JSON.
                   variables: {
                     data: {
                       "com.linkedin.ads.TextAdCreativeVariables": {
-                        text: caption.substring(0, 75), // Max 75 chars
-                        title: headline.substring(0, 25), // Max 25 chars
-                        clickUri: finalUrl
+                        text: caption ? caption.substring(0, 75) : 'AI Generated Text',
+                        title: headline ? headline.substring(0, 25) : 'AI Ad Title',
+                        clickUri: finalUrl || 'https://example.com'
                       }
                     }
                   }
                 })
               });
 
-              linkedinPostId = campaignUrn;
-              isAdCampaignSuccess = true;
-              this.logger.log(`Successfully created LinkedIn Ad Campaign: ${campaignUrn}`);
+              if (!creativeRes.ok) {
+                const creativeErr = await creativeRes.text();
+                this.logger.warn(`Failed to create LinkedIn Ad Creative. Reason: ${creativeErr}`);
+                // Since creative failed, the campaign is empty.
+                apiError = `LinkedIn Campaign created, but Ad Creative failed: ${creativeErr}`;
+              } else {
+                linkedinPostId = campaignUrn;
+                isAdCampaignSuccess = true;
+                this.logger.log(`Successfully created LinkedIn Ad Campaign & Creative: ${campaignUrn}`);
+              }
             } else {
               const err = await createCampRes.text();
               this.logger.warn(`Failed to create Ad Campaign. Reason: ${err}`);
@@ -3540,7 +3551,7 @@ Return ONLY JSON.
           if (raw.platform === 'linkedin' && user?.linkedinAccessToken && raw.data?.linkedinPostId) {
             const linkedinPostId = raw.data.linkedinPostId;
             const token = user.linkedinAccessToken;
-            
+
             if (linkedinPostId.startsWith('urn:li:sponsoredCampaign:')) {
               const campaignId = linkedinPostId.replace('urn:li:sponsoredCampaign:', '');
               try {
@@ -3604,7 +3615,7 @@ Return ONLY JSON.
                   const socialData = await socialRes.json();
                   const likes = socialData.likesSummary?.totalLikes || 0;
                   const comments = socialData.commentsSummary?.totalComments || 0;
-                  
+
                   clicks = likes + comments;
                   results = clicks;
                   resultType = 'Social Actions';
@@ -3639,7 +3650,119 @@ Return ONLY JSON.
         })
       );
 
-      return enrichedCampaigns;
+      let externalGoogleCampaigns: any[] = [];
+      const googleAdsRefreshToken = user?.googleRefreshToken;
+      const systemRefreshToken = process.env.SYSTEM_GOOGLE_REFRESH_TOKEN;
+      const workingRefreshToken = googleAdsRefreshToken || systemRefreshToken;
+      let customerId = user?.googleCustomerId || process.env.GOOGLE_ADS_CUSTOMER_ID || process.env.SYSTEM_GOOGLE_CUSTOMER_ID;
+      const loginCustomerId = process.env.SYSTEM_GOOGLE_MCC_ID || process.env.GOOGLE_ADS_MANAGER_ID;
+
+      if (workingRefreshToken && loginCustomerId) {
+        try {
+          const { GoogleAdsApi } = require('google-ads-api');
+          const clientAuth = new GoogleAdsApi({
+            client_id: process.env.GOOGLE_CLIENT_ID || '',
+            client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+            developer_token: process.env.GOOGLE_DEVELOPER_TOKEN || 'lcZ3RRE00HWy2i4quLMNuQ',
+          });
+
+          // Dynamically resolve customerId if missing
+          if (!customerId) {
+            const mccOptions: any = {
+              customer_id: loginCustomerId.replace(/-/g, ''),
+              refresh_token: workingRefreshToken,
+            };
+            const mccCustomer = clientAuth.Customer(mccOptions);
+            const childResult = await mccCustomer.query(`
+              SELECT customer_client.id
+              FROM customer_client
+              WHERE customer_client.level <= 1 AND customer_client.manager = FALSE
+              LIMIT 1
+            `);
+            if (childResult && childResult.length > 0) {
+              customerId = childResult[0].customer_client?.id?.toString();
+            }
+          }
+
+          if (customerId) {
+            const customerOptions: any = {
+              customer_id: customerId.replace(/-/g, ''),
+              refresh_token: workingRefreshToken,
+            };
+          if (loginCustomerId && loginCustomerId !== customerId) {
+            customerOptions.login_customer_id = loginCustomerId.replace(/-/g, '');
+          }
+          const workingCustomer = clientAuth.Customer(customerOptions);
+
+          const result = await workingCustomer.query(`
+            SELECT campaign.id, campaign.status, campaign.name, campaign_budget.amount_micros, metrics.cost_micros, metrics.impressions, metrics.clicks
+            FROM campaign
+            WHERE campaign.status IN ('ENABLED', 'PAUSED')
+          `);
+          
+          if (result && result.length > 0) {
+            externalGoogleCampaigns = result.map((row: any) => {
+              const googleCamp = row.campaign;
+              const googleBudget = row.campaign_budget;
+              const googleMetrics = row.metrics;
+              
+              const existsInMongo = enrichedCampaigns.some((ec) => {
+                if (ec.platform !== 'google') return false;
+                const resourceName = ec.data?.googleResources?.campaignResourceName || '';
+                return resourceName.includes(googleCamp.id.toString()) || ec.campaignId === googleCamp.id.toString();
+              });
+              
+              if (existsInMongo) return null;
+
+              let delivery = 'UNKNOWN';
+              const googleStatus = googleCamp.status; 
+              if (googleStatus === 'ENABLED' || googleStatus === 2) {
+                delivery = 'ACTIVE';
+              } else if (googleStatus === 'PAUSED' || googleStatus === 3) {
+                delivery = 'PAUSED';
+              } else if (googleStatus === 'REMOVED' || googleStatus === 4) {
+                delivery = 'REMOVED';
+              }
+
+              const spend = googleMetrics?.cost_micros ? parseFloat(googleMetrics.cost_micros) / 1000000 : 0;
+              const clicks = googleMetrics?.clicks ? parseInt(googleMetrics.clicks) : 0;
+              const impressions = googleMetrics?.impressions ? parseInt(googleMetrics.impressions) : 0;
+              const results = clicks;
+              const costPerResult = results > 0 ? spend / results : 0;
+
+              return {
+                _id: `ext_google_${googleCamp.id}`,
+                id: `ext_google_${googleCamp.id}`,
+                campaignId: googleCamp.id.toString(),
+                name: googleCamp.name || 'Google Campaign',
+                platform: 'google',
+                status: delivery.toLowerCase(),
+                delivery: delivery,
+                dailyBudget: googleBudget?.amount_micros ? parseFloat(googleBudget.amount_micros) / 1000000 : 0,
+                spend,
+                impressions,
+                reach: 0,
+                clicks,
+                results,
+                resultType: 'Clicks',
+                costPerResult,
+                bidStrategy: 'Google Ads System',
+                isRealMeta: false,
+                isRealGoogle: true,
+                isRealX: false,
+                isRealLinkedIn: false,
+                isReal: true,
+                isExternal: true
+              };
+            }).filter(Boolean);
+          }
+          } // close if (customerId)
+        } catch (err: any) {
+          this.logger.error(`Failed to fetch external Google campaigns: ${err.message}`);
+        }
+      }
+
+      return [...enrichedCampaigns, ...externalGoogleCampaigns];
     } catch (error) {
       this.logger.error(`Error fetching campaigns for user ${userId}`, error);
       throw new InternalServerErrorException('Failed to fetch campaigns');
@@ -3735,18 +3858,18 @@ Return ONLY JSON.
           }
         }
       }
-      
+
       // Google toggle
       if (campaign.platform === 'google' && campaign.data?.googleResources?.campaignResourceName) {
         this.logger.log(`Toggling Google Campaign ${campaign._id} status to ${uppercaseStatus}`);
-        
+
         const googleAdsRefreshToken = user.googleRefreshToken;
         const systemRefreshToken = process.env.SYSTEM_GOOGLE_REFRESH_TOKEN;
         const workingRefreshToken = googleAdsRefreshToken || systemRefreshToken;
 
         let customerId = user.googleCustomerId;
         let loginCustomerId = process.env.SYSTEM_GOOGLE_MCC_ID;
-        
+
         if (workingRefreshToken && customerId) {
           try {
             const { GoogleAdsApi, enums } = require('google-ads-api');
@@ -3764,9 +3887,9 @@ Return ONLY JSON.
               customerOptions.login_customer_id = loginCustomerId.replace(/-/g, '');
             }
             const workingCustomer = clientAuth.Customer(customerOptions);
-            
+
             const targetStatus = uppercaseStatus === 'ACTIVE' ? enums.CampaignStatus.ENABLED : enums.CampaignStatus.PAUSED;
-            
+
             await workingCustomer.campaigns.update([
               {
                 resource_name: campaign.data.googleResources.campaignResourceName,
@@ -3972,6 +4095,11 @@ Return ONLY JSON.
       }
     }
 
+    if (citiesList.length > 0 || regionsList.length > 0) {
+      // Prevent Meta overlapping location error (OAuthException 100)
+      countriesList.length = 0;
+    }
+
     if (countriesList.length > 0) geo.countries = countriesList;
     if (regionsList.length > 0) geo.regions = regionsList;
     if (citiesList.length > 0) geo.cities = citiesList;
@@ -4047,6 +4175,11 @@ Return ONLY JSON.
       } catch (err: any) {
         this.logger.error(`Error resolving location matching "${loc}": ${err.message}`);
       }
+    }
+
+    if (citiesList.length > 0 || regionsList.length > 0) {
+      // Prevent Meta overlapping location error (OAuthException 100)
+      countriesList.length = 0;
     }
 
     if (countriesList.length > 0) geo.countries = countriesList;

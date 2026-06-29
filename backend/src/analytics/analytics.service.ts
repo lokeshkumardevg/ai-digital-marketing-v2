@@ -38,6 +38,7 @@ export class AnalyticsService {
     customerId?: string,
     bypassCache = false,
   ): Promise<any> {
+    bypassCache = true; // Temporary force bypass cache for debugging
     const cacheKey = `ad_insights:${userId}:${platform}:${customerId || 'default'}:${bypassCache ? Date.now() : ''}`;
 
     if (!bypassCache) {
@@ -124,7 +125,7 @@ export class AnalyticsService {
       const query = `
         SELECT campaign.id, campaign.name, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.ctr, metrics.conversions
         FROM campaign
-        WHERE segments.date DURING LAST_30_DAYS
+        WHERE campaign.status IN ('ENABLED', 'PAUSED')
         ORDER BY metrics.impressions DESC
         LIMIT 10
       `;
@@ -133,7 +134,7 @@ export class AnalyticsService {
       let managerId = (user as any).googleManagerId || this.configService.get<string>('GOOGLE_ADS_MANAGER_ID') || systemMccId;
 
       try {
-        const listRes = await fetch('https://googleads.googleapis.com/v16/customers:listAccessibleCustomers', {
+        const listRes = await fetch('https://googleads.googleapis.com/v19/customers:listAccessibleCustomers', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'developer-token': developerToken,
@@ -149,7 +150,7 @@ export class AnalyticsService {
         let foundClient = false;
         for (const mccId of accessibleCids) {
           try {
-            const childRes = await fetch(`https://googleads.googleapis.com/v16/customers/${mccId}/googleAds:search`, {
+            const childRes = await fetch(`https://googleads.googleapis.com/v19/customers/${mccId}/googleAds:search`, {
               method: 'POST',
               headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -186,7 +187,7 @@ export class AnalyticsService {
       }
 
       const response = await fetch(
-        `https://googleads.googleapis.com/v16/customers/${resolvedCustomerId}/googleAds:search`,
+        `https://googleads.googleapis.com/v19/customers/${resolvedCustomerId}/googleAds:search`,
         {
           method: 'POST',
           headers,
@@ -225,7 +226,7 @@ export class AnalyticsService {
       });
 
       if (creatives.length === 0) {
-        return this.getDemoData('Google Ads', '#ea4335');
+        return this.getEmptyResponse();
       }
 
       return {
@@ -235,27 +236,11 @@ export class AnalyticsService {
       };
     } catch (error: any) {
       this.logger.error('Google API error', error?.message || error);
-      return this.getDemoData('Google Ads', '#ea4335');
+      return this.getEmptyResponse();
     }
   }
 
-  private getDemoData(platformName: string, color: string) {
-    return {
-      audiences: [
-        { label: 'Retargeting Audience', value: 45000, color: color },
-        { label: 'Lookalike 1%', value: 32000, color: color + 'CC' },
-        { label: 'Broad Match Leads', value: 25000, color: color + '99' },
-      ],
-      pages: [
-        { label: `${platformName} Primary`, value: 102000, color: color },
-      ],
-      creatives: [
-        { name: 'Launch Promo Q3', impressions: 45000, cpa: 12.50, ctr: 3.2, spend: 1200.00, color: color },
-        { name: 'Evergreen Retargeting', impressions: 32000, cpa: 8.75, ctr: 4.1, spend: 850.50, color: color },
-        { name: 'Lead Gen Magnet', impressions: 25000, cpa: 15.20, ctr: 2.8, spend: 600.00, color: color },
-      ]
-    };
-  }
+
 
   private async resolveGoogleAccessToken(user: any): Promise<string> {
     const isTokenValid = user.googleAccessToken && user.googleTokenExpiry && Date.now() + 60000 < user.googleTokenExpiry;
@@ -336,7 +321,7 @@ export class AnalyticsService {
         accounts.map(async (account: any) => {
           const accountId = account.account_id || account.id;
           const campaignsRes = await fetch(
-            `https://graph.facebook.com/v20.0/act_${accountId}/campaigns?fields=name,status,objective,insights.date_preset(lifetime){impressions,clicks,spend,ctr}&access_token=${accessToken}`,
+            `https://graph.facebook.com/v20.0/act_${accountId}/campaigns?fields=name,status,objective,insights.date_preset(maximum){impressions,clicks,spend,ctr}&access_token=${accessToken}`,
           );
           const campaignsJson = await campaignsRes.json();
 
@@ -387,7 +372,7 @@ export class AnalyticsService {
       const audiences = pages.map((page) => ({ ...page }));
 
       if (creatives.length === 0) {
-        return this.getDemoData('Meta Ads', '#1877f2');
+        return this.getEmptyResponse();
       }
 
       return {
@@ -399,7 +384,7 @@ export class AnalyticsService {
       };
     } catch (error) {
       this.logger.error('Meta API error', error);
-      return this.getDemoData('Meta Ads', '#1877f2');
+      return this.getEmptyResponse();
     }
   }
 
@@ -411,10 +396,10 @@ export class AnalyticsService {
       }
 
       // Twitter Ads API requires special developer access
-      return this.getDemoData('X Ads', '#000000');
+      return this.getEmptyResponse();
     } catch (error) {
       this.logger.error('Twitter API error', error);
-      return this.getDemoData('X Ads', '#000000');
+      return this.getEmptyResponse();
     }
   }
 
@@ -433,7 +418,7 @@ export class AnalyticsService {
       });
       const accountsData: any = await accountsRes.json();
       if (!accountsRes.ok || !accountsData.elements || !accountsData.elements.length) {
-        return this.getDemoData('LinkedIn Ads', '#0A66C2');
+        return this.getEmptyResponse();
       }
 
       const accountUrn = accountsData.elements[0].id || accountsData.elements[0].account || accountsData.elements[0].organisations?.[0];
@@ -451,7 +436,7 @@ export class AnalyticsService {
       });
       const statsJson: any = await statsRes.json();
       if (!statsRes.ok || !statsJson.elements) {
-        return this.getDemoData('LinkedIn Ads', '#0A66C2');
+        return this.getEmptyResponse();
       }
 
       const creatives = statsJson.elements.map((element: any, i: number) => {
@@ -472,7 +457,7 @@ export class AnalyticsService {
       });
 
       if (creatives.length === 0) {
-        return this.getDemoData('LinkedIn Ads', '#0A66C2');
+        return this.getEmptyResponse();
       }
 
       const totalSpend = creatives.reduce((s: number, c: any) => s + c.spend, 0);
@@ -484,7 +469,7 @@ export class AnalyticsService {
       };
     } catch (error) {
       this.logger.error('LinkedIn API error', error);
-      return this.getDemoData('LinkedIn Ads', '#0A66C2');
+      return this.getEmptyResponse();
     }
   }
 
@@ -712,7 +697,7 @@ export class AnalyticsService {
     let managerId = (user as any).googleManagerId || this.configService.get<string>('GOOGLE_ADS_MANAGER_ID') || systemMccId;
 
     try {
-      const listRes = await fetch('https://googleads.googleapis.com/v16/customers:listAccessibleCustomers', {
+      const listRes = await fetch('https://googleads.googleapis.com/v19/customers:listAccessibleCustomers', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'developer-token': developerToken,
@@ -748,7 +733,7 @@ export class AnalyticsService {
     }
 
     const res = await fetch(
-      `https://googleads.googleapis.com/v16/customers/${customerId}/googleAds:search`,
+      `https://googleads.googleapis.com/v19/customers/${customerId}/googleAds:search`,
       {
         method: 'POST',
         headers,
