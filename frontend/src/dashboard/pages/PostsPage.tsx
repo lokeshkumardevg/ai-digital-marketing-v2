@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Inbox, Clock, Search, Grid3x3, List,
   ChevronDown, ChevronRight, Send, RefreshCw, AlertCircle,
@@ -62,8 +62,6 @@ interface DbComment {
 interface AiGeneratedEntry {
   reply: string;
   generatedAt: string;
-  posted?: boolean;
-  postedAt?: string;
 }
 
 interface DbPost {
@@ -134,10 +132,10 @@ type SyncStatus = 'idle' | 'syncing' | 'done' | 'error';
 // ─────────────────────────────────────────────────────────────────────────
 // Static config
 // ─────────────────────────────────────────────────────────────────────────
-const PLATFORM_CONFIG: Record<PlatformTabKey, { label: string; color: string; bg: string }> = {
-  meta:     { label: 'Meta',     color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
-  x:        { label: 'X',        color: '#E5E7EB', bg: 'rgba(229,231,235,0.10)' },
-  linkedin: { label: 'LinkedIn', color: '#0A66C2', bg: 'rgba(10,102,194,0.14)' },
+const PLATFORM_CONFIG: Record<PlatformTabKey, { label: string }> = {
+  meta:     { label: 'Meta'     },
+  x:        { label: 'X'        },
+  linkedin: { label: 'LinkedIn' },
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -240,16 +238,15 @@ function ComingSoonBanner({ platform }: { platform: string }) {
 // ─────────────────────────────────────────────────────────────────────────
 // AiReplyBubble — shows AI reply + "Post on Facebook" button
 // ─────────────────────────────────────────────────────────────────────────
-function AiReplyBubble({ reply, generatedAt, commentId, pageAccessToken, initialPosted = false, onPosted }: {
+function AiReplyBubble({ reply, generatedAt, commentId, pageAccessToken, onPosted }: {
   reply: string;
   generatedAt?: string;
   commentId: string;
   pageAccessToken: string;
-  initialPosted?: boolean;
   onPosted?: () => void;
 }) {
   const [posting, setPosting]     = useState(false);
-  const [posted, setPosted]       = useState(initialPosted);
+  const [posted, setPosted]       = useState(false);
   const [postError, setPostError] = useState('');
 
   const handlePostToFb = async (e: React.MouseEvent) => {
@@ -401,24 +398,33 @@ function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated,
   onReplySuccess?: () => void;
   compact?: boolean;
 }) {
-  const [replying, setReplying] = useState(false);
-  const [message, setMessage] = useState('');
-  const [sending, setSending] = useState(false);
+  const [replying, setReplying]     = useState(false);
+  const [message, setMessage]       = useState('');
+  const [sending, setSending]       = useState(false);
   const [replyError, setReplyError] = useState('');
 
-  const [showReplies, setShowReplies]     = useState(false);
-  const [replies, setReplies]             = useState<CommentReply[] | null>(null);
+  const [showReplies, setShowReplies]       = useState(false);
+  const [liveReplies, setLiveReplies]       = useState<LiveReply[] | null>(null);
   const [loadingReplies, setLoadingReplies] = useState(false);
-  const [repliesError, setRepliesError]   = useState('');
+  const [repliesError, setRepliesError]     = useState('');
 
-  const fetchReplies = useCallback(async () => {
-    setLoadingReplies(true);
-    setRepliesError('');
+  // AI generation state
+  const [generatingAi, setGeneratingAi]   = useState(false);
+  const [aiError, setAiError]             = useState('');
+  const [localAiEntry, setLocalAiEntry]   = useState<AiGeneratedEntry | undefined>(aiEntry);
+
+  // Sync prop changes (when parent refreshes posts after bulk generate)
+  useEffect(() => { setLocalAiEntry(aiEntry); }, [aiEntry]);
+
+  const displayReplies: (DbReply | LiveReply)[] = liveReplies ?? comment.replies ?? [];
+  const replyCount = liveReplies ? liveReplies.length : (comment.replyCount ?? comment.replies?.length ?? 0);
+  const hasReplies = replyCount > 0 || showReplies;
+
+  const fetchLiveReplies = useCallback(async () => {
+    setLoadingReplies(true); setRepliesError('');
     try {
-      // GET /meta-reviews/comments/:commentId/replies
-      const data = await apiFetch<CommentReply[]>(
-        `/meta-reviews/comments/${comment.commentId}/replies` +
-        `?pageAccessToken=${encodeURIComponent(pageAccessToken)}`,
+      const data = await apiFetch<LiveReply[]>(
+        `/meta-reviews/comments/${comment.commentId}/replies?pageAccessToken=${encodeURIComponent(pageAccessToken)}`,
       );
       setLiveReplies(data);
     } catch (e: any) {
@@ -472,19 +478,6 @@ function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated,
     }
   };
 
-  const isPosted = !!localAiEntry?.posted;
-
-  // ── Called by AiReplyBubble once the reply has actually been posted to Facebook ──
-  const handleAiPosted = useCallback(() => {
-    setLocalAiEntry(prev => {
-      if (!prev) return prev;
-      const next: AiGeneratedEntry = { ...prev, posted: true, postedAt: new Date().toISOString() };
-      onAiGenerated(comment.commentId, next);
-      return next;
-    });
-    setShowAiBubble(false);
-  }, [comment.commentId, onAiGenerated]);
-
   return (
     <div className="par-comment-thread">
       <div className="par-comment-row">
@@ -510,47 +503,31 @@ function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated,
               </button>
             )}
 
-            {/* ── AI Generate button (hidden once a reply has already been posted) ── */}
-            {!isPosted && (
-              <button
-                onClick={handleGenerateAiReply}
-                disabled={generatingAi}
-                className={`par-ai-gen-btn${localAiEntry ? ' par-ai-gen-btn-regen' : ''}`}
-                title={localAiEntry ? 'Re-generate AI reply' : 'Generate AI reply'}
-              >
-                {generatingAi
-                  ? <><Loader size={10} className="par-spin" />Generating…</>
-                  : localAiEntry
-                    ? <><Sparkles size={10} />Re-generate</>
-                    : <><Sparkles size={10} />AI Reply</>
-                }
-              </button>
-            )}
-
-            {/* ── Once posted, just a small toggle to reveal the reply that was already sent ── */}
-            {isPosted && (
-              <button
-                onClick={() => setShowAiBubble(s => !s)}
-                className="par-ai-posted-toggle"
-                title={showAiBubble ? 'Hide the reply that was sent' : 'Show the reply that was already sent'}
-              >
-                <CheckCircle size={10} />
-                {showAiBubble ? 'Hide reply' : 'Reply already sent'}
-              </button>
-            )}
+            {/* ── AI Generate button ── */}
+            <button
+              onClick={handleGenerateAiReply}
+              disabled={generatingAi}
+              className={`par-ai-gen-btn${localAiEntry ? ' par-ai-gen-btn-regen' : ''}`}
+              title={localAiEntry ? 'Re-generate AI reply' : 'Generate AI reply'}
+            >
+              {generatingAi
+                ? <><Loader size={10} className="par-spin" />Generating…</>
+                : localAiEntry
+                  ? <><Sparkles size={10} />Re-generate</>
+                  : <><Sparkles size={10} />AI Reply</>
+              }
+            </button>
           </div>
 
           {aiError && <p className="par-reply-error">{aiError}</p>}
 
           {/* ── AI reply bubble ── */}
-          {localAiEntry && showAiBubble && (
+          {localAiEntry && (
             <AiReplyBubble
               reply={localAiEntry.reply}
               generatedAt={localAiEntry.generatedAt}
               commentId={comment.commentId}
               pageAccessToken={pageAccessToken}
-              initialPosted={isPosted}
-              onPosted={handleAiPosted}
             />
           )}
 
@@ -689,24 +666,17 @@ function FeedPostSection({ post, pageName, pagePicture, view, onOpenComments, on
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// CommentsSidePanel — with "Generate All AI Replies" button
+// CommentsSidePanel — comments + per-comment AI generate + Post on FB
 // ─────────────────────────────────────────────────────────────────────────
 function CommentsSidePanel({ post, pageName, pagePicture, pageAccessToken, onClose, onPostUpdated }: {
   post: DbPost; pageName: string; pagePicture: string | null;
   pageAccessToken: string; onClose: () => void;
   onPostUpdated: (updatedPost: DbPost) => void;
 }) {
-  // Local ai-generated map — so we can update optimistically without full reload
   const [aiGenerated, setAiGenerated] = useState<Record<string, AiGeneratedEntry>>(
     post['ai-generated'] ?? {},
   );
 
-  // Bulk AI generation state
-  const [generatingAll, setGeneratingAll] = useState(false);
-  const [bulkResult, setBulkResult]       = useState<{ processed: number } | null>(null);
-  const [bulkError, setBulkError]         = useState('');
-
-  // Keep in sync if parent post prop changes (e.g. after reload)
   useEffect(() => { setAiGenerated(post['ai-generated'] ?? {}); }, [post]);
 
   useEffect(() => {
@@ -718,44 +688,15 @@ function CommentsSidePanel({ post, pageName, pagePicture, pageAccessToken, onClo
   }, [onClose]);
 
   const comments = post.comments ?? [];
+  const generatedCount = Object.keys(aiGenerated).length;
 
-  // Called by individual CommentCard when a single reply is generated
   const handleSingleAiGenerated = useCallback((commentId: string, entry: AiGeneratedEntry) => {
     setAiGenerated(prev => {
       const next = { ...prev, [commentId]: entry };
-      // Propagate to parent so FeedPostSection badge updates
       onPostUpdated({ ...post, 'ai-generated': next });
       return next;
     });
   }, [post, onPostUpdated]);
-
-  // ── Generate ALL replies for this post ──
-  const handleGenerateAll = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setGeneratingAll(true); setBulkError(''); setBulkResult(null);
-    try {
-      // Call bulk endpoint — it processes all unprocessed comments in the post
-      const result = await apiFetch<GenerateMetaRepliesResult>('/generate-meta-replies', { method: 'POST' });
-
-      // Build updated ai-generated map from result
-      const nextMap = { ...aiGenerated };
-      for (const r of result.results) {
-        if (r.postId === post.postId) {
-          nextMap[r.commentId] = { reply: r.reply, generatedAt: new Date().toISOString() };
-        }
-      }
-      setAiGenerated(nextMap);
-      onPostUpdated({ ...post, 'ai-generated': nextMap });
-      setBulkResult({ processed: result.processed });
-    } catch (e: any) {
-      setBulkError(e.message || 'Failed to generate AI replies');
-    } finally {
-      setGeneratingAll(false);
-    }
-  };
-
-  const pendingCount = comments.filter(c => !aiGenerated[c.commentId]).length;
-  const generatedCount = Object.keys(aiGenerated).length;
 
   return (
     <div className="par-panel-layer">
@@ -788,49 +729,11 @@ function CommentsSidePanel({ post, pageName, pagePicture, pageAccessToken, onClo
 
           <div className="par-panel-divider" />
 
-          {/* ── AI Generate All section ── */}
-          {comments.length > 0 && (
-            <div className="par-ai-panel-bar">
-              <div className="par-ai-panel-bar-info">
-                <Bot size={14} className="par-ai-panel-bar-icon" />
-                <div>
-                  <p className="par-ai-panel-bar-title">AI Reply Generator</p>
-                  <p className="par-ai-panel-bar-sub">
-                    {generatedCount}/{comments.length} replies generated
-                    {pendingCount > 0 && ` · ${pendingCount} pending`}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleGenerateAll}
-                disabled={generatingAll || pendingCount === 0}
-                className="par-ai-generate-all-btn"
-                title={pendingCount === 0 ? 'All comments already have AI replies' : `Generate replies for ${pendingCount} pending comment${pendingCount === 1 ? '' : 's'}`}
-              >
-                {generatingAll
-                  ? <><Loader size={12} className="par-spin" />Generating…</>
-                  : <><Zap size={12} />Generate All ({pendingCount})</>
-                }
-              </button>
-            </div>
-          )}
-
-          {bulkError && (
-            <div className="par-banner par-banner-error" style={{ marginBottom: 12 }}>
-              <AlertCircle size={13} style={{ flexShrink: 0 }} /> {bulkError}
-            </div>
-          )}
-          {bulkResult && (
-            <div className="par-banner par-banner-success" style={{ marginBottom: 12 }}>
-              <CheckCircle size={13} style={{ flexShrink: 0 }} />
-              {bulkResult.processed === 0
-                ? 'All comments already had AI replies.'
-                : `Generated ${bulkResult.processed} new AI repl${bulkResult.processed === 1 ? 'y' : 'ies'}!`}
-            </div>
-          )}
-
           <p className="par-panel-comments-heading">
             {comments.length} comment{comments.length === 1 ? '' : 's'}
+            {generatedCount > 0 && (
+              <span className="par-panel-ai-count"> · <Bot size={10} style={{display:'inline',verticalAlign:'middle'}} /> {generatedCount} AI repl{generatedCount === 1 ? 'y' : 'ies'}</span>
+            )}
           </p>
 
           {comments.length === 0 ? (
@@ -861,22 +764,40 @@ function CommentsSidePanel({ post, pageName, pagePicture, pageAccessToken, onClo
 export default function PostAdReviews() {
   const [tab, setTab] = useState<PlatformTabKey>('meta');
 
-  // ── Meta data ────────────────────────────────────────────────────────
   const [pages, setPages]                   = useState<MetaPage[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string>('');
-  const [posts, setPosts]                   = useState<MetaPost[]>([]);
+  const [loadingPages, setLoadingPages]     = useState(false);
+
+  const [dbPosts, setDbPosts]           = useState<DbPost[]>([]);
+  const [dbMeta, setDbMeta]             = useState<{ total: number; totalPages: number } | null>(null);
+  const [currentPage, setCurrentPage]   = useState(1);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+  const [pageStats, setPageStats]   = useState<DbPageStats | null>(null);
+
   const [selectedPostId, setSelectedPostId] = useState<string>('all');
-  const [comments, setComments]             = useState<MetaComment[]>([]);
+  const [search, setSearch]                 = useState('');
+  const [view, setView]                     = useState<ViewMode>('grid');
+  const [error, setError]                   = useState('');
 
-  // ── UI ──────────────────────────────────────────────────────────────
-  const [loadingPages,    setLoadingPages]    = useState(false);
-  const [loadingPosts,    setLoadingPosts]    = useState(false);
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [error,           setError]           = useState('');
-  const [search,          setSearch]          = useState('');
-  const [view,            setView]            = useState<ViewMode>('grid');
+  const [panelPost, setPanelPost] = useState<DbPost | null>(null);
 
-  // ── Step 1: load Pages when Meta tab is active ──────────────────────
+  // ── Global: generate AI replies for ALL posts / ALL pending comments ──
+  const [globalGenerating, setGlobalGenerating] = useState(false);
+
+  const LIMIT = 12;
+
+  const selectedPage = useMemo(() => pages.find(p => p.pageId === selectedPageId) ?? null, [pages, selectedPageId]);
+
+  // ── Update a post in state (called from panel when ai-generated map changes) ──
+  const handlePostUpdated = useCallback((updatedPost: DbPost) => {
+    setDbPosts(prev => prev.map(p => p.postId === updatedPost.postId ? updatedPost : p));
+    // Also update panelPost so the panel re-renders with fresh data
+    setPanelPost(prev => prev?.postId === updatedPost.postId ? updatedPost : prev);
+  }, []);
+
   const loadPages = useCallback(async () => {
     setError(''); setLoadingPages(true);
     try {
@@ -964,6 +885,47 @@ export default function PostAdReviews() {
     () => dbPosts.reduce((sum, p) => sum + Object.keys(p['ai-generated'] ?? {}).length, 0),
     [dbPosts],
   );
+  const totalPending = useMemo(
+    () => dbPosts.reduce((sum, p) => {
+      const ai = p['ai-generated'] ?? {};
+      return sum + (p.comments ?? []).filter(c => !ai[c.commentId]).length;
+    }, 0),
+    [dbPosts],
+  );
+
+  // Global "Generate All" — generates AI replies for every pending comment across all loaded posts
+  const handleGlobalGenerateAll = useCallback(async () => {
+    if (globalGenerating || totalPending === 0) return;
+    setGlobalGenerating(true);
+    try {
+      const result = await apiFetch<GenerateMetaRepliesResult>('/generate-meta-replies', { method: 'POST' });
+      // Patch each post in state with newly generated replies
+      setDbPosts(prev => prev.map(post => {
+        const nextMap = { ...(post['ai-generated'] ?? {}) };
+        for (const r of result.results) {
+          if (r.postId === post.postId) {
+            nextMap[r.commentId] = { reply: r.reply, generatedAt: new Date().toISOString() };
+          }
+        }
+        return { ...post, 'ai-generated': nextMap };
+      }));
+      // Also update panelPost if open
+      setPanelPost(prev => {
+        if (!prev) return prev;
+        const nextMap = { ...(prev['ai-generated'] ?? {}) };
+        for (const r of result.results) {
+          if (r.postId === prev.postId) {
+            nextMap[r.commentId] = { reply: r.reply, generatedAt: new Date().toISOString() };
+          }
+        }
+        return { ...prev, 'ai-generated': nextMap };
+      });
+    } catch (e: any) {
+      setError(e.message || 'Failed to generate AI replies');
+    } finally {
+      setGlobalGenerating(false);
+    }
+  }, [globalGenerating, totalPending]);
 
   const emptyMessage = !selectedPage
     ? 'Connect your Facebook Page in Settings to get started.'
@@ -1045,9 +1007,9 @@ export default function PostAdReviews() {
               status={syncStatus}
               result={syncResult}
               onSync={handleSync}
-              totalPending={totalPendingGlobal}
-              onGenerateAll={handleGenerateAllGlobal}
-              generatingAll={generatingAllGlobal}
+              totalPending={totalPending}
+              onGenerateAll={handleGlobalGenerateAll}
+              generatingAll={globalGenerating}
             />
           )}
 
@@ -1176,7 +1138,7 @@ export default function PostAdReviews() {
         .par-search-input:focus-visible, .par-reply-input:focus-visible, .par-post-link:focus-visible,
         .par-sync-btn:focus-visible, .par-page-btn:focus-visible, .par-feed-section-clickable:focus-visible,
         .par-panel-close:focus-visible, .par-panel-post-link:focus-visible, .par-ai-gen-btn:focus-visible,
-        .par-ai-generate-all-btn:focus-visible, .par-ai-posted-toggle:focus-visible { outline: 2px solid var(--par-accent-2); outline-offset: 2px; }
+        .par-ai-generate-all-btn:focus-visible { outline: 2px solid var(--par-accent-2); outline-offset: 2px; }
 
         .par-banner { padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
         .par-banner-error { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); color: var(--par-danger); }
@@ -1189,6 +1151,8 @@ export default function PostAdReviews() {
         .par-sync-time { font-size: 12px; color: var(--par-text-tertiary); }
         .par-sync-result { display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--par-success); }
         .par-sync-result-error { color: var(--par-danger); }
+        /* sync-actions: groups the two right-side buttons */
+        .par-sync-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
         .par-sync-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: 1px solid rgba(91,110,245,0.35); background: rgba(91,110,245,0.12); color: #A5B4FC; cursor: pointer; transition: all .15s; flex-shrink: 0; white-space: nowrap; }
         .par-sync-btn:hover:not(:disabled) { background: rgba(91,110,245,0.22); border-color: rgba(91,110,245,0.55); }
         .par-sync-btn:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -1196,6 +1160,23 @@ export default function PostAdReviews() {
         .par-sync-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 60px 20px; color: var(--par-text-secondary); border: 1px dashed var(--par-border); border-radius: 14px; text-align: center; }
         .par-sync-loading p { margin: 0; font-size: 14px; }
         .par-sync-loading-sub { font-size: 12px; color: var(--par-text-tertiary) !important; }
+
+        /* Per-post generate button (on feed card) */
+        .par-post-gen-btn { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; padding: 7px 10px; border-radius: 8px; font-size: 11.5px; font-weight: 700; border: 1px solid var(--par-ai-border); background: var(--par-ai-bg); color: var(--par-ai-accent); cursor: pointer; transition: all .15s; white-space: nowrap; }
+        .par-post-gen-btn:hover:not(:disabled) { background: rgba(167,139,250,0.16); border-color: rgba(167,139,250,0.38); }
+        .par-post-gen-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .par-post-gen-btn-done { background: rgba(52,211,153,0.07); border-color: rgba(52,211,153,0.2); color: var(--par-success); }
+
+        /* Post on Facebook button (inside AI bubble) */
+        .par-ai-bubble-footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .par-ai-post-error { margin: 0; font-size: 10.5px; color: var(--par-danger); flex: 1; }
+        .par-post-fb-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 7px; font-size: 11.5px; font-weight: 700; border: 1px solid rgba(91,110,245,0.3); background: rgba(91,110,245,0.1); color: #A5B4FC; cursor: pointer; transition: all .15s; white-space: nowrap; }
+        .par-post-fb-btn:hover:not(:disabled) { background: rgba(91,110,245,0.2); border-color: rgba(91,110,245,0.5); }
+        .par-post-fb-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .par-post-fb-btn-done { border-color: rgba(52,211,153,0.25); background: rgba(52,211,153,0.08); color: var(--par-success); }
+
+        /* AI count label in panel heading */
+        .par-panel-ai-count { font-size: 11px; font-weight: 600; color: var(--par-ai-accent); margin-left: 2px; }
 
         .par-selectors { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
         @media (max-width: 640px) { .par-selectors { grid-template-columns: 1fr; gap: 14px; } }
@@ -1276,16 +1257,9 @@ export default function PostAdReviews() {
         /* AI badge on feed card */
         .par-ai-badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; background: var(--par-ai-bg); border: 1px solid var(--par-ai-border); color: var(--par-ai-accent); }
 
-        /* ── AI panel bar (inside side panel) ── */
-        .par-ai-panel-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; margin-bottom: 14px; background: var(--par-ai-bg); border: 1px solid var(--par-ai-border); border-radius: 12px; flex-wrap: wrap; }
-        .par-ai-panel-bar-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
-        .par-ai-panel-bar-icon { color: var(--par-ai-accent); flex-shrink: 0; }
-        .par-ai-panel-bar-title { margin: 0; font-size: 12.5px; font-weight: 700; color: var(--par-ai-accent); }
-        .par-ai-panel-bar-sub { margin: 0; font-size: 11px; color: var(--par-text-tertiary); }
-
-        /* Generate All button */
-        .par-ai-generate-all-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; border: 1px solid var(--par-ai-border); background: rgba(167,139,250,0.14); color: var(--par-ai-accent); cursor: pointer; transition: all .15s; flex-shrink: 0; white-space: nowrap; }
-        .par-ai-generate-all-btn:hover:not(:disabled) { background: rgba(167,139,250,0.24); border-color: rgba(167,139,250,0.4); }
+        /* Generate All AI button (inside SyncBar) */
+        .par-ai-generate-all-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; border: 1px solid var(--par-ai-border); background: rgba(167,139,250,0.12); color: var(--par-ai-accent); cursor: pointer; transition: all .15s; flex-shrink: 0; white-space: nowrap; }
+        .par-ai-generate-all-btn:hover:not(:disabled) { background: rgba(167,139,250,0.22); border-color: rgba(167,139,250,0.38); }
         .par-ai-generate-all-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* Per-comment AI Generate button */
@@ -1294,10 +1268,6 @@ export default function PostAdReviews() {
         .par-ai-gen-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .par-ai-gen-btn-regen { background: transparent; border-color: rgba(167,139,250,0.15); color: var(--par-text-tertiary); }
         .par-ai-gen-btn-regen:hover:not(:disabled) { background: var(--par-ai-bg); color: var(--par-ai-accent); border-color: var(--par-ai-border); }
-
-        /* "Reply already sent" toggle (shown instead of the generate button once posted) */
-        .par-ai-posted-toggle { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; height: 22px; border-radius: 999px; font-size: 10.5px; font-weight: 700; border: 1px solid rgba(52,211,153,0.25); background: rgba(52,211,153,0.08); color: var(--par-success); cursor: pointer; transition: all .15s; white-space: nowrap; }
-        .par-ai-posted-toggle:hover { background: rgba(52,211,153,0.16); border-color: rgba(52,211,153,0.4); }
 
         /* AI reply bubble */
         .par-ai-bubble { margin-top: 6px; padding: 9px 12px; background: var(--par-ai-bg); border: 1px solid var(--par-ai-border); border-radius: 12px; border-top-left-radius: 4px; }

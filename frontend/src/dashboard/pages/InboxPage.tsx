@@ -592,7 +592,7 @@ const InboxPage: React.FC = () => {
   }, [filters]);
 
   const FILTER_OPTIONS = {
-    platform:  ['all', 'google', 'facebook', 'trustpilot', 'website'],
+    platform:  ['all', 'google'],
     sentiment: ['all', 'positive', 'negative', 'neutral', 'mixed'],
     status:    ['all', 'pending', 'replied', 'ignored'],
     rating:    ['', '5', '4', '3', '2', '1'],
