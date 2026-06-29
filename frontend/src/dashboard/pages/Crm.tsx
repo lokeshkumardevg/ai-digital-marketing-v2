@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { SmartTable } from '../components/SmartTable';
 import { Users, RefreshCw, Database } from 'lucide-react';
+import { AdInsights } from './AdInsights';
+import { AiAnalysis } from './AiAnalysis';
 
 const dateRanges = ['Last 7 days', 'Last 14 days', 'Last 30 days', 'Last 90 days', 'Today'];
 
@@ -20,7 +22,7 @@ const ChartLine: React.FC<{ data: number[]; color: string; height: number; width
     <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }} preserveAspectRatio="none">
       <defs>
         <linearGradient id={`grad-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor={color} stopOpacity="0.25" />
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
@@ -32,40 +34,41 @@ const ChartLine: React.FC<{ data: number[]; color: string; height: number; width
 
 // ── Dark token palette (matches landing page) ──────────────────
 const D = {
-  bg:         '#0a0f1e',          // deepest background
-  surface:    '#0f1629',          // card surfaces
+  bg: '#0a0f1e',          // deepest background
+  surface: '#0f1629',          // card surfaces
   surfaceAlt: '#141d35',          // slightly lighter card
-  border:     'rgba(99,102,241,0.18)',
+  border: 'rgba(99,102,241,0.18)',
   borderGlow: 'rgba(112,51,245,0.35)',
-  purple:     '#0665ff',
+  purple: '#0665ff',
   purpleSoft: 'rgba(124,58,237,0.15)',
   purpleText: '#a78bfa',
-  green:      '#10b981',
-  greenSoft:  'rgba(16,185,129,0.15)',
-  greenText:  '#34d399',
-  textPrimary:'#f1f5f9',
-  textMuted:  '#94a3b8',
-  textDim:    '#64748b',
-  white005:   'rgba(255,255,255,0.05)',
-  white010:   'rgba(255,255,255,0.08)',
-  inputBg:    'rgba(255,255,255,0.04)',
+  green: '#10b981',
+  greenSoft: 'rgba(16,185,129,0.15)',
+  greenText: '#34d399',
+  textPrimary: '#f1f5f9',
+  textMuted: '#94a3b8',
+  textDim: '#64748b',
+  white005: 'rgba(255,255,255,0.05)',
+  white010: 'rgba(255,255,255,0.08)',
+  inputBg: 'rgba(255,255,255,0.04)',
 };
 
 export const Crm: React.FC = () => {
-  const [activeRange, setActiveRange]   = useState('Last 7 days');
+  const [activeRange, setActiveRange] = useState('Last 7 days');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
-  const [audiences, setAudiences]       = useState<any[]>([]);
-  const [loading, setLoading]           = useState(true);
+  const [audiences, setAudiences] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'overview' | 'insights' | 'ai'>('overview');
   // const [rechargeAmount, setRechargeAmount] = useState(500);
   // const [walletBalance, setWalletBalance] = useState(0);
   const { user } = useSelector((state: any) => state.auth);
   const [kpis, setKpis] = useState([
-    { label: 'Spend',          value: '$0.00', color: D.purple,  checked: true,  key: 'spend' },
-    { label: 'CPM',            value: '$0.00', color: D.textDim,  checked: false, key: 'cpm' },
-    { label: 'CPC',            value: '$0.00', color: D.textDim,  checked: false, key: 'cpc' },
-    { label: 'CTR',            value: '0.00%', color: D.textDim,  checked: false, key: 'ctr' },
-    { label: 'ROAS',           value: '0.00',  color: D.green,   checked: true,  key: 'roas' },
-    { label: 'Purchase Value', value: '$0.00', color: D.textDim,  checked: false, key: 'purchaseValue' },
+    { label: 'Spend', value: '$0.00', color: D.purple, checked: true, key: 'spend' },
+    { label: 'CPM', value: '$0.00', color: D.textDim, checked: false, key: 'cpm' },
+    { label: 'CPC', value: '$0.00', color: D.textDim, checked: false, key: 'cpc' },
+    { label: 'CTR', value: '0.00%', color: D.textDim, checked: false, key: 'ctr' },
+    { label: 'ROAS', value: '0.00', color: D.green, checked: true, key: 'roas' },
+    { label: 'Purchase Value', value: '$0.00', color: D.textDim, checked: false, key: 'purchaseValue' },
   ]);
 
   const fetchData = useCallback(async () => {
@@ -124,7 +127,7 @@ export const Crm: React.FC = () => {
       if (changed) {
         window.history.replaceState({}, '', url.toString());
       }
-    } catch {}
+    } catch { }
 
     // import('../../api/axios').then(({ api }) => {
     //   api.get('/billing/wallet').then(res => {
@@ -205,7 +208,7 @@ export const Crm: React.FC = () => {
 
   const activeDates = analyticsData?.daily?.map((d: any) => d.date) || [];
   const activeSpend = analyticsData?.daily?.map((d: any) => d.spend) || [];
-  const activeRoas  = analyticsData?.daily?.map((d: any) => d.roas)  || [];
+  const activeRoas = analyticsData?.daily?.map((d: any) => d.roas) || [];
 
   return (
     <div style={{ minHeight: '100%', background: D.bg, color: D.textPrimary }}>
@@ -347,208 +350,257 @@ export const Crm: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ padding: '24px 32px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-          {[ 
-            { label: 'Meta', connected: !!user?.metaAccessToken, disconnectable: true },
-            { label: 'Google', connected: !!(user?.googleRefreshToken || user?.googleAccessToken), disconnectable: true },
-            { label: 'X', connected: !!user?.twitterAccessToken, disconnectable: true },
-            { label: 'LinkedIn', connected: !!user?.linkedinAccessToken, disconnectable: true },
-          ].map((item) => (
-            <div
-              key={item.label}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '10px 14px',
-                borderRadius: 999,
-                border: `1px solid ${D.border}`,
-                background: item.connected ? D.surfaceAlt : D.white005,
-                color: item.connected ? D.textPrimary : D.textDim,
-                fontSize: '0.78rem',
-                fontWeight: 700,
-              }}
-            >
-              <span style={{ width: 10, height: 10, borderRadius: '50%', background: item.connected ? D.greenText : D.textDim }} />
-              {item.label} {item.connected ? 'Connected' : 'Not connected'}
+      {/* ── Tabs ── */}
+      <div style={{ display: 'flex', borderBottom: `1px solid ${D.border}`, background: D.surfaceAlt }}>
+        <button
+          onClick={() => setActiveTab('overview')}
+          style={{
+            padding: '12px 24px', background: 'transparent', border: 'none', cursor: 'pointer',
+            color: activeTab === 'overview' ? D.purpleText : D.textMuted,
+            fontWeight: 600, borderBottom: activeTab === 'overview' ? `2px solid ${D.purpleText}` : '2px solid transparent',
+          }}
+        >
+          Overview
+        </button>
+        <button
+          onClick={() => setActiveTab('insights')}
+          style={{
+            padding: '12px 24px', background: 'transparent', border: 'none', cursor: 'pointer',
+            color: activeTab === 'insights' ? D.purpleText : D.textMuted,
+            fontWeight: 600, borderBottom: activeTab === 'insights' ? `2px solid ${D.purpleText}` : '2px solid transparent',
+          }}
+        >
+          Ad Insights
+        </button>
+        <button
+          onClick={() => setActiveTab('ai')}
+          style={{
+            padding: '12px 24px', background: 'transparent', border: 'none', cursor: 'pointer',
+            color: activeTab === 'ai' ? D.purpleText : D.textMuted,
+            fontWeight: 600, borderBottom: activeTab === 'ai' ? `2px solid ${D.purpleText}` : '2px solid transparent',
+          }}
+        >
+          AI Analysis
+        </button>
+      </div>
 
-              {item.disconnectable && item.connected && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const { api } = await import('../../api/axios');
-                      let endpoint = '/analytics/disconnect/meta';
-                      if (item.label === 'Google') endpoint = '/analytics/disconnect/google';
-                      else if (item.label === 'X') endpoint = '/analytics/disconnect/x';
-                      else if (item.label === 'LinkedIn') endpoint = '/analytics/disconnect/linkedin';
-                      
-                      await api.post(endpoint);
-                      toast.success(`${item.label} disconnected.`);
-                      void fetchData();
-                    } catch (e: unknown) {
-                      const ax = e as { response?: { data?: { message?: string } } };
-                      toast.error(ax?.response?.data?.message || `Failed to disconnect ${item.label}`);
-                    }
-                  }}
-                  style={{
-                    marginLeft: 6,
-                    padding: '4px 10px',
-                    borderRadius: 999,
-                    border: `1px solid rgba(239,68,68,0.3)`,
-                    background: 'rgba(239,68,68,0.10)',
-                    color: '#ef4444',
-                    cursor: 'pointer',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                  }}
-                  title="Disconnect"
-                >
-                  Disconnect
-                </button>
-              )}
-            </div>
-          ))}
-
-        </div>
-        {audiences.length === 0 && (
-          <div style={{ marginBottom: 18, padding: 16, borderRadius: 16, background: D.surfaceAlt, border: `1px solid ${D.border}`, color: D.textMuted }}>
-            No audience segments are available yet. Sync your connected ad accounts to populate CRM audiences and performance segments.
-          </div>
-        )}
-
-        {/* ── Date Range Filters ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-          {dateRanges.map(r => (
-            <button key={r} onClick={() => setActiveRange(r)} style={{
-              padding: '8px 20px', borderRadius: 99, cursor: 'pointer', transition: '0.2s',
-              border: activeRange === r ? `1px solid ${D.purple}` : `1px solid ${D.border}`,
-              background: activeRange === r ? D.purple : D.white005,
-              color: activeRange === r ? '#fff' : D.textMuted,
-              fontSize: '0.85rem', fontWeight: 700,
-            }}>
-              {r}
-            </button>
-          ))}
-          <div style={{ padding: '8px 20px', borderRadius: 99, border: `1px solid ${D.border}`, background: D.white005, fontSize: '0.8rem', color: D.textDim, display: 'flex', alignItems: 'center', gap: 8 }}>
-            📅 {activeDates[0] ?? '—'} → {activeDates[activeDates.length - 1] ?? '—'}
-          </div>
-        </div>
-
-         
-
-        {/* ── KPI Grid ── */}
-        <div style={{ background: D.surface, border: `1px solid ${D.border}`, borderRadius: 20, padding: 24, marginBottom: 24, boxShadow: '0 4px 30px rgba(0,0,0,0.3)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
-            {kpis.map((kpi, i) => (
+      {activeTab === 'overview' && (
+        <div style={{ padding: '24px 32px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+            {[
+              { label: 'Meta', connected: !!user?.metaAccessToken, disconnectable: true },
+              { label: 'Google', connected: !!(user?.googleRefreshToken || user?.googleAccessToken), disconnectable: true },
+              { label: 'X', connected: !!user?.twitterAccessToken, disconnectable: true },
+              { label: 'LinkedIn', connected: !!user?.linkedinAccessToken, disconnectable: true },
+            ].map((item) => (
               <div
-                key={kpi.label}
-                onClick={() => toggleKpi(i)}
+                key={item.label}
                 style={{
-                  padding: 20, borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s',
-                  border: `2px solid ${kpi.checked ? kpi.color + '50' : D.border}`,
-                  background: kpi.checked ? kpi.color + '10' : D.white005,
-                  display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '10px 14px',
+                  borderRadius: 999,
+                  border: `1px solid ${D.border}`,
+                  background: item.connected ? D.surfaceAlt : D.white005,
+                  color: item.connected ? D.textPrimary : D.textDim,
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = kpi.checked ? kpi.color + '18' : D.white010}
-                onMouseLeave={e => e.currentTarget.style.background = kpi.checked ? kpi.color + '10' : D.white005}
               >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                    <div style={{ width: 14, height: 4, borderRadius: 2, background: kpi.checked ? kpi.color : D.textDim }} />
-                    <span style={{ fontSize: '0.82rem', color: D.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{kpi.label}</span>
-                  </div>
-                  <div style={{ fontSize: '1.8rem', fontWeight: 800, color: kpi.checked ? D.textPrimary : D.textDim, fontFamily: 'Outfit' }}>
-                    {kpi.value}
-                  </div>
-                </div>
-                <input type="checkbox" checked={kpi.checked} readOnly style={{ accentColor: D.purple, width: 16, height: 16, cursor: 'pointer', marginTop: 4 }} />
+                <span style={{ width: 10, height: 10, borderRadius: '50%', background: item.connected ? D.greenText : D.textDim }} />
+                {item.label} {item.connected ? 'Connected' : 'Not connected'}
+
+                {item.disconnectable && item.connected && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const { api } = await import('../../api/axios');
+                        let endpoint = '/analytics/disconnect/meta';
+                        if (item.label === 'Google') endpoint = '/analytics/disconnect/google';
+                        else if (item.label === 'X') endpoint = '/analytics/disconnect/x';
+                        else if (item.label === 'LinkedIn') endpoint = '/analytics/disconnect/linkedin';
+
+                        await api.post(endpoint);
+                        toast.success(`${item.label} disconnected.`);
+                        void fetchData();
+                      } catch (e: unknown) {
+                        const ax = e as { response?: { data?: { message?: string } } };
+                        toast.error(ax?.response?.data?.message || `Failed to disconnect ${item.label}`);
+                      }
+                    }}
+                    style={{
+                      marginLeft: 6,
+                      padding: '4px 10px',
+                      borderRadius: 999,
+                      border: `1px solid rgba(239,68,68,0.3)`,
+                      background: 'rgba(239,68,68,0.10)',
+                      color: '#ef4444',
+                      cursor: 'pointer',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                    }}
+                    title="Disconnect"
+                  >
+                    Disconnect
+                  </button>
+                )}
               </div>
             ))}
-          </div>
-        </div>
 
-        {/* ── Performance Chart ── */}
-        <div style={{ background: D.surface, border: `1px solid ${D.border}`, borderRadius: 20, padding: 32, marginBottom: 24, boxShadow: '0 4px 30px rgba(0,0,0,0.3)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: D.textPrimary }}>Node Performance History</h3>
-            <div style={{ display: 'flex', gap: 24 }}>
-              {[['#0665ff', 'Spend'], ['#10b981', 'ROAS']].map(([color, label]) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 12, height: 12, borderRadius: 3, background: color }} />
-                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: D.textMuted }}>{label}</span>
+          </div>
+          {audiences.length === 0 && (
+            <div style={{ marginBottom: 18, padding: 16, borderRadius: 16, background: D.surfaceAlt, border: `1px solid ${D.border}`, color: D.textMuted }}>
+              No audience segments are available yet. Sync your connected ad accounts to populate CRM audiences and performance segments.
+            </div>
+          )}
+
+          {/* ── Date Range Filters ── */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+            {dateRanges.map(r => (
+              <button key={r} onClick={() => setActiveRange(r)} style={{
+                padding: '8px 20px', borderRadius: 99, cursor: 'pointer', transition: '0.2s',
+                border: activeRange === r ? `1px solid ${D.purple}` : `1px solid ${D.border}`,
+                background: activeRange === r ? D.purple : D.white005,
+                color: activeRange === r ? '#fff' : D.textMuted,
+                fontSize: '0.85rem', fontWeight: 700,
+              }}>
+                {r}
+              </button>
+            ))}
+            <div style={{ padding: '8px 20px', borderRadius: 99, border: `1px solid ${D.border}`, background: D.white005, fontSize: '0.8rem', color: D.textDim, display: 'flex', alignItems: 'center', gap: 8 }}>
+              📅 {activeDates[0] ?? '—'} → {activeDates[activeDates.length - 1] ?? '—'}
+            </div>
+          </div>
+
+
+
+          {/* ── KPI Grid ── */}
+          <div style={{ background: D.surface, border: `1px solid ${D.border}`, borderRadius: 20, padding: 24, marginBottom: 24, boxShadow: '0 4px 30px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+              {kpis.map((kpi, i) => (
+                <div
+                  key={kpi.label}
+                  onClick={() => toggleKpi(i)}
+                  style={{
+                    padding: 20, borderRadius: 16, cursor: 'pointer', transition: 'all 0.2s',
+                    border: `2px solid ${kpi.checked ? kpi.color + '50' : D.border}`,
+                    background: kpi.checked ? kpi.color + '10' : D.white005,
+                    display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = kpi.checked ? kpi.color + '18' : D.white010}
+                  onMouseLeave={e => e.currentTarget.style.background = kpi.checked ? kpi.color + '10' : D.white005}
+                >
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                      <div style={{ width: 14, height: 4, borderRadius: 2, background: kpi.checked ? kpi.color : D.textDim }} />
+                      <span style={{ fontSize: '0.82rem', color: D.textMuted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{kpi.label}</span>
+                    </div>
+                    <div style={{ fontSize: '1.8rem', fontWeight: 800, color: kpi.checked ? D.textPrimary : D.textDim, fontFamily: 'Outfit' }}>
+                      {kpi.value}
+                    </div>
+                  </div>
+                  <input type="checkbox" checked={kpi.checked} readOnly style={{ accentColor: D.purple, width: 16, height: 16, cursor: 'pointer', marginTop: 4 }} />
                 </div>
               ))}
             </div>
           </div>
 
-          <div style={{ position: 'relative', height: 220, width: '100%' }}>
-            <div style={{ position: 'absolute', inset: 0 }}>
-              <ChartLine data={activeSpend} color="#0665ff" height={220} width={1200} />
-            </div>
-            <div style={{ position: 'absolute', inset: 0 }}>
-              <ChartLine data={activeRoas.map((v: number) => v * 10)} color="#10b981" height={220} width={1200} />
-            </div>
-            {/* Subtle grid lines */}
-            {[0, 1, 2, 3].map(i => (
-              <div key={i} style={{ position: 'absolute', left: 0, right: 0, top: `${(i / 3) * 85 + 5}%`, borderTop: `1px solid ${D.border}`, pointerEvents: 'none' }} />
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, borderTop: `1px solid ${D.border}`, paddingTop: 12 }}>
-            {activeDates.map((d: string) => (
-              <span key={d} style={{ fontSize: '0.72rem', color: D.textDim, fontWeight: 600 }}>
-                {d.split('-').slice(1).join('/')}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Audience Segments ── */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-              <Users size={16} />
-            </div>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: D.textPrimary }}>Intelligence Audience Segments</h3>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-            {audiences.slice(0, 3).map((aud, i) => (
-              <div key={i} style={{ background: D.surface, border: `1px solid ${D.border}`, borderRadius: 16, padding: 20, transition: 'all 0.2s', cursor: 'default' }}
-                onMouseEnter={e => { e.currentTarget.style.border = `1px solid ${D.borderGlow}`; e.currentTarget.style.background = D.surfaceAlt; }}
-                onMouseLeave={e => { e.currentTarget.style.border = `1px solid ${D.border}`; e.currentTarget.style.background = D.surface; }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                  <span style={{ fontWeight: 800, fontSize: '0.95rem', color: D.textPrimary }}>{aud.name}</span>
-                  <span style={{ background: D.greenSoft, color: D.greenText, padding: '2px 10px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                    {((aud.estimatedSize || 0) / 1000).toFixed(1)}k Reach
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.78rem', color: D.textDim, lineHeight: 1.6 }}>{aud.description}</p>
+          {/* ── Performance Chart ── */}
+          <div style={{ background: D.surface, border: `1px solid ${D.border}`, borderRadius: 20, padding: 32, marginBottom: 24, boxShadow: '0 4px 30px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: D.textPrimary }}>Node Performance History</h3>
+              <div style={{ display: 'flex', gap: 24 }}>
+                {[['#0665ff', 'Spend'], ['#10b981', 'ROAS']].map(([color, label]) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 12, height: 12, borderRadius: 3, background: color }} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: D.textMuted }}>{label}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            <div style={{ position: 'relative', height: 220, width: '100%' }}>
+              <div style={{ position: 'absolute', inset: 0 }}>
+                <ChartLine data={activeSpend} color="#0665ff" height={220} width={1200} />
+              </div>
+              <div style={{ position: 'absolute', inset: 0 }}>
+                <ChartLine data={activeRoas.map((v: number) => v * 10)} color="#10b981" height={220} width={1200} />
+              </div>
+              {/* Subtle grid lines */}
+              {[0, 1, 2, 3].map(i => (
+                <div key={i} style={{ position: 'absolute', left: 0, right: 0, top: `${(i / 3) * 85 + 5}%`, borderTop: `1px solid ${D.border}`, pointerEvents: 'none' }} />
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16, borderTop: `1px solid ${D.border}`, paddingTop: 12 }}>
+              {activeDates.map((d: string) => (
+                <span key={d} style={{ fontSize: '0.72rem', color: D.textDim, fontWeight: 600 }}>
+                  {d.split('-').slice(1).join('/')}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* ── Analytics Table ── */}
-        <div style={{ marginTop: 32 }}>
-          <SmartTable
-            title="Daily Performance Analytics"
-            columns={[
-              { key: 'date',  label: 'Node Date',   sortable: true, render: (row) => <span style={{ fontWeight: 700, color: D.textPrimary }}>{row.date}</span> },
-              { key: 'spend', label: 'Daily Spend',  sortable: true, render: (row) => <span style={{ fontWeight: 800, color: D.purpleText }}>${row.spend?.toFixed(2) ?? '0.00'}</span> },
-              { key: 'cpm',   label: 'CPM',          sortable: true, render: (r)   => <span style={{ color: D.textMuted }}>${r.cpm?.toFixed(2) ?? '0.00'}</span> },
-              { key: 'cpc',   label: 'CPC',          sortable: true, render: (r)   => <span style={{ color: D.textMuted }}>${r.cpc?.toFixed(2) ?? '0.00'}</span> },
-              { key: 'ctr',   label: 'CTR Matrix',   sortable: true, render: (r)   => <span style={{ fontWeight: 600, color: D.textPrimary }}>{r.ctr?.toFixed(2) ?? '0.00'}%</span> },
-              { key: 'roas',  label: 'ROAS Factor',  sortable: true, render: (r)   => <span style={{ fontWeight: 800, color: D.greenText }}>{r.roas?.toFixed(2) ?? '0.00'}x</span> },
-            ]}
-            data={analyticsData?.daily?.slice().reverse() ?? []}
-            dark={true}
-          />
-        </div>
+          {/* ── Audience Segments ── */}
+          <div style={{ marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                <Users size={16} />
+              </div>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: D.textPrimary }}>Intelligence Audience Segments</h3>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+              {audiences.slice(0, 3).map((aud, i) => (
+                <div key={i} style={{ background: D.surface, border: `1px solid ${D.border}`, borderRadius: 16, padding: 20, transition: 'all 0.2s', cursor: 'default' }}
+                  onMouseEnter={e => { e.currentTarget.style.border = `1px solid ${D.borderGlow}`; e.currentTarget.style.background = D.surfaceAlt; }}
+                  onMouseLeave={e => { e.currentTarget.style.border = `1px solid ${D.border}`; e.currentTarget.style.background = D.surface; }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <span style={{ fontWeight: 800, fontSize: '0.95rem', color: D.textPrimary }}>{aud.name}</span>
+                    <span style={{ background: D.greenSoft, color: D.greenText, padding: '2px 10px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                      {((aud.estimatedSize || 0) / 1000).toFixed(1)}k Reach
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.78rem', color: D.textDim, lineHeight: 1.6 }}>{aud.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
 
-      </div>
+          {/* ── Analytics Table ── */}
+          <div style={{ marginTop: 32 }}>
+            <SmartTable
+              title="Daily Performance Analytics"
+              columns={[
+                { key: 'date', label: 'Node Date', sortable: true, render: (row) => <span style={{ fontWeight: 700, color: D.textPrimary }}>{row.date}</span> },
+                { key: 'spend', label: 'Daily Spend', sortable: true, render: (row) => <span style={{ fontWeight: 800, color: D.purpleText }}>${row.spend?.toFixed(2) ?? '0.00'}</span> },
+                { key: 'cpm', label: 'CPM', sortable: true, render: (r) => <span style={{ color: D.textMuted }}>${r.cpm?.toFixed(2) ?? '0.00'}</span> },
+                { key: 'cpc', label: 'CPC', sortable: true, render: (r) => <span style={{ color: D.textMuted }}>${r.cpc?.toFixed(2) ?? '0.00'}</span> },
+                { key: 'ctr', label: 'CTR Matrix', sortable: true, render: (r) => <span style={{ fontWeight: 600, color: D.textPrimary }}>{r.ctr?.toFixed(2) ?? '0.00'}%</span> },
+                { key: 'roas', label: 'ROAS Factor', sortable: true, render: (r) => <span style={{ fontWeight: 800, color: D.greenText }}>{r.roas?.toFixed(2) ?? '0.00'}x</span> },
+              ]}
+              data={analyticsData?.daily?.slice().reverse() ?? []}
+              dark={true}
+            />
+          </div>
+
+        </div>
+      )}
+
+      {activeTab === 'insights' && (
+        <div style={{ height: 'calc(100vh - 120px)', overflowY: 'auto' }}>
+          <AdInsights />
+        </div>
+      )}
+
+      {activeTab === 'ai' && (
+        <div style={{ height: 'calc(100vh - 120px)', overflowY: 'auto' }}>
+          <AiAnalysis />
+        </div>
+      )}
+
     </div>
   );
 };

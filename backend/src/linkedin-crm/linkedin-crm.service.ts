@@ -71,7 +71,11 @@ export class LinkedInCrmService {
     page?: number;
     limit?: number;
   }) {
-    const query: any = { userId: new Types.ObjectId(userId), status: { $ne: 'deleted' } };
+    const query: any = { 
+      userId: new Types.ObjectId(userId), 
+      status: { $ne: 'deleted' },
+      linkedinId: { $not: /^(mock_lead|sim_)/ } // Exclude legacy mock leads
+    };
 
     if (filters?.stage) query.stage = filters.stage;
     if (filters?.tag) query.tags = { $in: [filters.tag] };
@@ -241,13 +245,12 @@ export class LinkedInCrmService {
   }
 
   async getLeadStats(userId: string) {
-    const query = { userId: new Types.ObjectId(userId), status: { $ne: 'deleted' } };
+    const query: any = { 
+      userId: new Types.ObjectId(userId), 
+      status: { $ne: 'deleted' },
+      linkedinId: { $not: /^(mock_lead|sim_)/ }
+    };
     let totalLeads = await this.leadModel.countDocuments(query);
-
-    if (totalLeads === 0) {
-      await this.seedMockLeadsIfEmpty(userId);
-      totalLeads = await this.leadModel.countDocuments(query);
-    }
 
     const pipeline = [
       { $match: query },
@@ -270,130 +273,7 @@ export class LinkedInCrmService {
     };
   }
 
-  async seedMockLeadsIfEmpty(userId: string): Promise<void> {
-    const mockLeads = [
-      {
-        linkedinId: 'mock_lead_1',
-        name: 'Sarah Jenkins',
-        headline: 'VP of Marketing at cloudScale.io',
-        email: 'sarah.jenkins@cloudscale.io',
-        phone: '+1 (555) 019-2834',
-        company: 'cloudScale.io',
-        jobTitle: 'VP of Marketing',
-        location: 'San Francisco Bay Area',
-        industry: 'Information Technology',
-        stage: 'new',
-        priority: 'high',
-        aiLeadScore: 85,
-        networkingScore: 78,
-        hiringScore: 40,
-        tags: ['Enterprise', 'Inbound', 'Cloud'],
-        bio: 'Experienced marketing executive looking to scale lead generation and brand awareness campaigns using automation tools.',
-        notes: [
-          {
-            message: 'Downloaded the whitepaper on AI Marketing Automation. Looks very interested in high-volume email workflows.',
-            type: 'note',
-            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-            author: 'System',
-          },
-        ],
-        source: 'chrome-extension',
-        status: 'active',
-      },
-      {
-        linkedinId: 'mock_lead_2',
-        name: 'David Chen',
-        headline: 'Founder & CTO at DevStream AI',
-        email: 'david@devstream.ai',
-        phone: '+1 (555) 014-9876',
-        company: 'DevStream AI',
-        jobTitle: 'Founder & CTO',
-        location: 'Austin, Texas',
-        industry: 'Software Development',
-        stage: 'contacted',
-        priority: 'critical',
-        aiLeadScore: 92,
-        networkingScore: 88,
-        hiringScore: 90,
-        tags: ['SaaS', 'Founder', 'Tech'],
-        bio: 'Serial entrepreneur building next-gen developer productivity tools. Active on LinkedIn, sharing dev-rel strategies.',
-        notes: [
-          {
-            message: 'Sent a connection request on LinkedIn and introduced our platform. David replied expressing interest in a demo next Tuesday.',
-            type: 'note',
-            timestamp: new Date(Date.now() - 48 * 60 * 60 * 1000),
-            author: 'System',
-          },
-        ],
-        source: 'scraped',
-        status: 'active',
-      },
-      {
-        linkedinId: 'mock_lead_3',
-        name: 'Elena Rostova',
-        headline: 'Senior Director of Talent Acquisition at FinTech Global',
-        email: 'e.rostova@fintechglobal.com',
-        phone: '+44 20 7946 0958',
-        company: 'FinTech Global',
-        jobTitle: 'Senior Director of Talent Acquisition',
-        location: 'London, UK',
-        industry: 'Financial Services',
-        stage: 'qualified',
-        priority: 'medium',
-        aiLeadScore: 74,
-        networkingScore: 65,
-        hiringScore: 95,
-        tags: ['Fintech', 'HR', 'Recruiting'],
-        bio: 'Leading a global recruitment team of 40. Interested in employer branding campaigns and LinkedIn talent pipeline automation.',
-        notes: [
-          {
-            message: 'Had a discovery call. She is looking to run LinkedIn programmatic campaigns for hiring senior Rust engineers.',
-            type: 'note',
-            timestamp: new Date(Date.now() - 72 * 60 * 60 * 1000),
-            author: 'System',
-          },
-        ],
-        source: 'scraped',
-        status: 'active',
-      },
-      {
-        linkedinId: 'mock_lead_4',
-        name: 'Marcus Thompson',
-        headline: 'Growth Lead at Apex Retail',
-        email: 'm.thompson@apexretail.com',
-        phone: '+1 (555) 012-3456',
-        company: 'Apex Retail',
-        jobTitle: 'Growth Lead',
-        location: 'New York, NY',
-        industry: 'Retail',
-        stage: 'won',
-        priority: 'low',
-        aiLeadScore: 90,
-        networkingScore: 82,
-        hiringScore: 20,
-        tags: ['E-commerce', 'Growth', 'Paid-Ads'],
-        bio: 'Growth marketer focused on D2C customer acquisition, creative optimization, and omnichannel attribution.',
-        notes: [
-          {
-            message: 'Proposal accepted. Contract signed for Q3 social ad management pilot campaign.',
-            type: 'note',
-            timestamp: new Date(Date.now() - 96 * 60 * 60 * 1000),
-            author: 'System',
-          },
-        ],
-        source: 'imported',
-        status: 'active',
-      },
-    ];
 
-    for (const lead of mockLeads) {
-      await this.leadModel.findOneAndUpdate(
-        { userId: new Types.ObjectId(userId), linkedinId: lead.linkedinId },
-        { ...lead, userId: new Types.ObjectId(userId) },
-        { upsert: true, new: true }
-      );
-    }
-  }
 
   async syncRealLinkedInLeads(userId: string): Promise<void> {
     const account = await this.getConnectedAccount(userId);
@@ -646,7 +526,10 @@ export class LinkedInCrmService {
       console.error('[LinkedInCRM] Background sync error:', err);
     });
 
-    const query: any = { userId: new Types.ObjectId(userId) };
+    const query: any = { 
+      userId: new Types.ObjectId(userId),
+      linkedinPostId: { $not: /^mock_/ } // Exclude legacy mock posts
+    };
 
     if (filters?.postType) query.postType = filters.postType;
     if (filters?.search) {
@@ -825,7 +708,7 @@ export class LinkedInCrmService {
     const tokenParams = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      redirect_uri: `${this.configService.get('BACKEND_URL') || 'http://localhost:3000'}/linkedin-crm/oauth/callback`,
+      redirect_uri: `${this.configService.get<string>('BACKEND_URL')}/linkedin-crm/oauth/callback`,
       client_id: clientId,
       client_secret: clientSecret,
     });
@@ -874,7 +757,7 @@ export class LinkedInCrmService {
 
   getLinkedInOAuthUrl(userId: string): string {
     const clientId = this.configService.get('LINKEDIN_CLIENT_ID');
-    const redirectUri = `${this.configService.get('BACKEND_URL') || 'http://localhost:3000'}/linkedin-crm/oauth/callback`;
+    const redirectUri = `${this.configService.get<string>('BACKEND_URL')}/linkedin-crm/oauth/callback`;
 
     const scope = [
       'openid',

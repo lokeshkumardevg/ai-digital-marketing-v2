@@ -9,7 +9,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────
 // API helper
 // ─────────────────────────────────────────────────────────────────────────
-const API_BASE = 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('access_token') || '';
@@ -134,10 +134,10 @@ type SyncStatus = 'idle' | 'syncing' | 'done' | 'error';
 // ─────────────────────────────────────────────────────────────────────────
 // Static config
 // ─────────────────────────────────────────────────────────────────────────
-const PLATFORM_CONFIG: Record<PlatformTabKey, { label: string }> = {
-  meta:     { label: 'Meta'     },
-  x:        { label: 'X'        },
-  linkedin: { label: 'LinkedIn' },
+const PLATFORM_CONFIG: Record<PlatformTabKey, { label: string; color: string; bg: string }> = {
+  meta:     { label: 'Meta',     color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
+  x:        { label: 'X',        color: '#E5E7EB', bg: 'rgba(229,231,235,0.10)' },
+  linkedin: { label: 'LinkedIn', color: '#0A66C2', bg: 'rgba(10,102,194,0.14)' },
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -401,38 +401,24 @@ function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated,
   onReplySuccess?: () => void;
   compact?: boolean;
 }) {
-  const [replying, setReplying]     = useState(false);
-  const [message, setMessage]       = useState('');
-  const [sending, setSending]       = useState(false);
+  const [replying, setReplying] = useState(false);
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
   const [replyError, setReplyError] = useState('');
 
-  const [showReplies, setShowReplies]       = useState(false);
-  const [liveReplies, setLiveReplies]       = useState<LiveReply[] | null>(null);
+  const [showReplies, setShowReplies]     = useState(false);
+  const [replies, setReplies]             = useState<CommentReply[] | null>(null);
   const [loadingReplies, setLoadingReplies] = useState(false);
-  const [repliesError, setRepliesError]     = useState('');
+  const [repliesError, setRepliesError]   = useState('');
 
-  // AI generation state
-  const [generatingAi, setGeneratingAi]   = useState(false);
-  const [aiError, setAiError]             = useState('');
-  const [localAiEntry, setLocalAiEntry]   = useState<AiGeneratedEntry | undefined>(aiEntry);
-  const [showAiBubble, setShowAiBubble]   = useState(!aiEntry?.posted);
-
-  // Sync prop changes (when parent refreshes posts after bulk generate).
-  // Auto-collapse the bubble once a reply is already posted; user can still expand it.
-  useEffect(() => {
-    setLocalAiEntry(aiEntry);
-    setShowAiBubble(!aiEntry?.posted);
-  }, [aiEntry]);
-
-  const displayReplies: (DbReply | LiveReply)[] = liveReplies ?? comment.replies ?? [];
-  const replyCount = liveReplies ? liveReplies.length : (comment.replyCount ?? comment.replies?.length ?? 0);
-  const hasReplies = replyCount > 0 || showReplies;
-
-  const fetchLiveReplies = useCallback(async () => {
-    setLoadingReplies(true); setRepliesError('');
+  const fetchReplies = useCallback(async () => {
+    setLoadingReplies(true);
+    setRepliesError('');
     try {
-      const data = await apiFetch<LiveReply[]>(
-        `/meta-reviews/comments/${comment.commentId}/replies?pageAccessToken=${encodeURIComponent(pageAccessToken)}`,
+      // GET /meta-reviews/comments/:commentId/replies
+      const data = await apiFetch<CommentReply[]>(
+        `/meta-reviews/comments/${comment.commentId}/replies` +
+        `?pageAccessToken=${encodeURIComponent(pageAccessToken)}`,
       );
       setLiveReplies(data);
     } catch (e: any) {
@@ -875,72 +861,22 @@ function CommentsSidePanel({ post, pageName, pagePicture, pageAccessToken, onClo
 export default function PostAdReviews() {
   const [tab, setTab] = useState<PlatformTabKey>('meta');
 
+  // ── Meta data ────────────────────────────────────────────────────────
   const [pages, setPages]                   = useState<MetaPage[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string>('');
-  const [loadingPages, setLoadingPages]     = useState(false);
-
-  const [dbPosts, setDbPosts]           = useState<DbPost[]>([]);
-  const [dbMeta, setDbMeta]             = useState<{ total: number; totalPages: number } | null>(null);
-  const [currentPage, setCurrentPage]   = useState(1);
-  const [loadingPosts, setLoadingPosts] = useState(false);
-
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
-  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
-  const [pageStats, setPageStats]   = useState<DbPageStats | null>(null);
-
+  const [posts, setPosts]                   = useState<MetaPost[]>([]);
   const [selectedPostId, setSelectedPostId] = useState<string>('all');
-  const [search, setSearch]                 = useState('');
-  const [view, setView]                     = useState<ViewMode>('grid');
-  const [error, setError]                   = useState('');
+  const [comments, setComments]             = useState<MetaComment[]>([]);
 
-  const [panelPost, setPanelPost] = useState<DbPost | null>(null);
+  // ── UI ──────────────────────────────────────────────────────────────
+  const [loadingPages,    setLoadingPages]    = useState(false);
+  const [loadingPosts,    setLoadingPosts]    = useState(false);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [error,           setError]           = useState('');
+  const [search,          setSearch]          = useState('');
+  const [view,            setView]            = useState<ViewMode>('grid');
 
-  const [generatingAllGlobal, setGeneratingAllGlobal] = useState(false);
-
-  const LIMIT = 12;
-
-  const selectedPage = useMemo(() => pages.find(p => p.pageId === selectedPageId) ?? null, [pages, selectedPageId]);
-
-  // ── Update a post in state (called from panel when ai-generated map changes) ──
-  const handlePostUpdated = useCallback((updatedPost: DbPost) => {
-    setDbPosts(prev => prev.map(p => p.postId === updatedPost.postId ? updatedPost : p));
-    // Also update panelPost so the panel re-renders with fresh data
-    setPanelPost(prev => prev?.postId === updatedPost.postId ? updatedPost : prev);
-  }, []);
-
-  // ── Global: generate AI replies for every pending comment across all loaded posts ──
-  const totalPendingGlobal = useMemo(
-    () => dbPosts.reduce((sum, p) => {
-      const aiMap = p['ai-generated'] ?? {};
-      const pending = (p.comments ?? []).filter(c => !aiMap[c.commentId]).length;
-      return sum + pending;
-    }, 0),
-    [dbPosts],
-  );
-
-  const handleGenerateAllGlobal = useCallback(async () => {
-    if (generatingAllGlobal || totalPendingGlobal === 0) return;
-    setGeneratingAllGlobal(true); setError('');
-    try {
-      const result = await apiFetch<GenerateMetaRepliesResult>('/generate-meta-replies', { method: 'POST' });
-      const applyUpdates = (p: DbPost): DbPost => {
-        const updates = result.results.filter(r => r.postId === p.postId);
-        if (updates.length === 0) return p;
-        const nextMap = { ...(p['ai-generated'] ?? {}) };
-        for (const u of updates) {
-          nextMap[u.commentId] = { reply: u.reply, generatedAt: new Date().toISOString() };
-        }
-        return { ...p, 'ai-generated': nextMap };
-      };
-      setDbPosts(prev => prev.map(applyUpdates));
-      setPanelPost(prev => (prev ? applyUpdates(prev) : prev));
-    } catch (e: any) {
-      setError(e.message || 'Failed to generate AI replies');
-    } finally {
-      setGeneratingAllGlobal(false);
-    }
-  }, [generatingAllGlobal, totalPendingGlobal]);
-
+  // ── Step 1: load Pages when Meta tab is active ──────────────────────
   const loadPages = useCallback(async () => {
     setError(''); setLoadingPages(true);
     try {

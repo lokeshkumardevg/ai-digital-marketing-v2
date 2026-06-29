@@ -19,7 +19,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 // ─────────────────────────────────────────────
 // TYPES

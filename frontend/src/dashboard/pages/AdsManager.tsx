@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { BrainCircuit, TrendingUp, Zap, BarChart2, RefreshCw, Search, ArrowUpRight, CheckCircle, AlertCircle } from 'lucide-react';
 import { SmartTable } from '../components/SmartTable';
+import { EditGoogleCampaignModal } from '../components/EditGoogleCampaignModal';
 import { api } from '../../api/axios';
 
 const platforms = ['All', 'Meta', 'Google', 'X', 'LinkedIn'];
@@ -48,6 +49,7 @@ export const AdsManager: React.FC = () => {
   const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [editingGoogleCampaign, setEditingGoogleCampaign] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const [billingStatus, setBillingStatus] = useState<any>({
@@ -148,6 +150,7 @@ export const AdsManager: React.FC = () => {
 
             return {
               id: c._id ? c._id.toString() : '',
+              originalData: c,
               name: c.name || 'AI Campaign',
               platform: plat,
               status: (c.status || 'active').toLowerCase(),
@@ -179,6 +182,7 @@ export const AdsManager: React.FC = () => {
 
             return {
               id: c?._id ? c._id.toString() : '',
+              originalData: c,
               name: c?.name || 'AI Campaign',
               platform: plat,
               status: 'active',
@@ -246,6 +250,25 @@ export const AdsManager: React.FC = () => {
       showToast(errMsg, 'error');
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleUpdateGoogleCampaign = async (updatedData: any) => {
+    if (!editingGoogleCampaign) return;
+    try {
+      showToast('Updating Google Campaign...', 'info');
+      const response = await api.put(`/campaign/google/${editingGoogleCampaign._id}`, {
+        userId,
+        ...updatedData
+      });
+      if (response.data) {
+        showToast('Google Campaign updated successfully!', 'success');
+        fetchCampaigns();
+      }
+    } catch (err: any) {
+      console.error('Failed to update Google campaign:', err);
+      const errMsg = err.response?.data?.message || 'Failed to update Google campaign';
+      throw new Error(errMsg);
     }
   };
 
@@ -482,7 +505,29 @@ export const AdsManager: React.FC = () => {
                   </div>
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: row.score > 80 ? '#16a34a' : row.score > 60 ? '#d97706' : '#dc2626' }}>{row.score}</span>
                 </div>
-              )}
+              )},
+              { key: 'actions', label: 'Actions', sortable: false, render: (row) => {
+                if (row.platform === 'Google') {
+                  return (
+                    <button 
+                      onClick={() => setEditingGoogleCampaign(row.originalData)}
+                      style={{
+                        padding: '4px 12px',
+                        background: 'rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '6px',
+                        color: '#fff',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      Edit
+                    </button>
+                  );
+                }
+                return null;
+              }}
             ]}
             data={filtered}
           />
@@ -511,6 +556,16 @@ export const AdsManager: React.FC = () => {
           {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle size={15} />}
           {toast.message}
         </div>
+      )}
+
+      {/* Edit Google Campaign Modal */}
+      {editingGoogleCampaign && (
+        <EditGoogleCampaignModal
+          campaign={editingGoogleCampaign}
+          isOpen={true}
+          onClose={() => setEditingGoogleCampaign(null)}
+          onSave={handleUpdateGoogleCampaign}
+        />
       )}
     </div>
   );

@@ -348,7 +348,7 @@ const linkedinCrmSlice = createSlice({
           const p = state.posts[randIdx];
           if (p) {
             p.likes += Math.floor(Math.random() * 3) + 1;
-            p.impressions = (p.impressions || 0) + Math.floor(Math.random() * 50) + 10;
+            (p as any).impressions = ((p as any).impressions || 0) + Math.floor(Math.random() * 50) + 10;
             if (Math.random() > 0.7) {
               p.comments += 1;
               // Occasionally add a real AI comment

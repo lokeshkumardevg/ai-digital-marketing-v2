@@ -1,0 +1,6086 @@
+{
+  "info": {
+    "name": "Wheedle API",
+    "description": "Auto-generated Postman Collection for all backend APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Ai",
+      "item": [
+        {
+          "name": "generateText",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "generateMessageTemplates",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/generate-templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "generate-templates"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "runSeoAudit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/seo-audit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "seo-audit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "runBrandProfile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/brand-profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "brand-profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "runMarketResearch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/market-research",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "market-research"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "runCompetitorAnalysis",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/competitor-analysis",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "competitor-analysis"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "runAudienceInsights",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/audience-insights",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "audience-insights"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "runCampaignStrategy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/campaign-strategy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "campaign-strategy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "runCopyGeneration",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/copy-generation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "copy-generation"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "runCreativeTesting",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/creative-testing",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "creative-testing"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getHistory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "history"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/ai/history/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "ai",
+                "history",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhook",
+      "item": [
+        {
+          "name": "reviewGen",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/review-gen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "review-gen"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "reviewResponse",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/review-response",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "review-response"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "socialPub",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/social-pub",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "social-pub"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "socialEngage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/social-engage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "social-engage"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "reporting",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/reporting",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "reporting"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "listingsOpt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/listings-opt",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "listings-opt"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "leadGen",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/lead-gen",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "lead-gen"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "segmentation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/segmentation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "segmentation"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "templateDesign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/template-design",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "template-design"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "custom",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/custom",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "custom"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "websiteBuilder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/website-builder",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "website-builder"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "adCopy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/ad-copy",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "ad-copy"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "emailSequence",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/email-sequence",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "email-sequence"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "blogWriter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/blog-writer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "blog-writer"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "videoScript",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/video-script",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "video-script"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "pressRelease",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/press-release",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "press-release"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "brandIdentity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/webhook/brand-identity",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhook",
+                "brand-identity"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "getDashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "dashboard"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "disconnectMeta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/disconnect/meta",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "disconnect",
+                "meta"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "disconnectGoogle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/disconnect/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "disconnect",
+                "google"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "disconnectX",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/disconnect/x",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "disconnect",
+                "x"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "disconnectLinkedIn",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/disconnect/linkedin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "disconnect",
+                "linkedin"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "syncMeta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/sync/meta",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "sync",
+                "meta"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "syncGoogle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/sync/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "sync",
+                "google"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "syncX",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/sync/x",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "sync",
+                "x"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "syncLinkedIn",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/sync/linkedin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "sync",
+                "linkedin"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getInsights",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/insights",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "analytics",
+                "insights"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "App",
+      "item": [
+        {
+          "name": "getHello",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "googleLogin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getProfile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updateProfile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getGoogleAuthUrl",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getGoogleAds",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/ads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "ads"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "checkGoogleAccounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/check-accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "check-accounts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "googleCallback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "callback"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updateGoogleCredentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/google/credentials",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "google",
+                "credentials"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updateMetaCredentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/meta/credentials",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "meta",
+                "credentials"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getMetaAuthUrl",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/meta",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "meta"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getMetaPages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/meta/pages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "meta",
+                "pages"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getMetaPixels",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/meta/pixels",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "meta",
+                "pixels"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getMetaBusinesses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/meta/businesses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "meta",
+                "businesses"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "metaCallback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/meta/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "meta",
+                "callback"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updateXCredentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/x/credentials",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "x",
+                "credentials"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getXAuthUrl",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/x",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "x"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "xCallback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/x/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "x",
+                "callback"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getLinkedInAuthUrl",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/linkedin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "linkedin"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "linkedinCallback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/linkedin/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "linkedin",
+                "callback"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Billing",
+      "item": [
+        {
+          "name": "getSubscription",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/subscription",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "subscription"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getPlans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "plans"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createCheckoutSession",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/checkout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "checkout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "simulateWebhookSuccess",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/webhook/mock-success",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "webhook",
+                "mock-success"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getWalletDetails",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/wallet",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "wallet"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "rechargeWallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/wallet/recharge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "wallet",
+                "recharge"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deductWallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/wallet/deduct",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "wallet",
+                "deduct"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createOrder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/razorpay/create-order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "razorpay",
+                "create-order"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "verifyPayment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/razorpay/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "razorpay",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getPlans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/plans",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "plans"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getSubscription",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/subscription/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "subscription",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "upgradeSubscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/subscription/upgrade",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "subscription",
+                "upgrade"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "verifySubscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/subscription/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "subscription",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "cancelSubscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/subscription/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "subscription",
+                "cancel"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getWalletBalance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/wallet/balance/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "wallet",
+                "balance",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getWalletTransactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/wallet/transactions/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "wallet",
+                "transactions",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "rechargeWallet",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/wallet/recharge",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "wallet",
+                "recharge"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getAnalytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/analytics/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "billing",
+                "analytics",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Brand",
+      "item": [
+        {
+          "name": "getBrands",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/brands/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "brands",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "saveBrand",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/brand-save/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "brand-save",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "setActiveBrand",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/brand-active/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "brand-active",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deleteBrand",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/brand/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "brand",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Calling",
+      "item": [
+        {
+          "name": "createCampaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/calling/campaign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calling",
+                "campaign"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getCampaigns",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/calling/campaigns",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calling",
+                "campaigns"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getCampaignRecords",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/calling/campaigns/:id/records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calling",
+                "campaigns",
+                ":id",
+                "records"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "handleWebhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/calling/webhook",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "calling",
+                "webhook"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Campaigns",
+      "item": [
+        {
+          "name": "discover",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/discover",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "discover"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "budget",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/budget-breakdown",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "budget-breakdown"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "draft",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/tempdraft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "tempdraft"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "publish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/publish/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "publish",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "publishWithBody",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "publish"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/:id/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                ":id",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "live",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/:id/live-dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                ":id",
+                "live-dashboard"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getSession",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/session/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "session",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "saveSession",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/session/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "session",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deleteSession",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/session/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "session",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "captureWebsite",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/screenshot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "screenshot"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "extractAssets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/assets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "assets"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "saveDraft",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/draft",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "draft"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getDrafts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/draft/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "draft",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "publishMeta",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/meta/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "meta",
+                "publish"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "publishGoogle",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/google/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "google",
+                "publish"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "publishLinkedin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/linkedin/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "linkedin",
+                "publish"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "linkedinStatus",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/linkedin/status/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "linkedin",
+                "status",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getCampaigns",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/user/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "user",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "toggleStatus",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/:id/toggle-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                ":id",
+                "toggle-status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getMetaBillingStatus",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaign/meta/billing-status/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaign",
+                "meta",
+                "billing-status",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Chatbot",
+      "item": [
+        {
+          "name": "getChatbots",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chatbot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chatbot"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createChatbot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chatbot",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chatbot"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getChatbot",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chatbot/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chatbot",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "chat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/chatbot/:id/chat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chatbot",
+                ":id",
+                "chat"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Content",
+      "item": [
+        {
+          "name": "getAllContent",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createManualCreative",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deleteContent",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "generateContent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "publishContent",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/:id/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                ":id",
+                "publish"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "fetchUrlImages",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/fetch-url-images",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "fetch-url-images"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "generateReferenceCreative",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/generate-reference-creative",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "generate-reference-creative"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "generateReferenceCreative",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/generate-reference-creative",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                "generate-reference-creative"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updateContent",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/content/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "content",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Crm",
+      "item": [
+        {
+          "name": "getCrmDashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/crm/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "crm",
+                "dashboard"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createContact",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/crm/contact",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "crm",
+                "contact"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getContacts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/crm/contacts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "crm",
+                "contacts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "generateAiAudience",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/crm/audience/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "crm",
+                "audience",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getAudiences",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/crm/audiences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "crm",
+                "audiences"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "scoreLead",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/crm/contact/:id/score",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "crm",
+                "contact",
+                ":id",
+                "score"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Google-business",
+      "item": [
+        {
+          "name": "UseGuards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/google-business/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "google-business",
+                "accounts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UseGuards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/google-business/locations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "google-business",
+                "locations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UseGuards",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/google-business/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "google-business",
+                "reviews"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UseGuards",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/google-business/reviews/reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "google-business",
+                "reviews",
+                "reply"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Linkedin",
+      "item": [
+        {
+          "name": "getPosts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin/posts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin",
+                "posts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getEvents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getConnections",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin/connections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin",
+                "connections"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Linkedin-crm",
+      "item": [
+        {
+          "name": "getOAuthUrl",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/oauth/url",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "oauth",
+                "url"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "oauthCallback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/oauth/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "oauth",
+                "callback"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getAccounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "accounts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getConnectedAccount",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/accounts/connected",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "accounts",
+                "connected"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "disconnectAccount",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/accounts/:accountId/disconnect",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "accounts",
+                ":accountId",
+                "disconnect"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getLeads",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/leads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "leads"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getLeadStats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/leads/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "leads",
+                "stats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getLeadById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/leads/:leadId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "leads",
+                ":leadId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createLead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/leads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "leads"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updateLead",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/leads/:leadId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "leads",
+                ":leadId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updateLeadStage",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/leads/:leadId/stage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "leads",
+                ":leadId",
+                "stage"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "addNote",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/leads/:leadId/notes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "leads",
+                ":leadId",
+                "notes"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "addTag",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/leads/:leadId/tags",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "leads",
+                ":leadId",
+                "tags"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "removeTag",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/leads/:leadId/tags/:tag",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "leads",
+                ":leadId",
+                "tags",
+                ":tag"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deleteLead",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/leads/:leadId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "leads",
+                ":leadId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getLeadPosts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/leads/:leadId/posts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "leads",
+                ":leadId",
+                "posts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getPosts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/posts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "posts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getPostById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/posts/:postId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "posts",
+                ":postId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "savePost",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/posts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "posts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "publishPost",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/posts/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "posts",
+                "publish"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deletePost",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/posts/:postId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "posts",
+                ":postId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getAds",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/ads",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "ads"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getOrganizations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/organizations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "organizations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getAdAccounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/ad-accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "ad-accounts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "connectOrganization",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/organizations/connect",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "organizations",
+                "connect"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getEvents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createEvent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "syncProfile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/profile/sync",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "profile",
+                "sync"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getOnboardingStatus",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-crm/onboarding/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-crm",
+                "onboarding",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Linkedin-scraper",
+      "item": [
+        {
+          "name": "triggerProfileScrape",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/linkedin-scraper/trigger-profile-scrape",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "linkedin-scraper",
+                "trigger-profile-scrape"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Message-log",
+      "item": [
+        {
+          "name": "getLogs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/messaging/logs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messaging",
+                "logs"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Messaging",
+      "item": [
+        {
+          "name": "HttpCode",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/messaging/upload",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messaging",
+                "upload"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "sendCampaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/messaging/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "messaging",
+                "send"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Meta-reviews",
+      "item": [
+        {
+          "name": "getPages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/meta-reviews/pages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meta-reviews",
+                "pages"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getPagePosts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/meta-reviews/pages/:pageId/posts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meta-reviews",
+                "pages",
+                ":pageId",
+                "posts"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getPostComments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/meta-reviews/posts/:postId/comments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meta-reviews",
+                "posts",
+                ":postId",
+                "comments"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "replyToComment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/meta-reviews/comments/:commentId/reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meta-reviews",
+                "comments",
+                ":commentId",
+                "reply"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getPageFeed",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/meta-reviews/pages/:pageId/feed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "meta-reviews",
+                "pages",
+                ":pageId",
+                "feed"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "getNotifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getCount",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/count",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "count"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "markOneRead",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/:id/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                ":id",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "markAllRead",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/read-all",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "read-all"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deleteOne",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "clearRead",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/clear-read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "clear-read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "sendTest",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notifications/test",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notifications",
+                "test"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications.event",
+      "item": [
+        {
+          "name": "emit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notification-events/emit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "notification-events",
+                "emit"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Platformposts",
+      "item": [
+        {
+          "name": "generate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/platformposts/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "platformposts",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "findAll",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "create",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "findOne",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "products",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reputation",
+      "item": [
+        {
+          "name": "getDashboardStats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/dashboard/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "dashboard",
+                "stats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getReviewStats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/reviews/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "reviews",
+                "stats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "seedMockReviews",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/reviews/seed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "reviews",
+                "seed"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "aiDraftBatch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/reviews/ai-draft-batch",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "reviews",
+                "ai-draft-batch"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "importCustomers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/customers/import",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "customers",
+                "import"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getRatingTrend",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/analytics/rating-trend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "analytics",
+                "rating-trend"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getSentimentTrend",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/analytics/sentiment-trend",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "analytics",
+                "sentiment-trend"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getTopicBreakdown",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/analytics/topic-breakdown",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "analytics",
+                "topic-breakdown"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "generateInsights",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/recommendations/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "recommendations",
+                "generate"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getReviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "reviews"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getCustomers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "customers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createCustomer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/customers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "customers"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getInsights",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/recommendations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "recommendations"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "generateAiReply",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/reviews/:id/generate-reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "reviews",
+                ":id",
+                "generate-reply"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "publishReply",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/reviews/:id/publish-reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "reviews",
+                ":id",
+                "publish-reply"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "markResolved",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/reviews/:id/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "reviews",
+                ":id",
+                "resolve"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "analyzeSentiment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/reviews/:id/analyze-sentiment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "reviews",
+                ":id",
+                "analyze-sentiment"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "sendReviewRequest",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/customers/:id/send-request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "customers",
+                ":id",
+                "send-request"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updateCustomer",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/customers/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "customers",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deleteCustomer",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/customers/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "customers",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "markInsightRead",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/recommendations/:id/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "recommendations",
+                ":id",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getReviewById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/reviews/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "reviews",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getCustomerById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/customers/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "customers",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createLeadsBulk",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reputation/leads/bulk",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reputation",
+                "leads",
+                "bulk"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "getDashboardStats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/dashboard/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                "dashboard",
+                "stats"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "seedMockReviews",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/seed",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                "seed"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getReviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "generateAiReply",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id/generate-reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                ":id",
+                "generate-reply"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "publishReply",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id/publish-reply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                ":id",
+                "publish-reply"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "markResolved",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                ":id",
+                "resolve"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "analyzeSentiment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id/analyze-sentiment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                ":id",
+                "analyze-sentiment"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getReviewById",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "getRoles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createRole",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updateRole",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roles",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deleteRole",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/roles/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "roles",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Social-auth",
+      "item": [
+        {
+          "name": "getAuthUrl",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/social/auth/:platform",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "social",
+                "auth",
+                ":platform"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "callback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/social/auth/:platform/callback",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "social",
+                "auth",
+                ":platform",
+                "callback"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getAuthConnections",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/social/auth/connections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "social",
+                "auth",
+                "connections"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "disconnectPlatform",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/social/auth/:platform/disconnect",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "social",
+                "auth",
+                ":platform",
+                "disconnect"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Social",
+      "item": [
+        {
+          "name": "getPosts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/social",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "social"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "publishPost",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/social/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "social",
+                "publish"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "schedulePost",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/social/schedule",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "social",
+                "schedule"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getConnections",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/social/connections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "social",
+                "connections"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "getAllUsers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createUser",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "updateUser",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "deleteUser",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                ":id"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Wallet",
+      "item": [
+        {
+          "name": "getBalance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet/balance/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "balance",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "credit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet/credit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "credit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "debit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet/debit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "debit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getTransactions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet/transactions/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "transactions",
+                ":userId"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createRazorpayOrder",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet/razorpay/create-order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "razorpay",
+                "create-order"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "verifyPayment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/wallet/razorpay/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "wallet",
+                "razorpay",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Workflows",
+      "item": [
+        {
+          "name": "getWorkflows",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workflows",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workflows"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "createWorkflow",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workflows",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workflows"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "toggleWorkflow",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workflows/:id/toggle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workflows",
+                ":id",
+                "toggle"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "YOUR_AUTH_TOKEN_HERE",
+      "type": "string"
+    }
+  ]
+}

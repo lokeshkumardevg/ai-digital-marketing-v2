@@ -4,7 +4,7 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) { }
 
   @Post('login')
   async login(@Body() loginDto: any) {
@@ -19,16 +19,16 @@ export class AuthController {
   async register(@Body() registerDto: any) {
     return this.authService.register(registerDto);
   }
-@Post('google/login')
-async googleLogin(@Body() body: { code?: string; access_token?: string }) {
-  if (body.code) {
-    return this.authService.loginWithGoogleCode(body.code);
+  @Post('google/login')
+  async googleLogin(@Body() body: { code?: string; access_token?: string }) {
+    if (body.code) {
+      return this.authService.loginWithGoogleCode(body.code);
+    }
+    if (!body.access_token) {
+      throw new UnauthorizedException('No code or access_token provided');
+    }
+    return this.authService.loginWithGoogleIdToken(body.access_token);
   }
-  if (!body.access_token) {
-    throw new UnauthorizedException('No code or access_token provided');
-  }
-  return this.authService.loginWithGoogleIdToken(body.access_token);
-}
 
 
   @UseGuards(AuthGuard('jwt'))
@@ -77,8 +77,8 @@ async googleLogin(@Body() body: { code?: string; access_token?: string }) {
     }
 
     const userId = state;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const redirectBase = `${frontendUrl}/settings`;
+    const frontendUrl = process.env.FRONTEND_URL;
+    const redirectBase = `${frontendUrl}/dashboard/crm`;
 
     try {
       await this.authService.handleGoogleCallback(userId, code);
@@ -156,8 +156,8 @@ async googleLogin(@Body() body: { code?: string; access_token?: string }) {
     @Query('code') code: string,
     @Query('state') state: string,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const redirectBase = `${frontendUrl}/settings`;
+    const frontendUrl = process.env.FRONTEND_URL;
+    const redirectBase = `${frontendUrl}/dashboard/crm`;
 
     // eslint-disable-next-line no-console
     console.log('[AuthController] metaCallback hit', {
@@ -216,8 +216,8 @@ async googleLogin(@Body() body: { code?: string; access_token?: string }) {
     @Query('code') code: string,
     @Query('state') state: string,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const redirectBase = `${frontendUrl}/settings`;
+    const frontendUrl = process.env.FRONTEND_URL;
+    const redirectBase = `${frontendUrl}/dashboard/crm`;
 
     if (!code || !state) {
       return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?xConnected=error&reason=missing_params" /></head><body>Redirecting...</body></html>`;
@@ -246,8 +246,8 @@ async googleLogin(@Body() body: { code?: string; access_token?: string }) {
     @Query('code') code: string,
     @Query('state') state: string,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    const redirectBase = `${frontendUrl}/settings`;
+    const frontendUrl = process.env.FRONTEND_URL;
+    const redirectBase = `${frontendUrl}/dashboard/crm`;
 
     if (!code || !state) {
       return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?linkedinConnected=error&reason=missing_params" /></head><body>Redirecting...</body></html>`;

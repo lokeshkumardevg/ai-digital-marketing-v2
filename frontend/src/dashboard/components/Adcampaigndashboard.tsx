@@ -62,6 +62,8 @@ interface PlatformCreative {
 
   // Google specific
   googleObjective?: string;
+  googleCampaignType?: string;
+  googleReachGoal?: string;
   googleNetworks?: string[];
   googleBiddingStrategy?: string;
   googleKeywords?: string[];
@@ -108,7 +110,7 @@ interface Plan {
   popular?: boolean;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 /* ─── GLOBAL STYLES ─────────────────────────────────────── */
 const GLOBAL_CSS = `
@@ -626,6 +628,7 @@ export function TopBar({
 
   // Local states for LinkedIn dropdown choices
   const [selectedLiPage, setSelectedLiPage] = useState<string>("");
+  // @ts-ignore
   const [selectedLiTag, setSelectedLiTag] = useState<string>("");
 
   const [liPages, setLiPages] = useState<any[]>([]);
@@ -1073,8 +1076,8 @@ function TargetAudienceCard({
               style={{ paddingRight: 30 }}
             />
             {incQuery && (
-              <button 
-                onClick={() => setIncQuery('')} 
+              <button
+                onClick={() => setIncQuery('')}
                 style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", color: "var(--t3)", fontSize: 11, cursor: "pointer" }}
               >
                 ✕
@@ -1125,8 +1128,8 @@ function TargetAudienceCard({
               style={{ paddingRight: 30 }}
             />
             {excQuery && (
-              <button 
-                onClick={() => setExcQuery('')} 
+              <button
+                onClick={() => setExcQuery('')}
                 style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", border: "none", background: "transparent", color: "var(--t3)", fontSize: 11, cursor: "pointer" }}
               >
                 ✕
@@ -1280,9 +1283,29 @@ function PlatformSpecificSettingsCard({ activePlatformId, creative, onCreativeCh
             <select className="editable-input" value={creative.googleObjective || "SALES"} onChange={e => onCreativeChange({ googleObjective: e.target.value })}>
               <option value="SALES">Sales</option>
               <option value="LEADS">Leads</option>
-              <option value="WEBSITE_TRAFFIC">Website Traffic</option>
-              <option value="BRAND_AWARENESS">Brand Awareness</option>
-              <option value="APP_PROMOTION">App Promotion</option>
+              <option value="WEBSITE_TRAFFIC">Website traffic</option>
+              <option value="APP_PROMOTION">App promotion</option>
+              <option value="YOUTUBE_REACH_VIEWS_ENGAGEMENTS">YouTube reach, views, and engagements</option>
+              <option value="LOCAL_STORE_VISITS_PROMOTIONS">Local store visits and promotions</option>
+              <option value="WITHOUT_GUIDANCE">Create a campaign without guidance</option>
+            </select>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Campaign Type</div>
+            <select className="editable-input" value={creative.googleCampaignType || "SEARCH"} onChange={e => onCreativeChange({ googleCampaignType: e.target.value })}>
+              <option value="PERFORMANCE_MAX">Performance Max</option>
+              <option value="SEARCH">Search</option>
+              <option value="DEMAND_GEN">Demand Gen</option>
+              <option value="VIDEO">Video</option>
+              <option value="DISPLAY">Display</option>
+              <option value="SHOPPING">Shopping</option>
+            </select>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Reach Goal</div>
+            <select className="editable-input" value={creative.googleReachGoal || "WEBSITE_VISITS"} onChange={e => onCreativeChange({ googleReachGoal: e.target.value })}>
+              <option value="WEBSITE_VISITS">Website visits</option>
+              <option value="STORE_VISITS">Store visits</option>
             </select>
           </div>
           <div>
@@ -1297,11 +1320,11 @@ function PlatformSpecificSettingsCard({ activePlatformId, creative, onCreativeCh
           </div>
           <div>
             <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Networks</div>
-            <input className="editable-input" value={(creative.googleNetworks || ["SEARCH"]).join(', ')} onChange={e => onCreativeChange({ googleNetworks: e.target.value.split(',').map(s=>s.trim()).filter(Boolean) })} placeholder="SEARCH, DISPLAY" />
+            <input className="editable-input" value={(creative.googleNetworks || ["SEARCH"]).join(', ')} onChange={e => onCreativeChange({ googleNetworks: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} placeholder="SEARCH, DISPLAY" />
           </div>
           <div>
             <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Keywords</div>
-            <input className="editable-input" value={(creative.googleKeywords || []).join(', ')} onChange={e => onCreativeChange({ googleKeywords: e.target.value.split(',').map(s=>s.trim()).filter(Boolean) })} placeholder="e.g. digital marketing, software" />
+            <input className="editable-input" value={(creative.googleKeywords || []).join(', ')} onChange={e => onCreativeChange({ googleKeywords: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} placeholder="e.g. digital marketing, software" />
           </div>
         </div>
         {!enabled && <DisabledOverlay />}
@@ -1336,11 +1359,11 @@ function PlatformSpecificSettingsCard({ activePlatformId, creative, onCreativeCh
           </div>
           <div>
             <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Job Titles (Comma separated)</div>
-            <input className="editable-input" value={(creative.liJobTitles || []).join(', ')} onChange={e => onCreativeChange({ liJobTitles: e.target.value.split(',').map(s=>s.trim()).filter(Boolean) })} placeholder="e.g. Marketing Manager, CEO" />
+            <input className="editable-input" value={(creative.liJobTitles || []).join(', ')} onChange={e => onCreativeChange({ liJobTitles: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} placeholder="e.g. Marketing Manager, CEO" />
           </div>
           <div>
             <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}>Seniority (Comma separated)</div>
-            <input className="editable-input" value={(creative.liSeniority || []).join(', ')} onChange={e => onCreativeChange({ liSeniority: e.target.value.split(',').map(s=>s.trim()).filter(Boolean) })} placeholder="e.g. CXO, Director, Manager" />
+            <input className="editable-input" value={(creative.liSeniority || []).join(', ')} onChange={e => onCreativeChange({ liSeniority: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })} placeholder="e.g. CXO, Director, Manager" />
           </div>
         </div>
         {!enabled && <DisabledOverlay />}
@@ -1779,6 +1802,8 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     metaPlacements: draftPlatformData?.metaPlacements || "ADVANTAGE_PLUS",
 
     googleObjective: draftPlatformData?.googleObjective || "SALES",
+    googleCampaignType: draftPlatformData?.googleCampaignType || "SEARCH",
+    googleReachGoal: draftPlatformData?.googleReachGoal || "WEBSITE_VISITS",
     googleNetworks: draftPlatformData?.googleNetworks || ["SEARCH"],
     googleBiddingStrategy: draftPlatformData?.googleBiddingStrategy || "MAXIMIZE_CONVERSIONS",
     googleKeywords: draftPlatformData?.googleKeywords || [],
@@ -1915,6 +1940,8 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
         metaSpecialAdCategory: activePlatData?.metaSpecialAdCategory,
         metaPlacements: activePlatData?.metaPlacements,
         googleObjective: activePlatData?.googleObjective,
+        googleCampaignType: activePlatData?.googleCampaignType,
+        googleReachGoal: activePlatData?.googleReachGoal,
         googleNetworks: activePlatData?.googleNetworks,
         googleBiddingStrategy: activePlatData?.googleBiddingStrategy,
         googleKeywords: activePlatData?.googleKeywords,
@@ -1943,6 +1970,13 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
           return;
         }
         showToast(res.data?.message || '✅ Published to LinkedIn successfully!', 'success');
+      } else if (activePid === 'x') {
+        const res = await api.post('/campaign/x/publish', payload);
+        if (res.data?.success === false) {
+          showToast(`❌ X: ${res.data?.error || res.data?.message || 'Publish failed. Check your X connection.'}`, 'error');
+          return;
+        }
+        showToast(res.data?.message || '✅ Published to X successfully!', 'success');
       } else {
         const res = await api.post('/campaign/publish', { ...payload, platform: activePid });
         showToast(res.data?.message || `✅ Published with ${planId.charAt(0).toUpperCase() + planId.slice(1)} plan!`, 'success');
@@ -1985,6 +2019,8 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
           metaSpecialAdCategory: c.metaSpecialAdCategory,
           metaPlacements: c.metaPlacements,
           googleObjective: c.googleObjective,
+          googleCampaignType: c.googleCampaignType,
+          googleReachGoal: c.googleReachGoal,
           googleNetworks: c.googleNetworks,
           googleBiddingStrategy: c.googleBiddingStrategy,
           googleKeywords: c.googleKeywords,

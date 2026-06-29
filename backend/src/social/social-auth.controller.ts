@@ -46,10 +46,10 @@ export class SocialAuthController {
   ) {
     try {
       await this.socialAuthService.handleCallback(platform, code, state);
-      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL');
       return res.redirect(`${frontendUrl}/social?social_connect=${platform}&status=success`);
     } catch {
-      const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL');
       return res.redirect(`${frontendUrl}/social?social_connect=${platform}&status=error`);
     }
   }
