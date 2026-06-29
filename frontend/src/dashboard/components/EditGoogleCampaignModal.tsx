@@ -21,6 +21,21 @@ export const EditGoogleCampaignModal: React.FC<EditGoogleCampaignModalProps> = (
   const [caption, setCaption] = useState(campaign?.data?.caption || '');
   const [finalUrl, setFinalUrl] = useState(campaign?.data?.finalUrl || '');
   
+  // New States: Status dropdown, Start/End Dates (calendars), and Keywords
+  const [status, setStatus] = useState(campaign?.status || campaign?.data?.status || 'PAUSED');
+  const [startDate, setStartDate] = useState(() => {
+    if (campaign?.data?.startDate) return campaign.data.startDate;
+    return '';
+  });
+  const [endDate, setEndDate] = useState(() => {
+    if (campaign?.data?.endDate) return campaign.data.endDate;
+    return '';
+  });
+  const [googleKeywords, setGoogleKeywords] = useState(() => {
+    const kws = campaign?.data?.googleKeywords || [];
+    return Array.isArray(kws) ? kws.join(', ') : '';
+  });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -35,7 +50,11 @@ export const EditGoogleCampaignModal: React.FC<EditGoogleCampaignModalProps> = (
         dailyBudget,
         headline,
         caption,
-        finalUrl
+        finalUrl,
+        status,
+        startDate,
+        endDate,
+        googleKeywords: googleKeywords.split(',').map(s => s.trim()).filter(Boolean)
       });
       onClose();
     } catch (err: any) {
@@ -46,8 +65,8 @@ export const EditGoogleCampaignModal: React.FC<EditGoogleCampaignModalProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#0f0f13] border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="bg-[#0f0f13] border border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl my-8">
         <h2 className="text-2xl font-bold text-white mb-4">Edit Google Campaign</h2>
         
         {error && (
@@ -57,26 +76,82 @@ export const EditGoogleCampaignModal: React.FC<EditGoogleCampaignModalProps> = (
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">Campaign Name</label>
-            <input 
-              type="text" 
-              value={campaignName}
-              onChange={(e) => setCampaignName(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[#4B83F3]"
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1">Campaign Name</label>
+              <input 
+                type="text" 
+                value={campaignName}
+                onChange={(e) => setCampaignName(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[#4B83F3]"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1">Status</label>
+              <select 
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full bg-[#1b1b22] border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[#4B83F3]"
+              >
+                <option value="ACTIVE">Active (Running)</option>
+                <option value="PAUSED">Paused</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1">Daily Budget ($)</label>
+              <input 
+                type="number" 
+                value={dailyBudget}
+                onChange={(e) => setDailyBudget(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[#4B83F3]"
+                min="10"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1">Final URL</label>
+              <input 
+                type="url" 
+                value={finalUrl}
+                onChange={(e) => setFinalUrl(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[#4B83F3]"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1">Start Date</label>
+              <input 
+                type="date" 
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[#4B83F3]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-1">End Date</label>
+              <input 
+                type="date" 
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[#4B83F3]"
+              />
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">Daily Budget ($)</label>
+            <label className="block text-sm font-medium text-white/70 mb-1">Keywords (comma-separated)</label>
             <input 
-              type="number" 
-              value={dailyBudget}
-              onChange={(e) => setDailyBudget(e.target.value)}
+              type="text" 
+              value={googleKeywords}
+              onChange={(e) => setGoogleKeywords(e.target.value)}
+              placeholder="e.g. digital marketing, software, solar power"
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[#4B83F3]"
-              min="10"
-              required
             />
           </div>
 
@@ -99,16 +174,6 @@ export const EditGoogleCampaignModal: React.FC<EditGoogleCampaignModalProps> = (
               maxLength={90}
               rows={2}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[#4B83F3] resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-white/70 mb-1">Final URL</label>
-            <input 
-              type="url" 
-              value={finalUrl}
-              onChange={(e) => setFinalUrl(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-[#4B83F3]"
             />
           </div>
 

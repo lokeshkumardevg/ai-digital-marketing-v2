@@ -243,7 +243,7 @@ export const generateAiReply = createAsyncThunk(
   'reputation/generateAiReply',
   async (reviewId: string, { rejectWithValue }) => {
     try {
-      const res = await api.post(`/reputation/reviews/${reviewId}/generate-reply`);
+      const res = await api.post(`/generate-reply/${reviewId}`);
       return { ...res.data, reviewId };
     } catch (e: any) {
       return rejectWithValue(e.response?.data?.message || 'Failed to generate AI reply');

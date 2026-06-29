@@ -15,7 +15,13 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { AiService } from './ai.service';
 import { SemrushService } from './semrush.service';
+import { UsersService } from '../users/users.service';
 import * as cheerio from 'cheerio';
+import { chromium } from 'playwright';
+import axios from 'axios';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Brand, BrandDocument } from '../brand/brand.schema';
 
 @Controller('ai')
 export class AiController {
@@ -24,6 +30,8 @@ export class AiController {
   constructor(
     private readonly aiService: AiService,
     private readonly semrushService: SemrushService,
+    private readonly usersService: UsersService,
+    @InjectModel(Brand.name) private readonly brandModel: Model<BrandDocument>,
   ) {}
 
   // ── GENERATE TEXT ─────────────────────────────────────────
@@ -70,7 +78,7 @@ export class AiController {
   @UseGuards(AuthGuard('jwt'))
   @Post('seo-audit')
   @HttpCode(HttpStatus.OK)
-  async runSeoAudit(@Body() body: { url: string }) {
+  async runSeoAudit(@Body() body: { url: string }, @Request() req: any) {
     try {
       const startTime = Date.now();
       const targetUrl = body.url.startsWith('http') ? body.url : `https://${body.url}`;
@@ -99,13 +107,46 @@ export class AiController {
 
       const loadTime = ((Date.now() - startTime) / 1000).toFixed(1) + 's';
 
-      // 2. Semrush Integration
-      const [semrushOverview, semrushKeywords, semrushBacklinks, semrushCompetitors] = await Promise.all([
-        this.semrushService.getDomainOverview(domain),
-        this.semrushService.getOrganicKeywords(domain),
-        this.semrushService.getBacklinksOverview(domain),
-        this.semrushService.getOrganicCompetitors(domain),
-      ]);
+      let semrushOverview: any = null;
+      let semrushKeywords: any[] = [];
+      let semrushBacklinks: any = null;
+      let semrushCompetitors: any[] = [];
+      let semrushTrafficSeries: any[] = [];
+      let isGsc = false;
+
+      try {
+        if (req.user?.id) {
+          const user = await this.usersService.findById(req.user.id);
+          if (user) {
+            const gscData = await this.semrushService.getGoogleSearchConsoleData(domain, user, this.usersService);
+            if (gscData) {
+              semrushOverview = gscData.overview;
+              semrushKeywords = gscData.keywords;
+              semrushBacklinks = gscData.backlinks;
+              semrushCompetitors = gscData.competitors;
+              semrushTrafficSeries = gscData.trafficSeries || [];
+              isGsc = true;
+              this.logger.log(`Using live Google Search Console data for domain ${domain}`);
+            }
+          }
+        }
+      } catch (err: any) {
+        this.logger.error(`Failed to fetch GSC data, falling back to Semrush: ${err.message}`);
+      }
+
+      if (!isGsc) {
+        // 2. Semrush Integration
+        const [overview, keywords, backlinks, competitors] = await Promise.all([
+          this.semrushService.getDomainOverview(domain),
+          this.semrushService.getOrganicKeywords(domain),
+          this.semrushService.getBacklinksOverview(domain),
+          this.semrushService.getOrganicCompetitors(domain),
+        ]);
+        semrushOverview = overview;
+        semrushKeywords = keywords || [];
+        semrushBacklinks = backlinks;
+        semrushCompetitors = competitors || [];
+      }
 
       // 3. Enhanced AI Analysis
       const prompt = `
@@ -116,7 +157,7 @@ export class AiController {
         Description: ${meta.description}
         H1: ${meta.h1}
         
-        SEMRUSH MARKET DATA:
+        ${isGsc ? 'GOOGLE SEARCH CONSOLE LIVE DATA:' : 'SEMRUSH MARKET DATA:'}
         Authority Score: ${semrushBacklinks?.ascore || 'N/A'}
         Organic Traffic: ${semrushOverview?.Ot || 'N/A'}
         Organic Keywords: ${semrushOverview?.Or || 'N/A'}
@@ -146,7 +187,8 @@ export class AiController {
             overview: semrushOverview,
             keywords: semrushKeywords,
             backlinks: semrushBacklinks,
-            competitors: semrushCompetitors
+            competitors: semrushCompetitors,
+            trafficSeries: semrushTrafficSeries
           },
           ai: aiResponse
         }
@@ -165,27 +207,81 @@ export class AiController {
   @UseGuards(AuthGuard('jwt'))
   @Post('brand-profile')
   @HttpCode(HttpStatus.OK)
-  async runBrandProfile(@Body() body: { url: string; brandName: string }) {
+  async runBrandProfile(
+    @Body() body: { url: string; brandName: string },
+    @Request() req: any,
+  ) {
     const { url, brandName } = body;
 
     let scrapedContext = '';
 
-    try {
-      const res = await fetch(url);
-      const html = await res.text();
-      const $ = cheerio.load(html);
-const title = $('title').text();
-const metaDesc = $('meta[name="description"]').attr('content') || '';
+    let browser: any = null;
+    let title = '';
+    let metaDesc = '';
+    let bodyText = '';
+    let scrapedSuccessfully = false;
 
-scrapedContext = `
+    // 1. Try Playwright first
+    try {
+      this.logger.log(`Manual Profile: Playwright scraping ${url}`);
+      browser = await chromium.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+      const context = await browser.newContext({
+        viewport: { width: 1440, height: 900 },
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      });
+      const page = await context.newPage();
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 12000 });
+      
+      title = await page.title();
+      metaDesc = await page.$eval('meta[name="description"]', (el: any) => el.getAttribute('content')).catch(() => '');
+      bodyText = await page.evaluate(() => {
+        const scripts = document.querySelectorAll('script, style, noscript, iframe, nav, footer');
+        scripts.forEach(s => s.remove());
+        return document.body.innerText || '';
+      });
+
+      scrapedSuccessfully = true;
+      await browser.close();
+    } catch (err: any) {
+      this.logger.warn(`Playwright manual scrape failed: ${err.message}. Trying Axios fallback.`);
+      if (browser) {
+        try { await browser.close(); } catch {}
+      }
+    }
+
+    // 2. Try Axios + Cheerio Fallback
+    if (!scrapedSuccessfully) {
+      try {
+        const response = await axios.get(url, {
+          timeout: 10000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          }
+        });
+        const $ = cheerio.load(response.data);
+        title = $('title').text() || '';
+        metaDesc = $('meta[name="description"]').attr('content') || '';
+        $('script, style, noscript, iframe, nav, footer').remove();
+        bodyText = $('body').text() || '';
+        scrapedSuccessfully = true;
+      } catch (err: any) {
+        this.logger.error(`Axios manual scrape fallback failed: ${err.message}`);
+      }
+    }
+
+    if (scrapedSuccessfully) {
+      scrapedContext = `
 TITLE: ${title}
 DESCRIPTION: ${metaDesc}
 
 CONTENT:
-${$('body').text().replace(/\s+/g, ' ').slice(0, 3000)}
+${bodyText.replace(/\s+/g, ' ').slice(0, 3500)}
 `;
-      
-    } catch {
+    } else {
       scrapedContext = `${brandName} ${url}`;
     }
 
@@ -193,6 +289,13 @@ ${$('body').text().replace(/\s+/g, ' ').slice(0, 3000)}
       url,
       brandName,
       scrapedContext
+    );
+
+    // Save generated profile to database
+    const brandData = profile.data?.brand || profile;
+    await this.brandModel.findOneAndUpdate(
+      { userId: req.user.id },
+      { $set: { brandProfile: brandData } }
     );
 
     return {

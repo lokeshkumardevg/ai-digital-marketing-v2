@@ -1612,10 +1612,17 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
                       const platConfig = PLATFORM_LIST.find(p => p.id === draft.platform) || PLATFORM_LIST[0];
                       const d = draft.raw.data || {};
                       const audience = d.advantagePlus ? 'Advantage+' : d.location || '—';
-                      const images = [
+                      const draftImg = draft.raw.data?.image || draft.raw.aiGeneratedContent?.imageUrl;
+                      const rawImages = [];
+                      if (draftImg) rawImages.push(draftImg);
+                      rawImages.push(
                         ...(brandDetails?.assets?.images || []),
-                        ...(brandDetails?.assets?.banners || []),
-                      ].filter(Boolean).slice(0, 3);
+                        ...(brandDetails?.assets?.banners || [])
+                      );
+                      const images = rawImages
+                        .filter(Boolean)
+                        .filter((img, idx, self) => self.indexOf(img) === idx)
+                        .slice(0, 3);
                       if (images.length === 0) images.push(...SEED.demoImages.slice(0, 2));
 
                       return (
@@ -1693,10 +1700,17 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
               {/* ── MOBILE CARDS ── */}
               <div className="draft-cards-grid">
                 {filtered.map((draft, idx) => {
-                  const images = [
+                  const draftImg = draft.raw.data?.image || draft.raw.aiGeneratedContent?.imageUrl;
+                  const rawImages = [];
+                  if (draftImg) rawImages.push(draftImg);
+                  rawImages.push(
                     ...(brandDetails?.assets?.images || []),
-                    ...(brandDetails?.assets?.banners || []),
-                  ].filter(Boolean).slice(0, 4);
+                    ...(brandDetails?.assets?.banners || [])
+                  );
+                  const images = rawImages
+                    .filter(Boolean)
+                    .filter((img, idx, self) => self.indexOf(img) === idx)
+                    .slice(0, 4);
                   if (images.length === 0) images.push(...SEED.demoImages.slice(0, 3));
 
                   return (

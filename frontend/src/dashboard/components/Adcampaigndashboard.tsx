@@ -45,6 +45,7 @@ interface PromoData {
   schedule?: string;
   advantagePlus?: boolean;
   estimatedAudience?: string;
+  keywords?: string | string[];
 }
 
 /** Per-platform creative state */
@@ -947,9 +948,33 @@ export function TopBar({
 }
 
 /* ─── AD SETTING CARD ─────────────────────────────────────── */
-interface AdSettingCardProps { event: string; budget: string; schedule: string; finalUrl: string; enabled: boolean; onEventChange: (v: string) => void; onBudgetChange: (v: string) => void; onScheduleChange: (v: string) => void; onFinalUrlChange: (v: string) => void; }
+interface AdSettingCardProps { 
+  event: string; 
+  budget: string; 
+  startDate: string; 
+  endDate: string; 
+  finalUrl: string; 
+  enabled: boolean; 
+  onEventChange: (v: string) => void; 
+  onBudgetChange: (v: string) => void; 
+  onStartDateChange: (v: string) => void; 
+  onEndDateChange: (v: string) => void; 
+  onFinalUrlChange: (v: string) => void; 
+}
 
-function AdSettingCard({ event, budget, schedule, finalUrl, enabled, onEventChange, onBudgetChange, onScheduleChange, onFinalUrlChange }: AdSettingCardProps) {
+function AdSettingCard({ 
+  event, 
+  budget, 
+  startDate, 
+  endDate, 
+  finalUrl, 
+  enabled, 
+  onEventChange, 
+  onBudgetChange, 
+  onStartDateChange, 
+  onEndDateChange, 
+  onFinalUrlChange 
+}: AdSettingCardProps) {
   return (
     <div style={{ ...card(), borderTop: "3px solid var(--blue)" }}>
       <div style={sLabel("var(--blue)")}><I.Settings /> Ad Setting</div>
@@ -964,10 +989,31 @@ function AdSettingCard({ event, budget, schedule, finalUrl, enabled, onEventChan
         </div>
       </div>
       <div style={{ borderTop: "1px solid var(--bdr)", margin: "10px 0" }} />
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}><I.Edit /> Schedule</div>
-        <input className="editable-input" value={schedule} onChange={e => onScheduleChange(e.target.value)} placeholder="e.g. May 08, 2026" />
+      
+      {/* Date Picker Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}><I.Edit /> Start Date</div>
+          <input 
+            type="date" 
+            className="editable-input" 
+            value={startDate} 
+            onChange={e => onStartDateChange(e.target.value)} 
+            style={{ fontFamily: "inherit" }} 
+          />
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}><I.Edit /> End Date</div>
+          <input 
+            type="date" 
+            className="editable-input" 
+            value={endDate} 
+            onChange={e => onEndDateChange(e.target.value)} 
+            style={{ fontFamily: "inherit" }} 
+          />
+        </div>
       </div>
+
       <div>
         <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}><I.Edit /> Final URL</div>
         <input className="editable-input" value={finalUrl} onChange={e => onFinalUrlChange(e.target.value)} placeholder="https://yourbrand.com" style={{ color: "var(--cyan)", fontSize: 11 }} />
@@ -1762,6 +1808,17 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
   const [adEvent, setAdEvent] = useState<string>(globalDraftData?.event || promoData?.event || promoData?.adGoal || SEED.event);
   const [adBudget, setAdBudget] = useState<string>(globalDraftData?.budget || budgetStr);
   const [adSchedule, setAdSchedule] = useState<string>(globalDraftData?.schedule || promoData?.schedule || SEED.schedule);
+  const [adStartDate, setAdStartDate] = useState<string>(() => {
+    if (globalDraftData?.startDate) return globalDraftData.startDate;
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [adEndDate, setAdEndDate] = useState<string>(() => {
+    if (globalDraftData?.endDate) return globalDraftData.endDate;
+    const later = new Date();
+    later.setDate(later.getDate() + 30);
+    return later.toISOString().split('T')[0];
+  });
   const [adFinalUrl, setAdFinalUrl] = useState<string>(globalDraftData?.finalUrl || promoData?.finalUrl || "");
   const [adIncludeLocations, setAdIncludeLocations] = useState<string[]>(() => {
     if (globalDraftData?.includeLocations) return globalDraftData.includeLocations;
@@ -1790,6 +1847,111 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
   const defaultPrimaryText = promoData?.primaryTexts?.[0] || SEED.primaryTexts[0];
   const defaultCta = promoData?.callToAction || SEED.cta;
 
+  const resolveDefaultKeywords = (): string[] => {
+    if (globalDraftData?.googleKeywords && globalDraftData.googleKeywords.length > 0) {
+      return globalDraftData.googleKeywords;
+    }
+    if (promoData?.keywords && Array.isArray(promoData.keywords) && promoData.keywords.length > 0) {
+      return promoData.keywords;
+    }
+    if (typeof promoData?.keywords === 'string' && promoData.keywords.trim()) {
+      return promoData.keywords.split(',').map((s: string) => s.trim()).filter(Boolean);
+    }
+    
+    const bDetails = brandDetails as any;
+    let list: string[] = [];
+
+    // 1. Pull from the AI brand discovery keywords response
+    if (bDetails?.keywords) {
+      const kwObj = bDetails.keywords;
+      if (Array.isArray(kwObj.primary)) list.push(...kwObj.primary);
+      if (Array.isArray(kwObj.secondary)) list.push(...kwObj.secondary);
+      if (Array.isArray(kwObj.longTail)) list.push(...kwObj.longTail);
+      if (Array.isArray(kwObj.gaps)) list.push(...kwObj.gaps);
+    }
+
+    // 2. Fallbacks to other properties
+    if (list.length === 0 && bDetails?.brand?.market_keywords && Array.isArray(bDetails.brand.market_keywords)) {
+      list.push(...bDetails.brand.market_keywords);
+    }
+    if (list.length === 0 && bDetails?.brandProfile?.seoAudit?.keywords && Array.isArray(bDetails.brandProfile.seoAudit.keywords)) {
+      list.push(...bDetails.brandProfile.seoAudit.keywords);
+    }
+    if (list.length === 0 && bDetails?.brandProfile?.marketAnalysis?.targetKeywords && Array.isArray(bDetails.brandProfile.marketAnalysis.targetKeywords)) {
+      list.push(...bDetails.brandProfile.marketAnalysis.targetKeywords);
+    }
+    if (list.length === 0 && bDetails?.assets?.keywords && Array.isArray(bDetails.assets.keywords)) {
+      list.push(...bDetails.assets.keywords);
+    }
+
+    const bName = (brandName || bDetails?.brand?.name || "Wheedle").toLowerCase().trim();
+
+    // 3. Clean keywords (uniqueness, trim, and filter out those that are strictly the brand name)
+    let cleaned = list
+      .map(k => k.trim())
+      .filter(Boolean)
+      .filter((k, idx, self) => self.indexOf(k) === idx);
+
+    // Filter out matches where the keyword contains or equals the brand name
+    cleaned = cleaned.filter(k => k.toLowerCase() !== bName);
+
+    // 4. Ensure we have at least 15 keywords
+    if (cleaned.length < 15) {
+      const industry = (bDetails?.brand?.industry || "Technology").toLowerCase();
+      const industryKeywordsMap: Record<string, string[]> = {
+        'solar': [
+          'solar panels installation', 'best solar company', 'solar energy solutions',
+          'renewable energy systems', 'residential solar panels', 'solar power for home',
+          'commercial solar contractors', 'solar energy developers', 'solar panel cost',
+          'solar system maintenance', 'solar installers near me', 'green energy power',
+          'off grid solar systems', 'clean solar electricity', 'solar battery storage'
+        ],
+        'water': [
+          'ro water purifier', 'best water filter', 'alkaline water machine',
+          'drinking water filtration', 'water purification system', 'domestic ro system',
+          'industrial water filter', 'water purifier service', 'alkaline filter price',
+          'home water filtration', 'uv water purifier', 'clean drinking water',
+          'ro filter replacement', 'mineral water purifier', 'best ro for home'
+        ],
+        'default': [
+          'custom software development', 'it consulting services', 'cloud migration solutions',
+          'enterprise software development', 'managed it services', 'cybersecurity consulting',
+          'digital transformation services', 'app development company', 'ai software solutions',
+          'devops consulting', 'cloud infrastructure management', 'saas software development',
+          'data analytics platform', 'business automation tools', 'network security services'
+        ]
+      };
+
+      let industryKeys = industryKeywordsMap['default'];
+      for (const [key, keywordsList] of Object.entries(industryKeywordsMap)) {
+        if (industry.includes(key) || bName.includes(key)) {
+          industryKeys = keywordsList;
+          break;
+        }
+      }
+
+      for (const kw of industryKeys) {
+        if (cleaned.length >= 15) break;
+        if (!cleaned.some(existing => existing.toLowerCase() === kw.toLowerCase())) {
+          cleaned.push(kw);
+        }
+      }
+    }
+
+    // 5. Final fallback if empty
+    if (cleaned.length === 0) {
+      cleaned = [
+        'professional consulting', 'business services online', 'custom solutions developer',
+        'expert industry consultants', 'affordable professional agency', 'top rated developers',
+        'innovative business systems', 'quality service provider', 'trusted advisors team',
+        'reliable agency systems', 'performance optimization service', 'industry leading products',
+        'expert consulting firm', 'custom solution integration', 'business strategy consulting'
+      ];
+    }
+
+    return cleaned;
+  };
+
   const buildDefaultCreative = (draftPlatformData?: any): PlatformCreative => ({
     headline: draftPlatformData?.headline || defaultHeadline,
     primaryText: draftPlatformData?.primaryText || draftPlatformData?.caption || defaultPrimaryText,
@@ -1806,7 +1968,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     googleReachGoal: draftPlatformData?.googleReachGoal || "WEBSITE_VISITS",
     googleNetworks: draftPlatformData?.googleNetworks || ["SEARCH"],
     googleBiddingStrategy: draftPlatformData?.googleBiddingStrategy || "MAXIMIZE_CONVERSIONS",
-    googleKeywords: draftPlatformData?.googleKeywords || [],
+    googleKeywords: draftPlatformData?.googleKeywords || (draftPlatformData ? [] : resolveDefaultKeywords()),
 
     liObjective: draftPlatformData?.liObjective || "BRAND_AWARENESS",
     liAdFormat: draftPlatformData?.liAdFormat || "SINGLE_IMAGE",
@@ -1918,13 +2080,15 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
       if (targetCid && (activePid as string) !== 'All' && !targetCid.endsWith(`_${activePid}`)) {
         targetCid = `${targetCid}_${activePid}`;
       }
-
+ 
       const payload = {
         userId,
         campaignId: targetCid,
         campaignName: `${brandName}_${activePid}_Campaign`,
-        dailyBudget: parseInt(adBudget) || 10,
+        dailyBudget: parseFloat(adBudget.replace(/[^0-9.]/g, '')) || 10,
         objective: adEvent,
+        startDate: adStartDate,
+        endDate: adEndDate,
         finalUrl: adFinalUrl,
         headline: activePlatData?.headline,
         caption: activePlatData?.primaryText || '',
@@ -1951,7 +2115,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
         liSeniority: activePlatData?.liSeniority,
         liCompanySize: activePlatData?.liCompanySize,
       };
-
+ 
       const { api } = await import('../../api/axios');
       if (activePid === 'google') {
         const res = await api.post('/campaign/google/publish', payload);
@@ -1988,7 +2152,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     } finally {
       setLoading(null);
     }
-  }, [onPublish, showToast, activePid, platformCreatives, userId, campaignId, activeCid, brandName, adBudget, adEvent, adFinalUrl, selectedMetaPage, selectedMetaPixel, selectedGoogleAccount, adIncludeLocations, adExcludeLocations]);
+  }, [onPublish, showToast, activePid, platformCreatives, userId, campaignId, activeCid, brandName, adBudget, adEvent, adStartDate, adEndDate, adFinalUrl, selectedMetaPage, selectedMetaPixel, selectedGoogleAccount, adIncludeLocations, adExcludeLocations]);
 
   const campaignTitle = `${brandName}_${promoData?.businessGoal || promoData?.objective || "OUTCOME_SALES"}_${activePlat.name}_${new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}`;
 
@@ -2009,6 +2173,8 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
           budget: adBudget,
           event: adEvent,
           schedule: adSchedule,
+          startDate: adStartDate,
+          endDate: adEndDate,
           finalUrl: adFinalUrl,
           location: adIncludeLocations.join(', '),
           includeLocations: adIncludeLocations,
@@ -2061,6 +2227,8 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
           estimatedAudience: adEstimated,
           originalHeadlines: promoData?.headlines ?? SEED.headlines,
           originalPrimaryTexts: promoData?.primaryTexts ?? SEED.primaryTexts,
+          startDate: adStartDate,
+          endDate: adEndDate,
         },
 
         // ── Per-platform creatives + ad settings ───────────────────────
@@ -2088,7 +2256,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     }
   }, [
     enabledPlatforms, platformCreatives,
-    adBudget, adEvent, adSchedule, adFinalUrl, adIncludeLocations, adExcludeLocations, adAdvantage, adEstimated,
+    adBudget, adEvent, adSchedule, adStartDate, adEndDate, adFinalUrl, adIncludeLocations, adExcludeLocations, adAdvantage, adEstimated,
     campaignTitle, userId, campaignId, activeCid,
     brandName, logoUrl, brandDetails,
     promoData,
@@ -2154,10 +2322,17 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
               <div style={{ display: "grid", gridTemplateColumns: "minmax(200px,1fr) minmax(260px,1.1fr) minmax(200px,1fr)", gap: 14, alignItems: "start" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <AdSettingCard
-                    event={adEvent} budget={adBudget} schedule={adSchedule} finalUrl={adFinalUrl}
+                    event={adEvent} 
+                    budget={adBudget} 
+                    startDate={adStartDate} 
+                    endDate={adEndDate} 
+                    finalUrl={adFinalUrl}
                     enabled={isCurrentPlatformEnabled}
-                    onEventChange={setAdEvent} onBudgetChange={setAdBudget}
-                    onScheduleChange={setAdSchedule} onFinalUrlChange={setAdFinalUrl}
+                    onEventChange={setAdEvent} 
+                    onBudgetChange={setAdBudget}
+                    onStartDateChange={setAdStartDate} 
+                    onEndDateChange={setAdEndDate} 
+                    onFinalUrlChange={setAdFinalUrl}
                   />
                   <TargetAudienceCard
                     includeLocations={adIncludeLocations}

@@ -139,6 +139,10 @@ export class AnalyticsService {
             'developer-token': developerToken,
           }
         });
+        if (!listRes.ok) {
+          const text = await listRes.text();
+          throw new Error(`listAccessibleCustomers failed with status ${listRes.status}: ${text.substring(0, 150)}`);
+        }
         const listData = await listRes.json();
         const accessibleCids = (listData.resourceNames || []).map((rn: string) => rn.split('/')[1]);
 
@@ -157,8 +161,9 @@ export class AnalyticsService {
                 query: 'SELECT customer_client.id FROM customer_client WHERE customer_client.level <= 1 AND customer_client.manager = FALSE LIMIT 1'
               })
             });
+            if (!childRes.ok) continue;
             const childJson = await childRes.json();
-            if (childRes.ok && childJson.results && childJson.results.length > 0) {
+            if (childJson.results && childJson.results.length > 0) {
               resolvedCustomerId = childJson.results[0].customerClient.id.toString();
               managerId = mccId;
               foundClient = true;
@@ -166,8 +171,8 @@ export class AnalyticsService {
             }
           } catch (e) { continue; }
         }
-      } catch (e) {
-        this.logger.warn(`Failed to dynamically resolve manager ID: ${e}`);
+      } catch (e: any) {
+        this.logger.warn(`Failed to dynamically resolve manager ID: ${e.message}`);
       }
 
       const headers: Record<string, string> = {
@@ -189,8 +194,13 @@ export class AnalyticsService {
         },
       );
 
+      if (!response.ok) {
+        const errText = await response.text();
+        this.logger.warn(`Google Ads search API error: ${errText.substring(0, 300)}`);
+        throw new HttpException(`Google Ads API error: ${errText.substring(0, 300)}`, HttpStatus.BAD_REQUEST);
+      }
       const json = await response.json();
-      if (!response.ok || json.error) {
+      if (json.error) {
         const message = json.error?.message || JSON.stringify(json);
         this.logger.warn(`Google Ads API error: ${message}`);
         throw new HttpException(`Google Ads API error: ${message}`, HttpStatus.BAD_REQUEST);
@@ -708,6 +718,10 @@ export class AnalyticsService {
           'developer-token': developerToken,
         }
       });
+      if (!listRes.ok) {
+        const text = await listRes.text();
+        throw new Error(`listAccessibleCustomers failed with status ${listRes.status}: ${text.substring(0, 150)}`);
+      }
       const listData = await listRes.json();
       const accessibleCids = (listData.resourceNames || []).map((rn: string) => rn.split('/')[1]);
       // If the manager (MCC) ID is among the accessible customers, keep it as managerId.
@@ -719,8 +733,8 @@ export class AnalyticsService {
         // Fallback to the first accessible ID (assumed to be a manager).
         managerId = accessibleCids[0];
       }
-    } catch (e) {
-      this.logger.warn(`Failed to dynamically resolve manager ID: ${e}`);
+    } catch (e: any) {
+      this.logger.warn(`Failed to dynamically resolve manager ID: ${e.message}`);
     }
 
     const headers: Record<string, string> = {
@@ -741,18 +755,19 @@ export class AnalyticsService {
         body: JSON.stringify({ query }),
       },
     );
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new HttpException(
+        `Google Ads API request failed with status ${res.status}: ${errText.substring(0, 300)}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     const json: any = await res.json();
 
     if (json.error) {
       throw new HttpException(
         `Google Ads API error: ${json.error.message || JSON.stringify(json.error)}`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (!res.ok) {
-      throw new HttpException(
-        `Google Ads API request failed with status ${res.status}`,
         HttpStatus.BAD_REQUEST,
       );
     }

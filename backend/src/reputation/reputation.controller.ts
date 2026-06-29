@@ -9,7 +9,7 @@ import {
     Query,
 } from '@nestjs/common';
 import { ReputationService } from './reputation.service';
-import { CreateLeadDto, CreateLeadsBulkDto } from 'src/dto/create-lead.dto';
+import { CreateLeadDto, CreateLeadsBulkDto } from '../dto/create-lead.dto';
 
 @Controller('reputation')
 export class ReputationController {
