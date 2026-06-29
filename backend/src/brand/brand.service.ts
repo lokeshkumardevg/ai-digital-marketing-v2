@@ -3,12 +3,16 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Brand, BrandDocument } from './brand.schema';
+import { AiService } from '../ai/ai.service';
+import { chromium } from 'playwright';
+import axios from 'axios';
 
 @Injectable()
 export class BrandService {
   constructor(
     @InjectModel(Brand.name)
     private readonly brandModel: Model<BrandDocument>,
+    private readonly aiService: AiService,
   ) {}
 
   // ============================================================
@@ -67,6 +71,7 @@ export class BrandService {
       campaignId:   doc.campaignId,
       assets:       doc.assets,
       savedAt:      doc.savedAt,
+      brandProfile: doc.brandProfile,
     };
   }
 
@@ -158,12 +163,109 @@ if (existing && !forceReplace && (existing.name || '').trim().toLowerCase() !== 
 
     console.log(`[brand-save] ✅ Saved brand "${brandName}" for user ${userId}`);
 
+    // Trigger background brand profile generation
+    this.generateAndSaveProfileInBackground(userId, brandName, updated.url);
+
     return {
       ok:       true,
       replaced: !!existing,
       message:  existing ? 'Brand replaced successfully' : 'Brand saved successfully',
       brand:    this.normaliseBrandRecord(updated),
     };
+  }
+
+  async updateBrandProfile(userId: string, brandProfile: any) {
+    const updated = await this.brandModel.findOneAndUpdate(
+      { userId },
+      { $set: { brandProfile } },
+      { new: true, upsert: true }
+    );
+    return this.normaliseBrandRecord(updated);
+  }
+
+  async generateAndSaveProfileInBackground(userId: string, brandName: string, url: string) {
+    if (!url) return;
+    setImmediate(async () => {
+      try {
+        console.log(`[brand-save] Background brand profile generation starting for ${brandName} (${url})...`);
+        let scrapedContext = '';
+        
+        let browser: any = null;
+        let title = '';
+        let metaDesc = '';
+        let bodyText = '';
+        let scrapedSuccessfully = false;
+
+        // 1. Try Playwright
+        try {
+          browser = await chromium.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+          });
+          const context = await browser.newContext({
+            viewport: { width: 1440, height: 900 },
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          });
+          const page = await context.newPage();
+          await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 12000 });
+          
+          title = await page.title();
+          metaDesc = await page.$eval('meta[name="description"]', (el: any) => el.getAttribute('content')).catch(() => '');
+          bodyText = await page.evaluate(() => {
+            const scripts = document.querySelectorAll('script, style, noscript, iframe, nav, footer');
+            scripts.forEach(s => s.remove());
+            return document.body.innerText || '';
+          });
+
+          scrapedSuccessfully = true;
+          await browser.close();
+        } catch (err: any) {
+          console.warn(`[brand-save] Playwright background scrape failed: ${err.message}. Trying Axios fallback.`);
+          if (browser) {
+            try { await browser.close(); } catch {}
+          }
+        }
+
+        // 2. Try Axios + Cheerio
+        if (!scrapedSuccessfully) {
+          try {
+            const response = await axios.get(url, {
+              timeout: 10000,
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+              }
+            });
+            const cheerio = require('cheerio');
+            const $ = cheerio.load(response.data);
+            title = $('title').text() || '';
+            metaDesc = $('meta[name="description"]').attr('content') || '';
+            $('script, style, noscript, iframe, nav, footer').remove();
+            bodyText = $('body').text() || '';
+            scrapedSuccessfully = true;
+          } catch (err: any) {
+            console.warn(`[brand-save] Axios background scrape fallback failed: ${err.message}`);
+          }
+        }
+
+        if (scrapedSuccessfully) {
+          scrapedContext = `TITLE: ${title}\nDESCRIPTION: ${metaDesc}\n\nCONTENT:\n${bodyText.replace(/\s+/g, ' ').slice(0, 3500)}`;
+        } else {
+          scrapedContext = `${brandName} ${url}`;
+        }
+
+        const profileRes = await this.aiService.generateBrandProfile(url, brandName, scrapedContext);
+        const profile = profileRes.data?.brand || profileRes;
+        
+        await this.brandModel.findOneAndUpdate(
+          { userId },
+          { $set: { brandProfile: profile } }
+        );
+        console.log(`[brand-save] ✅ Background brand profile generation completed and saved for ${brandName}`);
+      } catch (err: any) {
+        console.error(`[brand-save] Background brand profile generation failed: ${err.message}`);
+      }
+    });
   }
 
   // ============================================================
