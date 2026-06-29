@@ -314,13 +314,25 @@ const DashboardPage: React.FC = () => {
       </div>
 
       {/* ── AI Insights ── */}
-      <GlassCard>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-          <Sparkles size={18} color="#f59e0b" />
-          <h3 className="dash-card-title">AI Insights</h3>
-          <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--accent-primary)', cursor: 'pointer' }}>View all</span>
-        </div>
-        <div className="dash-insights">
+<GlassCard>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+    <Sparkles size={18} color="#f59e0b" />
+    <h3 className="dash-card-title">AI Insights</h3>
+    <span style={{ 
+      fontSize: '0.6rem', 
+      color: 'var(--accent-primary)', 
+      background: 'rgba(245, 158, 11, 0.15)',
+      padding: '2px 10px',
+      borderRadius: '12px',
+      fontWeight: '500',
+      letterSpacing: '0.3px',
+      textTransform: 'uppercase'
+    }}>
+      Coming Soon
+    </span>
+    <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--accent-primary)', cursor: 'pointer' }}>View all</span>
+  </div>
+        {/* <div className="dash-insights">
           {[
             { icon: '🚚', title: 'Shipping complaints increased 24%',    sub: 'Compared to last month',                color: '#ef4444', bg: 'rgba(239,68,68,0.07)'   },
             { icon: '❤️', title: 'Customers love your product quality',  sub: 'Positive mentions increased 18%',       color: '#10b981', bg: 'rgba(16,185,129,0.07)'  },
@@ -339,7 +351,7 @@ const DashboardPage: React.FC = () => {
               </button>
             </div>
           ))}
-        </div>
+        </div> */}
       </GlassCard>
 
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
