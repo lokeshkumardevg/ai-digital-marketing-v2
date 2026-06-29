@@ -46,3 +46,8 @@ uploads/
 test-ad.js
 test-ad3.js
 test-ads-update.js
+
+# Excel and Work Reports
+*.csv
+latest_tasks_for_excel.csv
+todays_work_report.csv
