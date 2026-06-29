@@ -66,6 +66,40 @@ const initials = (name: string) =>
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+const transformRawProfile = (raw: any): BrandData => {
+  return {
+    name: raw?.name || '',
+    url: raw?.website || '',
+    description: raw?.description || '',
+    lifecycle: raw?.lifecycle || '',
+    companySize: raw?.company_size || '',
+    businessModel: raw?.business_model || '',
+    targetMarket: raw?.target_market || '',
+    tags: raw?.brand_tone || [],
+    brandDna: {
+      brandTone: Array.isArray(raw?.brand_tone) ? raw.brand_tone.join(', ') : raw?.brand_tone || '',
+      marketKeywords: raw?.market_keywords || [],
+    },
+    coreAdvantages: {
+      valueProposition: raw?.value_proposition || '',
+      differentiators: raw?.differentiators || [],
+    },
+    features: raw?.features || [],
+    targetAudience: raw?.target_audience || [],
+    competitors: raw?.competitors || [],
+    reachAndEcosystem: {
+      marketingChannels: raw?.marketing_channels || [],
+      customerHangouts: raw?.customer_hangouts || [],
+    },
+    impactAnalysis: raw?.impact_analysis || {
+      revenue: [],
+      cost: [],
+      policy: [],
+      technology: [],
+    },
+  };
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export const BrandProfile: React.FC = () => {
@@ -84,17 +118,31 @@ export const BrandProfile: React.FC = () => {
   const [liLoading, setLiLoading] = useState<boolean>(false);
   const [activeAudienceIdx, setActiveAudienceIdx] = useState(0);
 
-  // Load cached result from localStorage on mount
+  // Load brand profile on active brand change
   useEffect(() => {
     if (!activeBrand) return;
+
+    if (activeBrand.brandProfile) {
+      const transformed = transformRawProfile(activeBrand.brandProfile);
+      setBrandData(transformed);
+      setPhase('result');
+      // Sync to localStorage
+      localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transformed));
+      return;
+    }
+
     const cached = localStorage.getItem(`brand_profile_${activeBrand.id}`);
     if (cached) {
-      try { setBrandData(JSON.parse(cached)); setPhase('result'); } catch { }
-    } else {
-      setPhase('idle');
-      setBrandData(null);
+      try {
+        setBrandData(JSON.parse(cached));
+        setPhase('result');
+        return;
+      } catch { }
     }
-  }, [activeBrand?.id]);
+
+    setPhase('idle');
+    setBrandData(null);
+  }, [activeBrand?.id, activeBrand?.brandProfile]);
 
   // Fetch LinkedIn data once brand profile is loaded
   useEffect(() => {
@@ -207,8 +255,11 @@ export const BrandProfile: React.FC = () => {
       setBrandData(transformed);
       localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transformed));
       setPhase('result');
-      // Persist brand to backend and update Redux
-      dispatch(upsertBrandLocally(transformed));
+      // Update local Redux store with the new brandProfile
+      dispatch(upsertBrandLocally({
+        ...activeBrand,
+        brandProfile: raw,
+      }));
 
     } catch (err: any) {
       setError(err.message || 'Analysis failed');
@@ -222,6 +273,11 @@ export const BrandProfile: React.FC = () => {
     setBrandData(null);
     setPhase('idle');
     setError(null);
+    // Clear brandProfile in Redux store as well
+    dispatch(upsertBrandLocally({
+      ...activeBrand,
+      brandProfile: null,
+    }));
   };
 
   // ── Render ──────────────────────────────────────────────────────────────────

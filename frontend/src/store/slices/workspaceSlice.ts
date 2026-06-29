@@ -51,6 +51,9 @@ export interface BrandRecord {
 
   /** ISO timestamp of when the brand was saved / last updated */
   savedAt?: string;
+
+  /** AI-generated brand profile */
+  brandProfile?: any;
 }
 
 interface WorkspaceState {
@@ -126,7 +129,18 @@ const normaliseBrand = (raw: any): BrandRecord => {
         }
       : undefined;
 
-  return { id, name, url, status, industry, tagline, overallScore, assets, savedAt: raw.savedAt };
+  return {
+    id,
+    name,
+    url,
+    status,
+    industry,
+    tagline,
+    overallScore,
+    assets,
+    savedAt: raw.savedAt,
+    brandProfile: raw.brandProfile,
+  };
 };
 
 // ─────────────────────────────────────────────

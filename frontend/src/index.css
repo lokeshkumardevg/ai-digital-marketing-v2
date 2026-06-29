@@ -301,4 +301,42 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
 }
+
+/* Ads Manager Responsive Briefing */
+.briefing-grid {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  width: 100%;
+}
+
+.briefing-item {
+  flex: 1;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding-right: 32px;
+}
+
+.briefing-item:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+@media (max-width: 1024px) {
+  .briefing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .briefing-item {
+    border-right: none;
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .briefing-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
 }
