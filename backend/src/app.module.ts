@@ -33,8 +33,7 @@ import { CallingModule } from './calling/calling.module';
 import { GoogleBusinessModule } from './google-business/google-business.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MetaReviewsModule } from './meta-reviews/meta-reviews.module';
-
-
+import { ReviewAgentModule } from './reviewagent/reviewagent.module';
 
 @Module({
   imports: [
@@ -91,6 +90,7 @@ import { MetaReviewsModule } from './meta-reviews/meta-reviews.module';
     CallingModule,
     GoogleBusinessModule,
     MetaReviewsModule,
+    ReviewAgentModule
   ],
   controllers: [AppController],
   providers: [AppService],
