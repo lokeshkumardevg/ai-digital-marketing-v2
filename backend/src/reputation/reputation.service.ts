@@ -25,6 +25,7 @@ export class ReputationService {
     @InjectModel('Review')   private reviewModel:   Model<any>,
     @InjectModel('Customer') private customerModel: Model<any>,
     @InjectModel('Insight')  private insightModel:  Model<any>,
+    @InjectModel('PostReviewMeta') private postMetaModel: Model<any>, 
   ) {}
 
   // ═══════════════════════════════════════════════════════════
@@ -43,15 +44,29 @@ async getDashboardStats(brandId: string) {
     ratingDistribution,
     repliedCount,
     recentTrend,
+    fbStats, // naya — facebook comments stats
   ] = await Promise.all([
     this.reviewModel.countDocuments(filter),
     this.reviewModel.aggregate([
       { $match: filter },
       { $group: { _id: null, avg: { $avg: '$rating' } } },
     ]),
+    // ---- UPDATED: sentiment ab stored '$sentiment' field se nahi, balki
+    // rating se directly derive ho rha h -> rating <= 3 = negative, rating > 3 = positive
     this.reviewModel.aggregate([
       { $match: filter },
-      { $group: { _id: '$sentiment', count: { $sum: 1 } } },
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $lte: ['$rating', 3] }, // rating 1, 2, 3 -> negative
+              'negative',
+              'positive',               // rating 4, 5 -> positive
+            ],
+          },
+          count: { $sum: 1 },
+        },
+      },
     ]),
     this.reviewModel.aggregate([
       { $match: filter },
@@ -63,16 +78,20 @@ async getDashboardStats(brandId: string) {
       { $sort: { _id: 1 } },
     ]),
     this.reviewModel.countDocuments({ ...filter, isReplied: true }),
+    // ---- FIXED: reviewDate may be stored as a string, $convert before $dateToString ----
     this.reviewModel.aggregate([
       { $match: filter },
       {
-        $group: {
-          _id: {
-            $dateToString: {
-              format: '%Y-%m-%d',
-              date: '$reviewDate',
-            },
+        $addFields: {
+          _reviewDate: {
+            $convert: { input: '$reviewDate', to: 'date', onError: null, onNull: null },
           },
+        },
+      },
+      { $match: { _reviewDate: { $ne: null } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$_reviewDate' } },
           count: { $sum: 1 },
           avgRating: { $avg: '$rating' },
         },
@@ -80,50 +99,137 @@ async getDashboardStats(brandId: string) {
       { $sort: { _id: 1 } },
       { $limit: 30 },
     ]),
+    this.getFacebookCommentStats(brandId), // naya
   ]);
 
   const avg = avgRatingAgg[0]?.avg ?? 0;
 
   const sentimentMap: any = {};
-  sentimentCounts.forEach((s: any) => {
-    sentimentMap[s._id] = s.count;
-  });
+  sentimentCounts.forEach((s: any) => { sentimentMap[s._id] = s.count; });
 
   const platformMap: any = {};
-  platformCounts.forEach((p: any) => {
-    platformMap[p._id] = p.count;
-  });
+  platformCounts.forEach((p: any) => { platformMap[p._id] = p.count; });
+  // Facebook ka actual count comments se add karo
+  platformMap['facebook'] = (platformMap['facebook'] || 0) + fbStats.totalComments;
 
   const ratingMap: any = {};
-  ratingDistribution.forEach((r: any) => {
-    ratingMap[r._id] = r.count;
-  });
+  ratingDistribution.forEach((r: any) => { ratingMap[r._id] = r.count; });
 
   const positiveCount = sentimentMap['positive'] || 0;
   const negativeCount = sentimentMap['negative'] || 0;
 
+  // Combined totals: Google reviews + Facebook comments
+  const combinedTotal = totalReviews + fbStats.totalComments;
+  const combinedReplied = repliedCount + fbStats.repliedComments;
+
+  // Rating/sentiment sirf un items pe based h jinke paas actually ye data h (abhi sirf Google)
+  const ratedReviewsCount = totalReviews;
+
   const responseRate =
-    totalReviews > 0
-      ? Math.round((repliedCount / totalReviews) * 100)
-      : 0;
+    combinedTotal > 0 ? Math.round((combinedReplied / combinedTotal) * 100) : 0;
+
+  // Trend ko date-wise merge karo (Google reviewDate + FB comment createdAt)
+  const trendMap: Record<string, { count: number; ratingSum: number; ratingCount: number }> = {};
+
+  recentTrend.forEach((t: any) => {
+    trendMap[t._id] = {
+      count: t.count,
+      ratingSum: (t.avgRating || 0) * t.count,
+      ratingCount: t.count,
+    };
+  });
+
+  fbStats.trend.forEach((t: any) => {
+    if (!trendMap[t._id]) trendMap[t._id] = { count: 0, ratingSum: 0, ratingCount: 0 };
+    trendMap[t._id].count += t.count;
+  });
+
+  const trend = Object.keys(trendMap)
+    .sort()
+    .map((date) => ({
+      _id: date,
+      count: trendMap[date].count,
+      avgRating:
+        trendMap[date].ratingCount > 0
+          ? Math.round((trendMap[date].ratingSum / trendMap[date].ratingCount) * 10) / 10
+          : null, // us din rating available nahi (sirf FB comments hue)
+    }));
 
   return {
-    totalReviews,
-    averageRating: Math.round(avg * 10) / 10,
+    totalReviews: combinedTotal,              // Google + Facebook combined
+    googleReviewsCount: totalReviews,         // breakdown ke liye
+    facebookCommentsCount: fbStats.totalComments,
+    averageRating: Math.round(avg * 10) / 10, // sirf Google pe based (FB me rating nahi hoti)
+    ratedReviewsCount,                        // frontend ko bata dega ye avg kis count pe h
     positiveSentiment:
-      totalReviews > 0
-        ? Math.round((positiveCount / totalReviews) * 100)
-        : 0,
+      ratedReviewsCount > 0 ? Math.round((positiveCount / ratedReviewsCount) * 100) : 0,
     negativeSentiment:
-      totalReviews > 0
-        ? Math.round((negativeCount / totalReviews) * 100)
-        : 0,
-    responseRate,
+      ratedReviewsCount > 0 ? Math.round((negativeCount / ratedReviewsCount) * 100) : 0,
+    responseRate,                             // Google + FB combined replied %
     reviewGrowth: 24,
     byPlatform: platformMap,
     ratingDistribution: ratingMap,
-    trend: recentTrend,
+    trend,
     isDemoData: false,
+  };
+}
+
+private async getFacebookCommentStats(brandId: string) {
+  // CONFIRMED: postMeta docs have a direct brandId field (verified from sample doc),
+  // so match on it directly — do NOT match on pageId, brandId !== pageId.
+  const matchFilter: any = brandId ? { brandId } : {};
+
+  const [totals] = await this.postMetaModel.aggregate([
+    { $match: matchFilter },
+    { $unwind: { path: '$comments', preserveNullAndEmptyArrays: false } },
+    {
+      $group: {
+        _id: null,
+        totalComments: { $sum: 1 },
+        repliedComments: {
+          $sum: {
+            $cond: [
+              { $gt: [{ $size: { $ifNull: ['$comments.replies', []] } }, 0] },
+              1,
+              0,
+            ],
+          },
+        },
+      },
+    },
+  ]);
+
+  // ---- FIXED: comments.createdAt may be stored as a string, $convert before $dateToString ----
+  const trend = await this.postMetaModel.aggregate([
+    { $match: matchFilter },
+    { $unwind: '$comments' },
+    {
+      $addFields: {
+        _commentDate: {
+          $convert: {
+            input: '$comments.createdAt',
+            to: 'date',
+            onError: null, // unparseable string -> null instead of throwing
+            onNull: null,
+          },
+        },
+      },
+    },
+    { $match: { _commentDate: { $ne: null } } }, // drop comments with no valid date
+    {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$_commentDate' } },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { _id: 1 } },
+    { $limit: 30 },
+  ]);
+
+  return {
+    totalComments: totals?.totalComments || 0,
+    repliedComments: totals?.repliedComments || 0,
+    trend,
   };
 }
 
