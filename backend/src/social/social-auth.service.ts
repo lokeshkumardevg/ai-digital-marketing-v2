@@ -272,7 +272,7 @@ export class SocialAuthService {
   }
 
   private getRedirectUri(platform: SocialPlatform): string {
-    const backendUrl = this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000';
+    const backendUrl = this.configService.get<string>('BACKEND_URL');
     const fromEnv = this.configService.get<string>(`${platform.toUpperCase()}_REDIRECT_URI`);
     return fromEnv || `${backendUrl}/social/auth/${platform}/callback`;
   }

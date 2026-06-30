@@ -15,7 +15,7 @@ export const Dashboard: React.FC = () => {
   const [data, setData] = useState<{ daily: any[], summary: any } | null>(null);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/analytics/dashboard`)
+    fetch(`${import.meta.env.VITE_API_URL}/analytics/dashboard`)
       .then(res => res.json())
       .then(d => setData(d))
       .catch(console.error);
@@ -55,9 +55,9 @@ export const Dashboard: React.FC = () => {
         marginBottom: '32px'
       }}>
         {[
-          { label: 'Total AI Content', value: data?.aiContentCount || 0, change: '0%', icon: Wand2, color: 'var(--accent-primary)' },
+          { label: 'Total AI Content', value: (data as any)?.aiContentCount || 0, change: '0%', icon: Wand2, color: 'var(--accent-primary)' },
           { label: 'Predicted ROI', value: data?.summary?.roas ? `${data.summary.roas}x` : '0x', change: '0%', icon: TrendingUp, color: 'var(--success)' },
-          { label: 'Active Campaigns', value: data?.campaigns || 0, change: '0', icon: Target, color: 'var(--warning)' },
+          { label: 'Active Campaigns', value: (data as any)?.campaigns || 0, change: '0', icon: Target, color: 'var(--warning)' },
           { label: 'Total Conversions', value: data?.summary?.conversions || 0, change: '0%', icon: MousePointerClick, color: 'var(--info)' },
         ].map((stat, i) => (
           <GlassCard key={i} onClick={() => { }}>
@@ -122,7 +122,7 @@ export const Dashboard: React.FC = () => {
         <GlassCard>
           <h3 style={{ marginBottom: '24px', fontSize: '1.2rem' }}>AI Orchestrator Status</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {(data?.orchestratorStatus || []).map((model: any, i: number) => (
+            {((data as any)?.orchestratorStatus || []).map((model: any, i: number) => (
               <div key={i} style={{
                 background: 'var(--bg-card)',
                 padding: '16px', borderRadius: '12px', border: '1px solid var(--glass-border)',

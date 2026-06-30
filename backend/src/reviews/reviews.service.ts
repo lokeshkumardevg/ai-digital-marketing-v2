@@ -172,7 +172,7 @@ Reply only the message text, no quotes.
     `.trim();
  
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-4o-mini',
       temperature: 0.7,
       max_tokens: 200,
       messages: [{ role: 'user', content: prompt }],
@@ -214,7 +214,7 @@ Review: "${review.content}"
     `.trim();
  
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-4o-mini',
       temperature: 0.1,
       max_tokens: 150,
       response_format: { type: 'json_object' },

@@ -83,7 +83,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({
   // ── Dark theme ─────────────────────────────────────────────────
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
         {title && <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: D.textPrimary }}>{title}</h3>}
         <div style={{ position: 'relative' }}>
           <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: D.textDim, pointerEvents: 'none' }} size={15} />
@@ -100,7 +100,8 @@ export const SmartTable: React.FC<SmartTableProps> = ({
       </div>
 
       <div style={{ background: D.surface, borderRadius: 16, border: `1px solid ${D.border}`, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1200px' }}>
           <thead>
             <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: `1px solid ${D.border}` }}>
               {columns.map(col => (
@@ -157,9 +158,11 @@ export const SmartTable: React.FC<SmartTableProps> = ({
             )}
           </tbody>
         </table>
+        </div>
 
         {/* Pagination */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderTop: `1px solid ${D.border}`, background: 'var(--bg-card)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderTop: `1px solid ${D.border}`, background: 'rgba(255,255,255,0.02)', flexWrap: 'wrap', gap: 12 }}>
           <div style={{ fontSize: '0.82rem', color: D.textDim, fontWeight: 500 }}>
             Showing {filteredData.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} – {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} records
           </div>

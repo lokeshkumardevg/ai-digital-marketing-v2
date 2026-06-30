@@ -62,6 +62,12 @@ export class User {
   @Prop({ required: false })
   metaAdAccountName?: string;
 
+  @Prop({ required: false })
+  metaBusinessId?: string;
+
+  @Prop({ required: false })
+  metaBusinessName?: string;
+
   @Prop()
   linkedinAccessToken?: string;
 

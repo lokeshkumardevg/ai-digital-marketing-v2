@@ -34,6 +34,7 @@ import { GoogleBusinessModule } from './google-business/google-business.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MetaReviewsModule } from './meta-reviews/meta-reviews.module';
 import { UploadModule } from './upload/upload.module';
+import { ReviewAgentModule } from './reviewagent/reviewagent.module';
 
 @Module({
   imports: [
@@ -46,21 +47,21 @@ import { UploadModule } from './upload/upload.module';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'single',
-        url: configService.get('REDIS_URL') || 'redis://localhost:6379',
+        url: configService.get<string>('REDIS_URL'),
       }),
       inject: [ConfigService],
     }),
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        redis: configService.get<string>('REDIS_URL') || 'redis://localhost:6379',
+        redis: configService.get<string>('REDIS_URL'),
       }),
       inject: [ConfigService],
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI') || 'mongodb+srv://devclientg:SCpLNaejWusV7mcR@cluster0.vyinynw.mongodb.net/ai_digital',
+        uri: configService.get<string>('MONGO_URI'),
       }),
       inject: [ConfigService],
     }),
@@ -91,6 +92,7 @@ import { UploadModule } from './upload/upload.module';
     GoogleBusinessModule,
     MetaReviewsModule,
     UploadModule,
+    ReviewAgentModule
   ],
   controllers: [AppController],
   providers: [AppService],

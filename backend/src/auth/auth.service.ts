@@ -184,13 +184,15 @@ export class AuthService {
       throw new Error('Google Client ID not configured');
     }
 
-    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const backendUrl = this.configService.get<string>('BACKEND_URL');
     const redirectUri = `${backendUrl}/auth/google/callback`;
 
     const scope = [
       'https://www.googleapis.com/auth/adwords',
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/webmasters',
+      'https://www.googleapis.com/auth/webmasters.readonly',
     ].join(' ');
 
     return `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -205,13 +207,17 @@ export class AuthService {
 
   getMetaAuthUrl(userId: string) {
     const appId = this.configService.get('META_APP_ID');
-    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const backendUrl = this.configService.get<string>('BACKEND_URL');
     const redirectUri = `${backendUrl}/auth/meta/callback`;
     const scope = [
       'public_profile',
       'email',
       'ads_management',
       'ads_read',
+      'business_management',
+      'pages_show_list',
+      'pages_read_engagement',
+      'pages_manage_ads'
     ].join(',');
 
     return `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}` +
@@ -224,26 +230,15 @@ export class AuthService {
   getXAuthUrl(userId: string) {
     let clientId = this.configService.get('X_CLIENT_ID') || this.configService.get('TWITTER_CLIENT_ID');
     console.log('[DEBUG] getXAuthUrl triggered');
-    console.log('[DEBUG] Initial resolved clientId:', clientId);
-    if (clientId && !clientId.includes(':')) {
-      try {
-        const decoded = Buffer.from(clientId, 'base64').toString('utf8');
-        if (decoded.includes(':')) {
-          console.log('[DEBUG] Decoded base64 clientId to raw:', decoded);
-          clientId = decoded;
-        }
-      } catch (e) {
-        console.error('[DEBUG] Failed to decode clientId as base64', e);
-      }
-    }
     console.log('[DEBUG] Final clientId used:', clientId);
+
     if (!clientId) {
       throw new Error('X (Twitter) Client ID not configured.');
     }
-    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const backendUrl = this.configService.get<string>('BACKEND_URL');
     const redirectUri = `${backendUrl}/auth/x/callback`;
-    // Use only basic scopes — ads.read requires special Twitter Ads API access
-    const scope = encodeURIComponent('tweet.read users.read offline.access');
+    // We need tweet.write to publish simulated campaigns
+    const scope = encodeURIComponent('tweet.read tweet.write users.read offline.access');
     const codeVerifier = 'challengechallengechallengechallengechallenge'; // 43 chars
     const crypto = require('crypto');
     const codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
@@ -254,7 +249,7 @@ export class AuthService {
 
   getLinkedInAuthUrl(userId: string) {
     const clientId = this.configService.get('LINKEDIN_CLIENT_ID');
-    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const backendUrl = this.configService.get<string>('BACKEND_URL');
     const redirectUri = `${backendUrl}/auth/linkedin/callback`;
     const scope = 'openid%20profile%20email%20w_member_social%20r_organization_admin%20w_organization_social';
 
@@ -272,7 +267,7 @@ export class AuthService {
       throw new UnauthorizedException('Google credentials not configured');
     }
 
-    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const backendUrl = this.configService.get<string>('BACKEND_URL');
 
     const params = new URLSearchParams({
       code,
@@ -392,7 +387,7 @@ export class AuthService {
     const loginCustomerId = (managerId && managerId !== cleanCustomerId) ? managerId : cleanCustomerId;
 
     const res = await fetch(
-      `https://googleads.googleapis.com/v16/customers/${cleanCustomerId}/googleAds:search`,
+      `https://googleads.googleapis.com/v19/customers/${cleanCustomerId}/googleAds:search`,
       {
         method: 'POST',
         headers: {
@@ -482,7 +477,7 @@ export class AuthService {
       console.log('APP ID:', appId);
       console.log('APP SECRET EXISTS:', !!appSecret);
 
-      const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+      const backendUrl = this.configService.get<string>('BACKEND_URL');
       const redirectUri = `${backendUrl}/auth/meta/callback`;
 
       console.log('REDIRECT URI:', redirectUri);
@@ -595,6 +590,54 @@ export class AuthService {
     }
   }
 
+  async getMetaAdAccounts(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.metaAccessToken) throw new UnauthorizedException('No Meta token');
+    try {
+      const res = await axios.get(`https://graph.facebook.com/v20.0/me/adaccounts`, {
+        params: { access_token: user.metaAccessToken, fields: 'account_id,name,account_status' }
+      });
+      return res.data;
+    } catch (e: any) {
+      throw new UnauthorizedException(e.response?.data?.error?.message || 'Failed to fetch ad accounts');
+    }
+  }
+
+  async updateMetaAdAccount(userId: string, adAccountId: string, adAccountName: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    if (!adAccountId) {
+      throw new UnauthorizedException('Ad Account ID is required');
+    }
+
+    // Ensure format starts with act_
+    const formattedAccountId = adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId}`;
+
+    await this.usersService.update(userId, {
+      metaAdAccountId: formattedAccountId,
+      metaAdAccountName: adAccountName,
+    });
+
+    return { success: true, metaAdAccountId: formattedAccountId, metaAdAccountName: adAccountName };
+  }
+
+  async updateMetaBusiness(userId: string, businessId: string, businessName: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+
+    if (!businessId) {
+      throw new UnauthorizedException('Business ID is required');
+    }
+
+    await this.usersService.update(userId, {
+      metaBusinessId: businessId,
+      metaBusinessName: businessName,
+    });
+
+    return { success: true, metaBusinessId: businessId, metaBusinessName: businessName };
+  }
+
   async getMetaPixels(userId: string) {
     const user = await this.usersService.findById(userId);
     if (!user || !user.metaAccessToken || !user.metaAdAccountId) throw new UnauthorizedException('No Meta token or Ad Account');
@@ -646,21 +689,13 @@ export class AuthService {
 
     // X (Twitter) OAuth 2.0 PKCE flow
     let clientId = this.configService.get('X_CLIENT_ID') || this.configService.get('TWITTER_CLIENT_ID');
-    if (clientId && !clientId.includes(':')) {
-      try {
-        const decoded = Buffer.from(clientId, 'base64').toString('utf8');
-        if (decoded.includes(':')) {
-          clientId = decoded;
-        }
-      } catch (e) { }
-    }
     const clientSecret = this.configService.get('X_CLIENT_SECRET') || this.configService.get('TWITTER_CLIENT_SECRET');
 
     if (!clientId || !clientSecret) {
       throw new UnauthorizedException('X (Twitter) credentials not configured. Please add X_CLIENT_ID and X_CLIENT_SECRET to .env');
     }
 
-    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const backendUrl = this.configService.get<string>('BACKEND_URL');
 
     const params = new URLSearchParams({
       code,
@@ -763,7 +798,7 @@ export class AuthService {
       throw new UnauthorizedException('LinkedIn credentials not configured');
     }
 
-    const backendUrl = this.configService.get('BACKEND_URL') || 'http://localhost:3000';
+    const backendUrl = this.configService.get<string>('BACKEND_URL');
 
     const params = new URLSearchParams({
       grant_type: 'authorization_code',

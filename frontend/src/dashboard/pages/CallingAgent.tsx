@@ -39,7 +39,7 @@ export const CallingAgent: React.FC = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/calling/campaigns`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/calling/campaigns`);
       if (res.ok) {
         const data = await res.json();
         setCampaigns(data);
@@ -53,7 +53,7 @@ export const CallingAgent: React.FC = () => {
     setIsLoadingRecords(true);
     setSelectedCampaign(campaignId);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/calling/campaigns/${campaignId}/records`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/calling/campaigns/${campaignId}/records`);
       if (res.ok) {
         const data = await res.json();
         setRecords(data);
@@ -88,7 +88,7 @@ export const CallingAgent: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/calling/campaign`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/calling/campaign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: campaignName, prompt, contacts })

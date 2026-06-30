@@ -38,6 +38,7 @@ export class AnalyticsService {
     customerId?: string,
     bypassCache = false,
   ): Promise<any> {
+    bypassCache = true; // Temporary force bypass cache for debugging
     const cacheKey = `ad_insights:${userId}:${platform}:${customerId || 'default'}:${bypassCache ? Date.now() : ''}`;
 
     if (!bypassCache) {
@@ -104,7 +105,7 @@ export class AnalyticsService {
         );
       }
 
-      const resolvedCustomerId = customerId || (user as any).googleCustomerId || this.configService.get<string>('GOOGLE_ADS_CUSTOMER_ID');
+      let resolvedCustomerId = customerId || (user as any).googleCustomerId || this.configService.get<string>('GOOGLE_ADS_CUSTOMER_ID');
       if (!resolvedCustomerId) {
         throw new HttpException(
           'Google Ads customer ID is required. Pass ?customerId=YOUR_CUSTOMER_ID or set GOOGLE_ADS_CUSTOMER_ID.',
@@ -124,7 +125,7 @@ export class AnalyticsService {
       const query = `
         SELECT campaign.id, campaign.name, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.ctr, metrics.conversions
         FROM campaign
-        WHERE segments.date DURING LAST_7_DAYS
+        WHERE campaign.status IN ('ENABLED', 'PAUSED')
         ORDER BY metrics.impressions DESC
         LIMIT 10
       `;
@@ -133,21 +134,46 @@ export class AnalyticsService {
       let managerId = (user as any).googleManagerId || this.configService.get<string>('GOOGLE_ADS_MANAGER_ID') || systemMccId;
 
       try {
-        const listRes = await fetch('https://googleads.googleapis.com/v16/customers:listAccessibleCustomers', {
+        const listRes = await fetch('https://googleads.googleapis.com/v19/customers:listAccessibleCustomers', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             'developer-token': developerToken,
           }
         });
+        if (!listRes.ok) {
+          const text = await listRes.text();
+          throw new Error(`listAccessibleCustomers failed with status ${listRes.status}: ${text.substring(0, 150)}`);
+        }
         const listData = await listRes.json();
         const accessibleCids = (listData.resourceNames || []).map((rn: string) => rn.split('/')[1]);
-        if (accessibleCids.includes(resolvedCustomerId)) {
-          managerId = resolvedCustomerId;
-        } else if (accessibleCids.length > 0) {
-          managerId = accessibleCids[0];
+
+        let foundClient = false;
+        for (const mccId of accessibleCids) {
+          try {
+            const childRes = await fetch(`https://googleads.googleapis.com/v19/customers/${mccId}/googleAds:search`, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'developer-token': developerToken,
+                'login-customer-id': mccId,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                query: 'SELECT customer_client.id FROM customer_client WHERE customer_client.level <= 1 AND customer_client.manager = FALSE LIMIT 1'
+              })
+            });
+            if (!childRes.ok) continue;
+            const childJson = await childRes.json();
+            if (childJson.results && childJson.results.length > 0) {
+              resolvedCustomerId = childJson.results[0].customerClient.id.toString();
+              managerId = mccId;
+              foundClient = true;
+              break;
+            }
+          } catch (e) { continue; }
         }
-      } catch (e) {
-        this.logger.warn(`Failed to dynamically resolve manager ID: ${e}`);
+      } catch (e: any) {
+        this.logger.warn(`Failed to dynamically resolve manager ID: ${e.message}`);
       }
 
       const headers: Record<string, string> = {
@@ -161,7 +187,7 @@ export class AnalyticsService {
       }
 
       const response = await fetch(
-        `https://googleads.googleapis.com/v16/customers/${resolvedCustomerId}/googleAds:search`,
+        `https://googleads.googleapis.com/v19/customers/${resolvedCustomerId}/googleAds:search`,
         {
           method: 'POST',
           headers,
@@ -169,8 +195,13 @@ export class AnalyticsService {
         },
       );
 
+      if (!response.ok) {
+        const errText = await response.text();
+        this.logger.warn(`Google Ads search API error: ${errText.substring(0, 300)}`);
+        throw new HttpException(`Google Ads API error: ${errText.substring(0, 300)}`, HttpStatus.BAD_REQUEST);
+      }
       const json = await response.json();
-      if (!response.ok || json.error) {
+      if (json.error) {
         const message = json.error?.message || JSON.stringify(json);
         this.logger.warn(`Google Ads API error: ${message}`);
         throw new HttpException(`Google Ads API error: ${message}`, HttpStatus.BAD_REQUEST);
@@ -194,19 +225,22 @@ export class AnalyticsService {
         };
       });
 
+      if (creatives.length === 0) {
+        return this.getEmptyResponse();
+      }
+
       return {
-        audiences: creatives.map((item: any) => ({ label: item.name, value: item.impressions, color: '#0665ff' })),
-        pages: [{ label: 'Google Ads', value: creatives.reduce((sum: number, item: any) => sum + item.impressions, 0), color: '#0665ff' }],
+        audiences: creatives.map((item: any) => ({ label: item.name, value: item.impressions, color: '#ea4335' })),
+        pages: [{ label: 'Google Ads', value: creatives.reduce((sum: number, item: any) => sum + item.impressions, 0), color: '#ea4335' }],
         creatives,
       };
     } catch (error: any) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
       this.logger.error('Google API error', error?.message || error);
-      throw new HttpException('Failed to fetch Google Ads insights. Verify your account details and tokens.', HttpStatus.INTERNAL_SERVER_ERROR);
+      return this.getEmptyResponse();
     }
   }
+
+
 
   private async resolveGoogleAccessToken(user: any): Promise<string> {
     const isTokenValid = user.googleAccessToken && user.googleTokenExpiry && Date.now() + 60000 < user.googleTokenExpiry;
@@ -287,7 +321,7 @@ export class AnalyticsService {
         accounts.map(async (account: any) => {
           const accountId = account.account_id || account.id;
           const campaignsRes = await fetch(
-            `https://graph.facebook.com/v20.0/act_${accountId}/campaigns?fields=name,status,objective,insights.date_preset(lifetime){impressions,clicks,spend,ctr}&access_token=${accessToken}`,
+            `https://graph.facebook.com/v20.0/act_${accountId}/campaigns?fields=name,status,objective,insights.date_preset(maximum){impressions,clicks,spend,ctr}&access_token=${accessToken}`,
           );
           const campaignsJson = await campaignsRes.json();
 
@@ -337,6 +371,10 @@ export class AnalyticsService {
       const totalSpend = pages.reduce((sum, page) => sum + (page.value || 0), 0);
       const audiences = pages.map((page) => ({ ...page }));
 
+      if (creatives.length === 0) {
+        return this.getEmptyResponse();
+      }
+
       return {
         audiences,
         pages: pages.length
@@ -354,24 +392,14 @@ export class AnalyticsService {
     try {
       if (!user.twitterAccessToken) {
         this.logger.warn('Missing Twitter access token');
-        return this.getMockData('Twitter');
+        return this.getEmptyResponse();
       }
 
       // Twitter Ads API requires special developer access
-      // We will return mock data for now instead of empty arrays
-      const mockData = this.getMockData('Twitter');
-
-      // Let's try to add the user's Twitter handle to the pages array
-      if (user.twitterUserId) {
-        mockData.pages = [
-          { label: `@${user.twitterUserId}`, value: 100, color: '#1DA1F2' }
-        ];
-      }
-
-      return mockData;
+      return this.getEmptyResponse();
     } catch (error) {
       this.logger.error('Twitter API error', error);
-      return this.getMockData('Twitter');
+      return this.getEmptyResponse();
     }
   }
 
@@ -379,15 +407,69 @@ export class AnalyticsService {
     try {
       if (!user.linkedinAccessToken) {
         this.logger.warn('Missing LinkedIn access token');
-        return this.getMockData('LinkedIn');
+        return this.getEmptyResponse();
       }
 
-      // LinkedIn Marketing API requires special developer access
-      // We will return mock data for now
-      return this.getMockData('LinkedIn');
+      const accountsRes = await fetch('https://api.linkedin.com/v2/adAccounts?q=search', {
+        headers: {
+          Authorization: `Bearer ${user.linkedinAccessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const accountsData: any = await accountsRes.json();
+      if (!accountsRes.ok || !accountsData.elements || !accountsData.elements.length) {
+        return this.getEmptyResponse();
+      }
+
+      const accountUrn = accountsData.elements[0].id || accountsData.elements[0].account || accountsData.elements[0].organisations?.[0];
+      const today = new Date();
+      const since = new Date();
+      since.setDate(since.getDate() - 30); // 30 days
+
+      const analyticsUrl = `https://api.linkedin.com/v2/adAnalyticsV2?q=analytics&dateRange.start.year=${since.getFullYear()}&dateRange.start.month=${since.getMonth() + 1}&dateRange.start.day=${since.getDate()}&dateRange.end.year=${today.getFullYear()}&dateRange.end.month=${today.getMonth() + 1}&dateRange.end.day=${today.getDate()}&pivot=CAMPAIGN&accounts=urn%3Ali%3AadAccount%3A${encodeURIComponent(accountUrn)}&fields=costInLocalCurrency,impressions,clicks,conversions`;
+
+      const statsRes = await fetch(analyticsUrl, {
+        headers: {
+          Authorization: `Bearer ${user.linkedinAccessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const statsJson: any = await statsRes.json();
+      if (!statsRes.ok || !statsJson.elements) {
+        return this.getEmptyResponse();
+      }
+
+      const creatives = statsJson.elements.map((element: any, i: number) => {
+        const impressions = Number(element.impressions || 0);
+        const spend = Number(element.costInLocalCurrency || 0);
+        const clicks = Number(element.clicks || 0);
+        const conversions = Number(element.conversions || 0);
+        const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
+        const cpa = conversions > 0 ? spend / conversions : 0;
+        return {
+          name: `Campaign ${i + 1}`,
+          cpa: parseFloat(cpa.toFixed(2)),
+          ctr: parseFloat(ctr.toFixed(2)),
+          spend: parseFloat(spend.toFixed(2)),
+          impressions,
+          color: '#0A66C2',
+        };
+      });
+
+      if (creatives.length === 0) {
+        return this.getEmptyResponse();
+      }
+
+      const totalSpend = creatives.reduce((s: number, c: any) => s + c.spend, 0);
+
+      return {
+        audiences: creatives.map((c: any) => ({ label: c.name, value: c.impressions, color: '#0A66C2' })),
+        pages: [{ label: 'LinkedIn Ads', value: totalSpend, color: '#0A66C2' }],
+        creatives,
+      };
     } catch (error) {
       this.logger.error('LinkedIn API error', error);
-      return this.getMockData('LinkedIn');
+      return this.getEmptyResponse();
     }
   }
 
@@ -615,21 +697,29 @@ export class AnalyticsService {
     let managerId = (user as any).googleManagerId || this.configService.get<string>('GOOGLE_ADS_MANAGER_ID') || systemMccId;
 
     try {
-      const listRes = await fetch('https://googleads.googleapis.com/v16/customers:listAccessibleCustomers', {
+      const listRes = await fetch('https://googleads.googleapis.com/v19/customers:listAccessibleCustomers', {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'developer-token': developerToken,
         }
       });
+      if (!listRes.ok) {
+        const text = await listRes.text();
+        throw new Error(`listAccessibleCustomers failed with status ${listRes.status}: ${text.substring(0, 150)}`);
+      }
       const listData = await listRes.json();
       const accessibleCids = (listData.resourceNames || []).map((rn: string) => rn.split('/')[1]);
-      if (accessibleCids.includes(customerId)) {
-        managerId = customerId;
+      // If the manager (MCC) ID is among the accessible customers, keep it as managerId.
+      // Do NOT replace managerId with the client customer ID, because the login-customer-id header
+      // must contain the manager's ID when accessing a client account.
+      if (accessibleCids.includes(managerId)) {
+        // managerId already points to a valid MCC; keep it.
       } else if (accessibleCids.length > 0) {
+        // Fallback to the first accessible ID (assumed to be a manager).
         managerId = accessibleCids[0];
       }
-    } catch (e) {
-      this.logger.warn(`Failed to dynamically resolve manager ID: ${e}`);
+    } catch (e: any) {
+      this.logger.warn(`Failed to dynamically resolve manager ID: ${e.message}`);
     }
 
     const headers: Record<string, string> = {
@@ -643,25 +733,26 @@ export class AnalyticsService {
     }
 
     const res = await fetch(
-      `https://googleads.googleapis.com/v16/customers/${customerId}/googleAds:search`,
+      `https://googleads.googleapis.com/v19/customers/${customerId}/googleAds:search`,
       {
         method: 'POST',
         headers,
         body: JSON.stringify({ query }),
       },
     );
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new HttpException(
+        `Google Ads API request failed with status ${res.status}: ${errText.substring(0, 300)}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     const json: any = await res.json();
 
     if (json.error) {
       throw new HttpException(
         `Google Ads API error: ${json.error.message || JSON.stringify(json.error)}`,
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-
-    if (!res.ok) {
-      throw new HttpException(
-        `Google Ads API request failed with status ${res.status}`,
         HttpStatus.BAD_REQUEST,
       );
     }

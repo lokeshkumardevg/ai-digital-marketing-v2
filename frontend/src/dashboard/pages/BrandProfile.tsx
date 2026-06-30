@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { upsertBrandLocally } from '../../store/slices/workspaceSlice';
 import type { RootState } from '../../store';
+import { useAppDispatch } from '../../store/hooks';
+import { fetchLinkedInPosts, fetchLinkedInEvents, fetchLinkedInLeads } from '../api/linkedinApi';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,17 +68,56 @@ const initials = (name: string) => {
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+const transformRawProfile = (raw: any): BrandData => {
+  return {
+    name: raw?.name || '',
+    url: raw?.website || '',
+    description: raw?.description || '',
+    lifecycle: raw?.lifecycle || '',
+    companySize: raw?.company_size || '',
+    businessModel: raw?.business_model || '',
+    targetMarket: raw?.target_market || '',
+    tags: raw?.brand_tone || [],
+    brandDna: {
+      brandTone: Array.isArray(raw?.brand_tone) ? raw.brand_tone.join(', ') : raw?.brand_tone || '',
+      marketKeywords: raw?.market_keywords || [],
+    },
+    coreAdvantages: {
+      valueProposition: raw?.value_proposition || '',
+      differentiators: raw?.differentiators || [],
+    },
+    features: raw?.features || [],
+    targetAudience: raw?.target_audience || [],
+    competitors: raw?.competitors || [],
+    reachAndEcosystem: {
+      marketingChannels: raw?.marketing_channels || [],
+      customerHangouts: raw?.customer_hangouts || [],
+    },
+    impactAnalysis: raw?.impact_analysis || {
+      revenue: [],
+      cost: [],
+      policy: [],
+      technology: [],
+    },
+  };
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export const BrandProfile: React.FC = () => {
   const websites = useSelector((s: RootState) => s.workspace.websites);
   const activeId = useSelector((s: RootState) => s.workspace.activeWebsiteId);
   const activeBrand = websites.find(w => w.id === activeId);
+  const dispatch = useAppDispatch();
 
   const [phase, setPhase] = useState<'idle' | 'generating' | 'result'>('idle');
   const [steps, setSteps] = useState<GenStep[]>([]);
   const [brandData, setBrandData] = useState<BrandData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [liPosts, setLiPosts] = useState<any[]>([]);
+  const [liEvents, setLiEvents] = useState<any[]>([]);
+  const [liLeads, setLiLeads] = useState<any[]>([]);
+  const [liLoading, setLiLoading] = useState<boolean>(false);
   const [activeAudienceIdx, setActiveAudienceIdx] = useState(0);
 
   // Fetch profile from DB on mount or URL change
@@ -142,6 +184,54 @@ export const BrandProfile: React.FC = () => {
 
     impactAnalysis: raw.impact_analysis,
   });
+  // Load brand profile on active brand change
+  useEffect(() => {
+    if (!activeBrand) return;
+
+    if (activeBrand.brandProfile) {
+      const transformed = transformRawProfile(activeBrand.brandProfile);
+      setBrandData(transformed);
+      setPhase('result');
+      // Sync to localStorage
+      localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transformed));
+      return;
+    }
+
+    const cached = localStorage.getItem(`brand_profile_${activeBrand.id}`);
+    if (cached) {
+      try {
+        setBrandData(JSON.parse(cached));
+        setPhase('result');
+        return;
+      } catch { }
+    }
+
+    setPhase('idle');
+    setBrandData(null);
+  }, [activeBrand?.id, activeBrand?.brandProfile]);
+
+  // Fetch LinkedIn data once brand profile is loaded
+  useEffect(() => {
+    if (!brandData) return;
+    const loadLinkedIn = async () => {
+      setLiLoading(true);
+      try {
+        const [posts, events, leads] = await Promise.all([
+          fetchLinkedInPosts(),
+          fetchLinkedInEvents(),
+          fetchLinkedInLeads(),
+        ]);
+        setLiPosts(posts || []);
+        setLiEvents(events || []);
+        setLiLeads(leads || []);
+      } catch (e) {
+        console.error('Failed to load LinkedIn data', e);
+      } finally {
+        setLiLoading(false);
+      }
+    };
+    loadLinkedIn();
+  }, [brandData]);
 
   // ── Start analysis ──────────────────────────────────────────────────────────
 
@@ -170,7 +260,7 @@ export const BrandProfile: React.FC = () => {
       await delay(1100); advance(2);
 
       // ── Real API call ──
-      const res = await fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/ai/brand-profile`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/ai/brand-profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -190,14 +280,53 @@ export const BrandProfile: React.FC = () => {
       }
 
       // Extract profile data correctly (handles nesting)
-      // const profileData = json.data?.brand || json.data || {};
       const raw = json.data?.data?.brand || {};
       
       advance(3);
       await delay(500);
 
       setBrandData(transformRawData(raw));
+      // Merge with workspace brand info
+      const transformed: BrandData = {
+        name: raw.name,
+        url: raw.website,
+        description: raw.description,
+        lifecycle: raw.lifecycle,
+        companySize: raw.company_size,
+        businessModel: raw.business_model,
+        targetMarket: raw.target_market,
+
+        tags: raw.brand_tone,
+
+        brandDna: {
+          brandTone: raw.brand_tone?.join(', '),
+          marketKeywords: raw.market_keywords,
+        },
+
+        coreAdvantages: {
+          valueProposition: raw.value_proposition,
+          differentiators: raw.differentiators,
+        },
+
+        features: raw.features,
+        targetAudience: raw.target_audience,
+        competitors: raw.competitors,
+
+        reachAndEcosystem: {
+          marketingChannels: raw.marketing_channels,
+          customerHangouts: raw.customer_hangouts,
+        },
+
+        impactAnalysis: raw.impact_analysis,
+      };
+      setBrandData(transformed);
+      localStorage.setItem(`brand_profile_${activeBrand.id}`, JSON.stringify(transformed));
       setPhase('result');
+      // Update local Redux store with the new brandProfile
+      dispatch(upsertBrandLocally({
+        ...activeBrand,
+        brandProfile: raw,
+      }));
 
     } catch (err: any) {
       setError(err.message || 'Analysis failed');
@@ -207,6 +336,17 @@ export const BrandProfile: React.FC = () => {
 
   const forceReanalyze = () => {
     startAnalysis(true);
+  const resetAnalysis = () => {
+    if (!activeBrand) return;
+    localStorage.removeItem(`brand_profile_${activeBrand.id}`);
+    setBrandData(null);
+    setPhase('idle');
+    setError(null);
+    // Clear brandProfile in Redux store as well
+    dispatch(upsertBrandLocally({
+      ...activeBrand,
+      brandProfile: null,
+    }));
   };
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -586,6 +726,79 @@ export const BrandProfile: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* ── LinkedIn Overview ── */}
+          <div style={{ background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '20px', marginBottom: '20px' }}>
+            <SectionTitle color="#0284c7" label="LinkedIn Overview" />
+            {liLoading && (
+              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '10px' }}>Loading LinkedIn data...</div>
+            )}
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginTop: '14px' }}>
+              {/* Posts */}
+              <div style={{ background: 'var(--bg-elevated)', borderRadius: '10px', padding: '16px', border: '1px solid var(--glass-border)' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{color: '#0665ff'}}>📝</span> Recent Posts
+                </h3>
+                {liPosts.length > 0 ? (
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {liPosts.slice(0, 5).map((p, i) => (
+                      <li key={i} style={{ paddingBottom: i < 4 ? '10px' : '0', borderBottom: i < 4 ? '1px solid var(--glass-border)' : 'none' }}>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 500 }}>{p.title || p.headline || 'LinkedIn Post'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
+                          {p.text?.substring(0, 100)}{p.text && p.text.length > 100 ? '…' : ''}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : !liLoading && (
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>No recent posts found.</div>
+                )}
+              </div>
+
+              {/* Events */}
+              <div style={{ background: 'var(--bg-elevated)', borderRadius: '10px', padding: '16px', border: '1px solid var(--glass-border)' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{color: '#f59e0b'}}>📅</span> Upcoming Events
+                </h3>
+                {liEvents.length > 0 ? (
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {liEvents.slice(0, 5).map((e, i) => (
+                      <li key={i} style={{ paddingBottom: i < 4 ? '10px' : '0', borderBottom: i < 4 ? '1px solid var(--glass-border)' : 'none' }}>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 500 }}>{e.title || e.name || 'Event'}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.5 }}>
+                          {e.description?.substring(0, 100)}{e.description && e.description.length > 100 ? '…' : ''}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : !liLoading && (
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>No upcoming events found.</div>
+                )}
+              </div>
+
+              {/* Leads / Connections */}
+              <div style={{ background: 'var(--bg-elevated)', borderRadius: '10px', padding: '16px', border: '1px solid var(--glass-border)' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{color: '#10b981'}}>👥</span> Leads (Connections)
+                </h3>
+                {liLeads.length > 0 ? (
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {liLeads.slice(0, 10).map((c, i) => (
+                      <li key={i} style={{ fontSize: '0.8rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: '#f3f0ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: '#0665ff' }}>
+                          {c.localizedFirstName?.[0]}{c.localizedLastName?.[0]}
+                        </div>
+                        {c.localizedFirstName ?? ''} {c.localizedLastName ?? ''}
+                      </li>
+                    ))}
+                  </ul>
+                ) : !liLoading && (
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>No connections found.</div>
+                )}
+              </div>
+            </div>
+          </div>
 
         </div>
       )}

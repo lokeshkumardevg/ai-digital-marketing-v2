@@ -1,16 +1,5 @@
 // ─── InboxPage.tsx ───────────────────────────────────────────
 // Route: /reviews/inbox
-//
-// Full-page staggered grid of review cards with working filters.
-// Clicking a card opens a side panel with detail + AI reply.
-//
-// ✅ FIXED: Field mapping aligned with actual backend response:
-//   - comment   → used directly (was: content)
-//   - date       → used directly (was: reviewDate)
-//   - isReplied  → from API or derived from status === 'replied'
-//   - isResolved → from API (direct)
-//   - sentiment  → optional (not in API, gracefully absent)
-//   - topics     → optional (not in API, gracefully absent)
 
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -34,7 +23,9 @@ import {
 } from '../../store/slices/Reputationslice';
 import { StarRating, PlatformBadge, SentimentBadge } from '../components/Reviewhelpers';
 
-// ─── Local Filter Types ──────────────────────────────────────
+const REVIEW_AGENT_API_URL =
+  (import.meta as any).env?.VITE_REVIEW_AGENT_API_URL || 'http://localhost:3000';
+
 interface LocalFilters {
   search: string;
   platform: string;
@@ -43,28 +34,20 @@ interface LocalFilters {
   rating: string;
 }
 
-// ─── Helper: derive display fields from raw API response ─────
-// Backend returns: comment, date, isReplied, isResolved
-// Frontend expects: comment (text), date, isReplied, isResolved
-// sentiment and topics are optional — not returned by current API
 function normalizeReview(r: any): Review {
   return {
     ...r,
-    // Map "comment" to "content" so existing UI references work
     content:    r.comment    ?? r.content    ?? '',
-    // Map "date" to "reviewDate" so timeSince() works
     reviewDate: r.date       ?? r.reviewDate ?? r.createdAt ?? '',
-    // Derive isReplied from status if not explicitly set
-    isReplied:  r.isReplied  ?? (r.status === 'replied'),
-    // Default isResolved to false if absent
+    generatedReply: r.generated_review ?? r.generatedReply ?? '',
+    isReplied:  r.isReplied  ?? (r.status === 'replied' || !!(r.generated_review ?? r.generatedReply)),
     isResolved: r.isResolved ?? false,
-    // sentiment / topics not in current API — default gracefully
     sentiment:  r.sentiment  ?? '',
     topics:     Array.isArray(r.topics) ? r.topics : [],
   };
 }
 
-// ─── Animated Review Card (Grid Item) ────────────────────────
+// ─── Animated Review Card ────────────────────────────────────
 const ReviewCard: React.FC<{
   review: Review;
   index: number;
@@ -102,9 +85,7 @@ const ReviewCard: React.FC<{
   const colors = getSentimentColor(review.sentiment ?? '');
   const isListView = viewMode === 'list';
 
-  // ── Resolve the comment text from either field ──
   const commentText: string = (review as any).content || (review as any).comment || '';
-  // ── Resolve the display date ──
   const displayDate: string = (review as any).reviewDate || (review as any).date || (review as any).createdAt || '';
 
   return (
@@ -185,7 +166,7 @@ const ReviewCard: React.FC<{
           <PlatformBadge platform={review.platform} />
         </div>
 
-        {/* Comment text — uses comment field from API */}
+        {/* Comment text */}
         <p style={{
           margin: 0,
           fontSize: '0.82rem',
@@ -205,7 +186,6 @@ const ReviewCard: React.FC<{
           display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap',
           ...(isListView && { flex: '0 0 auto' }),
         }}>
-          {/* Only show SentimentBadge if sentiment exists */}
           {review.sentiment && <SentimentBadge sentiment={review.sentiment} />}
 
           {review.isReplied && (
@@ -232,7 +212,7 @@ const ReviewCard: React.FC<{
           )}
         </div>
 
-        {/* Topics — optional, not in current API */}
+        {/* Topics */}
         {review.topics && review.topics.length > 0 && (
           <div style={{
             display: 'flex', gap: '6px', flexWrap: 'wrap',
@@ -264,7 +244,8 @@ const ReviewCard: React.FC<{
 const ReviewSidePanel: React.FC<{
   review: Review;
   onClose: () => void;
-}> = ({ review, onClose }) => {
+  loadReviews: () => void; // ← added
+}> = ({ review, onClose, loadReviews }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [isVisible, setIsVisible] = useState(false);
   const [editableReply, setEditableReply] = useState(review.generatedReply || '');
@@ -278,8 +259,8 @@ const ReviewSidePanel: React.FC<{
   const isPublished  = publishStatus  === 'done' || review.isReplied;
   const isResolving  = resolveStatus  === 'loading';
 
-  // ── Resolve display fields ──
   const commentText: string  = (review as any).content || (review as any).comment || '';
+  const hasGeneratedReply: boolean = !!review.generatedReply?.trim();
 
   useEffect(() => {
     requestAnimationFrame(() => setIsVisible(true));
@@ -290,10 +271,12 @@ const ReviewSidePanel: React.FC<{
     setEditableReply(review.generatedReply || '');
   }, [review._id, review.generatedReply]);
 
+  // ← Now correctly calls loadReviews received via props
   const handleGenerateReply = async () => {
     const result = await dispatch(generateAiReply(review._id));
     if (generateAiReply.fulfilled.match(result)) {
       toast.success('AI reply generated!');
+      loadReviews();
     } else {
       toast.error((result.payload as string) || 'Failed to generate reply');
     }
@@ -401,7 +384,6 @@ const ReviewSidePanel: React.FC<{
                 }
               </p>
 
-              {/* Topics — optional */}
               {review.topics && review.topics.length > 0 && (
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '12px' }}>
                   {review.topics.map((t: string, i: number) => (
@@ -429,22 +411,33 @@ const ReviewSidePanel: React.FC<{
                   <Bot size={16} color="#7033f5" />
                   <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>AI Reply</span>
                 </div>
-                <button
-                  onClick={handleGenerateReply}
-                  disabled={isGenerating}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    background: 'var(--accent-gradient)',
-                    color: '#fff', border: 'none', borderRadius: '8px',
-                    padding: '8px 16px', fontSize: '0.78rem', fontWeight: 600,
-                    cursor: isGenerating ? 'not-allowed' : 'pointer',
-                    opacity: isGenerating ? 0.7 : 1,
-                    transition: 'all 0.3s ease',
-                  }}
-                >
-                  {isGenerating ? <RefreshCw size={13} className="spin" /> : <Sparkles size={13} />}
-                  {isGenerating ? 'Generating...' : 'Generate'}
-                </button>
+                {hasGeneratedReply ? (
+                  <span style={{
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                    fontSize: '0.72rem', fontWeight: 600, color: '#10b981',
+                    background: 'rgba(16,185,129,0.12)',
+                    padding: '6px 12px', borderRadius: '20px',
+                  }}>
+                    <CheckCircle size={12} /> Reply Generated
+                  </span>
+                ) : (
+                  <button
+                    onClick={handleGenerateReply}
+                    disabled={isGenerating}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      background: 'var(--accent-gradient)',
+                      color: '#fff', border: 'none', borderRadius: '8px',
+                      padding: '8px 16px', fontSize: '0.78rem', fontWeight: 600,
+                      cursor: isGenerating ? 'not-allowed' : 'pointer',
+                      opacity: isGenerating ? 0.7 : 1,
+                      transition: 'all 0.3s ease',
+                    }}
+                  >
+                    {isGenerating ? <RefreshCw size={13} className="spin" /> : <Sparkles size={13} />}
+                    {isGenerating ? 'Generating...' : 'Generate'}
+                  </button>
+                )}
               </div>
 
               <textarea
@@ -556,10 +549,10 @@ const InboxPage: React.FC = () => {
   const { user }      = useSelector((s: RootState) => (s as any).auth);
   const { activeBrandId } = useSelector((s: any) => s.workspace);
 
-  // ── Normalize all reviews once ──
   const reviews = useMemo(() => rawReviews.map(normalizeReview), [rawReviews]);
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isBulkGenerating, setIsBulkGenerating] = useState(false);
 
   const [localFilters, setLocalFilters] = useState<LocalFilters>({
     search:    filters.search    || '',
@@ -599,7 +592,7 @@ const InboxPage: React.FC = () => {
   }, [filters]);
 
   const FILTER_OPTIONS = {
-    platform:  ['all', 'google', 'facebook', 'trustpilot', 'website'],
+    platform:  ['all', 'google'],
     sentiment: ['all', 'positive', 'negative', 'neutral', 'mixed'],
     status:    ['all', 'pending', 'replied', 'ignored'],
     rating:    ['', '5', '4', '3', '2', '1'],
@@ -615,7 +608,6 @@ const InboxPage: React.FC = () => {
     }
   };
 
-  // Client-side filter — searches both comment + content to be safe
   const filteredReviews = useMemo(() => {
     return reviews.filter((review: Review) => {
       if (localFilters.search?.trim()) {
@@ -638,6 +630,32 @@ const InboxPage: React.FC = () => {
 
   const pendingCount     = reviews.filter((r: Review) => r.status === 'pending').length;
   const unresolvedCount  = reviews.filter((r: Review) => !r.isResolved && r.sentiment === 'negative').length;
+
+  const handleBulkGenerate = async () => {
+    if (pendingCount === 0) {
+      toast('No pending reviews to generate replies for.');
+      return;
+    }
+
+    setIsBulkGenerating(true);
+    try {
+      const res = await fetch(`${REVIEW_AGENT_API_URL}/generate-reviews`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+
+      const data = await res.json();
+      toast.success(`Generated replies for ${data.processed} pending review(s)`);
+      loadReviews();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to generate bulk replies');
+    } finally {
+      setIsBulkGenerating(false);
+    }
+  };
 
   return (
     <div style={{ padding: 'clamp(16px, 2.5vw, 32px)', animation: 'fadeIn 0.5s ease' }}>
@@ -793,6 +811,28 @@ const InboxPage: React.FC = () => {
             </button>
           ))}
         </div>
+
+        {/* Bulk generate */}
+        <button
+          onClick={handleBulkGenerate}
+          disabled={isBulkGenerating || pendingCount === 0}
+          title={pendingCount === 0 ? 'No pending reviews' : `Generate replies for ${pendingCount} pending review(s)`}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            background: pendingCount === 0 ? 'rgba(255,255,255,0.04)' : 'var(--accent-gradient)',
+            color: pendingCount === 0 ? '#6b7280' : '#fff',
+            border: pendingCount === 0 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+            borderRadius: '12px', padding: '10px 18px',
+            fontSize: '0.82rem', fontWeight: 600,
+            cursor: (isBulkGenerating || pendingCount === 0) ? 'not-allowed' : 'pointer',
+            opacity: isBulkGenerating ? 0.7 : 1,
+            transition: 'all 0.3s ease',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {isBulkGenerating ? <RefreshCw size={14} className="spin" /> : <Sparkles size={14} />}
+          {isBulkGenerating ? 'Generating...' : `Generate All Pending (${pendingCount})`}
+        </button>
       </div>
 
       {/* ── Active filter tags ── */}
@@ -978,11 +1018,12 @@ const InboxPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── Side panel ── */}
+      {/* ── Side panel — loadReviews passed as prop ── */}
       {activeReview && (
         <ReviewSidePanel
           review={activeReview}
           onClose={() => dispatch(setActiveReview(null))}
+          loadReviews={loadReviews}  // ← fix: pass loadReviews down
         />
       )}
 

@@ -1,7 +1,9 @@
 import { UsersModule } from '../users/users.module';
 import { WalletModule } from '../wallet/wallet.module';
+import { SocialModule } from '../social/social.module';
 import { Module } from '@nestjs/common';
 import { CampaignService } from './campaigns.service';
+import { CampaignCronService } from './campaigns.cron';
 import { CampaignController } from './campaigns.controller';
 
 import { MongooseModule } from '@nestjs/mongoose';
@@ -12,6 +14,7 @@ import { CampaigndSchema } from './schemas/campaind.schema';
   imports: [
     UsersModule,
     WalletModule,
+    SocialModule,
     MongooseModule.forFeature([
   {
     name: 'Session',
@@ -23,7 +26,7 @@ import { CampaigndSchema } from './schemas/campaind.schema';
   },
 ]),
   ],
-  providers: [CampaignService],
+  providers: [CampaignService, CampaignCronService],
   controllers: [CampaignController],
 })
 export class CampaignModule {}

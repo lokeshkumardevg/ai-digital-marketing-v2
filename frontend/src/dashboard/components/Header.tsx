@@ -22,7 +22,7 @@ import { api } from '../../api/axios';
 import './Header.css';
 
 
-const API_BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 type PayStep = 'select' | 'qr' | 'url' | 'card' | 'upi' | 'processing' | 'success';
 type PayMethod = 'qr' | 'url' | 'card' | 'upi';
@@ -393,7 +393,7 @@ export const Header: React.FC = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    window.location.href = 'http://localhost:5173/';
+    window.location.href = "/";
   };
 
   const handleBellClick = () => {
@@ -1062,8 +1062,8 @@ export const Header: React.FC = () => {
 
       {/* ── Ask W-AI Modal ── */}
       {showAiModal && (
-        <div 
-          className="modal-overlay" 
+        <div
+          className="modal-overlay"
           onClick={e => { if (e.target === e.currentTarget) setShowAiModal(false); }}
           style={{
             position: 'fixed',
@@ -1091,7 +1091,7 @@ export const Header: React.FC = () => {
               to { transform: scale(1); opacity: 1; }
             }
           `}</style>
-          <div 
+          <div
             className="glass-modal-container"
             style={{
               width: '90%',
@@ -1111,7 +1111,7 @@ export const Header: React.FC = () => {
             }}
           >
             {/* Header */}
-            <div 
+            <div
               style={{
                 padding: '20px 24px',
                 borderBottom: '1px solid var(--glass-border)',
@@ -1122,7 +1122,7 @@ export const Header: React.FC = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div 
+                <div
                   style={{
                     background: 'rgba(99, 102, 241, 0.15)',
                     padding: '10px',
@@ -1139,7 +1139,7 @@ export const Header: React.FC = () => {
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Always synchronized with your campaigns & reviews</span>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setShowAiModal(false)}
                 style={{
                   background: 'var(--bg-card)',
@@ -1160,7 +1160,7 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Chat Messages */}
-            <div 
+            <div
               style={{
                 flex: 1,
                 padding: '24px',
@@ -1171,8 +1171,8 @@ export const Header: React.FC = () => {
               }}
             >
               {aiMessages.map((m, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   style={{
                     display: 'flex',
                     gap: '12px',
@@ -1182,7 +1182,7 @@ export const Header: React.FC = () => {
                   }}
                 >
                   {m.role === 'bot' && (
-                    <div 
+                    <div
                       style={{
                         background: 'rgba(99, 102, 241, 0.15)',
                         width: '32px',
@@ -1197,7 +1197,7 @@ export const Header: React.FC = () => {
                       <Bot size={16} color="#8b5cf6" />
                     </div>
                   )}
-                  <div 
+                  <div
                     style={{
                       background: m.role === 'user' ? 'var(--accent-primary)' : 'var(--bg-elevated)',
                       color: 'var(--text-primary)',
@@ -1219,7 +1219,7 @@ export const Header: React.FC = () => {
               ))}
               {aiIsTyping && (
                 <div style={{ display: 'flex', gap: '12px', alignSelf: 'flex-start' }}>
-                  <div 
+                  <div
                     style={{
                       background: 'rgba(99, 102, 241, 0.15)',
                       width: '32px',
@@ -1233,7 +1233,7 @@ export const Header: React.FC = () => {
                   >
                     <Bot size={16} color="#8b5cf6" />
                   </div>
-                  <div 
+                  <div
                     style={{
                       background: 'var(--bg-card)',
                       color: 'var(--text-secondary)',
@@ -1253,7 +1253,7 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Input Box */}
-            <div 
+            <div
               style={{
                 padding: '18px 24px',
                 borderTop: '1px solid var(--glass-border)',
@@ -1262,9 +1262,9 @@ export const Header: React.FC = () => {
                 gap: '12px'
               }}
             >
-              <input 
-                type="text" 
-                placeholder="Ask W-AI to check campaigns, errors, or brand insights..." 
+              <input
+                type="text"
+                placeholder="Ask W-AI to check campaigns, errors, or brand insights..."
                 value={aiInput}
                 onChange={e => setAiInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') handleSendAiMessage(); }}
@@ -1281,7 +1281,7 @@ export const Header: React.FC = () => {
                   transition: 'border-color 0.2s'
                 }}
               />
-              <button 
+              <button
                 onClick={handleSendAiMessage}
                 disabled={aiIsTyping || !aiInput.trim()}
                 style={{

@@ -15,9 +15,12 @@ import Home from './landing/pages/Home';
 import Features from './landing/pages/Features';
 // @ts-ignore
 import Tutorial from "./landing/pages/tutorial";
-import Help from './landing/pages/Help';
-import PricingPage from './landing/pages/PricingPage';
-import Resources from './landing/pages/Resources';
+import // @ts-ignore
+Help from './landing/pages/Help';
+import // @ts-ignore
+PricingPage from './landing/pages/PricingPage';
+import // @ts-ignore
+Resources from './landing/pages/Resources';
 import Register from './landing/pages/Register';
 import { Settings } from './dashboard/pages/Settings';
 import { Seo } from './dashboard/pages/Seo';
@@ -167,7 +170,7 @@ const App: React.FC = () => {
   // Connect Real-Time Matrix Socket.IO
   useEffect(() => {
     if (isAuthenticated) {
-      const socket = io(import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000', {
+      const socket = io(import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL, {
         auth: { token: localStorage.getItem('access_token') }
       });
 

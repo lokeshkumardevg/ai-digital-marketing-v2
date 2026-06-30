@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { BrainCircuit, TrendingUp, Zap, BarChart2, RefreshCw, Search, ArrowUpRight, CheckCircle, AlertCircle } from 'lucide-react';
 import { SmartTable } from '../components/SmartTable';
+import { EditGoogleCampaignModal } from '../components/EditGoogleCampaignModal';
 import { api } from '../../api/axios';
 
 const platforms = ['All', 'Meta', 'Google', 'X', 'LinkedIn'];
@@ -49,6 +50,7 @@ export const AdsManager: React.FC = () => {
   const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [editingGoogleCampaign, setEditingGoogleCampaign] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const [billingStatus, setBillingStatus] = useState<any>({
@@ -104,7 +106,7 @@ export const AdsManager: React.FC = () => {
             const sM1 = (seed % 100) / 100;
             const sM2 = (seed % 50) / 50;
 
-            const isReal = !!c.isRealMeta;
+            const isReal = !!c.isRealMeta || !!c.isRealGoogle || !!c.isRealLinkedIn || !!c.isRealX || !!c.isReal;
 
             const rawSpend = isReal ? c.spend : (100 + sM1 * 1000);
             const spendVal = Number(rawSpend) || 0;
@@ -147,11 +149,22 @@ export const AdsManager: React.FC = () => {
               plat = 'LinkedIn';
             }
 
+            let statusVal = (c.status || 'active').toLowerCase();
+            if (isReal) {
+              const upperDelivery = deliveryVal.toUpperCase();
+              if (upperDelivery.includes('ACTIVE') || upperDelivery.includes('ENABLED')) {
+                statusVal = 'active';
+              } else if (upperDelivery.includes('PAUSED')) {
+                statusVal = 'paused';
+              }
+            }
+
             return {
               id: c._id ? c._id.toString() : '',
+              originalData: c,
               name: c.name || 'AI Campaign',
               platform: plat,
-              status: (c.status || 'active').toLowerCase(),
+              status: statusVal,
               delivery: deliveryVal,
               spend: `$${spendVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
               budget: `$${budgetVal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/day`,
@@ -180,6 +193,7 @@ export const AdsManager: React.FC = () => {
 
             return {
               id: c?._id ? c._id.toString() : '',
+              originalData: c,
               name: c?.name || 'AI Campaign',
               platform: plat,
               status: 'active',
@@ -238,7 +252,7 @@ export const AdsManager: React.FC = () => {
       showToast(`Updating status to ${newStatus}...`, 'info');
       const response = await api.post(`/campaign/${campaignId}/toggle-status`, { status: newStatus });
       if (response.data?.success) {
-        setAds(prev => prev.map(ad => ad.id === campaignId ? { ...ad, status: newStatus } : ad));
+        setAds(prev => prev.map(ad => ad.id === campaignId ? { ...ad, status: newStatus, delivery: newStatus === 'active' ? 'ACTIVE' : 'PAUSED' } : ad));
         showToast(`Campaign successfully ${newStatus === 'active' ? 'activated' : 'paused'}!`, 'success');
       }
     } catch (err: any) {
@@ -247,6 +261,25 @@ export const AdsManager: React.FC = () => {
       showToast(errMsg, 'error');
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleUpdateGoogleCampaign = async (updatedData: any) => {
+    if (!editingGoogleCampaign) return;
+    try {
+      showToast('Updating Google Campaign...', 'info');
+      const response = await api.put(`/campaign/google/${editingGoogleCampaign._id}`, {
+        userId,
+        ...updatedData
+      });
+      if (response.data) {
+        showToast('Google Campaign updated successfully!', 'success');
+        fetchCampaigns();
+      }
+    } catch (err: any) {
+      console.error('Failed to update Google campaign:', err);
+      const errMsg = err.response?.data?.message || 'Failed to update Google campaign';
+      throw new Error(errMsg);
     }
   };
 
@@ -261,6 +294,13 @@ export const AdsManager: React.FC = () => {
   const activeCount = ads.filter(ad => ad.status === 'active').length;
   const pausedCount = ads.filter(ad => ad.status === 'paused').length;
   const draftCount = ads.filter(ad => ad.status === 'draft').length;
+
+  // Dynamic metrics calculations from the campaign list
+  const totalSpendVal = ads.reduce((sum, ad) => sum + parseFloat((ad.spend || '$0.00').replace(/[^0-9.]/g, '') || '0'), 0);
+  const totalRoasVal = ads.reduce((sum, ad) => sum + parseFloat((ad.roas || '0.0x').replace(/[^0-9.]/g, '') || '0'), 0);
+  const avgRoasVal = ads.length > 0 ? (totalRoasVal / ads.length).toFixed(1) : '0.0';
+  const totalScoreVal = ads.reduce((sum, ad) => sum + (ad.score || 0), 0);
+  const avgScoreVal = ads.length > 0 ? Math.round(totalScoreVal / ads.length) : 70;
 
   if (loading) return (
     <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
@@ -283,14 +323,14 @@ export const AdsManager: React.FC = () => {
 
       <div style={{ padding: '24px 32px' }}>
         {/* Insight Briefing */}
-        <div style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--glass-border)', padding: '20px 24px', marginBottom: '20px', display: 'flex', gap: '32px' }}>
+        <div className="briefing-grid" style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--glass-border)', padding: '20px 24px', marginBottom: '20px' }}>
           {[
-            { label: 'Total Spend', value: '$4,790', sub: 'This month', icon: BarChart2, color: '#0665ff' },
-            { label: 'Avg ROAS', value: '3.4x', sub: '+0.6x vs last week', icon: TrendingUp, color: '#16a34a' },
+            { label: 'Total Spend', value: `$${totalSpendVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sub: 'Active campaigns', icon: BarChart2, color: '#0665ff' },
+            { label: 'Avg ROAS', value: `${avgRoasVal}x`, sub: 'Average return', icon: TrendingUp, color: '#16a34a' },
             { label: 'Active Ads', value: String(activeCount), sub: `${pausedCount} paused, ${draftCount} draft`, icon: Zap, color: '#d97706' },
-            { label: 'AI Score', value: '74/100', sub: 'Good performance', icon: BrainCircuit, color: '#0665ff' },
+            { label: 'AI Score', value: `${avgScoreVal}/100`, sub: 'Average optimization rating', icon: BrainCircuit, color: '#0665ff' },
           ].map((stat, i) => (
-            <div key={i} style={{ flex: 1, borderRight: i < 3 ? '1px solid rgba(255,255,255,0.08)' : 'none', paddingRight: i < 3 ? '32px' : '0' }}>
+            <div key={i} className="briefing-item">
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
                 <stat.icon size={14} color={stat.color} />
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{stat.label}</span>
@@ -374,8 +414,8 @@ export const AdsManager: React.FC = () => {
         </div>
 
         {/* Platform Tabs + Search */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', gap: '16px' }}>
-          <div style={{ display: 'flex', gap: '2px', background: 'var(--bg-elevated)', borderRadius: '8px', padding: '3px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '2px', background: 'var(--bg-elevated)', borderRadius: '8px', padding: '3px', flexWrap: 'wrap' }}>
             {platforms.map(p => (
               <button key={p} onClick={() => setActivePlatform(p)} style={{
                 padding: '6px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
@@ -483,7 +523,29 @@ export const AdsManager: React.FC = () => {
                   </div>
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, color: row.score > 80 ? '#16a34a' : row.score > 60 ? '#d97706' : '#dc2626' }}>{row.score}</span>
                 </div>
-              )}
+              )},
+              { key: 'actions', label: 'Actions', sortable: false, render: (row) => {
+                if (row.platform === 'Google') {
+                  return (
+                    <button 
+                      onClick={() => setEditingGoogleCampaign(row.originalData)}
+                      style={{
+                        padding: '4px 12px',
+                        background: 'rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '6px',
+                        color: '#fff',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem',
+                        fontWeight: 600
+                      }}
+                    >
+                      Edit
+                    </button>
+                  );
+                }
+                return null;
+              }}
             ]}
             data={filtered}
           />
@@ -512,6 +574,16 @@ export const AdsManager: React.FC = () => {
           {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle size={15} />}
           {toast.message}
         </div>
+      )}
+
+      {/* Edit Google Campaign Modal */}
+      {editingGoogleCampaign && (
+        <EditGoogleCampaignModal
+          campaign={editingGoogleCampaign}
+          isOpen={true}
+          onClose={() => setEditingGoogleCampaign(null)}
+          onSave={handleUpdateGoogleCampaign}
+        />
       )}
     </div>
   );
