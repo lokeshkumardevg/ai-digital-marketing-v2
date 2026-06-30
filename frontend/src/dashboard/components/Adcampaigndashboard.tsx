@@ -1807,7 +1807,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
   const globalDraftData = initialDraftData ? (initialDraftData[enabledPlatforms[0]] || initialDraftData) : null;
   const [adEvent, setAdEvent] = useState<string>(globalDraftData?.event || promoData?.event || promoData?.adGoal || SEED.event);
   const [adBudget, setAdBudget] = useState<string>(globalDraftData?.budget || budgetStr);
-  const [adSchedule, setAdSchedule] = useState<string>(globalDraftData?.schedule || promoData?.schedule || SEED.schedule);
+  const [adSchedule] = useState<string>(globalDraftData?.schedule || promoData?.schedule || SEED.schedule);
   const [adStartDate, setAdStartDate] = useState<string>(() => {
     if (globalDraftData?.startDate) return globalDraftData.startDate;
     const today = new Date();
