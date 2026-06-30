@@ -12,7 +12,6 @@ export class BrandService {
   constructor(
     @InjectModel(Brand.name)
     private readonly brandModel: Model<BrandDocument>,
-  ) { }
     private readonly aiService: AiService,
   ) {}
 
@@ -35,8 +34,8 @@ export class BrandService {
     // Try every possible location the name could live
     return (
       incoming?.brand?.name ||  // { brand: { name } } ← discover API shape
-      incoming?.brandName ||  // flat brandName field
-      incoming?.name ||  // direct name
+      incoming?.brandName ||    // flat brandName field
+      incoming?.name ||         // direct name
       body?.brandDetails?.brand?.name ||  // double-nested fallback
       body?.name ||
       null
@@ -72,9 +71,6 @@ export class BrandService {
       campaignId: doc.campaignId,
       assets: doc.assets,
       savedAt: doc.savedAt,
-      campaignId:   doc.campaignId,
-      assets:       doc.assets,
-      savedAt:      doc.savedAt,
       brandProfile: doc.brandProfile,
     };
   }
@@ -101,7 +97,6 @@ export class BrandService {
   // CampaignSession snapshot as body.
   // ============================================================
   async saveBrand(userId: string, body: any, forceReplace = false) {
-
     // ── Step 1: Extract brandDetails from snapshot ────────────
     const incoming = this.extractBrandDetails(body);
 
@@ -120,11 +115,10 @@ export class BrandService {
     const assets = this.mergeAssets(incoming, body);
 
     // ── Step 4: Conflict check ────────────────────────────────
-    // ── Step 4: Conflict check ────────────────────────────────
     const existing = await this.brandModel.findOne({ userId });
 
     if (existing && !forceReplace && (existing.name || '').trim().toLowerCase() !== brandName.trim().toLowerCase()) {
-      throw new (await import('@nestjs/common')).ConflictException({
+      throw new ConflictException({
         ok: false,
         replaceRequired: true,
         message: 'Brand already exists',
@@ -182,7 +176,7 @@ export class BrandService {
     const updated = await this.brandModel.findOneAndUpdate(
       { userId },
       { $set: { brandProfile } },
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     );
     return this.normaliseBrandRecord(updated);
   }
@@ -193,7 +187,7 @@ export class BrandService {
       try {
         console.log(`[brand-save] Background brand profile generation starting for ${brandName} (${url})...`);
         let scrapedContext = '';
-        
+
         let browser: any = null;
         let title = '';
         let metaDesc = '';
@@ -212,21 +206,27 @@ export class BrandService {
           });
           const page = await context.newPage();
           await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 12000 });
-          
+
           title = await page.title();
-          metaDesc = await page.$eval('meta[name="description"]', (el: any) => el.getAttribute('content')).catch(() => '');
+          metaDesc = await page
+            .$eval('meta[name="description"]', (el: any) => el.getAttribute('content'))
+            .catch(() => '');
           bodyText = await page.evaluate(() => {
             const scripts = document.querySelectorAll('script, style, noscript, iframe, nav, footer');
-            scripts.forEach(s => s.remove());
+            scripts.forEach((s) => s.remove());
             return document.body.innerText || '';
           });
 
           scrapedSuccessfully = true;
-          await browser.close();
         } catch (err: any) {
           console.warn(`[brand-save] Playwright background scrape failed: ${err.message}. Trying Axios fallback.`);
+        } finally {
           if (browser) {
-            try { await browser.close(); } catch {}
+            try {
+              await browser.close();
+            } catch {
+              // ignore close errors
+            }
           }
         }
 
@@ -236,9 +236,10 @@ export class BrandService {
             const response = await axios.get(url, {
               timeout: 10000,
               headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-              }
+                'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+              },
             });
             const cheerio = require('cheerio');
             const $ = cheerio.load(response.data);
@@ -253,18 +254,17 @@ export class BrandService {
         }
 
         if (scrapedSuccessfully) {
-          scrapedContext = `TITLE: ${title}\nDESCRIPTION: ${metaDesc}\n\nCONTENT:\n${bodyText.replace(/\s+/g, ' ').slice(0, 3500)}`;
+          scrapedContext = `TITLE: ${title}\nDESCRIPTION: ${metaDesc}\n\nCONTENT:\n${bodyText
+            .replace(/\s+/g, ' ')
+            .slice(0, 3500)}`;
         } else {
           scrapedContext = `${brandName} ${url}`;
         }
 
         const profileRes = await this.aiService.generateBrandProfile(url, brandName, scrapedContext);
         const profile = profileRes.data?.brand || profileRes;
-        
-        await this.brandModel.findOneAndUpdate(
-          { userId },
-          { $set: { brandProfile: profile } }
-        );
+
+        await this.brandModel.findOneAndUpdate({ userId }, { $set: { brandProfile: profile } });
         console.log(`[brand-save] ✅ Background brand profile generation completed and saved for ${brandName}`);
       } catch (err: any) {
         console.error(`[brand-save] Background brand profile generation failed: ${err.message}`);
@@ -281,10 +281,7 @@ export class BrandService {
     const brand = await this.brandModel.findOneAndUpdate(
       {
         userId,
-        $or: [
-          { _id: brandId },
-          { campaignId: brandId },
-        ],
+        $or: [{ _id: brandId }, { campaignId: brandId }],
       },
       { $set: { isActiveBrand: true } },
       { new: true },

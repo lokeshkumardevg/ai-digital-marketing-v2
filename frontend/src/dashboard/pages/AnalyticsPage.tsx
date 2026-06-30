@@ -133,18 +133,6 @@ const radarData = [
     { subject: 'Trust',   A: 79 },
 ];
 
-// ─── Skeleton loader ──────────────────────────────────────────
-const ChartSkeleton: React.FC<{ height?: number }> = ({ height = 220 }) => (
-    <div
-        style={{
-            height,
-            borderRadius: '8px',
-            background: 'var(--bg-card)',
-            animation: 'pulse 1.5s ease-in-out infinite',
-        }}
-    />
-);
-
 // ─── Component ────────────────────────────────────────────────
 const AnalyticsPage: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -387,18 +375,17 @@ const AnalyticsPage: React.FC = () => {
                             Purple bars = Google + FB combined · Amber line = avg rating (Google only, right axis)
                         </p>
                     </div>
-                    {loading ? <Skel h={220} /> : rtData.length === 0 ? <Empty h={220} /> : (
+                    {loading ? (
+                        <Skel h={220} />
+                    ) : rtData.length === 0 ? (
+                        <Empty h={220} />
+                    ) : (
                         <ResponsiveContainer width="100%" height={220}>
                             <ComposedChart data={rtData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                                 <XAxis dataKey="month" stroke="#4b5563" tick={{ fontSize: 10 }} tickFormatter={fmtMonth} />
                                 <YAxis yAxisId="left"  stroke="#4b5563" tick={{ fontSize: 11 }} allowDecimals={false} />
                                 <YAxis yAxisId="right" orientation="right" domain={[0, 5]} stroke="#4b5563" tick={{ fontSize: 11 }} />
-                                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '8px', fontSize: '12px' }} />
-                                <Bar yAxisId="left" dataKey="count" fill="#7033f5" radius={[4, 4, 0, 0]} fillOpacity={0.8} />
-                                <Line yAxisId="right" type="monotone" dataKey="avgRating" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 4 }} />
-
-                            </BarChart>
                                 <Tooltip
                                     {...TT}
                                     formatter={(v: any, name: string) => {
@@ -411,8 +398,8 @@ const AnalyticsPage: React.FC = () => {
                                 />
                                 <Legend wrapperStyle={{ fontSize: 11, color: '#9ca3af' }} />
                                 {/* Stacked bars: google (purple) + fb (blue) */}
-                                <Bar yAxisId="left" dataKey="googleCount" stackId="a" fill={C.purple} fillOpacity={0.85} radius={[0,0,0,0]} maxBarSize={36} name="googleCount" />
-                                <Bar yAxisId="left" dataKey="fbCount"     stackId="a" fill="#1877F2"  fillOpacity={0.7}  radius={[4,4,0,0]} maxBarSize={36} name="fbCount" />
+                                <Bar yAxisId="left" dataKey="googleCount" stackId="a" fill={C.purple} fillOpacity={0.85} radius={[0, 0, 0, 0]} maxBarSize={36} name="googleCount" />
+                                <Bar yAxisId="left" dataKey="fbCount"     stackId="a" fill="#1877F2"  fillOpacity={0.7}  radius={[4, 4, 0, 0]} maxBarSize={36} name="fbCount" />
                                 <Line yAxisId="right" type="monotone" dataKey="avgRating" stroke={C.amber} strokeWidth={2}
                                     dot={{ fill: C.amber, r: 3 }} connectNulls={false} name="avgRating" />
                             </ComposedChart>
@@ -450,7 +437,11 @@ const AnalyticsPage: React.FC = () => {
                             Green = positive (rating &gt;3) · Red = negative (rating ≤3) · Amber = FB comments (unrated)
                         </p>
                     </div>
-                    {loading ? <Skel h={200} /> : sentimentData.length === 0 ? <Empty h={200} /> : (
+                    {loading ? (
+                        <Skel h={200} />
+                    ) : sentimentData.length === 0 ? (
+                        <Empty h={200} />
+                    ) : (
                         <ResponsiveContainer width="100%" height={200}>
                             <AreaChart data={sentimentData}>
                                 <defs>
@@ -468,11 +459,6 @@ const AnalyticsPage: React.FC = () => {
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                                <XAxis dataKey="month" stroke="#4b5563" tick={{ fontSize: 11 }} />
-                                <YAxis stroke="#4b5563" tick={{ fontSize: 11 }} />
-                                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '8px', fontSize: '12px' }} />
-                                <Area type="monotone" dataKey="positive" stroke="#10b981" fill="url(#posGrad)" strokeWidth={2} />
-                                <Area type="monotone" dataKey="negative" stroke="#ef4444" fill="url(#negGrad)" strokeWidth={2} />
                                 <XAxis dataKey="month" stroke="#4b5563" tick={{ fontSize: 10 }} tickFormatter={fmtMonth} />
                                 <YAxis stroke="#4b5563" tick={{ fontSize: 11 }} allowDecimals={false} />
                                 <Tooltip
@@ -498,28 +484,6 @@ const AnalyticsPage: React.FC = () => {
                     )}
                 </GlassCard>
 
-                <GlassCard>
-                    <div style={{ marginBottom: '20px' }}>
-                        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Topics Analysis</h3>
-                        {loading && <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Loading…</span>}
-                    </div>
-                    {loading ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {[1, 2, 3, 4, 5].map(i => (
-                                <div key={i} style={{ height: '36px', borderRadius: '6px', background: 'var(--bg-card)', animation: 'pulse 1.5s ease-in-out infinite' }} />
-                            ))}
-                        </div>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {topicBreakdown.map((t, idx) => (
-                                <div key={t.topic ?? t._id ?? idx}>   {/* ← was: key={t.topic} which can be undefined */}
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>{t.topic ?? t._id}</span>
-                                        <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>{t.positive}% positive</span>
-                                    </div>
-                                    <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-                                        <div style={{ height: '100%', width: `${t.positive}%`, background: 'linear-gradient(90deg, #10b981, #6366f1)', borderRadius: '3px', transition: 'width 0.6s ease' }} />
-                                    </div>
                 {/* Sentiment + Source summary from totals */}
                 <GlassCard style={{ padding: 24 }}>
                     <h3 style={{ margin: '0 0 18px', fontSize: '1rem', fontWeight: 600 }}>Sentiment Summary</h3>
@@ -588,9 +552,11 @@ const AnalyticsPage: React.FC = () => {
                 </div>
                 {loading ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {[1,2,3,4,5].map(i => <Skel key={i} h={42} />)}
+                        {[1, 2, 3, 4, 5].map(i => <Skel key={i} h={42} />)}
                     </div>
-                ) : topicsData.length === 0 ? <Empty h={160} msg="No topic data yet" /> : (
+                ) : topicsData.length === 0 ? (
+                    <Empty h={160} msg="No topic data yet" />
+                ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         {topicsData.map((t, idx) => (
                             <div key={t.topic + idx}>
