@@ -464,91 +464,347 @@ async getCustomerById(id: string, brandId: string) {
 
   // GET /reputation/analytics/rating-trend?brandId=xxx&months=6
 async getRatingTrend(brandId: string, months = 6) {
-  const filter: any = brandId ? { brandId } : {};
-
-  const trend = await this.reviewModel.aggregate([
-    { $match: filter },
-    {
-      $group: {
-        _id: {
-          year: { $year: '$reviewDate' },
-          month: { $month: '$reviewDate' },
+  const googleFilter: any = brandId ? { brandId } : {};
+  const fbFilter: any     = brandId ? { brandId } : {};
+ 
+  // ── 1. Google reviews — monthly ─────────────────────────
+  const [googleMonthly, googleTotals] = await Promise.all([
+    this.reviewModel.aggregate([
+      { $match: googleFilter },
+      {
+        $addFields: {
+          _d: { $convert: { input: '$reviewDate', to: 'date', onError: null, onNull: null } },
         },
-        avgRating: { $avg: '$rating' },
-        count: { $sum: 1 },
       },
-    },
-    { $sort: { '_id.year': 1, '_id.month': 1 } },
-    { $limit: months },
+      { $match: { _d: { $ne: null } } },
+      {
+        $group: {
+          _id:       { year: { $year: '$_d' }, month: { $month: '$_d' } },
+          avgRating: { $avg: '$rating' },
+          count:     { $sum: 1 },
+        },
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
+      { $limit: months },
+    ]),
+ 
+    // Google overall totals
+    this.reviewModel.aggregate([
+      { $match: googleFilter },
+      {
+        $group: {
+          _id:       null,
+          total:     { $sum: 1 },
+          avgRating: { $avg: '$rating' },
+        },
+      },
+    ]),
   ]);
-
+ 
+  // ── 2. Facebook comments — monthly ──────────────────────
+  const [fbMonthly, fbTotals] = await Promise.all([
+    this.postMetaModel.aggregate([
+      { $match: fbFilter },
+      { $unwind: { path: '$comments', preserveNullAndEmptyArrays: false } },
+      {
+        $addFields: {
+          _d: { $convert: { input: '$comments.createdAt', to: 'date', onError: null, onNull: null } },
+        },
+      },
+      { $match: { _d: { $ne: null } } },
+      {
+        $group: {
+          _id:   { year: { $year: '$_d' }, month: { $month: '$_d' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
+      { $limit: months },
+    ]),
+ 
+    // FB overall totals
+    this.postMetaModel.aggregate([
+      { $match: fbFilter },
+      { $unwind: { path: '$comments', preserveNullAndEmptyArrays: false } },
+      { $group: { _id: null, total: { $sum: 1 } } },
+    ]),
+  ]);
+ 
+  // ── 3. Merge Google + FB by month key ───────────────────
+  const map: Record<string, {
+    month: string; avgRating: number | null;
+    googleCount: number; fbCount: number;
+  }> = {};
+ 
+  googleMonthly.forEach((t: any) => {
+    const key = `${t._id.year}-${String(t._id.month).padStart(2, '0')}`;
+    map[key] = {
+      month:       key,
+      avgRating:   Math.round((t.avgRating ?? 0) * 10) / 10,
+      googleCount: t.count,
+      fbCount:     0,
+    };
+  });
+ 
+  fbMonthly.forEach((t: any) => {
+    const key = `${t._id.year}-${String(t._id.month).padStart(2, '0')}`;
+    if (!map[key]) map[key] = { month: key, avgRating: null, googleCount: 0, fbCount: 0 };
+    map[key].fbCount = t.count;
+  });
+ 
+  const data = Object.values(map)
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .map((m) => ({
+      month:       m.month,
+      avgRating:   m.avgRating,                   // null → FB-only month
+      count:       m.googleCount + m.fbCount,     // combined
+      googleCount: m.googleCount,
+      fbCount:     m.fbCount,
+    }));
+ 
+  // ── 4. Overall totals ────────────────────────────────────
+  const googleTotal     = googleTotals[0]?.total     ?? 0;
+  const googleAvgRating = googleTotals[0]?.avgRating ?? 0;
+  const fbTotal         = fbTotals[0]?.total         ?? 0;
+ 
   return {
-    data: trend.map((t) => ({
-      month: `${t._id.year}-${String(t._id.month).padStart(2, '0')}`,
-      avgRating: Math.round(t.avgRating * 10) / 10,
-      count: t.count,
-    })),
+    data,
+    totals: {
+      totalReviews:     googleTotal + fbTotal,
+      googleReviews:    googleTotal,
+      fbComments:       fbTotal,
+      overallAvgRating: Math.round(googleAvgRating * 10) / 10,  // Google only
+    },
     isDemoData: false,
   };
 }
 
   // GET /reputation/analytics/sentiment-trend?brandId=xxx
 async getSentimentTrend(brandId: string) {
-  const filter: any = brandId ? { brandId } : {};
-
-  const data = await this.reviewModel.aggregate([
-    { $match: filter },
-    {
-      $group: {
-        _id: {
-          year: { $year: '$reviewDate' },
-          month: { $month: '$reviewDate' },
-          sentiment: '$sentiment',
+  const googleFilter: any = brandId ? { brandId } : {};
+  const fbFilter: any     = brandId ? { brandId } : {};
+ 
+  // ── 1. Google reviews — sentiment derived from rating ───
+  const [googleMonthly, googleSentimentTotals] = await Promise.all([
+    this.reviewModel.aggregate([
+      { $match: googleFilter },
+      {
+        $addFields: {
+          _d: { $convert: { input: '$reviewDate', to: 'date', onError: null, onNull: null } },
+          _sentiment: {
+            $cond: [{ $lte: ['$rating', 3] }, 'negative', 'positive'],
+          },
         },
-        count: { $sum: 1 },
       },
-    },
-    { $sort: { '_id.year': 1, '_id.month': 1 } },
+      { $match: { _d: { $ne: null } } },
+      {
+        $group: {
+          _id: {
+            year:      { $year:  '$_d' },
+            month:     { $month: '$_d' },
+            sentiment: '$_sentiment',
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
+    ]),
+ 
+    // Google overall positive/negative totals
+    this.reviewModel.aggregate([
+      { $match: googleFilter },
+      {
+        $addFields: {
+          _sentiment: {
+            $cond: [{ $lte: ['$rating', 3] }, 'negative', 'positive'],
+          },
+        },
+      },
+      {
+        $group: {
+          _id:   '$_sentiment',
+          count: { $sum: 1 },
+        },
+      },
+    ]),
   ]);
-
+ 
+  // ── 2. Facebook comments — monthly (all neutral) ────────
+  const [fbMonthly, fbTotal] = await Promise.all([
+    this.postMetaModel.aggregate([
+      { $match: fbFilter },
+      { $unwind: { path: '$comments', preserveNullAndEmptyArrays: false } },
+      {
+        $addFields: {
+          _d: { $convert: { input: '$comments.createdAt', to: 'date', onError: null, onNull: null } },
+        },
+      },
+      { $match: { _d: { $ne: null } } },
+      {
+        $group: {
+          _id:   { year: { $year: '$_d' }, month: { $month: '$_d' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
+    ]),
+ 
+    this.postMetaModel.aggregate([
+      { $match: fbFilter },
+      { $unwind: { path: '$comments', preserveNullAndEmptyArrays: false } },
+      { $group: { _id: null, total: { $sum: 1 } } },
+    ]),
+  ]);
+ 
+  // ── 3. Pivot Google monthly rows → { month, positive, negative } ─
+  const map: Record<string, { month: string; positive: number; negative: number; neutral: number }> = {};
+ 
+  googleMonthly.forEach((row: any) => {
+    const key = `${row._id.year}-${String(row._id.month).padStart(2, '0')}`;
+    if (!map[key]) map[key] = { month: key, positive: 0, negative: 0, neutral: 0 };
+    if (row._id.sentiment === 'positive') map[key].positive += row.count;
+    else                                  map[key].negative += row.count;
+  });
+ 
+  // Merge FB monthly → neutral bucket
+  fbMonthly.forEach((row: any) => {
+    const key = `${row._id.year}-${String(row._id.month).padStart(2, '0')}`;
+    if (!map[key]) map[key] = { month: key, positive: 0, negative: 0, neutral: 0 };
+    map[key].neutral += row.count;
+  });
+ 
+  const data = Object.values(map)
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .map((m) => ({
+      ...m,
+      total: m.positive + m.negative + m.neutral,
+    }));
+ 
+  // ── 4. Overall sentiment totals ──────────────────────────
+  const sentMap: Record<string, number> = {};
+  googleSentimentTotals.forEach((s: any) => { sentMap[s._id] = s.count; });
+ 
+  const totalPositive  = sentMap['positive'] ?? 0;
+  const totalNegative  = sentMap['negative'] ?? 0;
+  const totalNeutral   = fbTotal[0]?.total   ?? 0;
+  const googleReviews  = totalPositive + totalNegative;
+  const totalReviews   = googleReviews + totalNeutral;
+ 
   return {
     data,
+    totals: {
+      totalReviews,
+      googleReviews,
+      fbComments:   totalNeutral,
+      totalPositive,
+      totalNegative,
+      totalNeutral,
+      positivePct: googleReviews > 0 ? Math.round((totalPositive / googleReviews) * 100) : 0,
+      negativePct: googleReviews > 0 ? Math.round((totalNegative / googleReviews) * 100) : 0,
+    },
     isDemoData: false,
   };
 }
 
   // GET /reputation/analytics/topic-breakdown?brandId=xxx
+// GET /reputation/analytics/topic-breakdown?brandId=xxx
 async getTopicBreakdown(brandId: string) {
-  const filter: any = brandId ? { brandId } : {};
-
-  const topics = await this.reviewModel.aggregate([
-    { $match: filter },
-    { $unwind: '$topics' },
-    {
-      $group: {
-        _id: '$topics',
-        total: { $sum: 1 },
-        positive: {
-          $sum: {
-            $cond: [{ $eq: ['$sentiment', 'positive'] }, 1, 0],
-          },
-        },
-        negative: {
-          $sum: {
-            $cond: [{ $eq: ['$sentiment', 'negative'] }, 1, 0],
+  const googleFilter: any = brandId ? { brandId } : {};
+  const fbFilter: any     = brandId ? { brandId } : {};
+ 
+  // ── 1. Google — topic breakdown ──────────────────────────
+  // Sentiment derived from rating (consistent with getDashboardStats)
+  const [topicData, googleOverall, fbOverall] = await Promise.all([
+    this.reviewModel.aggregate([
+      { $match: googleFilter },
+      { $unwind: '$topics' },
+      {
+        $addFields: {
+          _sentiment: {
+            $cond: [{ $lte: ['$rating', 3] }, 'negative', 'positive'],
           },
         },
       },
-    },
-    { $sort: { total: -1 } },
-    { $limit: 10 },
+      {
+        $group: {
+          _id:      '$topics',
+          total:    { $sum: 1 },
+          positive: { $sum: { $cond: [{ $eq: ['$_sentiment', 'positive'] }, 1, 0] } },
+          negative: { $sum: { $cond: [{ $eq: ['$_sentiment', 'negative'] }, 1, 0] } },
+          // Avg rating per topic
+          avgRating: { $avg: '$rating' },
+          // Platforms where this topic appears
+          platforms: { $addToSet: '$platform' },
+        },
+      },
+      { $sort: { total: -1 } },
+      { $limit: 10 },
+    ]),
+ 
+    // Google overall counts
+    this.reviewModel.aggregate([
+      { $match: googleFilter },
+      {
+        $addFields: {
+          _sentiment: {
+            $cond: [{ $lte: ['$rating', 3] }, 'negative', 'positive'],
+          },
+        },
+      },
+      {
+        $group: {
+          _id:      '$_sentiment',
+          count:    { $sum: 1 },
+        },
+      },
+    ]),
+ 
+    // FB overall comment count
+    this.postMetaModel.aggregate([
+      { $match: fbFilter },
+      { $unwind: { path: '$comments', preserveNullAndEmptyArrays: false } },
+      { $group: { _id: null, total: { $sum: 1 } } },
+    ]),
   ]);
-
+ 
+  // ── 2. Enrich topic data with % ──────────────────────────
+  const data = topicData.map((t: any) => ({
+    _id:             t._id,
+    total:           t.total,
+    positive:        t.positive,
+    negative:        t.negative,
+    positivePercent: t.total > 0 ? Math.round((t.positive / t.total) * 100) : 0,
+    negativePercent: t.total > 0 ? Math.round((t.negative / t.total) * 100) : 0,
+    avgRating:       Math.round((t.avgRating ?? 0) * 10) / 10,
+    platforms:       t.platforms ?? [],
+  }));
+ 
+  // ── 3. Overall totals ────────────────────────────────────
+  const sentMap: Record<string, number> = {};
+  googleOverall.forEach((s: any) => { sentMap[s._id] = s.count; });
+ 
+  const totalPositive   = sentMap['positive'] ?? 0;
+  const totalNegative   = sentMap['negative'] ?? 0;
+  const googleReviews   = totalPositive + totalNegative;
+  const fbComments      = fbOverall[0]?.total ?? 0;
+  const totalTopicMentions = data.reduce((sum: number, t: any) => sum + t.total, 0);
+ 
   return {
-    data: topics,
+    data,
+    totals: {
+      totalReviews:       googleReviews + fbComments,
+      googleReviews,
+      fbComments,
+      totalPositive,
+      totalNegative,
+      totalTopicMentions,
+      positivePct: googleReviews > 0 ? Math.round((totalPositive / googleReviews) * 100) : 0,
+      negativePct: googleReviews > 0 ? Math.round((totalNegative / googleReviews) * 100) : 0,
+    },
     isDemoData: false,
   };
 }
+ 
 
   // ═══════════════════════════════════════════════════════════
   // RECOMMENDATIONS

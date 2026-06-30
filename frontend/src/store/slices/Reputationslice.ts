@@ -69,6 +69,11 @@ export interface Analytics {
   ratingTrend: RatingTrendPoint[];
   sentimentTrend: SentimentTrendPoint[];
   topicBreakdown: TopicBreakdownItem[];
+  // ── NEW: backend-computed totals, kept alongside the chart-ready arrays.
+  // These are reliable summary numbers even when `data[]` is sparse/empty.
+  ratingTotals: Record<string, any> | null;
+  sentimentTotals: Record<string, any> | null;
+  topicTotals: Record<string, any> | null;
 }
 
 // ─── ReputationInsight ───────────────────────────────────────────────────────
@@ -183,7 +188,14 @@ const initialState: ReputationState = {
   sendRequestStatus: {},
 
   // Analytics
-  analytics: { ratingTrend: [], sentimentTrend: [], topicBreakdown: [] },
+  analytics: {
+    ratingTrend: [],
+    sentimentTrend: [],
+    topicBreakdown: [],
+    ratingTotals: null,
+    sentimentTotals: null,
+    topicTotals: null,
+  },
   analyticsLoad: mkLoad(),
 
   // Recommendations
@@ -299,7 +311,7 @@ export const addCustomer = createAsyncThunk(
   }
 );
 
-// ─── NEW: createLead thunk (matches POST /reputation/leads) ─────────────────
+// ─── createLead thunk (matches POST /reputation/leads) ──────────────────────
 export const createLead = createAsyncThunk(
   'reputation/createLead',
   async (
@@ -322,7 +334,7 @@ export const createLead = createAsyncThunk(
   }
 );
 
-// ─── NEW: createLeadsBulk thunk (POST /reputation/leads/bulk) ───────────────
+// ─── createLeadsBulk thunk (POST /reputation/leads/bulk) ────────────────────
 export const createLeadsBulk = createAsyncThunk(
   'reputation/createLeadsBulk',
   async (
@@ -371,6 +383,10 @@ export const sendReviewRequest = createAsyncThunk(
   }
 );
 
+// ─── fetchAnalytics: fires all 3 analytics endpoints in parallel ────────────
+// Each endpoint now returns { data: [...], totals: {...}, isDemoData }
+// We pass the full res.data (not just .data.data) through so the reducer
+// can pull out both `data` and `totals`.
 export const fetchAnalytics = createAsyncThunk(
   'reputation/fetchAnalytics',
   async (params: Record<string, any> = {}, { rejectWithValue }) => {
@@ -381,9 +397,9 @@ export const fetchAnalytics = createAsyncThunk(
         api.get('/reputation/analytics/topic-breakdown', { params }),
       ]);
       return {
-        ratingTrend:    ratingRes.data,
-        sentimentTrend: sentimentRes.data,
-        topicBreakdown: topicRes.data,
+        ratingTrend:    ratingRes.data,    // { data, totals, isDemoData }
+        sentimentTrend: sentimentRes.data, // { data, totals, isDemoData }
+        topicBreakdown: topicRes.data,     // { data, totals, isDemoData }
       };
     } catch (e: any) {
       return rejectWithValue(e.response?.data?.message || 'Failed to fetch analytics');
@@ -415,7 +431,7 @@ export const generateRecommendations = createAsyncThunk(
   }
 );
 
-// ─── FIX: deleteCustomer — plain string arg (was { customerId, brandId }) ───
+// ─── deleteCustomer — plain string arg (was { customerId, brandId }) ────────
 export const deleteCustomer = createAsyncThunk(
   'reputation/deleteCustomer',
   async ({ id, brandId }: { id: string; brandId: string }, { rejectWithValue }) => {
@@ -596,44 +612,70 @@ const reputationSlice = createSlice({
 })
 
       // ── Analytics ────────────────────────────────────────────────────────
+      // FIX: previously only `.data` was kept and `totals` was discarded
+      // entirely, so the frontend's totals.* fields (totalReviews,
+      // googleReviews, fbComments, positivePct, negativePct, etc.) were
+      // always undefined → KPI cards showed nothing / fell back to 0.
+      //
+      // Now we store BOTH the chart-ready `data[]` arrays AND the raw
+      // backend `totals` object for each endpoint.
       .addCase(fetchAnalytics.pending,   (s)    => setLoading(s.analyticsLoad))
       .addCase(fetchAnalytics.fulfilled, (s, a) => {
         setSucceeded(s.analyticsLoad);
 
+        // ── Rating trend ──────────────────────────────────────────────────
         const rawRating = a.payload.ratingTrend;
-        s.analytics.ratingTrend = Array.isArray(rawRating)
+        s.analytics.ratingTrend  = Array.isArray(rawRating)
           ? rawRating
           : Array.isArray(rawRating?.data) ? rawRating.data : [];
+        s.analytics.ratingTotals = Array.isArray(rawRating)
+          ? null
+          : rawRating?.totals ?? null;
 
+        // ── Sentiment trend ───────────────────────────────────────────────
         const rawSentiment  = a.payload.sentimentTrend;
         const sentimentRows: any[] = Array.isArray(rawSentiment)
           ? rawSentiment
           : Array.isArray(rawSentiment?.data) ? rawSentiment.data : [];
 
+        // Backend now sends pre-pivoted rows: { month, positive, negative, neutral, total }
+        // but we still defensively handle the OLD raw shape { _id:{year,month,sentiment}, count }
+        // in case an older cached response slips through.
         const sentimentMap: Record<string, Record<string, number>> = {};
         sentimentRows.forEach((row: any) => {
           if (row._id?.year !== undefined) {
             const key = `${row._id.year}-${String(row._id.month).padStart(2, '0')}`;
             if (!sentimentMap[key]) sentimentMap[key] = { month: key as any, positive: 0, negative: 0, neutral: 0, mixed: 0 };
             sentimentMap[key][row._id.sentiment] = row.count;
-          } else {
-            const key = row.month ?? row._id;
+          } else if (row.month) {
+            // already pivoted shape from backend — keep as-is
+            const key = row.month;
             sentimentMap[key] = { ...sentimentMap[key], ...row };
           }
         });
-        s.analytics.sentimentTrend = Object.values(sentimentMap) as any;
+        s.analytics.sentimentTrend  = Object.values(sentimentMap) as any;
+        s.analytics.sentimentTotals = Array.isArray(rawSentiment)
+          ? null
+          : rawSentiment?.totals ?? null;
 
+        // ── Topic breakdown ───────────────────────────────────────────────
         const rawTopics  = a.payload.topicBreakdown;
         const topicRows: any[] = Array.isArray(rawTopics)
           ? rawTopics
           : Array.isArray(rawTopics?.data) ? rawTopics.data : [];
+
+        // Backend now sends positivePercent/negativePercent already computed —
+        // keep them as-is, just normalize `topic` field name and fall back
+        // to computing % only if the backend field is missing.
         s.analytics.topicBreakdown = topicRows.map((t: any) => ({
           ...t,
-          topic:    t.topic ?? t._id,
-          positive: t.positive !== undefined
-            ? (t.total ? Math.round((t.positive / t.total) * 100) : t.positive)
-            : 0,
+          topic: t.topic ?? t._id,
+          positivePercent: t.positivePercent ?? (t.total ? Math.round((t.positive / t.total) * 100) : 0),
+          negativePercent: t.negativePercent ?? (t.total ? Math.round((t.negative / t.total) * 100) : 0),
         }));
+        s.analytics.topicTotals = Array.isArray(rawTopics)
+          ? null
+          : rawTopics?.totals ?? null;
       })
       .addCase(fetchAnalytics.rejected,  (s, a) => setFailed(s.analyticsLoad, a.payload as string))
 
