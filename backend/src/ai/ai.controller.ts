@@ -72,7 +72,7 @@ export class AiController {
       userId: req.user?.id,
     };
   }
- 
+
   // ── SEO AUDIT ─────────────────────────────────────────────
 
   @UseGuards(AuthGuard('jwt'))
@@ -91,7 +91,6 @@ export class AiController {
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36'
         }
       });
-       
 
       let meta = { title: '', description: '', h1: '', images: 0 };
       if (fetchResponse.ok) {
@@ -213,11 +212,11 @@ export class AiController {
     }
 
     const profile = await this.aiService.getBrandProfile(projectId);
-    
+
     if (!profile) {
       return { success: false, data: null };
     }
-    
+
     if (profile.url !== url) {
       // If the url changed, we invalidate it by returning null.
       // It will be overwritten on the next POST.
@@ -233,13 +232,11 @@ export class AiController {
   @UseGuards(AuthGuard('jwt'))
   @Post('brand-profile')
   @HttpCode(HttpStatus.OK)
-  async runBrandProfile(@Body() body: { projectId: string; url: string; brandName: string }) {
-    const { projectId, url, brandName } = body;
   async runBrandProfile(
-    @Body() body: { url: string; brandName: string },
+    @Body() body: { projectId: string; url: string; brandName: string },
     @Request() req: any,
   ) {
-    const { url, brandName } = body;
+    const { projectId, url, brandName } = body;
 
     let scrapedContext = '';
 
@@ -262,21 +259,27 @@ export class AiController {
       });
       const page = await context.newPage();
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 12000 });
-      
+
       title = await page.title();
-      metaDesc = await page.$eval('meta[name="description"]', (el: any) => el.getAttribute('content')).catch(() => '');
+      metaDesc = await page
+        .$eval('meta[name="description"]', (el: any) => el.getAttribute('content'))
+        .catch(() => '');
       bodyText = await page.evaluate(() => {
         const scripts = document.querySelectorAll('script, style, noscript, iframe, nav, footer');
-        scripts.forEach(s => s.remove());
+        scripts.forEach((s) => s.remove());
         return document.body.innerText || '';
       });
 
       scrapedSuccessfully = true;
-      await browser.close();
     } catch (err: any) {
       this.logger.warn(`Playwright manual scrape failed: ${err.message}. Trying Axios fallback.`);
+    } finally {
       if (browser) {
-        try { await browser.close(); } catch {}
+        try {
+          await browser.close();
+        } catch {
+          // ignore close errors
+        }
       }
     }
 
@@ -286,8 +289,9 @@ export class AiController {
         const response = await axios.get(url, {
           timeout: 10000,
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
           }
         });
         const $ = cheerio.load(response.data);
@@ -322,12 +326,15 @@ ${bodyText.replace(/\s+/g, ' ').slice(0, 3500)}
     if (projectId && profile.success) {
       await this.aiService.saveBrandProfile(projectId, url, brandName, profile);
     }
+
     // Save generated profile to database
-    const brandData = profile.data?.brand || profile;
-    await this.brandModel.findOneAndUpdate(
-      { userId: req.user.id },
-      { $set: { brandProfile: brandData } }
-    );
+    if (req.user?.id) {
+      const brandData = profile.data?.brand || profile;
+      await this.brandModel.findOneAndUpdate(
+        { userId: req.user.id },
+        { $set: { brandProfile: brandData } }
+      );
+    }
 
     return {
       success: true,

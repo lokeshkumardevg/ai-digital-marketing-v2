@@ -8,18 +8,15 @@ import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from '../users/users.module';
 import { AiAnalysis, AiAnalysisSchema } from './schemas/ai-analysis.schema';
 import { Brand, BrandSchema } from '../brand/brand.schema';
-
 import { BrandProfile, BrandProfileSchema } from './schemas/brand-profile.schema';
 
 @Module({
   imports: [
     ConfigModule,
-    MongooseModule.forFeature([
-      { name: AiAnalysis.name, schema: AiAnalysisSchema },
-      { name: BrandProfile.name, schema: BrandProfileSchema },
     UsersModule,
     MongooseModule.forFeature([
       { name: AiAnalysis.name, schema: AiAnalysisSchema },
+      { name: BrandProfile.name, schema: BrandProfileSchema },
       { name: Brand.name, schema: BrandSchema },
     ]),
   ],

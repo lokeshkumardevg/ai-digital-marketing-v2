@@ -32,25 +32,8 @@ const ChartLine: React.FC<{ data: number[]; color: string; height: number; width
   );
 };
 
-// ── Theme variables mapped to tokens ──────────────────
+// ── Dark token palette (matches landing page) ──────────────────
 const D = {
-  bg: 'var(--bg-secondary)',
-  surface: 'var(--bg-elevated)',
-  surfaceAlt: 'var(--bg-card)',
-  border: 'var(--glass-border)',
-  borderGlow: 'var(--glass-border)',
-  purple: 'var(--accent-primary)',
-  purpleSoft: 'var(--accent-secondary)',
-  purpleText: 'var(--accent-primary)',
-  green: 'var(--success)',
-  greenSoft: 'rgba(16,185,129,0.15)',
-  greenText: 'var(--success)',
-  textPrimary: 'var(--text-primary)',
-  textMuted: 'var(--text-secondary)',
-  textDim: 'var(--text-dim)',
-  white005: 'var(--bg-card)',
-  white010: 'var(--bg-elevated)',
-  inputBg: 'var(--bg-card)',
   bg: '#0a0f1e',          // deepest background
   surface: '#0f1629',          // card surfaces
   surfaceAlt: '#141d35',          // slightly lighter card
@@ -560,11 +543,6 @@ export const Crm: React.FC = () => {
             </div>
           </div>
 
-        {/* ── Audience Segments ── */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}>
-              <Users size={16} />
           {/* ── Audience Segments ── */}
           <div style={{ marginBottom: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>

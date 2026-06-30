@@ -188,6 +188,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({
           </div>
         </div>
       </div>
+      </div>
     </div>
   );
 };

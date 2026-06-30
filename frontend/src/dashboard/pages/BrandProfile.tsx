@@ -839,4 +839,4 @@ const Pill: React.FC<{ label: string; outline?: boolean }> = ({ label, outline }
 
 const KeywordPill: React.FC<{ label: string }> = ({ label }) => (
   <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 500, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)' }}>{label}</span>
-);
+);}
