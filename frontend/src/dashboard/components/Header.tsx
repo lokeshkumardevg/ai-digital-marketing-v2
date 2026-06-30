@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReplaceBrandModal from './content/ReplaceBrandModal';
 import {
   Bell, Search as SearchIcon, LogOut, CheckCircle2,
-  X, Sparkles, Wallet, RefreshCw, Globe, PlusCircle, ChevronDown, Send, Bot
+  X, Sparkles, Wallet, RefreshCw, Globe, PlusCircle, ChevronDown, Send, Bot,
+  Sun, Moon
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +15,7 @@ import {
 } from '../../store/slices/workspaceSlice';
 
 import { markAllReadAsync, markOneReadAsync, deleteOneAsync, fetchNotifications } from '../../store/slices/notificationSlice';
+import { toggleTheme } from '../../store/slices/themeSlice';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import { api } from '../../api/axios';
@@ -31,6 +33,7 @@ export const Header: React.FC = () => {
   const { user } = useSelector((state: any) => state.auth);
   const { websites, activeWebsiteId } = useSelector((state: any) => state.workspace);
   const { items, unreadCount, total } = useSelector((state: any) => state.notifications);
+  const themeMode = useSelector((state: any) => state.theme?.mode || 'dark');
 
   const CATEGORY_COLORS: Record<string, string> = {
     campaign: '#0665ff',
@@ -459,7 +462,27 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Right side actions */}
-        <div className="header-actions">
+        <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+
+          {/* Theme Toggle */}
+          <button 
+            className="theme-toggle-btn" 
+            onClick={() => dispatch(toggleTheme())}
+            title={`Switch to ${themeMode === 'light' ? 'Dark' : 'Light'} Mode`}
+            style={{ 
+              background: 'var(--bg-secondary)', 
+              border: '1px solid var(--glass-border)',
+              borderRadius: '50%',
+              width: '36px', height: '36px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', transition: 'var(--transition-medium)',
+              color: 'var(--text-primary)'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            {themeMode === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
 
           {/* ── Wallet ── */}
           <div className="wallet-dropdown-wrapper" ref={walletDropdownRef}>
@@ -845,7 +868,7 @@ export const Header: React.FC = () => {
                     position: 'absolute', top: '2px', right: '2px',
                     minWidth: '18px', height: '18px', background: 'var(--error)',
                     borderRadius: '10px', border: '2px solid var(--bg-secondary)',
-                    color: 'white', fontSize: '9px', display: 'flex', alignItems: 'center',
+                    color: 'var(--text-primary)', fontSize: '9px', display: 'flex', alignItems: 'center',
                     justifyContent: 'center', fontWeight: 800, padding: '0 3px',
                   }}>
                     {unreadCount > 99 ? '99+' : unreadCount}
@@ -1075,10 +1098,10 @@ export const Header: React.FC = () => {
               maxWidth: '560px',
               height: '80vh',
               maxHeight: '680px',
-              background: 'rgba(15, 23, 42, 0.85)',
+              background: 'var(--glass-bg)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              border: '1px solid var(--glass-border)',
               borderRadius: '24px',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
               display: 'flex',
@@ -1091,11 +1114,11 @@ export const Header: React.FC = () => {
             <div 
               style={{
                 padding: '20px 24px',
-                borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                borderBottom: '1px solid var(--glass-border)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                background: 'rgba(0, 0, 0, 0.15)'
+                background: 'var(--bg-elevated)'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1112,14 +1135,14 @@ export const Header: React.FC = () => {
                   <Sparkles size={20} color="#8b5cf6" />
                 </div>
                 <div style={{ textAlign: 'left' }}>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#f8fafc', fontFamily: 'Outfit' }}>Ask W-AI Strategic Agent</h3>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Always synchronized with your campaigns & reviews</span>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Outfit' }}>Ask W-AI Strategic Agent</h3>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Always synchronized with your campaigns & reviews</span>
                 </div>
               </div>
               <button 
                 onClick={() => setShowAiModal(false)}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
+                  background: 'var(--bg-card)',
                   border: 'none',
                   borderRadius: '50%',
                   width: '32px',
@@ -1128,7 +1151,7 @@ export const Header: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  color: '#94a3b8',
+                  color: 'var(--text-secondary)',
                   transition: '0.2s'
                 }}
               >
@@ -1176,15 +1199,15 @@ export const Header: React.FC = () => {
                   )}
                   <div 
                     style={{
-                      background: m.role === 'user' ? '#635bff' : 'rgba(255, 255, 255, 0.04)',
-                      color: '#f8fafc',
+                      background: m.role === 'user' ? 'var(--accent-primary)' : 'var(--bg-elevated)',
+                      color: 'var(--text-primary)',
                       padding: '12px 16px',
                       borderRadius: '16px',
                       borderTopRightRadius: m.role === 'user' ? '2px' : '16px',
                       borderTopLeftRadius: m.role === 'user' ? '16px' : '2px',
                       fontSize: '0.88rem',
                       lineHeight: 1.5,
-                      border: m.role === 'user' ? 'none' : '1px solid rgba(255, 255, 255, 0.05)',
+                      border: m.role === 'user' ? 'none' : '1px solid var(--glass-border)',
                       boxShadow: m.role === 'user' ? '0 4px 12px rgba(99, 102, 241, 0.3)' : 'none',
                       whiteSpace: 'pre-wrap',
                       textAlign: 'left'
@@ -1212,14 +1235,14 @@ export const Header: React.FC = () => {
                   </div>
                   <div 
                     style={{
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      color: '#94a3b8',
+                      background: 'var(--bg-card)',
+                      color: 'var(--text-secondary)',
                       padding: '12px 16px',
                       borderRadius: '16px',
                       borderTopLeftRadius: '2px',
                       fontSize: '0.8rem',
                       fontStyle: 'italic',
-                      border: '1px solid rgba(255, 255, 255, 0.05)',
+                      border: '1px solid var(--glass-border)',
                       textAlign: 'left'
                     }}
                   >
@@ -1233,8 +1256,8 @@ export const Header: React.FC = () => {
             <div 
               style={{
                 padding: '18px 24px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.06)',
-                background: 'rgba(0, 0, 0, 0.15)',
+                borderTop: '1px solid var(--glass-border)',
+                background: 'var(--bg-elevated)',
                 display: 'flex',
                 gap: '12px'
               }}
@@ -1248,11 +1271,11 @@ export const Header: React.FC = () => {
                 disabled={aiIsTyping}
                 style={{
                   flex: 1,
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '12px',
                   padding: '12px 16px',
-                  color: '#f8fafc',
+                  color: 'var(--text-primary)',
                   fontSize: '0.88rem',
                   outline: 'none',
                   transition: 'border-color 0.2s'
@@ -1271,7 +1294,7 @@ export const Header: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
                   transition: 'all 0.2s'
                 }}

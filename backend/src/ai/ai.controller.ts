@@ -163,10 +163,36 @@ export class AiController {
   // ── BRAND PROFILE ─────────────────────────────────────────
 
   @UseGuards(AuthGuard('jwt'))
+  @Get('brand-profile')
+  @HttpCode(HttpStatus.OK)
+  async getBrandProfile(@Query('projectId') projectId: string, @Query('url') url: string) {
+    if (!projectId) {
+      return { success: false, error: 'projectId is required' };
+    }
+
+    const profile = await this.aiService.getBrandProfile(projectId);
+    
+    if (!profile) {
+      return { success: false, data: null };
+    }
+    
+    if (profile.url !== url) {
+      // If the url changed, we invalidate it by returning null.
+      // It will be overwritten on the next POST.
+      return { success: false, data: null };
+    }
+
+    return {
+      success: true,
+      data: profile.data,
+    };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Post('brand-profile')
   @HttpCode(HttpStatus.OK)
-  async runBrandProfile(@Body() body: { url: string; brandName: string }) {
-    const { url, brandName } = body;
+  async runBrandProfile(@Body() body: { projectId: string; url: string; brandName: string }) {
+    const { projectId, url, brandName } = body;
 
     let scrapedContext = '';
 
@@ -194,6 +220,10 @@ ${$('body').text().replace(/\s+/g, ' ').slice(0, 3000)}
       brandName,
       scrapedContext
     );
+
+    if (projectId && profile.success) {
+      await this.aiService.saveBrandProfile(projectId, url, brandName, profile);
+    }
 
     return {
       success: true,

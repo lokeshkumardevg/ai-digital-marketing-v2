@@ -357,13 +357,13 @@ export const LinkedInCrm: React.FC = () => {
   ];
 
   return (
-    <div style={{ width: '100%', boxSizing: 'border-box', padding: '24px 28px', minHeight: '100vh', background: '#0a0f1e', color: '#e5e5e5', fontFamily: "'Inter', 'Outfit', sans-serif", overflowX: 'hidden' }}>
+    <div style={{ width: '100%', boxSizing: 'border-box', padding: '24px 28px', minHeight: '100vh', background: 'var(--bg-secondary)', color: '#e5e5e5', fontFamily: "'Inter', 'Outfit', sans-serif", overflowX: 'hidden' }}>
 
       {/* ============= LIVE AI TOAST ============= */}
       <div style={{
         position: 'fixed', bottom: '30px', right: '30px', zIndex: 9999,
         background: 'linear-gradient(135deg, rgba(34,197,94,0.9), rgba(21,128,61,0.95))',
-        color: '#fff', padding: '14px 20px', borderRadius: '12px',
+        color: 'var(--text-primary)', padding: '14px 20px', borderRadius: '12px',
         boxShadow: '0 8px 32px rgba(34,197,94,0.3)', fontWeight: 600, fontSize: '0.9rem',
         transform: toastMessage ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
         opacity: toastMessage ? 1 : 0, pointerEvents: toastMessage ? 'auto' : 'none',
@@ -411,7 +411,7 @@ export const LinkedInCrm: React.FC = () => {
                 LIVE AI
               </button>
             </h1>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>Manage leads, analyze profiles & automate outreach</p>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-dim)' }}>Manage leads, analyze profiles & automate outreach</p>
           </div>
         </div>
 
@@ -432,7 +432,7 @@ export const LinkedInCrm: React.FC = () => {
                 <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#22c55e' }}>
                   {connectedAccount.profileName}
                 </div>
-                <div style={{ fontSize: '0.65rem', color: '#64748b' }}>View Full Profile</div>
+                <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>View Full Profile</div>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); handleDisconnect(); }}
@@ -452,7 +452,7 @@ export const LinkedInCrm: React.FC = () => {
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
                 background: 'linear-gradient(135deg, #0077B5, #00A0DC)',
-                color: '#fff', border: 'none', borderRadius: '12px',
+                color: 'var(--text-primary)', border: 'none', borderRadius: '12px',
                 padding: '10px 20px', fontSize: '0.85rem', fontWeight: 600,
                 cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,119,181,0.3)',
                 transition: 'all 0.2s ease',
@@ -482,7 +482,7 @@ export const LinkedInCrm: React.FC = () => {
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               background: 'var(--accent-gradient, linear-gradient(135deg, #7033f5, #9b59b6))',
-              color: '#fff', border: 'none', borderRadius: '12px',
+              color: 'var(--text-primary)', border: 'none', borderRadius: '12px',
               padding: '10px 18px', fontSize: '0.85rem', fontWeight: 600,
               cursor: 'pointer', boxShadow: '0 4px 16px rgba(112,51,245,0.25)',
             }}
@@ -546,7 +546,7 @@ export const LinkedInCrm: React.FC = () => {
                 <div style={{ position: 'absolute', top: '16px', right: '16px', opacity: 0.15 }}>
                   <card.icon size={42} color={card.color} />
                 </div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
                   {card.label}
                 </div>
                 <div style={{ fontSize: '2rem', fontWeight: 800, color: card.color, letterSpacing: '-1px' }}>
@@ -563,9 +563,9 @@ export const LinkedInCrm: React.FC = () => {
           }}>
             <div style={{
               display: 'flex', alignItems: 'center', gap: '8px',
-              background: 'rgba(255,255,255,0.04)', borderRadius: '12px',
+              background: 'var(--bg-card)', borderRadius: '12px',
               padding: '6px 14px', flex: '1 1 250px', maxWidth: '400px',
-              border: '1px solid rgba(255,255,255,0.08)',
+              border: '1px solid var(--glass-border)',
             }}>
               <Search size={16} color="#64748b" />
               <input
@@ -579,7 +579,7 @@ export const LinkedInCrm: React.FC = () => {
                 }}
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 0 }}>
+                <button onClick={() => setSearchQuery('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-dim)', padding: 0 }}>
                   <X size={14} />
                 </button>
               )}
@@ -590,7 +590,7 @@ export const LinkedInCrm: React.FC = () => {
                 value={stageFilter}
                 onChange={(e) => setStageFilter(e.target.value)}
                 style={{
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
                   borderRadius: '10px', padding: '8px 12px', color: '#e5e5e5',
                   fontSize: '0.8rem', cursor: 'pointer', outline: 'none',
                 }}
@@ -602,8 +602,8 @@ export const LinkedInCrm: React.FC = () => {
               </select>
 
               <div style={{
-                display: 'flex', background: 'rgba(255,255,255,0.04)',
-                borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)',
+                display: 'flex', background: 'var(--bg-card)',
+                borderRadius: '10px', border: '1px solid var(--glass-border)',
                 overflow: 'hidden',
               }}>
                 {(['pipeline', 'table'] as const).map((v) => (
@@ -665,7 +665,7 @@ export const LinkedInCrm: React.FC = () => {
               { key: 'industry', label: 'Industry', icon: Briefcase },
             ].map((field) => (
               <div key={field.key}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <field.icon size={12} /> {field.label}
                 </label>
                 <input
@@ -674,7 +674,7 @@ export const LinkedInCrm: React.FC = () => {
                   onChange={(e) => setNewLead({ ...newLead, [field.key]: e.target.value })}
                   style={{
                     width: '100%', padding: '10px 12px', borderRadius: '10px',
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
                     color: '#e5e5e5', fontSize: '0.85rem', outline: 'none',
                     transition: 'border-color 0.2s',
                   }}
@@ -687,7 +687,7 @@ export const LinkedInCrm: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
             <button
               onClick={() => setShowAddLead(false)}
-              style={{ padding: '10px 20px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94a3b8', cursor: 'pointer', fontWeight: 600 }}
+              style={{ padding: '10px 20px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }}
             >
               Cancel
             </button>
@@ -697,7 +697,7 @@ export const LinkedInCrm: React.FC = () => {
               style={{
                 padding: '10px 24px', borderRadius: '10px',
                 background: newLead.name.trim() ? 'linear-gradient(135deg, #6366f1, #8b5cf6)' : 'rgba(255,255,255,0.06)',
-                border: 'none', color: '#fff', cursor: newLead.name.trim() ? 'pointer' : 'not-allowed',
+                border: 'none', color: 'var(--text-primary)', cursor: newLead.name.trim() ? 'pointer' : 'not-allowed',
                 fontWeight: 600, fontSize: '0.85rem',
                 boxShadow: newLead.name.trim() ? '0 4px 16px rgba(99,102,241,0.3)' : 'none',
               }}
@@ -728,23 +728,23 @@ export const LinkedInCrm: React.FC = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
-              <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase' }}>Email Address</div>
+              <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase' }}>Email Address</div>
                 <div style={{ fontSize: '0.9rem', color: '#e5e5e5' }}>{connectedAccount.email || 'Not provided by LinkedIn'}</div>
               </div>
-              <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase' }}>LinkedIn ID</div>
+              <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase' }}>LinkedIn ID</div>
                 <div style={{ fontSize: '0.9rem', color: '#e5e5e5', fontFamily: 'monospace' }}>{connectedAccount.linkedinId || connectedAccount.id || 'Unknown'}</div>
               </div>
-              <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ padding: '12px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Building2 size={12} /> Connected Company Page / Organization
                 </div>
                 {connectedAccount.connectedOrganizationUrn ? (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(99,102,241,0.05)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(99,102,241,0.1)' }}>
                     <div>
                       <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{connectedAccount.connectedOrganizationName}</div>
-                      <div style={{ fontSize: '0.65rem', color: '#64748b', fontFamily: 'monospace', marginTop: '2px' }}>{connectedAccount.connectedOrganizationUrn}</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontFamily: 'monospace', marginTop: '2px' }}>{connectedAccount.connectedOrganizationUrn}</div>
                     </div>
                     <button
                       onClick={() => dispatch(connectOrganization({ orgUrn: '', orgName: '' }))}
@@ -755,19 +755,19 @@ export const LinkedInCrm: React.FC = () => {
                   </div>
                 ) : (
                   <div>
-                    <p style={{ margin: '0 0 10px', fontSize: '0.75rem', color: '#94a3b8' }}>
+                    <p style={{ margin: '0 0 10px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                       Connect a company page to publish posts and run ads as your business instead of your personal profile.
                     </p>
                     {orgsLoading ? (
-                      <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Loading organizations...</div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Loading organizations...</div>
                     ) : organizations && organizations.length > 0 ? (
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <select
                           id="org-select"
                           style={{
                             flex: 1, padding: '8px 12px', borderRadius: '8px',
-                            background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
-                            color: '#fff', fontSize: '0.8rem', cursor: 'pointer', outline: 'none'
+                            background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)',
+                            color: 'var(--text-primary)', fontSize: '0.8rem', cursor: 'pointer', outline: 'none'
                           }}
                           onChange={(e) => {
                             const val = e.target.value;
@@ -801,14 +801,14 @@ export const LinkedInCrm: React.FC = () => {
                 </h4>
                 {connectedAccount.experience && Object.keys(connectedAccount.experience).length > 0 ? (
                   Array.isArray(connectedAccount.experience) && connectedAccount.experience.map((exp: any, i: number) => (
-                    <div key={i} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '8px' }}>
+                    <div key={i} style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '8px' }}>
                       <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{exp.title}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '4px 0' }}>{exp.company}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{exp.dates}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '4px 0' }}>{exp.company}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{exp.dates}</div>
                     </div>
                   ))
                 ) : (
-                  <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>No experience data available.</div>
                   </div>
                 )}
@@ -820,13 +820,13 @@ export const LinkedInCrm: React.FC = () => {
                 </h4>
                 {connectedAccount.education && Object.keys(connectedAccount.education).length > 0 ? (
                   Array.isArray(connectedAccount.education) && connectedAccount.education.map((edu: any, i: number) => (
-                    <div key={i} style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '8px' }}>
+                    <div key={i} style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '8px' }}>
                       <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{edu.school}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8', margin: '4px 0' }}>{edu.degree}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '4px 0' }}>{edu.degree}</div>
                     </div>
                   ))
                 ) : (
-                  <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                     <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>No education data available.</div>
                   </div>
                 )}
@@ -836,7 +836,7 @@ export const LinkedInCrm: React.FC = () => {
             {(!connectedAccount.scraperStatus || connectedAccount.scraperStatus === 'pending' || connectedAccount.scraperStatus === 'failed') && (
               <div style={{ marginTop: '10px', padding: '16px', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
                 <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem', color: '#fcd34d' }}>Fetch Full Profile Data (Scraper)</h4>
-                <p style={{ margin: '0 0 12px', fontSize: '0.8rem', color: '#94a3b8' }}>
+                <p style={{ margin: '0 0 12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                   To get real Education and Experience, we need your LinkedIn session cookie <code>li_at</code> to bypass API limits.
                 </p>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -845,14 +845,14 @@ export const LinkedInCrm: React.FC = () => {
                     placeholder="Paste li_at cookie here..."
                     value={liAtCookie}
                     onChange={(e) => setLiAtCookie(e.target.value)}
-                    style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: '0.85rem' }}
+                    style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'rgba(0,0,0,0.2)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
                   />
                   <button
                     onClick={handleTriggerScrape}
                     disabled={isScraping || !liAtCookie}
                     style={{
                       background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                      color: '#fff', border: 'none', borderRadius: '8px',
+                      color: 'var(--text-primary)', border: 'none', borderRadius: '8px',
                       padding: '0 16px', fontSize: '0.85rem', fontWeight: 600,
                       cursor: (isScraping || !liAtCookie) ? 'not-allowed' : 'pointer',
                       opacity: (isScraping || !liAtCookie) ? 0.7 : 1
@@ -887,7 +887,7 @@ export const LinkedInCrm: React.FC = () => {
                 placeholder="E.g., Launch of our new AI CRM feature..."
                 style={{
                   flex: 1, padding: '10px 12px', borderRadius: '8px',
-                  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
                   color: '#e5e5e5', fontSize: '0.85rem', outline: 'none',
                 }}
               />
@@ -897,7 +897,7 @@ export const LinkedInCrm: React.FC = () => {
                 style={{
                   padding: '0 16px', borderRadius: '8px',
                   background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                  border: 'none', color: '#fff', cursor: (!aiPrompt.trim() || isGeneratingAi) ? 'not-allowed' : 'pointer',
+                  border: 'none', color: 'var(--text-primary)', cursor: (!aiPrompt.trim() || isGeneratingAi) ? 'not-allowed' : 'pointer',
                   fontWeight: 600, fontSize: '0.85rem', opacity: (!aiPrompt.trim() || isGeneratingAi) ? 0.6 : 1,
                   display: 'flex', alignItems: 'center', gap: '6px'
                 }}
@@ -908,7 +908,7 @@ export const LinkedInCrm: React.FC = () => {
           </div>
           {connectedAccount?.connectedOrganizationUrn && (
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>
                 Post As
               </label>
               <div style={{ display: 'flex', gap: '10px' }}>
@@ -917,7 +917,7 @@ export const LinkedInCrm: React.FC = () => {
                   onClick={() => setPublishTarget('personal')}
                   style={{
                     flex: 1, padding: '8px 12px', borderRadius: '10px',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    border: '1px solid var(--glass-border)',
                     background: publishTarget === 'personal' ? 'rgba(0,119,181,0.15)' : 'rgba(255,255,255,0.02)',
                     color: publishTarget === 'personal' ? '#00A0DC' : '#94a3b8',
                     borderColor: publishTarget === 'personal' ? '#0077B5' : 'rgba(255,255,255,0.08)',
@@ -931,7 +931,7 @@ export const LinkedInCrm: React.FC = () => {
                   onClick={() => setPublishTarget('company')}
                   style={{
                     flex: 1, padding: '8px 12px', borderRadius: '10px',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    border: '1px solid var(--glass-border)',
                     background: publishTarget === 'company' ? 'rgba(0,119,181,0.15)' : 'rgba(255,255,255,0.02)',
                     color: publishTarget === 'company' ? '#00A0DC' : '#94a3b8',
                     borderColor: publishTarget === 'company' ? '#0077B5' : 'rgba(255,255,255,0.08)',
@@ -945,7 +945,7 @@ export const LinkedInCrm: React.FC = () => {
           )}
 
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8', marginBottom: '8px', display: 'block' }}>
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px', display: 'block' }}>
               Post Content
             </label>
             <textarea
@@ -955,7 +955,7 @@ export const LinkedInCrm: React.FC = () => {
               rows={6}
               style={{
                 width: '100%', padding: '14px', borderRadius: '12px', boxSizing: 'border-box',
-                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
                 color: '#e5e5e5', fontSize: '0.95rem', outline: 'none', resize: 'none',
                 fontFamily: 'inherit',
               }}
@@ -963,13 +963,13 @@ export const LinkedInCrm: React.FC = () => {
               onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
             />
           </div>
-          <div style={{ marginBottom: '16px', background: 'rgba(255,255,255,0.02)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ marginBottom: '16px', background: 'var(--bg-card)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: postImageUrl ? '16px' : '0' }}>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <label style={{
                   display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer',
-                  padding: '8px 14px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)',
-                  fontSize: '0.8rem', fontWeight: 600, color: '#e5e5e5', border: '1px solid rgba(255,255,255,0.1)',
+                  padding: '8px 14px', borderRadius: '8px', background: 'var(--bg-card)',
+                  fontSize: '0.8rem', fontWeight: 600, color: '#e5e5e5', border: '1px solid var(--glass-border)',
                   transition: 'background 0.2s'
                 }}>
                   <Image size={14} color="#0ea5e9" /> Upload Image
@@ -993,7 +993,7 @@ export const LinkedInCrm: React.FC = () => {
             </div>
 
             {postImageUrl && (
-              <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <div style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--glass-border)' }}>
                 <img src={postImageUrl} alt="Post Attachment" style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '300px', objectFit: 'cover' }} />
                 <button
                   onClick={() => setPostImageUrl(null)}
@@ -1001,7 +1001,7 @@ export const LinkedInCrm: React.FC = () => {
                     position: 'absolute', top: '8px', right: '8px',
                     background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%',
                     width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', color: '#fff'
+                    cursor: 'pointer', color: 'var(--text-primary)'
                   }}
                 >
                   <X size={14} />
@@ -1016,7 +1016,7 @@ export const LinkedInCrm: React.FC = () => {
                 setShowComposePost(false);
                 setPostImageUrl(null);
               }}
-              style={{ padding: '10px 20px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94a3b8', cursor: 'pointer', fontWeight: 600 }}
+              style={{ padding: '10px 20px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }}
             >
               Cancel
             </button>
@@ -1027,7 +1027,7 @@ export const LinkedInCrm: React.FC = () => {
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '10px 24px', borderRadius: '10px',
                 background: (postContent.trim() || postImageUrl) ? 'linear-gradient(135deg, #0077B5, #00A0DC)' : 'rgba(255,255,255,0.06)',
-                border: 'none', color: '#fff', cursor: (postContent.trim() || postImageUrl) ? 'pointer' : 'not-allowed',
+                border: 'none', color: 'var(--text-primary)', cursor: (postContent.trim() || postImageUrl) ? 'pointer' : 'not-allowed',
                 fontWeight: 600, fontSize: '0.85rem',
               }}
             >
@@ -1073,9 +1073,9 @@ const PipelineView: React.FC<{
           const StageIcon = stage.icon;
           return (
             <div key={stage.key} style={{
-              background: 'rgba(255,255,255,0.02)',
+              background: 'var(--bg-card)',
               borderRadius: '16px',
-              border: '1px solid rgba(255,255,255,0.06)',
+              border: '1px solid var(--glass-border)',
               minHeight: '400px',
               display: 'flex',
               flexDirection: 'column',
@@ -1083,7 +1083,7 @@ const PipelineView: React.FC<{
               {/* Stage Header */}
               <div style={{
                 padding: '14px 16px',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                borderBottom: '1px solid var(--glass-border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1113,7 +1113,7 @@ const PipelineView: React.FC<{
                       borderRadius: '12px',
                       padding: '12px',
                       cursor: 'pointer',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      border: '1px solid var(--glass-border)',
                       transition: 'all 0.2s ease',
                     }}
                     onMouseEnter={(e) => {
@@ -1143,7 +1143,7 @@ const PipelineView: React.FC<{
                           {lead.name}
                         </div>
                         {lead.company && (
-                          <div style={{ fontSize: '0.65rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {lead.company}
                           </div>
                         )}
@@ -1151,7 +1151,7 @@ const PipelineView: React.FC<{
                     </div>
 
                     {lead.headline && (
-                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                         {lead.headline}
                       </div>
                     )}
@@ -1183,7 +1183,7 @@ const PipelineView: React.FC<{
                           </span>
                         ))}
                         {lead.tags.length > 2 && (
-                          <span style={{ fontSize: '0.6rem', color: '#64748b' }}>+{lead.tags.length - 2}</span>
+                          <span style={{ fontSize: '0.6rem', color: 'var(--text-dim)' }}>+{lead.tags.length - 2}</span>
                         )}
                       </div>
                     )}
@@ -1216,9 +1216,9 @@ const TableView: React.FC<{
 }> = ({ leads, onLeadClick, onDelete }) => {
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.02)',
+      background: 'var(--bg-card)',
       borderRadius: '16px',
-      border: '1px solid rgba(255,255,255,0.06)',
+      border: '1px solid var(--glass-border)',
       overflow: 'hidden',
     }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -1227,9 +1227,9 @@ const TableView: React.FC<{
             {['Name', 'Company', 'Stage', 'AI Score', 'Priority', 'Tags', 'Source', 'Actions'].map((h) => (
               <th key={h} style={{
                 padding: '12px 16px', textAlign: 'left',
-                fontSize: '0.7rem', fontWeight: 700, color: '#64748b',
+                fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-dim)',
                 textTransform: 'uppercase', letterSpacing: '0.06em',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
+                borderBottom: '1px solid var(--glass-border)',
               }}>
                 {h}
               </th>
@@ -1262,11 +1262,11 @@ const TableView: React.FC<{
                     </div>
                     <div>
                       <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{lead.name}</div>
-                      {lead.headline && <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{lead.headline.slice(0, 40)}{lead.headline.length > 40 ? '...' : ''}</div>}
+                      {lead.headline && <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>{lead.headline.slice(0, 40)}{lead.headline.length > 40 ? '...' : ''}</div>}
                     </div>
                   </div>
                 </td>
-                <td style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.8rem', color: '#94a3b8' }}>
+                <td style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                   {lead.company || '—'}
                 </td>
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
@@ -1304,7 +1304,7 @@ const TableView: React.FC<{
                     ))}
                   </div>
                 </td>
-                <td style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.7rem', color: '#64748b' }}>
+                <td style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.7rem', color: 'var(--text-dim)' }}>
                   {lead.source}
                 </td>
                 <td style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
@@ -1372,8 +1372,8 @@ const LeadDetailPanel: React.FC<{
       {/* Header */}
       <div style={{
         padding: '20px 24px 0',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        background: 'rgba(255,255,255,0.02)',
+        borderBottom: '1px solid var(--glass-border)',
+        background: 'var(--bg-card)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
           <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#e5e5e5' }}>Lead Details</h3>
@@ -1381,7 +1381,7 @@ const LeadDetailPanel: React.FC<{
             <button onClick={onDelete} style={{ background: 'rgba(239,68,68,0.1)', border: 'none', borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', color: '#ef4444' }}>
               <Trash2 size={14} />
             </button>
-            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', color: '#94a3b8' }}>
+            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
               <X size={16} />
             </button>
           </div>
@@ -1431,7 +1431,7 @@ const LeadDetailPanel: React.FC<{
           </div>
           <div>
             <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#e5e5e5' }}>{lead.name}</h4>
-            {lead.headline && <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>{lead.headline}</p>}
+            {lead.headline && <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{lead.headline}</p>}
           </div>
         </div>
 
@@ -1451,9 +1451,9 @@ const LeadDetailPanel: React.FC<{
                 <div key={field.label} style={{
                   padding: '10px 12px', borderRadius: '10px',
                   background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  border: '1px solid var(--glass-border)',
                 }}>
-                  <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <field.icon size={10} /> {field.label}
                   </div>
                   {field.label === 'LinkedIn' && lead.linkedinProfileUrl ? (
@@ -1485,12 +1485,12 @@ const LeadDetailPanel: React.FC<{
                 ].map((score) => (
                   <div key={score.label} style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '1.4rem', fontWeight: 800, color: score.color }}>{score.value}</div>
-                    <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600 }}>{score.label}</div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600 }}>{score.label}</div>
                   </div>
                 ))}
               </div>
               {lead.aiSummary && (
-                <div style={{ marginTop: '12px', padding: '10px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                <div style={{ marginTop: '12px', padding: '10px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
                   {lead.aiSummary}
                 </div>
               )}
@@ -1498,7 +1498,7 @@ const LeadDetailPanel: React.FC<{
 
             {/* Stage Selector */}
             <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px' }}>PIPELINE STAGE</div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-dim)', marginBottom: '8px' }}>PIPELINE STAGE</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                 {PIPELINE_STAGES.map((s) => (
                   <button
@@ -1522,7 +1522,7 @@ const LeadDetailPanel: React.FC<{
             {/* Tags */}
             {lead.tags.length > 0 && (
               <div style={{ marginBottom: '20px' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-dim)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Tag size={12} /> TAGS
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -1540,7 +1540,7 @@ const LeadDetailPanel: React.FC<{
 
             {/* Add Note */}
             <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-dim)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <MessageSquare size={12} /> ADD NOTE
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -1552,7 +1552,7 @@ const LeadDetailPanel: React.FC<{
                   onKeyDown={(e) => e.key === 'Enter' && onAddNote()}
                   style={{
                     flex: 1, padding: '10px 12px', borderRadius: '10px',
-                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                    background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
                     color: '#e5e5e5', fontSize: '0.8rem', outline: 'none',
                   }}
                 />
@@ -1561,7 +1561,7 @@ const LeadDetailPanel: React.FC<{
                   style={{
                     padding: '10px 14px', borderRadius: '10px',
                     background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                    border: 'none', color: '#fff', cursor: 'pointer',
+                    border: 'none', color: 'var(--text-primary)', cursor: 'pointer',
                   }}
                 >
                   <ArrowUpRight size={16} />
@@ -1572,17 +1572,17 @@ const LeadDetailPanel: React.FC<{
             {/* Activity Log */}
             {lead.activityLog.length > 0 && (
               <div>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-dim)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <Clock size={12} /> ACTIVITY
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {lead.activityLog.slice(-5).reverse().map((log, i) => (
                     <div key={i} style={{
                       padding: '8px 12px', borderRadius: '8px',
-                      background: 'rgba(255,255,255,0.02)',
+                      background: 'var(--bg-card)',
                       borderLeft: '3px solid rgba(99,102,241,0.3)',
                     }}>
-                      <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{log.details}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{log.details}</div>
                       <div style={{ fontSize: '0.65rem', color: '#475569', marginTop: '2px' }}>
                         {new Date(log.timestamp).toLocaleString()}
                       </div>
@@ -1595,13 +1595,13 @@ const LeadDetailPanel: React.FC<{
             {/* Notes */}
             {lead.notes.length > 0 && (
               <div style={{ marginTop: '20px' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginBottom: '8px' }}>NOTES</div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-dim)', marginBottom: '8px' }}>NOTES</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {lead.notes.slice(-5).reverse().map((note, i) => (
                     <div key={i} style={{
                       padding: '10px 12px', borderRadius: '10px',
                       background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      border: '1px solid var(--glass-border)',
                     }}>
                       <div style={{ fontSize: '0.8rem', color: '#e5e5e5' }}>{note.message}</div>
                       <div style={{ fontSize: '0.65rem', color: '#475569', marginTop: '4px' }}>
@@ -1619,12 +1619,12 @@ const LeadDetailPanel: React.FC<{
         {activeTab === 'posts' && (
           <div>
             {leadPostsLoading ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-dim)' }}>
                 <Loader2 size={24} className="spin" style={{ marginBottom: '10px', animation: 'spin 1s linear infinite' }} />
                 <div style={{ fontSize: '0.85rem' }}>Fetching recent posts from LinkedIn...</div>
               </div>
             ) : leadPosts.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-dim)' }}>
                 <FileText size={32} style={{ marginBottom: '12px', opacity: 0.3 }} />
                 <div style={{ fontSize: '0.85rem' }}>No recent posts found for this lead.</div>
               </div>
@@ -1634,19 +1634,19 @@ const LeadDetailPanel: React.FC<{
                   <div key={post.id} style={{
                     padding: '16px', borderRadius: '12px',
                     background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    border: '1px solid var(--glass-border)',
                   }}>
-                    <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '8px' }}>
                       {new Date(post.date).toLocaleDateString()}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#e5e5e5', lineHeight: 1.5, marginBottom: '12px' }}>
                       {post.content}
                     </div>
                     <div style={{ display: 'flex', gap: '16px', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#94a3b8' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                         <ThumbsUp size={14} /> {post.likes}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: '#94a3b8' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                         <MessageCircle size={14} /> {post.comments}
                       </div>
                     </div>
@@ -1671,13 +1671,13 @@ const Modal: React.FC<{ title: string; onClose: () => void; children: React.Reac
   }}>
     <div style={{
       background: '#0f1629', borderRadius: '20px',
-      border: '1px solid rgba(255,255,255,0.1)',
+      border: '1px solid var(--glass-border)',
       padding: '28px', width: '560px', maxHeight: '80vh', overflowY: 'auto',
       boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
         <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#e5e5e5' }}>{title}</h3>
-        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#94a3b8' }}>
+        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
           <X size={16} />
         </button>
       </div>
@@ -1731,7 +1731,7 @@ const MyPostsView: React.FC<{
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: '#64748b' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: 'var(--text-dim)' }}>
         <Loader2 size={32} className="spin" style={{ animation: 'spin 1s linear infinite' }} />
       </div>
     );
@@ -1749,12 +1749,12 @@ const MyPostsView: React.FC<{
         background: 'rgba(255,255,255,0.03)', borderRadius: '16px',
         padding: '24px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '24px'
       }}>
-        <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
           {account?.profileImageUrl ? <img src={account.profileImageUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Users size={32} color="#64748b" />}
         </div>
         <div>
           <h2 style={{ margin: '0 0 4px', fontSize: '1.4rem', color: '#e5e5e5' }}>{account?.profileName || 'Your Profile'}</h2>
-          <p style={{ margin: '0 0 12px', fontSize: '0.9rem', color: '#94a3b8' }}>{account?.headline || 'No headline available'}</p>
+          <p style={{ margin: '0 0 12px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{account?.headline || 'No headline available'}</p>
           <div style={{ display: 'flex', gap: '16px' }}>
             <span style={{ fontSize: '0.8rem', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', padding: '4px 10px', borderRadius: '20px', fontWeight: 600 }}>All-Star Profile</span>
             <span style={{ fontSize: '0.8rem', color: '#22c55e', background: 'rgba(34, 197, 94, 0.1)', padding: '4px 10px', borderRadius: '20px', fontWeight: 600 }}>Active Posting</span>
@@ -1765,7 +1765,7 @@ const MyPostsView: React.FC<{
       {/* Analytics Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
         <div style={{ background: 'linear-gradient(135deg, rgba(14,165,233,0.1), rgba(14,165,233,0.02))', borderRadius: '16px', padding: '20px', border: '1px solid rgba(14,165,233,0.2)' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
             <Eye size={14} color="#0ea5e9" /> TOTAL IMPRESSIONS (30d)
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0ea5e9' }}>
@@ -1773,7 +1773,7 @@ const MyPostsView: React.FC<{
           </div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(245,158,11,0.02))', borderRadius: '16px', padding: '20px', border: '1px solid rgba(245,158,11,0.2)' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
             <MessageCircle size={14} color="#f59e0b" /> TOTAL ENGAGEMENT
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#f59e0b' }}>
@@ -1781,7 +1781,7 @@ const MyPostsView: React.FC<{
           </div>
         </div>
         <div style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.1), rgba(168,85,247,0.02))', borderRadius: '16px', padding: '20px', border: '1px solid rgba(168,85,247,0.2)' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
             <TrendingUpIcon size={14} color="#a855f7" /> AVG ENGAGEMENT RATE
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#a855f7' }}>
@@ -1823,10 +1823,10 @@ const MyPostsView: React.FC<{
         <div>
           <h3 style={{ margin: '0 0 16px', color: '#e5e5e5', fontSize: '1.1rem' }}>Your Recent Posts</h3>
           {posts.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+            <div style={{ textAlign: 'center', padding: '60px', background: 'var(--bg-card)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
               <FileText size={32} color="#64748b" style={{ marginBottom: '16px' }} />
               <h4 style={{ margin: '0 0 8px', color: '#e5e5e5' }}>No Posts Found</h4>
-              <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8' }}>You haven't published any posts yet. Use the Compose Post button above.</p>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>You haven't published any posts yet. Use the Compose Post button above.</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1839,7 +1839,7 @@ const MyPostsView: React.FC<{
                     border: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '24px', flexWrap: 'wrap'
                   }}>
                     <div style={{ flex: '1 1 300px' }}>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '8px', display: 'flex', gap: '12px' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '8px', display: 'flex', gap: '12px' }}>
                         <span>{new Date(post.createdAt || Date.now()).toLocaleDateString()}</span>
                         {post.postType && <span style={{ textTransform: 'capitalize', color: '#818cf8' }}>{post.postType}</span>}
                       </div>
@@ -1865,7 +1865,7 @@ const MyPostsView: React.FC<{
                     </div>
 
                     <div style={{ width: '250px', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '16px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                      <h4 style={{ margin: '0 0 12px', fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase' }}>Performance Insights</h4>
+                      <h4 style={{ margin: '0 0 12px', fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Performance Insights</h4>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                         <span style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>Impressions</span>
                         <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e5e5e5' }}>{impressions.toLocaleString()}</span>
@@ -1880,7 +1880,7 @@ const MyPostsView: React.FC<{
                       </div>
                       <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Engagement Rate</span>
+                          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Engagement Rate</span>
                           <span style={{ fontSize: '0.85rem', fontWeight: 600, color: engRate > 3 ? '#22c55e' : '#f59e0b' }}>
                             {engRate.toFixed(1)}%
                           </span>
@@ -1893,7 +1893,7 @@ const MyPostsView: React.FC<{
                       <button
                         onClick={() => setExpandedComments(prev => ({ ...prev, [post._id]: !prev[post._id] }))}
                         style={{
-                          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                          background: 'var(--bg-card)', border: '1px solid var(--glass-border)',
                           color: '#e5e5e5', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
                           fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px',
                           transition: 'all 0.2s', width: '100%', justifyContent: 'center'
@@ -1909,7 +1909,7 @@ const MyPostsView: React.FC<{
 
                           {/* New Comment Input */}
                           <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#1e293b', flexShrink: 0, overflow: 'hidden' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--bg-card)', flexShrink: 0, overflow: 'hidden' }}>
                               {account?.profileImageUrl ? <img src={account.profileImageUrl} alt="You" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Users size={16} color="#64748b" style={{ margin: '8px' }} />}
                             </div>
                             <div style={{ flex: 1, display: 'flex', gap: '8px' }}>
@@ -1919,12 +1919,12 @@ const MyPostsView: React.FC<{
                                 value={commentText[post._id] || ''}
                                 onChange={(e) => setCommentText(prev => ({ ...prev, [post._id]: e.target.value }))}
                                 onKeyDown={(e) => e.key === 'Enter' && handlePostComment(post._id)}
-                                style={{ flex: 1, padding: '10px 14px', borderRadius: '20px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', outline: 'none' }}
+                                style={{ flex: 1, padding: '10px 14px', borderRadius: '20px', background: 'var(--bg-card)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}
                               />
                               <button
                                 onClick={() => handlePostComment(post._id)}
                                 disabled={!commentText[post._id]?.trim()}
-                                style={{ background: commentText[post._id]?.trim() ? '#00A0DC' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '20px', padding: '0 16px', cursor: commentText[post._id]?.trim() ? 'pointer' : 'not-allowed', fontSize: '0.8rem', fontWeight: 600 }}
+                                style={{ background: commentText[post._id]?.trim() ? '#00A0DC' : 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: 'none', borderRadius: '20px', padding: '0 16px', cursor: commentText[post._id]?.trim() ? 'pointer' : 'not-allowed', fontSize: '0.8rem', fontWeight: 600 }}
                               >
                                 Post
                               </button>
@@ -1945,8 +1945,8 @@ const MyPostsView: React.FC<{
                                       <div style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>{comment.text}</div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '12px', marginTop: '4px', paddingLeft: '4px' }}>
-                                      <button onClick={() => setActiveReplyId(activeReplyId === comment.id ? null : comment.id)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>Reply</button>
-                                      <span style={{ color: '#64748b', fontSize: '0.75rem' }}>{new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                      <button onClick={() => setActiveReplyId(activeReplyId === comment.id ? null : comment.id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}>Reply</button>
+                                      <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>{new Date(comment.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
 
                                     {/* Replies */}
@@ -1977,12 +1977,12 @@ const MyPostsView: React.FC<{
                                           value={replyText[comment.id] || ''}
                                           onChange={(e) => setReplyText(prev => ({ ...prev, [comment.id]: e.target.value }))}
                                           onKeyDown={(e) => e.key === 'Enter' && handlePostReply(post._id, comment.id)}
-                                          style={{ flex: 1, padding: '8px 12px', borderRadius: '16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.8rem', outline: 'none' }}
+                                          style={{ flex: 1, padding: '8px 12px', borderRadius: '16px', background: 'var(--bg-card)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none' }}
                                         />
                                         <button
                                           onClick={() => handlePostReply(post._id, comment.id)}
                                           disabled={!replyText[comment.id]?.trim()}
-                                          style={{ background: replyText[comment.id]?.trim() ? '#22c55e' : 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '16px', padding: '0 12px', cursor: replyText[comment.id]?.trim() ? 'pointer' : 'not-allowed', fontSize: '0.75rem', fontWeight: 600 }}
+                                          style={{ background: replyText[comment.id]?.trim() ? '#22c55e' : 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: 'none', borderRadius: '16px', padding: '0 12px', cursor: replyText[comment.id]?.trim() ? 'pointer' : 'not-allowed', fontSize: '0.75rem', fontWeight: 600 }}
                                         >
                                           Send
                                         </button>
@@ -1993,7 +1993,7 @@ const MyPostsView: React.FC<{
                               ))}
                             </div>
                           ) : (
-                            <div style={{ textAlign: 'center', padding: '20px', color: '#64748b', fontSize: '0.85rem' }}>
+                            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-dim)', fontSize: '0.85rem' }}>
                               Be the first to comment on this post!
                             </div>
                           )}
@@ -2018,7 +2018,7 @@ const MyPostsView: React.FC<{
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
                 background: 'linear-gradient(135deg, #0077B5, #00A0DC)',
-                color: '#fff', border: 'none', borderRadius: '10px',
+                color: 'var(--text-primary)', border: 'none', borderRadius: '10px',
                 padding: '8px 16px', fontSize: '0.8rem', fontWeight: 600,
                 cursor: 'pointer'
               }}
@@ -2049,12 +2049,12 @@ const MyPostsView: React.FC<{
                         }}>
                           {isUpcoming ? 'UPCOMING' : 'COMPLETED'}
                         </span>
-                        <span style={{ fontSize: '0.7rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <Users size={12} /> {evt.attendees || 0} registered
                         </span>
                       </div>
                       <h4 style={{ margin: '0 0 8px', color: '#e5e5e5', fontSize: '0.95rem', fontWeight: 700 }}>{evt.name || evt.title}</h4>
-                      <p style={{ margin: '0 0 14px', fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.4 }}>{evt.description || 'No description provided.'}</p>
+                      <p style={{ margin: '0 0 14px', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{evt.description || 'No description provided.'}</p>
                     </div>
 
                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -2073,10 +2073,10 @@ const MyPostsView: React.FC<{
               })}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--bg-card)', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
               <Calendar size={28} color="#64748b" style={{ marginBottom: '12px', opacity: 0.5 }} />
               <h4 style={{ margin: '0 0 6px', color: '#e5e5e5', fontSize: '0.9rem' }}>No Virtual Events</h4>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>Create an audio or video event to connect with your LinkedIn audience.</p>
+              <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Create an audio or video event to connect with your LinkedIn audience.</p>
             </div>
           )}
         </div>
@@ -2091,35 +2091,35 @@ const MyPostsView: React.FC<{
         }}>
           <div style={{
             background: '#0f1629', borderRadius: '20px',
-            border: '1px solid rgba(255,255,255,0.1)',
+            border: '1px solid var(--glass-border)',
             padding: '28px', width: '500px', boxSizing: 'border-box',
             boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: '#e5e5e5' }}>Create LinkedIn Event</h3>
-              <button onClick={() => setShowCreateEvent(false)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: '#94a3b8' }}>
+              <button onClick={() => setShowCreateEvent(false)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                 <X size={16} />
               </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Event Name *</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Event Name *</label>
                 <input
                   type="text"
                   placeholder="E.g., AI Marketing Workshop"
                   value={newEvent.name}
                   onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'var(--bg-card)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: '0.85rem', boxSizing: 'border-box' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Event Format</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Event Format</label>
                 <select
                   value={newEvent.format}
                   onChange={(e) => setNewEvent({ ...newEvent, format: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', cursor: 'pointer', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: '0.85rem', cursor: 'pointer', boxSizing: 'border-box' }}
                 >
                   <option value="AUDIO">LinkedIn Audio Event</option>
                   <option value="VIDEO">LinkedIn Live Video Event</option>
@@ -2127,34 +2127,34 @@ const MyPostsView: React.FC<{
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Start Date & Time *</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Start Date & Time *</label>
                 <input
                   type="datetime-local"
                   value={newEvent.startsAt}
                   onChange={(e) => setNewEvent({ ...newEvent, startsAt: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'var(--bg-card)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: '0.85rem', boxSizing: 'border-box' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Online Event / Meeting Link</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Online Event / Meeting Link</label>
                 <input
                   type="url"
                   placeholder="https://example.com/meeting"
                   value={newEvent.onlineMeetingUrl}
                   onChange={(e) => setNewEvent({ ...newEvent, onlineMeetingUrl: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'var(--bg-card)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: '0.85rem', boxSizing: 'border-box' }}
                 />
               </div>
 
               <div>
-                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', marginBottom: '6px', display: 'block' }}>Description *</label>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px', display: 'block' }}>Description *</label>
                 <textarea
                   placeholder="Describe what your event is about..."
                   rows={4}
                   value={newEvent.description}
                   onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontSize: '0.85rem', resize: 'none', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', background: 'var(--bg-card)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: '0.85rem', resize: 'none', boxSizing: 'border-box' }}
                 />
               </div>
             </div>
@@ -2162,7 +2162,7 @@ const MyPostsView: React.FC<{
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
               <button
                 onClick={() => setShowCreateEvent(false)}
-                style={{ padding: '10px 20px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: 'none', color: '#94a3b8', cursor: 'pointer', fontWeight: 600 }}
+                style={{ padding: '10px 20px', borderRadius: '10px', background: 'rgba(255,255,255,0.06)', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }}
               >
                 Cancel
               </button>
@@ -2186,7 +2186,7 @@ const MyPostsView: React.FC<{
                 style={{
                   padding: '10px 24px', borderRadius: '10px',
                   background: (newEvent.name.trim() && newEvent.startsAt && newEvent.description.trim()) ? 'linear-gradient(135deg, #0077B5, #00A0DC)' : 'rgba(255,255,255,0.06)',
-                  border: 'none', color: '#fff', cursor: (newEvent.name.trim() && newEvent.startsAt && newEvent.description.trim()) ? 'pointer' : 'not-allowed',
+                  border: 'none', color: 'var(--text-primary)', cursor: (newEvent.name.trim() && newEvent.startsAt && newEvent.description.trim()) ? 'pointer' : 'not-allowed',
                   fontWeight: 600, fontSize: '0.85rem'
                 }}
               >
@@ -2204,7 +2204,7 @@ const MyPostsView: React.FC<{
 const AdsManagerView: React.FC<{ campaigns: any[]; loading: boolean }> = ({ campaigns, loading }) => {
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: '#64748b' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: 'var(--text-dim)' }}>
         <Loader2 size={32} className="spin" style={{ animation: 'spin 1s linear infinite' }} />
       </div>
     );
@@ -2212,7 +2212,7 @@ const AdsManagerView: React.FC<{ campaigns: any[]; loading: boolean }> = ({ camp
 
   if (!campaigns || campaigns.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '80px', color: '#64748b', background: 'rgba(255,255,255,0.02)', borderRadius: '16px' }}>
+      <div style={{ textAlign: 'center', padding: '80px', color: 'var(--text-dim)', background: 'var(--bg-card)', borderRadius: '16px' }}>
         <Megaphone size={48} style={{ marginBottom: '16px', opacity: 0.3 }} />
         <h3 style={{ margin: '0 0 8px', color: '#e5e5e5' }}>No Active Campaigns</h3>
         <p style={{ margin: 0, fontSize: '0.9rem' }}>You don't have any LinkedIn Ad Campaigns running right now.</p>
@@ -2224,7 +2224,7 @@ const AdsManagerView: React.FC<{ campaigns: any[]; loading: boolean }> = ({ camp
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
         <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
             <DollarSign size={14} color="#22c55e" /> TOTAL SPEND
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#e5e5e5' }}>
@@ -2232,7 +2232,7 @@ const AdsManagerView: React.FC<{ campaigns: any[]; loading: boolean }> = ({ camp
           </div>
         </div>
         <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
             <Activity size={14} color="#0ea5e9" /> TOTAL IMPRESSIONS
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#e5e5e5' }}>
@@ -2240,7 +2240,7 @@ const AdsManagerView: React.FC<{ campaigns: any[]; loading: boolean }> = ({ camp
           </div>
         </div>
         <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
             <Target size={14} color="#f59e0b" /> CONVERSIONS
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#e5e5e5' }}>
@@ -2249,16 +2249,16 @@ const AdsManagerView: React.FC<{ campaigns: any[]; loading: boolean }> = ({ camp
         </div>
       </div>
 
-      <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
-            <tr style={{ background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8' }}>CAMPAIGN NAME</th>
-              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8' }}>STATUS</th>
-              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8' }}>OBJECTIVE</th>
-              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8' }}>SPEND</th>
-              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8' }}>IMPRESSIONS</th>
-              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8' }}>CLICKS</th>
+            <tr style={{ background: 'var(--bg-card)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>CAMPAIGN NAME</th>
+              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>STATUS</th>
+              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>OBJECTIVE</th>
+              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>SPEND</th>
+              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>IMPRESSIONS</th>
+              <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>CLICKS</th>
             </tr>
           </thead>
           <tbody>
@@ -2274,7 +2274,7 @@ const AdsManagerView: React.FC<{ campaigns: any[]; loading: boolean }> = ({ camp
                     {c.status}
                   </span>
                 </td>
-                <td style={{ padding: '16px', fontSize: '0.8rem', color: '#94a3b8' }}>{c.objectiveType.replace('_', ' ')}</td>
+                <td style={{ padding: '16px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{c.objectiveType.replace('_', ' ')}</td>
                 <td style={{ padding: '16px', fontSize: '0.85rem', fontWeight: 600 }}>${c.metrics?.spend?.toFixed(2)}</td>
                 <td style={{ padding: '16px', fontSize: '0.85rem', color: '#cbd5e1' }}>{c.metrics?.impressions?.toLocaleString()}</td>
                 <td style={{ padding: '16px', fontSize: '0.85rem', color: '#cbd5e1' }}>{c.metrics?.clicks?.toLocaleString()}</td>

@@ -46,7 +46,7 @@ const AiCreativeWorkspacePage: React.FC = () => {
   };
 
   return (
-    <div style={{ minHeight: '100%', background: '#f5f6fa' }}>
+    <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
       <div style={{ padding: '20px 32px' }}>
         <AiCreativeWorkspace
           open={true}

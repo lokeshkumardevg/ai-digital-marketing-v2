@@ -133,29 +133,29 @@ export const Seo: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
           <GlassCard style={{ padding: '24px', borderTop: '4px solid #10b981' }}>
-             <h4 style={{ fontSize: '0.75rem', fontWeight: 900, color: '#64748b', marginBottom: '12px' }}>SITE HEALTH</h4>
-             <div style={{ fontSize: '2.5rem', fontWeight: 950, color: '#f8fafc' }}>{calculatedMetrics?.health}%</div>
+             <h4 style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-dim)', marginBottom: '12px' }}>SITE HEALTH</h4>
+             <div style={{ fontSize: '2.5rem', fontWeight: 950, color: 'var(--text-primary)' }}>{calculatedMetrics?.health}%</div>
              <p style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 800, marginTop: '8px' }}>OPTIMIZED PERFORMANCE</p>
           </GlassCard>
           <GlassCard style={{ padding: '24px', borderTop: '4px solid #ef4444' }}>
-             <h4 style={{ fontSize: '0.75rem', fontWeight: 900, color: '#64748b', marginBottom: '12px' }}>TECHNICAL ERRORS</h4>
+             <h4 style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-dim)', marginBottom: '12px' }}>TECHNICAL ERRORS</h4>
              <div style={{ fontSize: '2.5rem', fontWeight: 950, color: '#ef4444' }}>0</div>
              <p style={{ fontSize: '0.7rem', color: '#475569', fontWeight: 800, marginTop: '8px' }}>NO ACTION REQUIRED</p>
           </GlassCard>
           <GlassCard style={{ padding: '24px', borderTop: '4px solid #f59e0b' }}>
-             <h4 style={{ fontSize: '0.75rem', fontWeight: 900, color: '#64748b', marginBottom: '12px' }}>WARNINGS</h4>
+             <h4 style={{ fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-dim)', marginBottom: '12px' }}>WARNINGS</h4>
              <div style={{ fontSize: '2.5rem', fontWeight: 950, color: '#f59e0b' }}>14</div>
              <p style={{ fontSize: '0.7rem', color: '#475569', fontWeight: 800, marginTop: '8px' }}>MINOR OPTIMIZATIONS DETECTED</p>
           </GlassCard>
        </div>
        
        <GlassCard style={{ padding: '32px' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 950, marginBottom: '24px', color: '#f8fafc' }}>Technical On-Page Telemetry</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 950, marginBottom: '24px', color: 'var(--text-primary)' }}>Technical On-Page Telemetry</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
              <div>
                 <div style={{ marginBottom: '20px' }}>
                    <div style={{ fontSize: '0.65rem', fontWeight: 900, color: '#475569', marginBottom: '8px' }}>META TITLE</div>
-                   <div style={{ fontSize: '0.85rem', fontWeight: 800, padding: '12px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)', color: '#f8fafc' }}>
+                   <div style={{ fontSize: '0.85rem', fontWeight: 800, padding: '12px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)', color: 'var(--text-primary)' }}>
                       {result.meta?.title || 'No Title Detected'}
                    </div>
                 </div>
@@ -167,10 +167,10 @@ export const Seo: React.FC = () => {
                 </div>
              </div>
              <div style={{ padding: '24px', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '12px', border: '1px solid rgba(59, 130, 246, 0.1)' }}>
-                <h4 style={{ fontSize: '0.85rem', fontWeight: 950, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc' }}>
+                <h4 style={{ fontSize: '0.85rem', fontWeight: 950, marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)' }}>
                    <Info size={16} color="#3b82f6" /> AI Health Analysis
                 </h4>
-                <p style={{ fontSize: '0.9rem', color: '#94a3b8', lineHeight: 1.7, fontWeight: 500 }}>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.7, fontWeight: 500 }}>
                    Detailed Technical Audit confirms that the domain infrastructure is optimized for high-velocity crawl budgets. 
                    The core vitals are resilient. Strategy: Prioritize rich-snippet saturation for target keyword clusters.
                 </p>
@@ -184,17 +184,17 @@ export const Seo: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
        <GlassCard style={{ padding: '32px' }}>
           <div style={{ marginBottom: '24px' }}>
-             <h3 style={{ fontSize: '1.2rem', fontWeight: 950, margin: 0, color: '#f8fafc' }}>Organic Research Inventory</h3>
-             <p style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 800, margin: '4px 0 0' }}>FULL SEARCH ENGINE FOOTPRINT</p>
+             <h3 style={{ fontSize: '1.2rem', fontWeight: 950, margin: 0, color: 'var(--text-primary)' }}>Organic Research Inventory</h3>
+             <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', fontWeight: 800, margin: '4px 0 0' }}>FULL SEARCH ENGINE FOOTPRINT</p>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
              <thead>
                 <tr style={{ background: 'rgba(255, 255, 255, 0.03)', textAlign: 'left' }}>
-                   <th style={{ padding: '18px 24px', fontSize: '0.75rem', color: '#64748b', fontWeight: 900 }}>KEYWORD</th>
-                   <th style={{ padding: '18px 24px', fontSize: '0.75rem', color: '#64748b', fontWeight: 900 }}>POSITION</th>
-                   <th style={{ padding: '18px 24px', fontSize: '0.75rem', color: '#64748b', fontWeight: 900 }}>VOLUME</th>
-                   <th style={{ padding: '18px 24px', fontSize: '0.75rem', color: '#64748b', fontWeight: 900 }}>TRAFFIC %</th>
-                   <th style={{ padding: '18px 24px', fontSize: '0.75rem', color: '#64748b', fontWeight: 900 }}>CPC (USD)</th>
+                   <th style={{ padding: '18px 24px', fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 900 }}>KEYWORD</th>
+                   <th style={{ padding: '18px 24px', fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 900 }}>POSITION</th>
+                   <th style={{ padding: '18px 24px', fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 900 }}>VOLUME</th>
+                   <th style={{ padding: '18px 24px', fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 900 }}>TRAFFIC %</th>
+                   <th style={{ padding: '18px 24px', fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 900 }}>CPC (USD)</th>
                 </tr>
              </thead>
              <tbody>
@@ -206,9 +206,9 @@ export const Seo: React.FC = () => {
                             <Rocket size={14} /> #{kw.Po}
                          </div>
                       </td>
-                      <td style={{ padding: '20px 24px', fontSize: '0.9rem', color: '#94a3b8', fontWeight: 700 }}>{formatNum(kw.Nq)}</td>
-                      <td style={{ padding: '20px 24px', fontSize: '0.9rem', fontWeight: 950, color: '#f8fafc' }}>{kw.Tr || '0.0'}%</td>
-                      <td style={{ padding: '20px 24px', fontSize: '0.9rem', color: '#94a3b8', fontWeight: 600 }}>${kw.Cp || '0.00'}</td>
+                      <td style={{ padding: '20px 24px', fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 700 }}>{formatNum(kw.Nq)}</td>
+                      <td style={{ padding: '20px 24px', fontSize: '0.9rem', fontWeight: 950, color: 'var(--text-primary)' }}>{kw.Tr || '0.0'}%</td>
+                      <td style={{ padding: '20px 24px', fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600 }}>${kw.Cp || '0.00'}</td>
                    </tr>
                 ))}
              </tbody>
@@ -221,7 +221,7 @@ export const Seo: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
        <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '24px' }}>
           <GlassCard style={{ padding: '32px' }}>
-             <h3 style={{ fontSize: '1rem', fontWeight: 950, marginBottom: '24px', color: '#f8fafc' }}>Ranking Distribution</h3>
+             <h3 style={{ fontSize: '1rem', fontWeight: 950, marginBottom: '24px', color: 'var(--text-primary)' }}>Ranking Distribution</h3>
              <div style={{ height: '300px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                    <BarChart data={calculatedMetrics?.kwPositioning} layout="vertical">
@@ -237,13 +237,13 @@ export const Seo: React.FC = () => {
           </GlassCard>
 
           <GlassCard style={{ padding: '32px' }}>
-             <h3 style={{ fontSize: '1rem', fontWeight: 950, marginBottom: '24px', color: '#f8fafc' }}>Top Performers (Positions 1-10)</h3>
+             <h3 style={{ fontSize: '1rem', fontWeight: 950, marginBottom: '24px', color: 'var(--text-primary)' }}>Top Performers (Positions 1-10)</h3>
              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                    <tr style={{ background: 'rgba(255, 255, 255, 0.03)', textAlign: 'left' }}>
-                      <th style={{ padding: '12px 16px', fontSize: '0.7rem', color: '#64748b', fontWeight: 900 }}>KEYWORD</th>
-                      <th style={{ padding: '12px 16px', fontSize: '0.7rem', color: '#64748b', fontWeight: 900 }}>POS</th>
-                      <th style={{ padding: '12px 16px', fontSize: '0.7rem', color: '#64748b', fontWeight: 900 }}>TRAFFIC %</th>
+                      <th style={{ padding: '12px 16px', fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 900 }}>KEYWORD</th>
+                      <th style={{ padding: '12px 16px', fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 900 }}>POS</th>
+                      <th style={{ padding: '12px 16px', fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 900 }}>TRAFFIC %</th>
                    </tr>
                 </thead>
                 <tbody>
@@ -255,7 +255,7 @@ export const Seo: React.FC = () => {
                                #{kw.Po}
                             </div>
                          </td>
-                         <td style={{ padding: '14px 16px', fontSize: '0.85rem', fontWeight: 900, color: '#f8fafc' }}>{kw.Tr}%</td>
+                         <td style={{ padding: '14px 16px', fontSize: '0.85rem', fontWeight: 900, color: 'var(--text-primary)' }}>{kw.Tr}%</td>
                       </tr>
                    ))}
                 </tbody>
@@ -269,32 +269,32 @@ export const Seo: React.FC = () => {
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 400px', gap: '24px' }}>
           <GlassCard style={{ padding: '32px' }}>
-             <h3 style={{ fontSize: '1.1rem', fontWeight: 950, marginBottom: '24px', color: '#f8fafc' }}>Inbound Authority Profile</h3>
+             <h3 style={{ fontSize: '1.1rem', fontWeight: 950, marginBottom: '24px', color: 'var(--text-primary)' }}>Inbound Authority Profile</h3>
              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '32px' }}>
                 <div style={{ padding: '24px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                   <div style={{ fontSize: '2.5rem', fontWeight: 950, color: '#f8fafc' }}>{formatNum(result.semrush?.backlinks?.total)}</div>
+                   <div style={{ fontSize: '2.5rem', fontWeight: 950, color: 'var(--text-primary)' }}>{formatNum(result.semrush?.backlinks?.total)}</div>
                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#3b82f6' }}>TOTAL BACKLINKS</div>
                 </div>
                 <div style={{ padding: '24px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                   <div style={{ fontSize: '2.5rem', fontWeight: 950, color: '#f8fafc' }}>{formatNum(result.semrush?.backlinks?.domains_num)}</div>
+                   <div style={{ fontSize: '2.5rem', fontWeight: 950, color: 'var(--text-primary)' }}>{formatNum(result.semrush?.backlinks?.domains_num)}</div>
                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#10b981' }}>REFERRING DOMAINS</div>
                 </div>
              </div>
-             <h4 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '16px', color: '#f8fafc' }}>Authority Distribution</h4>
+             <h4 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: '16px', color: 'var(--text-primary)' }}>Authority Distribution</h4>
              <div style={{ height: '200px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                    <BarChart data={[{ r: '91-100', v: 2 }, { r: '81-90', v: 8 }, { r: '61-80', v: 45 }, { r: '41-60', v: 120 }, { r: '21-40', v: 450 }, { r: '0-20', v: 890 }]}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255, 255, 255, 0.05)" />
                       <XAxis dataKey="r" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
                       <YAxis hide />
-                      <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', background: '#1e293b' }} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
+                      <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', background: 'var(--bg-card)' }} cursor={{ fill: 'rgba(255,255,255,0.02)' }} />
                       <Bar dataKey="v" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                    </BarChart>
                 </ResponsiveContainer>
              </div>
           </GlassCard>
           <GlassCard style={{ padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-             <h3 style={{ fontSize: '1rem', fontWeight: 950, marginBottom: '32px', color: '#f8fafc' }}>A-Score Index</h3>
+             <h3 style={{ fontSize: '1rem', fontWeight: 950, marginBottom: '32px', color: 'var(--text-primary)' }}>A-Score Index</h3>
              <div style={{ width: '220px', height: '220px' }}>
                 <ResponsiveContainer width="100%" height="100%">
                    <PieChart>
@@ -306,7 +306,7 @@ export const Seo: React.FC = () => {
                    </PieChart>
                 </ResponsiveContainer>
              </div>
-             <p style={{ fontSize: '0.75rem', textAlign: 'center', color: '#64748b', marginTop: '24px', fontWeight: 600 }}>DOMAIN AUTHORITY RANKING</p>
+             <p style={{ fontSize: '0.75rem', textAlign: 'center', color: 'var(--text-dim)', marginTop: '24px', fontWeight: 600 }}>DOMAIN AUTHORITY RANKING</p>
           </GlassCard>
        </div>
     </div>
@@ -316,28 +316,28 @@ export const Seo: React.FC = () => {
     <div className="animate-fade-in">
        <GlassCard style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '24px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-             <h3 style={{ fontSize: '1.1rem', fontWeight: 900, margin: 0, color: '#f8fafc' }}>Global Market Rivals</h3>
+             <h3 style={{ fontSize: '1.1rem', fontWeight: 900, margin: 0, color: 'var(--text-primary)' }}>Global Market Rivals</h3>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
              <thead>
                 <tr style={{ background: 'rgba(255, 255, 255, 0.03)', textAlign: 'left' }}>
-                   <th style={{ padding: '20px 24px', fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>RIVAL DOMAIN</th>
-                   <th style={{ padding: '20px 24px', fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>COMMON KEYWORDS</th>
-                   <th style={{ padding: '20px 24px', fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>EST. TRAFFIC</th>
-                   <th style={{ padding: '20px 24px', fontSize: '0.75rem', color: '#64748b', fontWeight: 800 }}>MARKET SHARE</th>
+                   <th style={{ padding: '20px 24px', fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 800 }}>RIVAL DOMAIN</th>
+                   <th style={{ padding: '20px 24px', fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 800 }}>COMMON KEYWORDS</th>
+                   <th style={{ padding: '20px 24px', fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 800 }}>EST. TRAFFIC</th>
+                   <th style={{ padding: '20px 24px', fontSize: '0.75rem', color: 'var(--text-dim)', fontWeight: 800 }}>MARKET SHARE</th>
                 </tr>
              </thead>
              <tbody>
                 {(result.semrush?.competitors || []).map((comp: any, i: number) => (
                    <tr key={i} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                      <td style={{ padding: '20px 24px', fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <td style={{ padding: '20px 24px', fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '12px' }}>
                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: `hsl(${i * 72}, 70%, 55%)` }} />
                          {comp.Dn}
                       </td>
                       <td style={{ padding: '20px 24px', fontSize: '0.95rem', fontWeight: 900, color: '#10b981' }}>{formatNum(comp.Cr)}</td>
-                      <td style={{ padding: '20px 24px', fontSize: '0.95rem', color: '#f1f5f9', fontWeight: 800 }}>{formatNum(comp.Ot)}</td>
+                      <td style={{ padding: '20px 24px', fontSize: '0.95rem', color: 'var(--text-primary)', fontWeight: 800 }}>{formatNum(comp.Ot)}</td>
                       <td style={{ padding: '20px 24px' }}>
-                         <div style={{ width: '140px', height: '8px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '4px' }}>
+                         <div style={{ width: '140px', height: '8px', background: 'var(--bg-card)', borderRadius: '4px' }}>
                             <div style={{ width: `${Math.min(100, (parseInt(comp.Ot)/1000000) * 8)}%`, height: '100%', background: '#3b82f6', borderRadius: '4px' }} />
                          </div>
                       </td>
@@ -354,16 +354,16 @@ export const Seo: React.FC = () => {
       
       {/* Executive Header */}
 
-      <div style={{ marginBottom: '24px', background: 'rgba(255, 255, 255, 0.03)', padding: '16px 24px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)' }}>
+      <div style={{ marginBottom: '24px', background: 'rgba(255, 255, 255, 0.03)', padding: '16px 24px', borderRadius: '12px', border: '1px solid var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
            <div>
-             <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>SEO Intelligence Suite</div>
-             <h1 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#f8fafc', margin: '2px 0' }}>
+             <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>SEO Intelligence Suite</div>
+             <h1 style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-primary)', margin: '2px 0' }}>
                {result ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>{url} <ExternalLink size={14} /></span> : 'Market Command Center'}
              </h1>
            </div>
               <div style={{ display: 'flex', gap: '12px', borderLeft: '1px solid rgba(255, 255, 255, 0.05)', paddingLeft: '24px', marginLeft: '4px', alignItems: 'center', position: 'relative' }}>
-              <div style={{ position: 'absolute', left: '36px', color: '#94a3b8' }}>
+              <div style={{ position: 'absolute', left: '36px', color: 'var(--text-secondary)' }}>
                  <Search size={16} />
               </div>
               <input 
@@ -371,12 +371,12 @@ export const Seo: React.FC = () => {
                 value={url}
                 readOnly
                 onChange={() => {}}
-                style={{ height: '44px', width: '360px', fontSize: '0.9rem', paddingLeft: '40px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.1)', fontWeight: 700, color: url ? '#f8fafc' : '#94a3b8', background: 'rgba(255, 255, 255, 0.03)', outline: 'none', transition: 'all 0.2s', cursor: 'not-allowed' }}
+                style={{ height: '44px', width: '360px', fontSize: '0.9rem', paddingLeft: '40px', borderRadius: '10px', border: '1px solid var(--glass-border)', fontWeight: 700, color: url ? '#f8fafc' : '#94a3b8', background: 'rgba(255, 255, 255, 0.03)', outline: 'none', transition: 'all 0.2s', cursor: 'not-allowed' }}
               />
               <button 
                 onClick={handleScan}
                 disabled={scanning || !url}
-                style={{ height: '44px', background: scanning || !url ? 'rgba(59, 130, 246, 0.4)' : '#3b82f6', color: '#fff', border: 'none', borderRadius: '10px', padding: '0 24px', fontSize: '0.85rem', fontWeight: 900, cursor: scanning || !url ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)' }}
+                style={{ height: '44px', background: scanning || !url ? 'rgba(59, 130, 246, 0.4)' : '#3b82f6', color: 'var(--text-primary)', border: 'none', borderRadius: '10px', padding: '0 24px', fontSize: '0.85rem', fontWeight: 900, cursor: scanning || !url ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.3)' }}
               >
                 {scanning ? <RefreshCw size={16} className="animate-spin" /> : <Activity size={16} />}
                 {scanning ? 'SYNCHRONIZING...' : 'RUN ANALYTICS'}
@@ -384,10 +384,10 @@ export const Seo: React.FC = () => {
            </div>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-           <button style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#f8fafc', borderRadius: '6px', height: '36px', padding: '0 12px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+           <button style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', borderRadius: '6px', height: '36px', padding: '0 12px', fontSize: '0.75rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
              <Rocket size={14} color="#3b82f6" /> Create Portfolio
            </button>
-           <button style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#f8fafc', borderRadius: '6px', height: '36px', width: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+           <button style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', borderRadius: '6px', height: '36px', width: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
              <Share2 size={16} />
            </button>
         </div>
@@ -396,16 +396,16 @@ export const Seo: React.FC = () => {
       {scanning && (
         <div style={{ padding: '120px 0', textAlign: 'center' }}>
           <Activity size={56} className="animate-pulse" color="#3b82f6" style={{ margin: '0 auto' }} />
-          <h2 style={{ fontSize: '1.6rem', fontWeight: 950, marginTop: '24px', color: '#f8fafc' }}>Synchronizing Global Market Data</h2>
-          <p style={{ color: '#64748b', fontSize: '1rem', fontWeight: 500 }}>Connecting to search infrastructure and technical telemetry nodes...</p>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 950, marginTop: '24px', color: 'var(--text-primary)' }}>Synchronizing Global Market Data</h2>
+          <p style={{ color: 'var(--text-dim)', fontSize: '1rem', fontWeight: 500 }}>Connecting to search infrastructure and technical telemetry nodes...</p>
         </div>
       )}
 
       {!result && !scanning && (
-        <div style={{ height: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(10px)' }}>
+        <div style={{ height: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', border: '1px solid var(--glass-border)', backdropFilter: 'blur(10px)' }}>
            <Rocket size={80} color="#3b82f6" style={{ opacity: 0.1, marginBottom: '24px' }} />
-           <h2 style={{ fontSize: '1.6rem', fontWeight: 950, color: '#f8fafc' }}>SEO Command Center</h2>
-           <p style={{ color: '#64748b', fontSize: '1rem', marginTop: '10px', fontWeight: 500 }}>ENTER A DOMAIN ABOVE TO INITIALIZE MARKET AGENTS</p>
+           <h2 style={{ fontSize: '1.6rem', fontWeight: 950, color: 'var(--text-primary)' }}>SEO Command Center</h2>
+           <p style={{ color: 'var(--text-dim)', fontSize: '1rem', marginTop: '10px', fontWeight: 500 }}>ENTER A DOMAIN ABOVE TO INITIALIZE MARKET AGENTS</p>
         </div>
       )}
 
@@ -419,30 +419,30 @@ export const Seo: React.FC = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
                    <GlassCard style={{ padding: '24px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                         <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: '#f8fafc', margin: 0 }}>Position Tracking Overview</h3>
-                         <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>LAST 30 DAYS</div>
+                         <h3 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>Position Tracking Overview</h3>
+                         <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 700 }}>LAST 30 DAYS</div>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
                          <div style={{ textAlign: 'center', borderRight: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                            <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800 }}>VISIBILITY %</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800 }}>VISIBILITY %</div>
                             <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#3b82f6', margin: '4px 0' }}>{calculatedMetrics.visibility}%</div>
                             <div style={{ fontSize: '0.6rem', color: '#10b981', fontWeight: 800 }}>+2.45% GROWTH</div>
                          </div>
                          <div style={{ textAlign: 'center', borderRight: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                            <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800 }}>KEYWORDS</div>
-                            <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#f8fafc', margin: '4px 0' }}>{formatNum(result.semrush?.overview?.Or)}</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800 }}>KEYWORDS</div>
+                            <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--text-primary)', margin: '4px 0' }}>{formatNum(result.semrush?.overview?.Or)}</div>
                          </div>
                          <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800 }}>TOP RANKED</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 800 }}>TOP RANKED</div>
                             <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#10b981', margin: '4px 0' }}>{result.semrush?.keywords?.length || 0}</div>
                          </div>
                       </div>
                       <div style={{ marginTop: '24px' }}>
                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
                             <tr style={{ background: 'rgba(255, 255, 255, 0.03)', textAlign: 'left' }}>
-                               <th style={{ padding: '10px 12px', color: '#64748b' }}>PHRASE</th>
-                               <th style={{ padding: '10px 12px', color: '#64748b' }}>POS</th>
-                               <th style={{ padding: '10px 12px', color: '#64748b' }}>TRAFFIC %</th>
+                               <th style={{ padding: '10px 12px', color: 'var(--text-dim)' }}>PHRASE</th>
+                               <th style={{ padding: '10px 12px', color: 'var(--text-dim)' }}>POS</th>
+                               <th style={{ padding: '10px 12px', color: 'var(--text-dim)' }}>TRAFFIC %</th>
                             </tr>
                             {result.semrush?.keywords?.slice(0, 3).map((kw: any, i: number) => (
                                <tr key={i} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
@@ -457,7 +457,7 @@ export const Seo: React.FC = () => {
 
                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                       <GlassCard style={{ padding: '20px', flex: 1 }}>
-                         <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f8fafc', marginBottom: '16px' }}>Site Audit Status</h3>
+                         <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '16px' }}>Site Audit Status</h3>
                          <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
                             <div style={{ width: '90px', height: '90px' }}>
                                <ResponsiveContainer width="100%" height="100%">
@@ -491,7 +491,7 @@ export const Seo: React.FC = () => {
 
                 <GlassCard style={{ padding: '32px' }}>
                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 950, color: '#f8fafc', margin: 0 }}>Traffic Analytics Telemetry</h3>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 950, color: 'var(--text-primary)', margin: 0 }}>Traffic Analytics Telemetry</h3>
                       <div style={{ display: 'flex', gap: '16px' }}>
                          <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '10px', height: '3px', background: '#3b82f6' }} /> ORGANIC</div>
                          <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px' }}><div style={{ width: '10px', height: '3px', background: '#10b981' }} /> REFERRAL</div>
@@ -503,7 +503,7 @@ export const Seo: React.FC = () => {
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255, 255, 255, 0.05)" />
                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} />
                             <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fontWeight: 700, fill: '#64748b' }} tickFormatter={formatNum} />
-                            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', background: '#1e293b' }} />
+                            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', background: 'var(--bg-card)' }} />
                             <Area type="monotone" dataKey="organic" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.06} strokeWidth={4} />
                             <Area type="monotone" dataKey="referral" stroke="#10b981" fill="#10b981" fillOpacity={0.06} strokeWidth={4} />
                          </AreaChart>
@@ -513,7 +513,7 @@ export const Seo: React.FC = () => {
    
                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                       <GlassCard style={{ padding: '24px' }}>
-                         <h3 style={{ fontSize: '0.9rem', fontWeight: 900, marginBottom: '20px', color: '#f8fafc' }}>Keyword Distribution</h3>
+                         <h3 style={{ fontSize: '0.9rem', fontWeight: 900, marginBottom: '20px', color: 'var(--text-primary)' }}>Keyword Distribution</h3>
                          <div style={{ height: '200px' }}>
                             <ResponsiveContainer width="100%" height="100%">
                                <BarChart data={calculatedMetrics.kwPositioning} layout="vertical">
@@ -527,14 +527,14 @@ export const Seo: React.FC = () => {
                          </div>
                       </GlassCard>
                       <GlassCard style={{ padding: '24px' }}>
-                         <h3 style={{ fontSize: '0.9rem', fontWeight: 900, marginBottom: '20px', color: '#f8fafc' }}>Inbound Statistics</h3>
+                         <h3 style={{ fontSize: '0.9rem', fontWeight: 900, marginBottom: '20px', color: 'var(--text-primary)' }}>Inbound Statistics</h3>
                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                             <div style={{ padding: '20px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                               <div style={{ fontSize: '2rem', fontWeight: 950, color: '#f8fafc' }}>{formatNum(result.semrush?.backlinks?.total)}</div>
+                               <div style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--text-primary)' }}>{formatNum(result.semrush?.backlinks?.total)}</div>
                                <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#3b82f6', letterSpacing: '0.025em' }}>TOTAL LINKS</div>
                             </div>
                             <div style={{ padding: '20px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', textAlign: 'center', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                               <div style={{ fontSize: '2rem', fontWeight: 950, color: '#f8fafc' }}>{result.semrush?.backlinks?.ascore}</div>
+                               <div style={{ fontSize: '2rem', fontWeight: 950, color: 'var(--text-primary)' }}>{result.semrush?.backlinks?.ascore}</div>
                                <div style={{ fontSize: '0.8rem', fontWeight: 900, color: '#10b981', letterSpacing: '0.025em' }}>AUTHORITY SCORE</div>
                             </div>
                          </div>
@@ -548,7 +548,7 @@ export const Seo: React.FC = () => {
                             <Zap size={24} color="#0665ff" fill="#0665ff" />
                          </div>
                          <div>
-                            <h3 style={{ fontSize: '1.2rem', fontWeight: 950, margin: 0, color: '#f8fafc' }}>Executive AI Strategy</h3>
+                            <h3 style={{ fontSize: '1.2rem', fontWeight: 950, margin: 0, color: 'var(--text-primary)' }}>Executive AI Strategy</h3>
                             <p style={{ fontSize: '0.75rem', color: '#0665ff', fontWeight: 900, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>QUANTUM MARKET INTELLIGENCE OVERVIEW</p>
                          </div>
                       </div>

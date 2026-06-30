@@ -117,7 +117,7 @@ const statusStyle = (status: string): React.CSSProperties => {
     published: { background: '#052010', color: '#34d399', border: '1px solid #065f46' },
     approved: { background: '#052010', color: '#34d399', border: '1px solid #065f46' },
     rejected: { background: '#200505', color: '#f87171', border: '1px solid #7f1d1d' },
-    pending: { background: '#0d0a2e', color: '#a78bfa', border: '1px solid #4c1d95' },
+    pending: { background: 'var(--bg-card)', color: '#a78bfa', border: '1px solid var(--glass-border)' },
   };
   return map[s] || map.draft;
 };
@@ -136,7 +136,7 @@ const DASH_CSS = `
     --cyan: #22d3ee;
     --cyan-lt: #061e28;
     --white: #e2eaff;
-    --surface: #060f24;
+    --surface: var(--bg-elevated);
     --surface2: #0a1733;
     --card: #0d1e3a;
     --bdr: #1a2d50;
@@ -154,7 +154,7 @@ const DASH_CSS = `
     --amber-lt: #1c1a05;
     --red: #f87171;
     font-family: 'DM Sans', system-ui, sans-serif;
-    background: #040d1f;
+    background: var(--bg-primary);
     color: var(--t1);
     font-size: 13px;
     -webkit-font-smoothing: antialiased;
@@ -166,7 +166,7 @@ const DASH_CSS = `
   }
   .dash-inner { display: flex; flex: 1 1 0; min-height: 0; overflow: hidden; }
   .dash-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; overflow: hidden; height: 100%; }
-  .dash-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; padding: 0; background: #040d1f; }
+  .dash-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; padding: 0; background: var(--bg-primary); }
   .dash-root * { box-sizing: border-box; }
   .dash-root ::-webkit-scrollbar { width: 4px; height: 4px; }
   .dash-root ::-webkit-scrollbar-track { background: transparent; }
@@ -228,7 +228,7 @@ const DASH_CSS = `
 
   .expanded-body { animation: expandIn 0.2s cubic-bezier(0.4,0,0.2,1); }
   .spinner { width: 13px; height: 13px; border: 2px solid #1a3a7a; border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
-  .shimmer { background: linear-gradient(90deg, #0a1733 25%, #0d1e3a 50%, #0a1733 75%); background-size: 800px 100%; animation: shimmer 1.4s infinite; }
+  .shimmer { background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-card) 50%, var(--bg-elevated) 75%); background-size: 800px 100%; animation: shimmer 1.4s infinite; }
 
   .fb-post, .google-ad, .x-post, .li-post { transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
   .fb-post:hover, .google-ad:hover, .x-post:hover, .li-post:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(6,101,255,0.2); }
@@ -238,27 +238,27 @@ const DASH_CSS = `
 
   /* ── PLATFORM TABS ── */
   .platform-tab-btn { display: flex; align-items: center; gap: 7px; padding: 10px 20px; border: none; background: transparent; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--t3); border-bottom: 2px solid transparent; transition: all 0.25s cubic-bezier(0.4,0,0.2,1); font-family: inherit; white-space: nowrap; position: relative; }
-  .platform-tab-btn:hover { color: var(--t1); background: #0a1733; }
+  .platform-tab-btn:hover { color: var(--t1); background: var(--bg-elevated); }
   .platform-tab-btn.active { color: var(--t1); font-weight: 600; }
   .platform-tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px; background: linear-gradient(135deg, #0665ff 50%, #22d3ee 100%); animation: tabSlide 0.25s cubic-bezier(0.4,0,0.2,1); transform-origin: left; }
   .platform-tab-btn .tab-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease; }
   .platform-tab-btn:hover .tab-icon, .platform-tab-btn.active .tab-icon { transform: scale(1.15); }
 
   /* ── REC SECTION ── */
-  .rec-section { background: #0a1428; border: 1px solid #1a2d50; border-radius: 12px; margin: 16px 24px 0; overflow: hidden; transition: all 0.2s ease; animation: cardIn 0.45s cubic-bezier(0.4,0,0.2,1) both; }
-  .rec-header { display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid #1a2d50; }
+  .rec-section { background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 12px; margin: 16px 24px 0; overflow: hidden; transition: all 0.2s ease; animation: cardIn 0.45s cubic-bezier(0.4,0,0.2,1) both; }
+  .rec-header { display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--glass-border); }
   .rec-header-left { flex: 1; }
   .rec-header-left h2 { margin: 0 0 2px; font-size: 15px; font-weight: 700; color: var(--t1); }
   .rec-header-left p { margin: 0; font-size: 12px; color: var(--t3); }
   .rec-stats { display: flex; align-items: center; gap: 0; }
   .rec-stat-box { display: flex; align-items: center; gap: 10px; padding: 6px 20px; border-left: 1px solid #1a2d50; transition: all 0.2s ease; }
-  .rec-stat-box:hover { background: #0d1e3a; }
+  .rec-stat-box:hover { background: var(--bg-secondary); }
   .rec-stat-box .stat-num { font-size: 20px; font-weight: 700; color: var(--t1); line-height: 1; animation: statCount 0.5s ease both; }
   .rec-stat-box .stat-label { font-size: 11px; color: var(--t3); font-weight: 500; }
 
-  .auto-pub-btn { display: flex; align-items: center; gap: 7px; padding: 7px 14px; border: 1px solid #1a2d50; border-radius: 8px; background: #0a1428; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--t1); font-family: inherit; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
-  .auto-pub-btn:hover { background: #0d1e3a; transform: translateY(-1px); box-shadow: 0 2px 12px rgba(6,101,255,0.2); }
-  .pause-btn { display: flex; align-items: center; gap: 5px; padding: 7px 14px; border: 1px solid #1a2d50; border-radius: 8px; background: #0a1428; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--t3); font-family: inherit; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); margin-left: 8px; }
+  .auto-pub-btn { display: flex; align-items: center; gap: 7px; padding: 7px 14px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-card); cursor: pointer; font-size: 12px; font-weight: 600; color: var(--t1); font-family: inherit; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
+  .auto-pub-btn:hover { background: var(--bg-secondary); transform: translateY(-1px); box-shadow: 0 2px 12px rgba(6,101,255,0.2); }
+  .pause-btn { display: flex; align-items: center; gap: 5px; padding: 7px 14px; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--bg-card); cursor: pointer; font-size: 12px; font-weight: 600; color: var(--t3); font-family: inherit; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); margin-left: 8px; }
   .pause-btn:hover { background: #200505; color: #f87171; border-color: #7f1d1d; transform: translateY(-1px); }
 
   /* ── EMPTY STATE ── */
@@ -273,28 +273,28 @@ const DASH_CSS = `
   .rec-empty-icon-item:nth-child(7) { animation-delay: 0.75s; }
   .rec-empty-icon-item:nth-child(8) { animation-delay: 1.05s; }
   .rec-empty-icon-item:hover { transform: translateY(-4px) scale(1.08); }
-  .rec-empty-icon-circle { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid #1a2d50; display: flex; align-items: center; justify-content: center; background: #0d1e3a; transition: all 0.25s ease; }
+  .rec-empty-icon-circle { width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid #1a2d50; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); transition: all 0.25s ease; }
   .rec-empty-icon-item:hover .rec-empty-icon-circle { border-color: #0665ff; background: #071c4a; box-shadow: 0 0 16px rgba(6,101,255,0.25); }
   .rec-empty-icon-label { font-size: 11px; color: var(--t3); font-weight: 500; }
   .rec-empty-text { text-align: center; font-size: 13px; color: var(--t2); line-height: 1.7; max-width: 480px; }
   .rec-empty-text strong { color: var(--t1); }
 
   /* ── DRAFTS SECTION ── */
-  .drafts-section { background: #0a1428; border: 1px solid #1a2d50; border-radius: 12px; margin: 16px 24px 24px; overflow: hidden; animation: cardIn 0.55s cubic-bezier(0.4,0,0.2,1) both; animation-delay: 0.08s; }
-  .drafts-header { padding: 16px 20px; border-bottom: 1px solid #1a2d50; display: flex; align-items: center; justify-content: space-between; }
+  .drafts-section { background: var(--bg-card); border: 1px solid var(--glass-border); border-radius: 12px; margin: 16px 24px 24px; overflow: hidden; animation: cardIn 0.55s cubic-bezier(0.4,0,0.2,1) both; animation-delay: 0.08s; }
+  .drafts-header { padding: 16px 20px; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: space-between; }
   .drafts-header h2 { margin: 0; font-size: 15px; font-weight: 700; color: var(--t1); }
 
   /* ── TABLE ── */
   .drafts-table { width: 100%; border-collapse: collapse; }
-  .drafts-table th { padding: 10px 16px; text-align: left; font-size: 11.5px; font-weight: 600; color: var(--t3); background: #060f24; border-bottom: 1px solid #1a2d50; white-space: nowrap; }
+  .drafts-table th { padding: 10px 16px; text-align: left; font-size: 11.5px; font-weight: 600; color: var(--t3); background: var(--bg-elevated); border-bottom: 1px solid var(--glass-border); white-space: nowrap; }
   .drafts-table td { padding: 14px 16px; font-size: 13px; color: var(--t1); border-bottom: 1px solid #0d1e3a; vertical-align: middle; transition: background 0.15s ease; }
   .drafts-table tr:last-child td { border-bottom: none; }
   .drafts-table tr.draft-row { animation: rowIn 0.35s cubic-bezier(0.4,0,0.2,1) both; }
-  .drafts-table tr.draft-row:hover td { background: #0d1e3a; }
+  .drafts-table tr.draft-row:hover td { background: var(--bg-secondary); }
   .drafts-table tr.draft-row:hover td:first-child { border-left: 2px solid #0665ff; }
 
   /* ── DRAFT CARDS (mobile) ── */
-  .draft-card-mobile { background: #0d1e3a; border: 1px solid #1a2d50; border-radius: 12px; padding: 14px; animation: cardIn 0.38s cubic-bezier(0.4,0,0.2,1) both; transition: all 0.2s ease; }
+  .draft-card-mobile { background: var(--bg-secondary); border: 1px solid var(--glass-border); border-radius: 12px; padding: 14px; animation: cardIn 0.38s cubic-bezier(0.4,0,0.2,1) both; transition: all 0.2s ease; }
   .draft-card-mobile:hover { border-color: #1e3660; box-shadow: 0 4px 20px rgba(6,101,255,0.12); transform: translateY(-2px); }
   .draft-card-mobile:hover { border-left: 2px solid #0665ff; }
 
@@ -305,7 +305,7 @@ const DASH_CSS = `
   .score-ring .score-val { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; }
 
   /* ── MISC CELLS ── */
-  .queue-plus-btn { width: 28px; height: 28px; border-radius: 6px; border: 1.5px dashed #1a2d50; background: #060f24; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--t3); transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
+  .queue-plus-btn { width: 28px; height: 28px; border-radius: 6px; border: 1.5px dashed #1a2d50; background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--t3); transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
   .queue-plus-btn:hover { border-color: #0665ff; color: #93c5fd; background: #071c4a; transform: scale(1.1); box-shadow: 0 0 10px rgba(6,101,255,0.2); }
 
   .campaign-name-cell { font-size: 12.5px; font-weight: 600; color: var(--t1); line-height: 1.4; max-width: 200px; }
@@ -314,10 +314,10 @@ const DASH_CSS = `
   .creative-thumb { width: 40px; height: 34px; border-radius: 6px; object-fit: cover; border: 1.5px solid #1a2d50; transition: all 0.2s ease; }
   .creative-thumb:hover { transform: scale(1.15) translateY(-2px); z-index: 10; box-shadow: 0 6px 16px rgba(6,101,255,0.4); }
   .creative-thumb-stack { display: flex; align-items: center; }
-  .creative-thumb-stack .creative-thumb:not(:first-child) { margin-left: -10px; border: 2px solid #0a1428; }
+  .creative-thumb-stack .creative-thumb:not(:first-child) { margin-left: -10px; border: 2px solid var(--bg-card); }
 
-  .action-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid #1a2d50; background: #060f24; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--t3); transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
-  .action-btn:hover { background: #0a1733; color: var(--t1); border-color: #1e3660; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+  .action-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-elevated); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--t3); transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
+  .action-btn:hover { background: var(--bg-elevated); color: var(--t1); border-color: #1e3660; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
   .action-btn.danger:hover { background: #200505; color: #f87171; border-color: #7f1d1d; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(248,113,113,0.2); }
   .action-btn.primary:hover { background: #071c4a; color: #93c5fd; border-color: #1a3a7a; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(6,101,255,0.2); }
 
@@ -332,16 +332,16 @@ const DASH_CSS = `
   .status-badge .dot { width: 6px; height: 6px; border-radius: 50%; animation: pulse 2s ease-in-out infinite; }
 
   /* ── TOGGLE BUTTON ── */
-  .auto-toggle-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; height: 30px; border-radius: 6px; border: 1px solid #1a2d50; background: #060f24; cursor: pointer; font-size: 11px; font-weight: 600; min-width: 92px; font-family: inherit; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
+  .auto-toggle-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; height: 30px; border-radius: 6px; border: 1px solid var(--glass-border); background: var(--bg-elevated); cursor: pointer; font-size: 11px; font-weight: 600; min-width: 92px; font-family: inherit; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); }
   .auto-toggle-btn:hover { transform: translateY(-1px); }
   .auto-toggle-btn.on { background: #071c4a; border-color: #1a3a7a; color: #93c5fd; box-shadow: 0 0 10px rgba(6,101,255,0.15); }
   .auto-toggle-btn.off { color: var(--t3); }
   .auto-toggle-btn.on:hover { box-shadow: 0 0 16px rgba(6,101,255,0.3); }
-  .auto-toggle-btn.off:hover { background: #0a1733; color: var(--t2); }
+  .auto-toggle-btn.off:hover { background: var(--bg-elevated); color: var(--t2); }
 
   /* ── SKELETON LOADER ── */
   .skeleton-row td { padding: 14px 16px; }
-  .sk { border-radius: 6px; background: linear-gradient(90deg, #0a1733 25%, #0d2040 50%, #0a1733 75%); background-size: 600px 100%; animation: shimmer 1.4s infinite; display: inline-block; }
+  .sk { border-radius: 6px; background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-card) 50%, var(--bg-elevated) 75%); background-size: 600px 100%; animation: shimmer 1.4s infinite; display: inline-block; }
 
   /* ── RESPONSIVE ── */
   @media (max-width: 768px) {
@@ -379,8 +379,8 @@ const I = {
 };
 
 const card = (ex: React.CSSProperties = {}): React.CSSProperties => ({
-  background: '#0d1e3a',
-  border: '1px solid #1a2d50',
+  background: 'var(--bg-card)',
+  border: '1px solid var(--glass-border)',
   borderRadius: 14,
   padding: 16,
   position: 'relative',
@@ -468,7 +468,7 @@ function SkeletonCards() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 12 }}>
       {[...Array(3)].map((_, i) => (
-        <div key={i} style={{ background: '#0d1e3a', border: '1px solid #1a2d50', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span className="sk" style={{ width: 32, height: 32, borderRadius: 8 }} />
             <span className="sk" style={{ flex: 1, height: 14 }} />
@@ -502,9 +502,9 @@ function Toast({ message, type, onClose }: { message: string; type: ToastType; o
 
 function DisabledOverlay() {
   return (
-    <div style={{ position: 'absolute', inset: 0, background: 'rgba(4,13,31,.92)', borderRadius: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, zIndex: 5, backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s ease' }}>
-      <span style={{ color: '#4a6090' }}><I.Lock /></span>
-      <span style={{ fontSize: 11, color: '#4a6090', fontWeight: 500, textAlign: 'center', lineHeight: 1.6, padding: '0 16px' }}>Switch to Meta<br />to enable</span>
+    <div style={{ position: 'absolute', inset: 0, background: 'var(--glass-bg)', borderRadius: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, zIndex: 5, backdropFilter: 'blur(3px)', animation: 'fadeIn 0.2s ease' }}>
+      <span style={{ color: 'var(--text-dim)' }}><I.Lock /></span>
+      <span style={{ fontSize: 11, color: 'var(--text-dim)', fontWeight: 500, textAlign: 'center', lineHeight: 1.6, padding: '0 16px' }}>Switch to Meta<br />to enable</span>
     </div>
   );
 }
@@ -564,21 +564,21 @@ function AdSettingCard({ event, budget, schedule, finalUrl, enabled, onEventChan
       <div style={sLabel('#93c5fd')}><I.Settings /> Ad Setting</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
         <div>
-          <div style={{ fontSize: 10, color: '#4a6090', marginBottom: 4, fontWeight: 500 }}>Event</div>
+          <div style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 4, fontWeight: 500 }}>Event</div>
           <input className="editable-input" value={event} onChange={e => onEventChange(e.target.value)} placeholder="e.g. Purchase" />
         </div>
         <div>
-          <div style={{ fontSize: 10, color: '#4a6090', marginBottom: 4, fontWeight: 500 }}>Budget</div>
+          <div style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 4, fontWeight: 500 }}>Budget</div>
           <input className="editable-input" value={budget} onChange={e => onBudgetChange(e.target.value)} placeholder="e.g. 5.83 USD" style={{ color: '#22d3ee', fontWeight: 700 }} />
         </div>
       </div>
-      <div style={{ borderTop: '1px solid #1a2d50', margin: '10px 0' }} />
+      <div style={{ borderTop: '1px solid var(--glass-border)', margin: '10px 0' }} />
       <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 10, color: '#4a6090', marginBottom: 4, fontWeight: 500 }}>Schedule</div>
+        <div style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 4, fontWeight: 500 }}>Schedule</div>
         <input className="editable-input" value={schedule} onChange={e => onScheduleChange(e.target.value)} placeholder="e.g. May 08, 2026" />
       </div>
       <div>
-        <div style={{ fontSize: 10, color: '#4a6090', marginBottom: 4, fontWeight: 500 }}>Final URL</div>
+        <div style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 4, fontWeight: 500 }}>Final URL</div>
         <input className="editable-input" value={finalUrl} onChange={e => onFinalUrlChange(e.target.value)} placeholder="https://yourbrand.com" style={{ color: '#22d3ee', fontSize: 11 }} />
       </div>
       {!enabled && <DisabledOverlay />}
@@ -595,10 +595,10 @@ function TargetAudienceCard({ location, advantagePlus, enabled, onLocationChange
     <div style={{ ...card(), borderTop: '3px solid #34d399' }}>
       <div style={sLabel('#34d399')}><I.Users /> Target Audience</div>
       <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 10, color: '#4a6090', marginBottom: 4, fontWeight: 500 }}>Location</div>
+        <div style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 4, fontWeight: 500 }}>Location</div>
         <input className="editable-input" value={location} onChange={e => onLocationChange(e.target.value)} placeholder="e.g. United States" />
       </div>
-      <div onClick={onAdvantageToggle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: advantagePlus ? '#34d399' : '#4a6090', background: advantagePlus ? '#05201a' : '#0a1733', border: `1px solid ${advantagePlus ? '#065f46' : '#1a2d50'}`, padding: '5px 12px', borderRadius: 20, cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)', userSelect: 'none' }}>
+      <div onClick={onAdvantageToggle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: advantagePlus ? '#34d399' : 'var(--text-dim)', background: advantagePlus ? 'var(--success)' : 'var(--bg-elevated)', border: `1px solid ${advantagePlus ? 'var(--success)' : 'var(--glass-border)'}`, padding: '5px 12px', borderRadius: 20, cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4,0,0.2,1)', userSelect: 'none' }}>
         {advantagePlus ? '✦' : '○'} Advantage+ {advantagePlus ? 'on' : 'off'}
       </div>
       {!enabled && <DisabledOverlay />}
@@ -611,53 +611,53 @@ interface PreviewProps { brandName: string; logoUrl?: string; caption: string; c
 
 function MetaPreview({ brandName, logoUrl, caption, cta, imageUrl }: PreviewProps) {
   return (
-    <div className="fb-post" style={{ background: '#0a1428', border: '1px solid #1a2d50', borderRadius: 10, overflow: 'hidden' }}>
+    <div className="fb-post" style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 10, overflow: 'hidden' }}>
       <div style={{ padding: '12px 14px 8px', display: 'flex', alignItems: 'center', gap: 9 }}>
-        <div style={{ width: 38, height: 38, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#071c4a', border: '2px solid #1a3a7a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 38, height: 38, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--bg-secondary)', border: '2px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {logoUrl ? <img src={logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 15, fontWeight: 700, color: '#60a5fa' }}>{(brandName[0] ?? 'B').toUpperCase()}</span>}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#e2eaff' }}>{brandName}</div>
-          <div style={{ fontSize: 10, color: '#4a6090' }}>Sponsored · 🌐</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{brandName}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-dim)' }}>Sponsored · 🌐</div>
         </div>
       </div>
-      <div style={{ padding: '2px 14px 8px', fontSize: 13, lineHeight: 1.6, color: '#8aaad8' }}>{caption}</div>
-      <div style={{ width: '100%', aspectRatio: '1.91/1', background: '#071c4a', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <div style={{ padding: '2px 14px 8px', fontSize: 13, lineHeight: 1.6, color: 'var(--text-secondary)' }}>{caption}</div>
+      <div style={{ width: '100%', aspectRatio: '1.91/1', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
         {imageUrl ? <img src={imageUrl} alt="Ad" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 11, color: '#1a3a7a' }}>Upload or generate image</span>}
       </div>
-      <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#060f24', borderTop: '1px solid #1a2d50' }}>
-        <div style={{ fontSize: 11, color: '#4a6090', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>{caption}</div>
+      <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-elevated)', borderTop: '1px solid var(--glass-border)' }}>
+        <div style={{ fontSize: 11, color: 'var(--text-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>{caption}</div>
         <button style={{ background: 'linear-gradient(135deg, #0665ff 50%, #22d3ee 100%)', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 16px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{cta}</button>
       </div>
-      <div style={{ display: 'flex', borderTop: '1px solid #1a2d50' }}>
-        {['👍 Like', '💬 Comment', '↗ Share'].map(l => <button key={l} style={{ flex: 1, fontSize: 12, color: '#4a6090', fontWeight: 500, cursor: 'pointer', padding: '10px 4px', background: 'none', border: 'none', fontFamily: 'inherit' }}>{l}</button>)}
+      <div style={{ display: 'flex', borderTop: '1px solid var(--glass-border)' }}>
+        {['👍 Like', '💬 Comment', '↗ Share'].map(l => <button key={l} style={{ flex: 1, fontSize: 12, color: 'var(--text-dim)', fontWeight: 500, cursor: 'pointer', padding: '10px 4px', background: 'none', border: 'none', fontFamily: 'inherit' }}>{l}</button>)}
       </div>
     </div>
   );
 }
 function GooglePreview({ caption, imageUrl }: PreviewProps) {
   return (
-    <div className="google-ad" style={{ background: '#0a1428', border: '1px solid #1a2d50', borderRadius: 10, padding: 14 }}>
-      <div style={{ fontSize: 10, color: '#4a6090', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ background: '#34a853', color: '#fff', fontSize: 9, padding: '1px 5px', borderRadius: 3, fontWeight: 700 }}>Ad</span><span>brandname.com</span></div>
+    <div className="google-ad" style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: 14 }}>
+      <div style={{ fontSize: 10, color: 'var(--text-dim)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ background: '#34a853', color: 'var(--text-primary)', fontSize: 9, padding: '1px 5px', borderRadius: 3, fontWeight: 700 }}>Ad</span><span>brandname.com</span></div>
       <div style={{ fontSize: 16, color: '#22d3ee', fontWeight: 500, marginBottom: 4, lineHeight: 1.4 }}>{caption?.slice(0, 60) || 'Powerful Solutions — Official Site'}</div>
-      <div style={{ fontSize: 12, color: '#8aaad8', lineHeight: 1.6, marginBottom: 12 }}>{caption}</div>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>{caption}</div>
       {imageUrl && <img src={imageUrl} alt="Ad" style={{ width: '100%', aspectRatio: '1.91/1', objectFit: 'cover', borderRadius: 8, marginBottom: 10 }} />}
     </div>
   );
 }
 function XPreview({ brandName, logoUrl, caption, cta, imageUrl }: PreviewProps) {
   return (
-    <div className="x-post" style={{ background: '#0a1428', border: '1px solid #1a2d50', borderRadius: 10, padding: 14 }}>
+    <div className="x-post" style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: 14 }}>
       <div style={{ display: 'flex', gap: 10 }}>
-        <div style={{ width: 42, height: 42, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#060f24', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {logoUrl ? <img src={logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 16, fontWeight: 700, color: '#e2eaff' }}>{(brandName[0] ?? 'B').toUpperCase()}</span>}
+        <div style={{ width: 42, height: 42, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {logoUrl ? <img src={logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{(brandName[0] ?? 'B').toUpperCase()}</span>}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 3, color: '#e2eaff' }}>{brandName} <span style={{ fontSize: 11, color: '#4a6090' }}>· Promoted</span></div>
-          <div style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 10, color: '#8aaad8' }}>{caption}</div>
-          {imageUrl ? <img src={imageUrl} alt="Ad" style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', borderRadius: 12, marginBottom: 10 }} /> : <div style={{ width: '100%', aspectRatio: '16/9', background: '#060f24', borderRadius: 12, marginBottom: 10, border: '1px solid #1a2d50', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ color: '#1a2d50', fontSize: 24 }}>🖼</span></div>}
-          <div style={{ background: '#060f24', border: '1px solid #1a2d50', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 13, color: '#4a6090' }}>brandname.com</span>
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 3, color: 'var(--text-primary)' }}>{brandName} <span style={{ fontSize: 11, color: 'var(--text-dim)' }}>· Promoted</span></div>
+          <div style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 10, color: 'var(--text-secondary)' }}>{caption}</div>
+          {imageUrl ? <img src={imageUrl} alt="Ad" style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover', borderRadius: 12, marginBottom: 10 }} /> : <div style={{ width: '100%', aspectRatio: '16/9', background: 'var(--bg-elevated)', borderRadius: 12, marginBottom: 10, border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ color: 'var(--text-dim)', fontSize: 24 }}>🖼</span></div>}
+          <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 12, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-dim)' }}>brandname.com</span>
             <button style={{ background: 'linear-gradient(135deg, #0665ff 50%, #22d3ee 100%)', color: '#fff', border: 'none', borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>{cta}</button>
           </div>
         </div>
@@ -667,20 +667,20 @@ function XPreview({ brandName, logoUrl, caption, cta, imageUrl }: PreviewProps) 
 }
 function LinkedInPreview({ brandName, logoUrl, caption, cta, imageUrl }: PreviewProps) {
   return (
-    <div className="li-post" style={{ background: '#0a1428', border: '1px solid #1a2d50', borderRadius: 10, overflow: 'hidden' }}>
+    <div className="li-post" style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 10, overflow: 'hidden' }}>
       <div style={{ padding: '12px 14px 8px', display: 'flex', alignItems: 'center', gap: 9 }}>
-        <div style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: '#071c4a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', flexShrink: 0, background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {logoUrl ? <img src={logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 18, fontWeight: 700, color: '#38bdf8' }}>{(brandName[0] ?? 'B').toUpperCase()}</span>}
         </div>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: '#e2eaff' }}>{brandName}</div>
-          <div style={{ fontSize: 11, color: '#4a6090' }}>Sponsored · <span style={{ color: '#38bdf8' }}>Follow</span></div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{brandName}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Sponsored · <span style={{ color: '#38bdf8' }}>Follow</span></div>
         </div>
       </div>
-      <div style={{ padding: '4px 14px 10px', fontSize: 13, lineHeight: 1.65, color: '#8aaad8' }}>{caption}</div>
-      {imageUrl ? <img src={imageUrl} alt="Ad" style={{ width: '100%', aspectRatio: '1.91/1', objectFit: 'cover', display: 'block' }} /> : <div style={{ width: '100%', aspectRatio: '1.91/1', background: '#060f24', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ color: '#1a2d50', fontSize: 32 }}>🖼</span></div>}
-      <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #1a2d50' }}>
-        <div><div style={{ fontSize: 13, fontWeight: 600, color: '#e2eaff' }}>{brandName}</div><div style={{ fontSize: 11, color: '#4a6090' }}>brandname.com</div></div>
+      <div style={{ padding: '4px 14px 10px', fontSize: 13, lineHeight: 1.65, color: 'var(--text-secondary)' }}>{caption}</div>
+      {imageUrl ? <img src={imageUrl} alt="Ad" style={{ width: '100%', aspectRatio: '1.91/1', objectFit: 'cover', display: 'block' }} /> : <div style={{ width: '100%', aspectRatio: '1.91/1', background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ color: 'var(--text-dim)', fontSize: 32 }}>🖼</span></div>}
+      <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--glass-border)' }}>
+        <div><div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{brandName}</div><div style={{ fontSize: 11, color: 'var(--text-dim)' }}>brandname.com</div></div>
         <button style={{ background: 'transparent', color: '#38bdf8', border: '1.5px solid #38bdf8', borderRadius: 20, padding: '6px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{cta}</button>
       </div>
     </div>
@@ -703,13 +703,13 @@ function PlatformPreview({ platformId, brandName, logoUrl, caption, cta, imageUr
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: '#8aaad8', textTransform: 'uppercase', letterSpacing: '.7px' }}>{meta.label}</span>
-        <span style={{ fontSize: 10, background: '#071c4a', color: meta.color, padding: '2px 10px', borderRadius: 20, fontWeight: 700, border: `1px solid #1a3a7a` }}>Ad 1</span>
+        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.7px' }}>{meta.label}</span>
+        <span style={{ fontSize: 10, background: 'var(--bg-secondary)', color: meta.color, padding: '2px 10px', borderRadius: 20, fontWeight: 700, border: `1px solid var(--glass-border)` }}>Ad 1</span>
       </div>
       {previews[platformId]}
-      <div style={{ background: '#0d1e3a', border: '1px solid #1a2d50', borderRadius: 10, padding: 12 }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: 12 }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: '#22d3ee', marginBottom: 6 }}>Est. audience: {estimatedAudience}</div>
-        <div style={{ background: '#060f24', borderRadius: 6, height: 6, overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg-elevated)', borderRadius: 6, height: 6, overflow: 'hidden' }}>
           <div style={{ height: '100%', borderRadius: 6, background: 'linear-gradient(135deg, #0665ff 50%, #22d3ee 100%)', width: '40%' }} />
         </div>
       </div>
@@ -768,68 +768,68 @@ function CreativeStudio({ adCopy, activePlatformId, brandAssetImages, onSubheadi
 
   return (
     <div style={{ ...card({ padding: 0 }), borderTop: '3px solid #818cf8', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #1a2d50' }}>
+      <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid var(--glass-border)' }}>
         <div style={sLabel('#818cf8')}><I.Sparkle /> Creative Studio</div>
-        <div style={{ fontSize: 11, color: '#4a6090' }}>Edit copy · Choose visuals</div>
+        <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Edit copy · Choose visuals</div>
       </div>
       <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#8aaad8', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Headline</div>
-          <input className="hd-in" value={heading} onChange={e => setHeading(e.target.value)} style={{ width: '100%', background: '#060f24', border: '1px solid #1a2d50', borderRadius: 8, padding: '9px 12px', color: '#e2eaff', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', transition: 'all .15s' }} placeholder="Enter headline…" />
-          <div style={{ fontSize: 10, color: '#4a6090', marginTop: 3 }}>{heading.length}/125</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Headline</div>
+          <input className="hd-in" value={heading} onChange={e => setHeading(e.target.value)} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, padding: '9px 12px', color: 'var(--text-primary)', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', transition: 'all .15s' }} placeholder="Enter headline…" />
+          <div style={{ fontSize: 10, color: 'var(--text-dim)', marginTop: 3 }}>{heading.length}/125</div>
         </div>
-        <div style={{ borderTop: '1px solid #1a2d50' }} />
+        <div style={{ borderTop: '1px solid var(--glass-border)' }} />
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#8aaad8', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Primary Text</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Primary Text</div>
           <div style={{ display: 'flex', gap: 5, marginBottom: 8, flexWrap: 'wrap' }}>
-            {adCopy.primaryTexts.map((s, i) => <button key={i} className={`tag-pill${sIdx === i ? ' on' : ''}`} onClick={() => pickS(s, i)} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, border: '1px solid #1a2d50', background: '#060f24', color: '#8aaad8', fontFamily: 'inherit' }}>P{i + 1}</button>)}
+            {adCopy.primaryTexts.map((s, i) => <button key={i} className={`tag-pill${sIdx === i ? ' on' : ''}`} onClick={() => pickS(s, i)} style={{ fontSize: 10, padding: '3px 10px', borderRadius: 20, border: '1px solid var(--glass-border)', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', fontFamily: 'inherit' }}>P{i + 1}</button>)}
           </div>
-          <textarea className="pt-ta" value={sub} onChange={e => { setSub(e.target.value); onSubheadingChange(e.target.value); }} rows={3} style={{ width: '100%', background: '#060f24', border: '1px solid #1a2d50', borderRadius: 8, padding: '9px 12px', color: '#e2eaff', fontSize: 12, lineHeight: 1.65, resize: 'vertical', fontFamily: 'inherit', transition: 'all .15s' }} placeholder="Enter primary text…" />
+          <textarea className="pt-ta" value={sub} onChange={e => { setSub(e.target.value); onSubheadingChange(e.target.value); }} rows={3} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, padding: '9px 12px', color: 'var(--text-primary)', fontSize: 12, lineHeight: 1.65, resize: 'vertical', fontFamily: 'inherit', transition: 'all .15s' }} placeholder="Enter primary text…" />
         </div>
-        <div style={{ borderTop: '1px solid #1a2d50' }} />
+        <div style={{ borderTop: '1px solid var(--glass-border)' }} />
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#8aaad8', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Call to Action</div>
-          <input className="hd-in" value={cta} onChange={e => handleCtaChange(e.target.value)} style={{ width: '100%', background: '#060f24', border: '1px solid #1a2d50', borderRadius: 8, padding: '9px 12px', color: '#22d3ee', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', transition: 'all .15s' }} placeholder="e.g. Shop Now" />
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Call to Action</div>
+          <input className="hd-in" value={cta} onChange={e => handleCtaChange(e.target.value)} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, padding: '9px 12px', color: '#22d3ee', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', transition: 'all .15s' }} placeholder="e.g. Shop Now" />
         </div>
-        <div style={{ borderTop: '1px solid #1a2d50' }} />
+        <div style={{ borderTop: '1px solid var(--glass-border)' }} />
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#8aaad8', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>Ad Creative</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 10 }}>Ad Creative</div>
           <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
             {(['brand', 'ai', 'upload'] as ImageTab[]).map(t => <button key={t} className={`section-tab${imgTab === t ? ' active' : ''}`} onClick={() => setImgTab(t)}>{t === 'brand' ? `Brand (${brandAssetImages.length})` : t === 'ai' ? 'AI Gen' : 'Uploaded'}</button>)}
           </div>
           {imgTab === 'brand' && (
             brandAssetImages.length === 0
-              ? <div style={{ background: '#060f24', border: '1.5px dashed #1a2d50', borderRadius: 10, padding: '20px 14px', textAlign: 'center', color: '#4a6090', fontSize: 11 }}>{emptyMsg}</div>
+              ? <div style={{ background: 'var(--bg-elevated)', border: '1.5px dashed #1a2d50', borderRadius: 10, padding: '20px 14px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 11 }}>{emptyMsg}</div>
               : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
                 {brandAssetImages.map((url, i) => <div key={i} className={`brand-asset-img${selImg === url ? ' sel' : ''}`} onClick={() => pickImg(url)} style={{ aspectRatio: '1', position: 'relative', overflow: 'hidden', border: `2px solid ${selImg === url ? '#22d3ee' : '#1a2d50'}`, cursor: 'pointer' }}><img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />{selImg === url && <div style={{ position: 'absolute', inset: 0, background: '#0665ff1a', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', padding: 4 }}><div style={{ width: 18, height: 18, borderRadius: '50%', background: '#0665ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><I.Check /></div></div>}</div>)}
               </div>
           )}
           {imgTab === 'ai' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ background: '#0f1040', border: '1px solid #3730a3', borderRadius: 10, padding: 12 }}>
-                <textarea className="pt-ta" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder='e.g. "Eco-friendly solar panels at golden hour"' rows={2} style={{ width: '100%', background: '#0a0d2e', border: '1px solid #3730a3', borderRadius: 7, padding: '8px 10px', color: '#e2eaff', fontSize: 11, lineHeight: 1.5, resize: 'vertical', fontFamily: 'inherit' }} />
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 10, padding: 12 }}>
+                <textarea className="pt-ta" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder='e.g. "Eco-friendly solar panels at golden hour"' rows={2} style={{ width: '100%', background: '#0a0d2e', border: '1px solid var(--glass-border)', borderRadius: 7, padding: '8px 10px', color: 'var(--text-primary)', fontSize: 11, lineHeight: 1.5, resize: 'vertical', fontFamily: 'inherit' }} />
                 {aiErr && <div style={{ fontSize: 10, color: '#f87171', marginTop: 5, background: '#200505', padding: '5px 8px', borderRadius: 6 }}>{aiErr}</div>}
                 <button className="gen-btn" onClick={generate} disabled={loading || !aiPrompt.trim()} style={{ marginTop: 8, width: '100%', background: 'linear-gradient(135deg, #0665ff 50%, #22d3ee 100%)', color: '#fff', border: 'none', borderRadius: 7, padding: '8px 0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                   {loading ? <><Loader2 size={14} className="spinner" /><span>Generating…</span></> : <><I.Sparkle /><span>Generate Image</span></>}
                 </button>
               </div>
               {aiImgs.length > 0 && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>{aiImgs.map((url, i) => <div key={i} className={`img-th${selImg === url ? ' sel' : ''}`} onClick={() => pickImg(url)} style={{ aspectRatio: '1', borderRadius: 7, overflow: 'hidden', border: `2px solid ${selImg === url ? '#22d3ee' : '#1a2d50'}`, position: 'relative' }}><img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />{selImg === url && <div style={{ position: 'absolute', top: 4, right: 4, width: 16, height: 16, borderRadius: '50%', background: '#0665ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><I.Check /></div>}</div>)}</div>}
-              {aiImgs.length === 0 && !loading && <div style={{ fontSize: 11, color: '#4a6090', textAlign: 'center' }}>{emptyMsg}</div>}
+              {aiImgs.length === 0 && !loading && <div style={{ fontSize: 11, color: 'var(--text-dim)', textAlign: 'center' }}>{emptyMsg}</div>}
             </div>
           )}
           {imgTab === 'upload' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={upload} />
-              <button onClick={() => fileRef.current?.click()} style={{ width: '100%', background: '#060f24', border: '1.5px dashed #1e3660', borderRadius: 9, padding: '14px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, cursor: 'pointer', color: '#8aaad8', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', transition: 'all 0.2s ease' }}><I.Upload /> Upload from folder</button>
+              <button onClick={() => fileRef.current?.click()} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1.5px dashed #1e3660', borderRadius: 9, padding: '14px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', transition: 'all 0.2s ease' }}><I.Upload /> Upload from folder</button>
               {uploadedImgs.length > 0 && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>{uploadedImgs.map((url, i) => <div key={i} className={`img-th${selImg === url ? ' sel' : ''}`} onClick={() => pickImg(url)} style={{ aspectRatio: '1', borderRadius: 7, overflow: 'hidden', border: `2px solid ${selImg === url ? '#22d3ee' : '#1a2d50'}`, position: 'relative' }}><img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>)}</div>}
             </div>
           )}
         </div>
       </div>
       {!enabled && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(4,13,31,.93)', borderRadius: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, zIndex: 10, backdropFilter: 'blur(4px)' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'var(--glass-bg)', borderRadius: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, zIndex: 10, backdropFilter: 'blur(4px)' }}>
           <I.Lock />
-          <span style={{ fontSize: 12, color: '#4a6090', fontWeight: 500, textAlign: 'center', padding: '0 24px', lineHeight: 1.7 }}>Creative Studio is only available<br />for the active platform.</span>
+          <span style={{ fontSize: 12, color: 'var(--text-dim)', fontWeight: 500, textAlign: 'center', padding: '0 24px', lineHeight: 1.7 }}>Creative Studio is only available<br />for the active platform.</span>
         </div>
       )}
     </div>
@@ -840,34 +840,34 @@ function CreativeStudio({ adCopy, activePlatformId, brandAssetImages, onSubheadi
 function PublishPlanModal({ isOpen, onClose, onSelectPlan }: { isOpen: boolean; onClose: () => void; onSelectPlan: (id: PlanId) => void }) {
   const [billing, setBilling] = useState<BillingCycle>('monthly');
   const plans = [
-    { id: 'free' as PlanId, name: 'Free', price: '$0', features: ['1 campaign/month', 'Basic analytics', 'Standard publishing'], color: '#8aaad8' },
+    { id: 'free' as PlanId, name: 'Free', price: '$0', features: ['1 campaign/month', 'Basic analytics', 'Standard publishing'], color: 'var(--text-secondary)' },
     { id: 'silver' as PlanId, name: 'Silver', price: billing === 'monthly' ? '$29' : '$290', features: ['10 campaigns/month', 'Advanced analytics', 'Priority support', 'Unlimited AI images', 'A/B testing'], color: '#0665ff', popular: true },
     { id: 'gold' as PlanId, name: 'Gold', price: billing === 'monthly' ? '$79' : '$790', features: ['Unlimited campaigns', 'Real-time analytics', '24/7 support', 'Multi-platform', 'Custom integrations'], color: '#fbbf24' },
   ];
   if (!isOpen) return null;
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(4,13,31,.7)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, animation: 'fadeIn .2s ease' }} onClick={onClose}>
-      <div style={{ background: '#0a1428', border: '1px solid #1a2d50', borderRadius: 20, maxWidth: 780, width: '92%', maxHeight: '88vh', overflow: 'auto', padding: 28, position: 'relative', animation: 'slideUp .25s ease' }} onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, background: '#060f24', border: '1px solid #1a2d50', color: '#4a6090', width: 28, height: 28, borderRadius: 8, cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s ease' }}>✕</button>
+    <div style={{ position: 'fixed', inset: 0, background: 'var(--glass-bg)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, animation: 'fadeIn .2s ease' }} onClick={onClose}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 20, maxWidth: 780, width: '92%', maxHeight: '88vh', overflow: 'auto', padding: 28, position: 'relative', animation: 'slideUp .25s ease' }} onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} style={{ position: 'absolute', top: 16, right: 16, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', color: 'var(--text-dim)', width: 28, height: 28, borderRadius: 8, cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s ease' }}>✕</button>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4, fontFamily: "'Space Grotesk',sans-serif", color: '#e2eaff' }}>Choose Publishing Plan</h2>
-          <p style={{ fontSize: 13, color: '#8aaad8' }}>Select the plan that fits your campaign needs</p>
+          <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4, fontFamily: "'Space Grotesk',sans-serif", color: 'var(--text-primary)' }}>Choose Publishing Plan</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Select the plan that fits your campaign needs</p>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
-          <div style={{ display: 'flex', background: '#060f24', borderRadius: 40, padding: 4, border: '1px solid #1a2d50' }}>
+          <div style={{ display: 'flex', background: 'var(--bg-elevated)', borderRadius: 40, padding: 4, border: '1px solid var(--glass-border)' }}>
             {(['monthly', 'yearly'] as BillingCycle[]).map(b => <button key={b} onClick={() => setBilling(b)} style={{ padding: '7px 22px', borderRadius: 32, border: 'none', background: billing === b ? 'linear-gradient(135deg, #0665ff 50%, #22d3ee 100%)' : 'transparent', color: billing === b ? '#fff' : '#8aaad8', fontWeight: 600, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease' }}>{b.charAt(0).toUpperCase() + b.slice(1)}</button>)}
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px,1fr))', gap: 14, marginBottom: 20 }}>
           {plans.map(plan => (
-            <div key={plan.id} className="plan-card" onClick={() => onSelectPlan(plan.id)} style={{ border: `${(plan as any).popular ? '2px' : '1px'} solid ${(plan as any).popular ? plan.color + '55' : '#1a2d50'}`, borderRadius: 16, padding: 20, background: (plan as any).popular ? `${plan.color}10` : '#060f24', position: 'relative' }}>
+            <div key={plan.id} className="plan-card" onClick={() => onSelectPlan(plan.id)} style={{ border: `${(plan as any).popular ? '2px' : '1px'} solid ${(plan as any).popular ? plan.color + '55' : '#1a2d50'}`, borderRadius: 16, padding: 20, background: (plan as any).popular ? `${plan.color}10` : 'var(--bg-elevated)', position: 'relative' }}>
               {(plan as any).popular && <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #0665ff 50%, #22d3ee 100%)', color: '#fff', padding: '3px 12px', borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap' }}>Most Popular</div>}
               <div style={{ textAlign: 'center', marginBottom: 14 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4, color: '#e2eaff' }}>{plan.name}</div>
-                <div><span style={{ fontSize: 30, fontWeight: 800, color: plan.color }}>{plan.price}</span><span style={{ fontSize: 12, color: '#4a6090' }}>/{billing === 'monthly' ? 'mo' : 'yr'}</span></div>
+                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4, color: 'var(--text-primary)' }}>{plan.name}</div>
+                <div><span style={{ fontSize: 30, fontWeight: 800, color: plan.color }}>{plan.price}</span><span style={{ fontSize: 12, color: 'var(--text-dim)' }}>/{billing === 'monthly' ? 'mo' : 'yr'}</span></div>
               </div>
-              <ul style={{ listStyle: 'none', margin: '0 0 16px', borderTop: '1px solid #1a2d50', paddingTop: 12 }}>
-                {plan.features.map((f, i) => <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#8aaad8', marginBottom: 8 }}><CheckCircle2 size={13} color={plan.color} />{f}</li>)}
+              <ul style={{ listStyle: 'none', margin: '0 0 16px', borderTop: '1px solid var(--glass-border)', paddingTop: 12 }}>
+                {plan.features.map((f, i) => <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}><CheckCircle2 size={13} color={plan.color} />{f}</li>)}
               </ul>
               <button style={{ width: '100%', padding: '8px', borderRadius: 8, border: `1.5px solid ${plan.color}`, background: (plan as any).popular ? 'linear-gradient(135deg, #0665ff 50%, #22d3ee 100%)' : 'transparent', color: (plan as any).popular ? '#fff' : plan.color, fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease' }}>Select {plan.name}</button>
             </div>
@@ -881,16 +881,16 @@ function PublishPlanModal({ isOpen, onClose, onSelectPlan }: { isOpen: boolean; 
 /* ─── BOTTOM BAR ─────────────────────────────────────────── */
 function BottomBar({ onBack, onPublish, onSaveDraft, loading, activePlatformName }: { onBack: () => void; onPublish: () => void; onSaveDraft: () => void; loading: LoadingState; activePlatformName: string }) {
   return (
-    <div style={{ background: '#0a1428', borderTop: '1px solid #1a2d50', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, flexWrap: 'wrap', gap: 8 }}>
-      <button className="btn-back" onClick={onBack} style={{ background: '#060f24', border: '1px solid #1a2d50', color: '#8aaad8', padding: '8px 16px', borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s ease' }}>
+    <div style={{ background: 'var(--bg-card)', borderTop: '1px solid var(--glass-border)', padding: '10px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, flexWrap: 'wrap', gap: 8 }}>
+      <button className="btn-back" onClick={onBack} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)', padding: '8px 16px', borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s ease' }}>
         <I.Back /> Back to Drafts
       </button>
-      <div style={{ fontSize: 11, color: '#4a6090' }}>Publishing to <span style={{ color: '#22d3ee', fontWeight: 600 }}>{activePlatformName}</span></div>
+      <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>Publishing to <span style={{ color: '#22d3ee', fontWeight: 600 }}>{activePlatformName}</span></div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button className={`btn-pub${!loading ? ' pub-glow' : ''}`} onClick={onPublish} disabled={!!loading} style={{ background: 'linear-gradient(135deg, #0665ff 50%, #22d3ee 100%)', color: '#fff', border: 'none', padding: '8px 26px', borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease', opacity: loading ? .7 : 1 }}>
           {loading === 'publish' ? 'Publishing...' : 'Publish'}
         </button>
-        <button className="btn-draft" onClick={onSaveDraft} disabled={!!loading} style={{ background: '#060f24', border: '1px solid #1a2d50', color: '#8aaad8', padding: '8px 16px', borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease', opacity: loading ? .7 : 1 }}>
+        <button className="btn-draft" onClick={onSaveDraft} disabled={!!loading} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)', padding: '8px 16px', borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease', opacity: loading ? .7 : 1 }}>
           {loading === 'draft' ? 'Saving...' : 'Save Draft'}
         </button>
       </div>
@@ -1003,15 +1003,15 @@ export function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showTo
 
   return (
     <div className="dash-root" style={{ animation: 'slideInRight .25s ease' }}>
-      <div style={{ display: 'flex', gap: 8, padding: '10px 16px', borderBottom: '1px solid #1a2d50', background: '#0a1428', alignItems: 'flex-end', flexWrap: 'wrap', flexShrink: 0, position: 'relative', opacity: activePid === 'meta' ? 1 : .35, pointerEvents: activePid === 'meta' ? 'auto' : 'none' }}>
+      <div style={{ display: 'flex', gap: 8, padding: '10px 16px', borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-card)', alignItems: 'flex-end', flexWrap: 'wrap', flexShrink: 0, position: 'relative', opacity: activePid === 'meta' ? 1 : .35, pointerEvents: activePid === 'meta' ? 'auto' : 'none' }}>
         {['Ad Account', 'Page', 'Instagram', 'Pixel'].map(f => (
           <div key={f} style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: 1, minWidth: 110 }}>
             <span style={{ fontSize: 9, color: '#60a5fa', fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase' }}>{f}</span>
-            <div className="tb-sel" style={{ background: '#060f24', border: '1px solid #1a2d50', borderRadius: 8, padding: '7px 10px', color: '#4a6090', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}><span>Select {f.toLowerCase()}</span><span style={{ fontSize: 10 }}>▾</span></div>
+            <div className="tb-sel" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 8, padding: '7px 10px', color: 'var(--text-dim)', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}><span>Select {f.toLowerCase()}</span><span style={{ fontSize: 10 }}>▾</span></div>
           </div>
         ))}
         {activePid !== 'meta' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#4a6090', background: 'rgba(4,13,31,.85)', backdropFilter: 'blur(2px)', zIndex: 2 }}>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--text-dim)', background: 'var(--glass-bg)', backdropFilter: 'blur(2px)', zIndex: 2 }}>
             <I.Lock /> &nbsp;Switch to Meta to configure
           </div>
         )}
@@ -1019,10 +1019,10 @@ export function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showTo
       <div className="dash-inner">
         <div className="dash-main">
           <div className="dash-scroll">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '14px 16px', padding: '9px 14px', background: '#0d1e3a', border: '1px solid #1a2d50', borderRadius: 10, borderLeft: `4px solid ${activePlat.color}` }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#8aaad8', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{campaignTitle}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '14px 16px', padding: '9px 14px', background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 10, borderLeft: `4px solid ${activePlat.color}` }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{campaignTitle}</span>
               <span style={{ fontSize: 10, background: `${activePlat.color}18`, color: activePlat.color, padding: '2px 10px', borderRadius: 20, fontWeight: 700, border: `1px solid ${activePlat.color}33` }}>{activePlat.name}</span>
-              <span style={{ fontSize: 10, color: '#4a6090', fontFamily: 'monospace' }}>ID: {campaign._id}</span>
+              <span style={{ fontSize: 10, color: 'var(--text-dim)', fontFamily: 'monospace' }}>ID: {campaign._id}</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(200px,1fr) minmax(260px,1.1fr) minmax(200px,1fr)', gap: 14, padding: '0 16px 16px', alignItems: 'start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -1080,8 +1080,8 @@ function DraftMobileCard({
           {PLATFORM_ICONS_SM[draft.platform as PlatformId] ?? <Image size={13} color={platConfig.color} />}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#e2eaff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{draft.name}</div>
-          <div style={{ fontSize: 11, color: '#4a6090' }}>{platConfig.name}</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{draft.name}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-dim)' }}>{platConfig.name}</div>
         </div>
         <StatusBadge status={draft.status} />
       </div>
@@ -1099,16 +1099,16 @@ function DraftMobileCard({
       <div style={{ display: 'flex', gap: 16, marginBottom: 10, flexWrap: 'wrap' }}>
         {d.budget && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 10, color: '#4a6090', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.4px' }}>Budget</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#e2eaff' }}>{d.budget}</span>
+            <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.4px' }}>Budget</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{d.budget}</span>
           </div>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span style={{ fontSize: 10, color: '#4a6090', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.4px' }}>Audience</span>
-          <span style={{ fontSize: 12, color: '#8aaad8' }}>{audience}</span>
+          <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.4px' }}>Audience</span>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{audience}</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span style={{ fontSize: 10, color: '#4a6090', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.4px' }}>Score</span>
+          <span style={{ fontSize: 10, color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.4px' }}>Score</span>
           <ScoreRing score={draft.score} />
         </div>
       </div>
@@ -1118,7 +1118,7 @@ function DraftMobileCard({
       )}
 
       {/* Actions row */}
-      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10, borderTop: '1px solid #1a2d50' }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10, borderTop: '1px solid var(--glass-border)' }}>
         <button className={`auto-toggle-btn ${draft.raw?.autoPublish ? 'on' : 'off'}`} onClick={onToggleAuto}>
           {draft.raw?.autoPublish ? <ToggleRight size={15} /> : <ToggleLeft size={15} />}
           {draft.raw?.autoPublish ? 'Auto' : 'Manual'}
@@ -1241,10 +1241,10 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
     return (
       <>
         <style>{DASH_CSS}</style>
-        <div style={{ minHeight: '100%', background: '#040d1f', fontFamily: "'DM Sans',system-ui,sans-serif" }}>
-          <div style={{ background: '#0a1428', borderBottom: '1px solid #1a2d50', padding: '0 24px', display: 'flex', alignItems: 'center', overflowX: 'auto' }}>
+        <div style={{ minHeight: '100%', background: 'var(--bg-primary)', fontFamily: "'DM Sans',system-ui,sans-serif" }}>
+          <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--glass-border)', padding: '0 24px', display: 'flex', alignItems: 'center', overflowX: 'auto' }}>
             {PLATFORMS_FILTER.map(p => (
-              <button key={p} className="platform-tab-btn" style={{ color: '#4a6090' }}>
+              <button key={p} className="platform-tab-btn" style={{ color: 'var(--text-dim)' }}>
                 <span className="tab-icon">{PLATFORM_TAB_ICONS[p]}</span>{p}
               </button>
             ))}
@@ -1256,7 +1256,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
                 <div className="sk" style={{ width: 220, height: 12, borderRadius: 5, marginTop: 6 }} />
               </div>
             </div>
-            <div style={{ padding: '30px 20px', textAlign: 'center', color: '#4a6090', fontSize: 12 }}>Loading recommendations…</div>
+            <div style={{ padding: '30px 20px', textAlign: 'center', color: 'var(--text-dim)', fontSize: 12 }}>Loading recommendations…</div>
           </div>
           <div className="drafts-section">
             <div className="drafts-header"><div className="sk" style={{ width: 160, height: 16, borderRadius: 6 }} /></div>
@@ -1279,7 +1279,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
     return (
       <>
         <style>{DASH_CSS}</style>
-        <div style={{ height: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: '#040d1f', animation: 'fadeIn 0.3s ease' }}>
+        <div style={{ height: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: 'var(--bg-primary)', animation: 'fadeIn 0.3s ease' }}>
           <div style={{ fontSize: 40, animation: 'iconBounce 1s ease infinite' }}>⚠️</div>
           <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#f87171' }}>{fetchError}</div>
           <button onClick={fetchDrafts} style={{ padding: '9px 22px', borderRadius: 9, background: 'linear-gradient(135deg, #0665ff 50%, #22d3ee 100%)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem', transition: 'all 0.2s ease', fontFamily: 'inherit' }}>Retry</button>
@@ -1377,10 +1377,10 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
       <style>{DASH_CSS}</style>
       {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
 
-      <div style={{ minHeight: '100%', background: '#040d1f', fontFamily: "'DM Sans',system-ui,sans-serif" }}>
+      <div style={{ minHeight: '100%', background: 'var(--bg-primary)', fontFamily: "'DM Sans',system-ui,sans-serif" }}>
 
         {/* ── Platform Tabs ── */}
-        <div style={{ background: '#0a1428', borderBottom: '1px solid #1a2d50', padding: '0 24px', display: 'flex', alignItems: 'center', overflowX: 'auto' }}>
+        <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--glass-border)', padding: '0 24px', display: 'flex', alignItems: 'center', overflowX: 'auto' }}>
           {PLATFORMS_FILTER.map(p => (
             <button
               key={p}
@@ -1427,7 +1427,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
               >
                 <div style={{ border: 'none', padding: '0 12px 0 0', gap: 8, display: 'flex', alignItems: 'center' }}>
                   <motion.div
-                    style={{ width: 32, height: 32, borderRadius: 8, background: '#071c4a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #1a3a7a' }}
+                    style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--glass-border)' }}
                     whileHover={{ scale: 1.1, rotate: 15 }}
                     whileTap={{ scale: 0.9 }}
                   >
@@ -1454,7 +1454,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
                 whileTap="tap"
               >
                 <motion.div
-                  style={{ width: 32, height: 32, borderRadius: 8, background: '#05201a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #065f46' }}
+                  style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #065f46' }}
                   whileHover={{ scale: 1.1, rotate: -15 }}
                 >
                   <Send size={15} color="#34d399" />
@@ -1580,13 +1580,13 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
         <div className="drafts-section">
           <div className="drafts-header">
             <h2>Unpublished Drafts</h2>
-            <span style={{ fontSize: 12, color: '#4a6090', background: '#060f24', border: '1px solid #1a2d50', padding: '3px 10px', borderRadius: 20 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-dim)', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', padding: '3px 10px', borderRadius: 20 }}>
               {filtered.length} draft{filtered.length !== 1 ? 's' : ''}
             </span>
           </div>
 
           {filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '48px 0', color: '#4a6090', fontSize: 13, animation: 'fadeIn 0.3s ease' }}>
+            <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-dim)', fontSize: 13, animation: 'fadeIn 0.3s ease' }}>
               No drafts found for this platform.
             </div>
           ) : (

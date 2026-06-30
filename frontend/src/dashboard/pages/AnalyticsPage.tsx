@@ -33,7 +33,7 @@ const ChartSkeleton: React.FC<{ height?: number }> = ({ height = 220 }) => (
         style={{
             height,
             borderRadius: '8px',
-            background: 'rgba(255,255,255,0.04)',
+            background: 'var(--bg-card)',
             animation: 'pulse 1.5s ease-in-out infinite',
         }}
     />
@@ -137,7 +137,7 @@ const AnalyticsPage: React.FC = () => {
                                 <XAxis dataKey="month" stroke="#4b5563" tick={{ fontSize: 11 }} />
                                 <YAxis yAxisId="left" stroke="#4b5563" tick={{ fontSize: 11 }} />
                                 <YAxis yAxisId="right" orientation="right" domain={[0, 5]} stroke="#4b5563" tick={{ fontSize: 11 }} />
-                                <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }} />
+                                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '8px', fontSize: '12px' }} />
                                 <Bar yAxisId="left" dataKey="count" fill="#7033f5" radius={[4, 4, 0, 0]} fillOpacity={0.8} />
                                 <Line yAxisId="right" type="monotone" dataKey="avgRating" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 4 }} />
 
@@ -186,7 +186,7 @@ const AnalyticsPage: React.FC = () => {
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                                 <XAxis dataKey="month" stroke="#4b5563" tick={{ fontSize: 11 }} />
                                 <YAxis stroke="#4b5563" tick={{ fontSize: 11 }} />
-                                <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }} />
+                                <Tooltip contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '8px', fontSize: '12px' }} />
                                 <Area type="monotone" dataKey="positive" stroke="#10b981" fill="url(#posGrad)" strokeWidth={2} />
                                 <Area type="monotone" dataKey="negative" stroke="#ef4444" fill="url(#negGrad)" strokeWidth={2} />
                             </AreaChart>
@@ -202,7 +202,7 @@ const AnalyticsPage: React.FC = () => {
                     {loading ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {[1, 2, 3, 4, 5].map(i => (
-                                <div key={i} style={{ height: '36px', borderRadius: '6px', background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                                <div key={i} style={{ height: '36px', borderRadius: '6px', background: 'var(--bg-card)', animation: 'pulse 1.5s ease-in-out infinite' }} />
                             ))}
                         </div>
                     ) : (

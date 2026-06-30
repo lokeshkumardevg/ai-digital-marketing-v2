@@ -200,7 +200,7 @@ const statusConfig: Record<string, { color: string; bg: string; label: string; p
   ACTIVE:     { color: '#10b981', bg: 'rgba(16,185,129,0.12)', label: 'Live',       pulse: true },
   CREATING:   { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', label: 'Creating',   pulse: true },
   PROCESSING: { color: '#3b82f6', bg: 'rgba(59,130,246,0.12)', label: 'Processing', pulse: true },
-  PAUSED:     { color: '#64748b', bg: 'rgba(100,116,139,0.12)', label: 'Paused',    pulse: false },
+  PAUSED:     { color: 'var(--text-dim)', bg: 'rgba(100,116,139,0.12)', label: 'Paused',    pulse: false },
   FAILED:     { color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   label: 'Failed',    pulse: false },
 };
 
@@ -709,7 +709,7 @@ const DASHBOARD_CSS = `
   padding: 8px 14px; border-radius: 10px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
-  color: #64748b; cursor: pointer; font-size: 0.82rem;
+  color: var(--text-dim); cursor: pointer; font-size: 0.82rem;
   font-family: 'DM Sans', sans-serif;
   transition: all 0.18s;
 }
@@ -720,9 +720,9 @@ const DASHBOARD_CSS = `
   width: 40px; height: 40px; border-radius: 10px;
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.1rem; font-weight: 800; color: #fff;
+  font-size: 1.1rem; font-weight: 800; color: var(--text-primary);
 }
-.ld-header-title { margin: 0; font-size: 1.15rem; font-weight: 700; color: #fff; }
+.ld-header-title { margin: 0; font-size: 1.15rem; font-weight: 700; color: var(--text-primary); }
 .ld-header-id { font-size: 0.68rem; color: #4b5563; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
 
 .ld-live-pill {
@@ -738,16 +738,16 @@ const DASHBOARD_CSS = `
 }
 .ld-time-btn {
   padding: 8px 14px; background: none; border: none;
-  color: #64748b; cursor: pointer; font-size: 0.78rem; font-weight: 600;
+  color: var(--text-dim); cursor: pointer; font-size: 0.78rem; font-weight: 600;
   font-family: 'DM Sans', sans-serif; transition: all 0.18s;
 }
 .ld-time-btn.active { background: rgba(59,130,246,0.2); color: #60a5fa; }
-.ld-time-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: #94a3b8; }
+.ld-time-btn:hover:not(.active) { background: rgba(255,255,255,0.05); color: var(--text-secondary); }
 
 .ld-icon-btn {
   width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
   background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 9px; color: #64748b; cursor: pointer; transition: all 0.18s;
+  border-radius: 9px; color: var(--text-dim); cursor: pointer; transition: all 0.18s;
 }
 .ld-icon-btn:hover { background: rgba(255,255,255,0.09); color: #e2e8f0; }
 .ld-icon-btn.spinning svg { animation: ld-spin 0.8s linear infinite; }
@@ -793,7 +793,7 @@ const DASHBOARD_CSS = `
   font-size: 0.9rem;
 }
 .ld-metric-delta { font-size: 0.68rem; font-weight: 700; }
-.ld-metric-value { font-size: 1.35rem; font-weight: 800; color: #fff; line-height: 1; }
+.ld-metric-value { font-size: 1.35rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
 .ld-metric-label { font-size: 0.67rem; color: #4b5563; text-transform: uppercase; letter-spacing: 0.06em; }
 .ld-metric-spark { margin-top: 6px; opacity: 0.7; }
 
@@ -827,7 +827,7 @@ const DASHBOARD_CSS = `
   background: rgba(255,255,255,0.06); flex-shrink: 0;
 }
 .ld-plat-tile-info { flex: 1; min-width: 0; }
-.ld-plat-tile-name { font-size: 0.82rem; font-weight: 700; color: #fff; }
+.ld-plat-tile-name { font-size: 0.82rem; font-weight: 700; color: var(--text-primary); }
 .ld-plat-tile-sub { font-size: 0.65rem; color: #4b5563; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ld-plat-tile-status {
   display: flex; align-items: center; gap: 6px;
@@ -864,7 +864,7 @@ const DASHBOARD_CSS = `
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; position: relative; z-index: 1;
 }
-.ld-panel-platform-name { font-size: 1rem; font-weight: 700; color: #fff; position: relative; z-index: 1; }
+.ld-panel-platform-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); position: relative; z-index: 1; }
 .ld-panel-platform-sub { font-size: 0.7rem; color: rgba(255,255,255,0.5); position: relative; z-index: 1; }
 .ld-panel-gauges {
   display: flex; gap: 12px; margin-left: auto;
@@ -882,7 +882,7 @@ const DASHBOARD_CSS = `
   font-family: 'DM Sans', sans-serif;
   transition: color 0.18s, border-color 0.18s;
 }
-.ld-tab:hover { color: #94a3b8; }
+.ld-tab:hover { color: var(--text-secondary); }
 .ld-tab.active { color: var(--tc); border-bottom-color: var(--tc); }
 
 /* ── METRICS GRID ── */
@@ -933,7 +933,7 @@ const DASHBOARD_CSS = `
   display: inline-block; padding: 3px 8px; border-radius: 5px;
   font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
 }
-.ld-adset-num { color: #94a3b8; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+.ld-adset-num { color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
 
 /* ── DISTRIBUTION TAB ── */
 .ld-distrib-tab { padding: 16px; }
@@ -943,7 +943,7 @@ const DASHBOARD_CSS = `
   position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
 }
-.ld-donut-total { font-size: 0.9rem; font-weight: 800; color: #fff; }
+.ld-donut-total { font-size: 0.9rem; font-weight: 800; color: var(--text-primary); }
 .ld-donut-sub { font-size: 0.55rem; color: #4b5563; text-transform: uppercase; letter-spacing: 0.06em; }
 .ld-distrib-legend { flex: 1; display: flex; flex-direction: column; gap: 8px; }
 .ld-legend-row {
@@ -951,7 +951,7 @@ const DASHBOARD_CSS = `
   font-size: 0.78rem;
 }
 .ld-legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
-.ld-legend-name { flex: 1; color: #94a3b8; }
+.ld-legend-name { flex: 1; color: var(--text-secondary); }
 .ld-legend-val { color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; }
 .ld-legend-pct { font-weight: 700; font-size: 0.72rem; min-width: 32px; text-align: right; }
 .ld-weekly-section { border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px; }
@@ -1007,7 +1007,7 @@ const DASHBOARD_CSS = `
   display: flex; justify-content: space-between;
   font-size: 0.72rem;
 }
-.ld-perf-score-meta span { color: #64748b; }
+.ld-perf-score-meta span { color: var(--text-dim); }
 .ld-perf-score-meta strong { font-size: 0.75rem; }
 
 /* Health rows */

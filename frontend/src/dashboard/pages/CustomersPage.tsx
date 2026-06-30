@@ -252,7 +252,7 @@ const CustomersPage: React.FC = () => {
           <input ref={fileInputRef} type="file" accept=".csv,.xls,.xlsx" style={{ display: 'none' }} onChange={handleFileChange} />
           <button
             onClick={() => fileInputRef.current?.click()}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', padding: '9px 16px', fontSize: '0.82rem', cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--glass-border)', borderRadius: '10px', padding: '9px 16px', fontSize: '0.82rem', cursor: 'pointer' }}
           >
             <Upload size={14} />
             Import CSV / XLS
@@ -267,7 +267,7 @@ const CustomersPage: React.FC = () => {
           placeholder="Search customers..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          style={{ width: '100%', boxSizing: 'border-box', paddingLeft: '36px', paddingRight: '12px', height: '40px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#e5e7eb', fontSize: '0.82rem', outline: 'none' }}
+          style={{ width: '100%', boxSizing: 'border-box', paddingLeft: '36px', paddingRight: '12px', height: '40px', background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '10px', color: '#e5e7eb', fontSize: '0.82rem', outline: 'none' }}
         />
       </div>
 
@@ -275,7 +275,7 @@ const CustomersPage: React.FC = () => {
       <GlassCard style={{ padding: 0, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
               {['Name', 'Email', 'Phone', 'Source', 'Status', 'Actions'].map(h => (
                 <th key={h} style={{ padding: '14px 20px', textAlign: 'left', fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{h}</th>
               ))}
@@ -364,10 +364,10 @@ const CustomersPage: React.FC = () => {
       ══════════════════════════════════════════════════════ */}
       {showPreview && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ background: '#13111e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', width: '100%', maxWidth: '780px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ background: '#13111e', border: '1px solid var(--glass-border)', borderRadius: '16px', width: '100%', maxWidth: '780px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
             {/* Modal header */}
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#f3f4f6' }}>Import Preview</h3>
                 <p style={{ margin: '3px 0 0', fontSize: '0.78rem', color: '#6b7280' }}>{previewFile}</p>
@@ -383,7 +383,7 @@ const CustomersPage: React.FC = () => {
             <div style={{ flex: 1, overflowY: 'auto', padding: '0' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                 <thead style={{ position: 'sticky', top: 0, background: '#13111e', zIndex: 1 }}>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
                     {['#', 'Name', 'Email', 'Phone', 'Source', 'Status'].map(h => (
                       <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: '#6b7280', fontWeight: 600, whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
@@ -414,20 +414,20 @@ const CustomersPage: React.FC = () => {
             </div>
 
             {/* Modal footer */}
-            <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               {importDone
                 ? <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 600 }}>✓ Done — {importDone.ok} saved{importDone.fail ? `, ${importDone.fail} failed` : ''}</span>
                 : <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>{invalidCount > 0 ? `${invalidCount} row${invalidCount !== 1 ? 's' : ''} will be skipped` : 'All rows are valid'}</span>
               }
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button onClick={closePreview} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#9ca3af', padding: '9px 18px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem' }}>
+                <button onClick={closePreview} style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', color: '#9ca3af', padding: '9px 18px', borderRadius: '8px', cursor: 'pointer', fontSize: '0.82rem' }}>
                   {importDone ? 'Close' : 'Cancel'}
                 </button>
                 {!importDone && (
                   <button
                     onClick={handleConfirmImport}
                     disabled={importing || validCount === 0}
-                    style={{ background: importing || validCount === 0 ? 'rgba(99,102,241,0.4)' : '#0062ff', color: '#fff', border: 'none', padding: '9px 20px', borderRadius: '8px', cursor: importing || validCount === 0 ? 'not-allowed' : 'pointer', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
+                    style={{ background: importing || validCount === 0 ? 'rgba(99,102,241,0.4)' : '#0062ff', color: 'var(--text-primary)', border: 'none', padding: '9px 20px', borderRadius: '8px', cursor: importing || validCount === 0 ? 'not-allowed' : 'pointer', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
                     {importing
                       ? <><Loader size={13} style={{ animation: 'spin 1s linear infinite' }} /> Importing…</>

@@ -43,13 +43,13 @@ const ContentActions: React.FC<ContentActionsProps> = ({
           gap: '7px',
           padding: '9px 18px',
           borderRadius: '999px',
-          background: 'linear-gradient(135deg, #6d28d9, #4c1d95)',
+          background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-primary))',
           color: '#fff',
           border: 'none',
           cursor: 'pointer',
           fontWeight: 600,
           fontSize: '0.85rem',
-          boxShadow: '0 4px 12px rgba(76,29,149,0.4)',
+          boxShadow: 'var(--accent-glow)',
         }}
       >
         <Plus size={14} /> Add Creative
@@ -64,9 +64,9 @@ const ContentActions: React.FC<ContentActionsProps> = ({
           gap: '7px',
           padding: '9px 18px',
           borderRadius: '999px',
-          border: '1.5px solid #4c1d95',
-          background: '#1e1040',
-          color: '#a78bfa',
+          border: '1.5px solid var(--accent-primary)',
+          background: 'var(--accent-primary)',
+          color: '#fff',
           cursor: 'pointer',
           fontWeight: 600,
           fontSize: '0.85rem',

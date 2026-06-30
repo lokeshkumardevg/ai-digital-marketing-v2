@@ -117,8 +117,8 @@ const DashboardPage: React.FC = () => {
   const handleRetry = () => dispatch(fetchDashboardStats({ brandId }));
 
   const tooltipStyle = {
-    background: '#0f172a',
-    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--glass-border)',
     borderRadius: '8px',
     fontSize: '12px',
   };
@@ -216,7 +216,7 @@ const DashboardPage: React.FC = () => {
         <GlassCard>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '8px' }}>
             <h3 className="dash-card-title">Reviews Over Time</h3>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '4px 12px', borderRadius: '20px' }}>Daily</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', background: 'var(--bg-card)', padding: '4px 12px', borderRadius: '20px' }}>Daily</span>
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={trendData}>
@@ -292,7 +292,7 @@ const DashboardPage: React.FC = () => {
             {Object.entries(stats.byPlatform || {}).map(([platform, count]) => {
               const meta = PLATFORM_META[platform];
               return (
-                <div key={platform} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '14px', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div key={platform} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '14px', border: '1px solid var(--glass-border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                     <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: meta?.bg, color: meta?.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>
                       {meta?.icon}

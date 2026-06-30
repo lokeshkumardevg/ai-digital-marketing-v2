@@ -79,12 +79,12 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
         style={{
           width: '100%',
           height: 'calc(100vh - 40px)',
-          background: '#0f1117',
+          background: 'var(--bg-secondary)',
           borderRadius: '24px',
           boxShadow: '0 30px 80px rgba(0, 0, 0, 0.6)',
           padding: '28px 30px',
           overflow: 'auto',
-          border: '1px solid #1e2130',
+          border: '1px solid var(--glass-border)',
         }}
       >
         <div
@@ -95,7 +95,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
             marginBottom: '28px',
           }}
         >
-          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#f1f5f9' }}>
+          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             Upload by Group
           </h2>
 
@@ -106,12 +106,12 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
               height: '40px',
               borderRadius: '50%',
               border: 'none',
-              background: '#1e2130',
+              background: 'var(--glass-border)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#94a3b8',
+              color: 'var(--text-secondary)',
             }}
           >
             <X size={18} />
@@ -123,19 +123,19 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
             display: 'flex',
             alignItems: 'end',
             gap: '0',
-            borderBottom: '1px solid #1e2130',
+            borderBottom: '1px solid var(--glass-border)',
             marginBottom: '28px',
           }}
         >
           <button
             style={{
               padding: '14px 22px',
-              border: '1px solid #1e2130',
+              border: '1px solid var(--glass-border)',
               borderBottom: 'none',
-              background: '#0f1117',
+              background: 'var(--bg-secondary)',
               borderTopLeftRadius: '12px',
               borderTopRightRadius: '12px',
-              color: '#a78bfa',
+              color: 'var(--accent-primary)',
               fontWeight: 600,
               fontSize: '0.95rem',
               cursor: 'pointer',
@@ -149,16 +149,16 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
               marginLeft: '8px',
               width: '44px',
               height: '44px',
-              border: '1px solid #1e2130',
+              border: '1px solid var(--glass-border)',
               borderBottom: 'none',
-              background: '#0f1117',
+              background: 'var(--bg-secondary)',
               borderTopLeftRadius: '12px',
               borderTopRightRadius: '12px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#94a3b8',
+              color: 'var(--text-secondary)',
             }}
           >
             <CirclePlus size={18} />
@@ -178,8 +178,8 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
               width: '32px',
               height: '32px',
               borderRadius: '50%',
-              border: '1.5px solid #8b5cf6',
-              color: '#8b5cf6',
+              border: '1.5px solid var(--accent-primary)',
+              color: 'var(--accent-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -189,7 +189,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
             <CheckCircle2 size={18} />
           </div>
 
-          <div style={{ fontSize: '1rem', fontWeight: 600, color: '#f1f5f9' }}>
+          <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
             Start by selecting a creative type.
           </div>
         </div>
@@ -211,13 +211,13 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                 alignItems: 'center',
                 gap: '8px',
                 marginBottom: '8px',
-                color: '#f1f5f9',
+                color: 'var(--text-primary)',
                 fontSize: '0.95rem',
                 fontWeight: 500,
               }}
             >
               <span>Creatives type</span>
-              <Info size={16} color="#475569" />
+              <Info size={16} color="var(--text-dim)" />
             </div>
 
             <div style={{ position: 'relative', width: '260px', maxWidth: '100%' }}>
@@ -228,11 +228,11 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                   width: '100%',
                   height: '44px',
                   borderRadius: '999px',
-                  border: '1px solid #6d28d9',
+                  border: '1px solid var(--accent-primary)',
                   padding: '0 42px 0 16px',
                   outline: 'none',
-                  background: '#1a1f2e',
-                  color: groupCreativeType ? '#f1f5f9' : '#64748b',
+                  background: 'var(--bg-elevated)',
+                  color: groupCreativeType ? 'var(--text-primary)' : 'var(--text-dim)',
                   fontSize: '0.92rem',
                   appearance: 'none',
                   colorScheme: 'dark',
@@ -246,7 +246,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
 
               <ChevronDown
                 size={18}
-                color="#475569"
+                color="var(--text-dim)"
                 style={{
                   position: 'absolute',
                   right: '14px',
@@ -264,9 +264,9 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
               height: '44px',
               padding: '0 24px',
               borderRadius: '999px',
-              border: '1px solid #2d3348',
-              background: '#131720',
-              color: '#3d4460',
+              border: '1px solid var(--glass-border)',
+              background: 'var(--bg-elevated)',
+              color: 'var(--text-dim)',
               fontSize: '0.95rem',
               fontWeight: 500,
               cursor: 'not-allowed',
@@ -291,8 +291,8 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
-                  background: '#7c3aed',
-                  color: '#fff',
+                  background: 'var(--accent-primary)',
+                  color: 'var(--text-primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -303,7 +303,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                 1
               </div>
 
-              <div style={{ fontSize: '1rem', fontWeight: 600, color: '#f1f5f9' }}>
+              <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                 Upload creatives for targeted use.
               </div>
             </div>
@@ -323,9 +323,9 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
   onDragOver={onDragOver}
   style={{
     minHeight: '250px',
-    border: '1.5px dashed #2d3348',
+    border: '1.5px dashed var(--glass-border)',
     borderRadius: '28px',
-    background: '#131720',
+    background: 'var(--bg-elevated)',
     padding: '18px',
     marginBottom: '20px',
   }}
@@ -343,11 +343,11 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
       }}
     >
       <div>
-        <CloudUpload size={44} color="#2d3348" style={{ margin: '0 auto 14px' }} />
-        <div style={{ fontSize: '1.05rem', fontWeight: 600, color: '#a78bfa' }}>
+        <CloudUpload size={44} color="var(--glass-border)" style={{ margin: '0 auto 14px' }} />
+        <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--accent-primary)' }}>
           Click or drag file to this area to upload
         </div>
-        <div style={{ fontSize: '0.95rem', color: '#475569' }}>
+        <div style={{ fontSize: '0.95rem', color: 'var(--text-dim)' }}>
           Drag & drop or select multiple tagged creatives for bulk upload
         </div>
       </div>
@@ -361,9 +361,9 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
         style={{
           width: '160px',
           minHeight: '190px',
-          border: '1.5px dashed #2d3348',
+          border: '1.5px dashed var(--glass-border)',
           borderRadius: '22px',
-          background: '#1a1f2e',
+          background: 'var(--bg-elevated)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -371,7 +371,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
           padding: '16px',
         }}
       >
-        <CloudUpload size={30} color="#475569" />
+        <CloudUpload size={30} color="var(--text-dim)" />
       </div>
 
       {/* IMAGE PREVIEW */}
@@ -380,10 +380,10 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
           key={index}
           style={{
             width: '160px',
-            border: '1px solid #1e2130',
+            border: '1px solid var(--glass-border)',
             borderRadius: '18px',
             overflow: 'hidden',
-            background: '#131720',
+            background: 'var(--bg-elevated)',
           }}
         >
           <img
@@ -392,7 +392,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
           />
 
           <div style={{ padding: '10px' }}>
-            <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{item.file.name}</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{item.file.name}</div>
 
             <button
               onClick={(e) => {
@@ -400,7 +400,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                 e.stopPropagation();
                 onRemoveFile(index);
               }}
-              style={{ color: '#a78bfa', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              style={{ color: 'var(--accent-primary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             >
               Delete
             </button>
@@ -417,10 +417,10 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
             {/* {groupUploaded && (
               <div
                 style={{
-                  border: '1px solid #1e2130',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '20px',
                   padding: '20px',
-                  background: '#131720',
+                  background: 'var(--bg-elevated)',
                   marginBottom: '24px',
                 }}
               >
@@ -428,7 +428,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                   style={{
                     fontSize: '1rem',
                     fontWeight: 700,
-                    color: '#f1f5f9',
+                    color: 'var(--text-primary)',
                     marginBottom: '16px',
                   }}
                 >
@@ -446,7 +446,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                     <div
                       style={{
                         fontSize: '0.85rem',
-                        color: '#64748b',
+                        color: 'var(--text-dim)',
                         marginBottom: '8px',
                         fontWeight: 500,
                       }}
@@ -461,12 +461,12 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                         width: '100%',
                         height: '46px',
                         borderRadius: '12px',
-                        border: '1px solid #2d3348',
+                        border: '1px solid var(--glass-border)',
                         padding: '0 14px',
                         outline: 'none',
                         fontSize: '0.92rem',
-                        background: '#1a1f2e',
-                        color: '#f1f5f9',
+                        background: 'var(--bg-elevated)',
+                        color: 'var(--text-primary)',
                         colorScheme: 'dark',
                       }}
                     />
@@ -476,7 +476,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                     <div
                       style={{
                         fontSize: '0.85rem',
-                        color: '#64748b',
+                        color: 'var(--text-dim)',
                         marginBottom: '8px',
                         fontWeight: 500,
                       }}
@@ -491,12 +491,12 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
                         width: '100%',
                         height: '46px',
                         borderRadius: '12px',
-                        border: '1px solid #2d3348',
+                        border: '1px solid var(--glass-border)',
                         padding: '0 14px',
                         outline: 'none',
                         fontSize: '0.92rem',
-                        background: '#1a1f2e',
-                        color: '#f1f5f9',
+                        background: 'var(--bg-elevated)',
+                        color: 'var(--text-primary)',
                         colorScheme: 'dark',
                       }}
                     />
@@ -509,17 +509,17 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
           <div
             style={{
               minHeight: '320px',
-              border: '1px dashed #2d3348',
+              border: '1px dashed var(--glass-border)',
               borderRadius: '24px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#475569',
+              color: 'var(--text-dim)',
               fontSize: '0.98rem',
-              background: '#131720',
+              background: 'var(--bg-elevated)',
             }}
           >
-            Select <span style={{ color: '#a78bfa', margin: '0 6px' }}>Any </span> to
+            Select <span style={{ color: 'var(--accent-primary)', margin: '0 6px' }}>Any </span> to
             start upload flow.
           </div>
         )}
@@ -528,7 +528,7 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
           style={{
             position: 'sticky',
             bottom: 0,
-            background: '#0f1117',
+            background: 'var(--bg-secondary)',
             display: 'flex',
             justifyContent: 'flex-end',
             gap: '12px',
@@ -542,9 +542,9 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
               minWidth: '168px',
               height: '48px',
               borderRadius: '999px',
-              border: '1px solid #2d3348',
+              border: '1px solid var(--glass-border)',
               background: 'transparent',
-              color: '#94a3b8',
+              color: 'var(--text-secondary)',
               fontWeight: 500,
               fontSize: '0.98rem',
               cursor: 'pointer',
@@ -563,12 +563,12 @@ const UploadByGroupModal: React.FC<UploadByGroupModalProps> = ({
     border: 'none',
     background:
       groupCreativeType === 'image' && groupFiles.length > 0 && !groupUploading
-        ? 'linear-gradient(135deg, #7c3aed, #6d28d9)'
-        : '#2d1f4a',
+        ? 'linear-gradient(135deg, var(--accent-primary), var(--accent-primary))'
+        : 'var(--glass-bg)',
     color:
       groupCreativeType === 'image' && groupFiles.length > 0 && !groupUploading
         ? '#fff'
-        : '#5b4580',
+        : 'var(--text-dim)',
     fontWeight: 600,
     fontSize: '0.98rem',
     cursor:

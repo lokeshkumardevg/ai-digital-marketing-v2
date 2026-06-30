@@ -240,7 +240,7 @@ const TemplateCard: React.FC<{ template: CampaignTemplate; isMatch: boolean; onS
       {isMatch && (
         <div style={{
           position: 'absolute', top: 14, right: 14, background: template.color,
-          color: '#fff', fontSize: '0.7rem', fontWeight: 800, padding: '4px 10px',
+          color: 'var(--text-primary)', fontSize: '0.7rem', fontWeight: 800, padding: '4px 10px',
           borderRadius: '99px', display: 'flex', alignItems: 'center', gap: '4px', zIndex: 2
         }}>
           <Sparkles size={11} /> AI Match
@@ -253,7 +253,7 @@ const TemplateCard: React.FC<{ template: CampaignTemplate; isMatch: boolean; onS
           <Icon size={26} color="#fff" />
         </div>
         <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px' }}>{template.category}</div>
-        <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>{template.name}</h3>
+        <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>{template.name}</h3>
       </div>
 
       {/* Body */}
@@ -311,7 +311,7 @@ const TemplateDetail: React.FC<{ template: CampaignTemplate; onBack: () => void 
         ← Back to Templates
       </button>
 
-      <div style={{ background: template.gradient, borderRadius: '28px', padding: '40px', marginBottom: '28px', color: '#fff' }}>
+      <div style={{ background: template.gradient, borderRadius: '28px', padding: '40px', marginBottom: '28px', color: 'var(--text-primary)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
           <div style={{ width: '64px', height: '64px', borderRadius: '20px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Icon size={32} color="#fff" />

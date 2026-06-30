@@ -413,7 +413,7 @@ export const AiAnalysis: React.FC = () => {
                       flex: 2, padding: '11px', borderRadius: '10px',
                       border: 'none',
                       background: 'linear-gradient(135deg, #0665ff 0%, #1e27a8 100%)',
-                      color: '#fff', cursor: 'pointer', fontWeight: 700,
+                      color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700,
                       fontSize: '0.875rem', display: 'flex',
                       alignItems: 'center', justifyContent: 'center',
                       gap: '7px', transition: 'opacity 0.15s',
@@ -625,7 +625,7 @@ export const AiAnalysis: React.FC = () => {
                         {/* Step label */}
                         <div style={{
                           fontSize: '0.83rem',
-                          color: isPending ? '#94a3b8' : '#0f172a',
+                          color: isPending ? 'var(--text-dim)' : 'var(--text-primary)',
                           fontWeight: isActive ? 500 : 400,
                           lineHeight: 1.4,
                         }}>

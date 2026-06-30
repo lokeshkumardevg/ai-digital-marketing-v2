@@ -92,19 +92,19 @@ const BASE_MENU_ITEMS: MenuItem[] = [
       { path: '/seo/link-building', label: 'Link Building' },
     ],
   },
-{
-  label: 'ReputationIQ',
-  icon: ThumbsUp,
-  permission: 'automation',
-  subItems: [
-    { path: '/reputation/dashboard', label: 'Dashboard', icon: BarChart2 },
-    { path: '/reputation/inbox', label: 'Profile reviews', icon: Star },
-    { path: '/reputation/posts', label: 'Post & ad reviews', icon: Megaphone },
-    { path: '/reputation/customers', label: 'Customers', icon: Users },
-    { path: '/reputation/analytics', label: 'Analytics', icon: TrendingUp },
-    { path: '/reputation/recommendations', label: 'Recommendations', icon: Lightbulb, notifBadge: 3 },
-  ],
-},
+  {
+    label: 'ReputationIQ',
+    icon: ThumbsUp,
+    permission: 'automation',
+    subItems: [
+      { path: '/reputation/dashboard', label: 'Dashboard', icon: BarChart2 },
+      { path: '/reputation/inbox', label: 'Profile reviews', icon: Star },
+      { path: '/reputation/posts', label: 'Post & ad reviews', icon: Megaphone },
+      { path: '/reputation/customers', label: 'Customers', icon: Users },
+      { path: '/reputation/analytics', label: 'Analytics', icon: TrendingUp },
+      { path: '/reputation/recommendations', label: 'Recommendations', icon: Lightbulb, notifBadge: 3 },
+    ],
+  },
   {
     label: 'More Tools',
     icon: GitBranch,
@@ -191,8 +191,8 @@ export const Sidebar: React.FC = () => {
 
   const getBadgeStyle = (badge?: 'new' | 'beta' | 'hot') => {
     const styles = {
-      new: { background: '#10b981', color: '#fff', boxShadow: '0 2px 4px rgba(16,185,129,0.3)' },
-      beta: { background: '#8b5cf6', color: '#fff', boxShadow: '0 2px 4px rgba(139,92,246,0.3)' },
+      new: { background: '#10b981', color: 'var(--text-primary)', boxShadow: '0 2px 4px rgba(16,185,129,0.3)' },
+      beta: { background: '#8b5cf6', color: 'var(--text-primary)', boxShadow: '0 2px 4px rgba(139,92,246,0.3)' },
       hot: { background: '#f59e0b', color: '#000', boxShadow: '0 2px 4px rgba(245,158,11,0.3)' },
     };
     return badge ? styles[badge] : {};
@@ -234,12 +234,12 @@ export const Sidebar: React.FC = () => {
         }
  
         .sidebar-nav-link:hover {
-          color: #fff !important;
+          color: #394bed !important;
           transform: scale(1.04) translateX(3px) !important;
         }
  
         .sidebar-parent-btn:hover {
-          color: #e5e5e5 !important;
+          color: #394bed !important;
           transform: scale(1.04) translateX(3px) !important;
         }
  
@@ -293,14 +293,14 @@ export const Sidebar: React.FC = () => {
           position: 'fixed',
           left: 0,
           top: 0,
-          background: '#0a0f1e',
-          borderRight: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--bg-secondary)',
+          borderRight: '1px solid var(--glass-border)',
           display: 'flex',
           flexDirection: 'column',
           zIndex: 100,
           overflowY: 'auto',
           overflowX: 'hidden',
-          color: '#e5e5e5',
+          color: 'var(--text-primary)',
         }}
       >
         {/* FIX: Logo — sticky, correct positioning, no padding duplication */}
@@ -308,17 +308,17 @@ export const Sidebar: React.FC = () => {
           style={{
             position: 'sticky',
             top: 0,
-            background: '#0a0f1e',
+            background: 'var(--bg-secondary)',
             padding: '18px 16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '0px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            borderBottom: '1px solid var(--glass-border)',
             zIndex: 10,
             flexShrink: 0,
-            transition: 'box-shadow 0.2s ease',
-            ...(scrolled ? { boxShadow: '0 1px 14px #228bee36' } : {}),
+            transition: 'box-shadow 0.2s ease, background 0.3s ease',
+            ...(scrolled ? { boxShadow: '0 1px 14px rgba(34, 139, 238, 0.2)' } : {}),
           }}
         >
           <div
@@ -341,15 +341,12 @@ export const Sidebar: React.FC = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <h2
+              className="logo-text"
               style={{
                 fontSize: '1.25rem',
                 fontWeight: 800,
                 margin: 0,
                 letterSpacing: '-0.8px',
-                background: 'linear-gradient(135deg, #fff 0%, #fafafa 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                color: 'transparent',
                 fontFamily: 'Outfit, sans-serif',
                 whiteSpace: 'nowrap',
                 animation: 'fadeInRight 0.5s ease both',
@@ -390,7 +387,7 @@ export const Sidebar: React.FC = () => {
               left: 0,
               right: 0,
               height: '48px',
-              background: 'linear-gradient(to bottom, #0a0f1e 0%, rgba(10,15,30,0.7) 50%, transparent 100%)',
+              background: 'linear-gradient(to bottom, var(--bg-secondary) 0%, transparent 100%)',
             }}
           />
           {/* Bouncing chevron */}
@@ -473,12 +470,12 @@ export const Sidebar: React.FC = () => {
                       />
                     )}
                   </div>
-                  <span style={{ flex: 1 }}>{item.label}</span>
+                  <span style={{ flex: 1, color: 'var(--text-primary)' }}>{item.label}</span>
                   {item.badge && (
                     <span
                       style={{
                         background: 'var(--error)',
-                        color: '#fff',
+                        color: 'var(--text-primary)',
                         borderRadius: 999,
                         padding: '1px 7px',
                         fontSize: '0.7rem',
@@ -525,7 +522,7 @@ export const Sidebar: React.FC = () => {
                   }}
                 >
                   <Icon size={17} style={{ flexShrink: 0 }} />
-                  <span style={{ flex: 1 }}>{item.label}</span>
+                  <span style={{ flex: 1, color: 'var(--text-primary)' }}>{item.label}</span>
                   {item.subItems.length > 0 && (
                     <ChevronRight
                       size={14}
@@ -599,7 +596,7 @@ export const Sidebar: React.FC = () => {
                           <span
                             style={{
                               background: '#3b82f6',
-                              color: '#fff',
+                              color: 'var(--text-primary)',
                               borderRadius: '999px',
                               padding: '1px 7px',
                               fontSize: '0.7rem',
@@ -643,9 +640,9 @@ export const Sidebar: React.FC = () => {
             margin: '12px',
             marginTop: '16px',
             padding: '14px 16px',
-            background: 'rgba(255,255,255,0.04)',
+            background: 'var(--bg-card)',
             borderRadius: '16px',
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--glass-border)',
             textAlign: 'center',
             flexShrink: 0,
           }}

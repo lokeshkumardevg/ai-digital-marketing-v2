@@ -1071,7 +1071,7 @@ export default function PostAdReviews() {
           border-radius: 50%;
           background: linear-gradient(135deg, var(--par-accent-1), var(--par-accent-2));
           display: flex; align-items: center; justify-content: center;
-          font-weight: 700; color: #fff; flex-shrink: 0;
+          font-weight: 700; color: var(--text-primary); flex-shrink: 0;
         }
         .par-avatar-img { object-fit: cover; }
 
@@ -1118,7 +1118,7 @@ export default function PostAdReviews() {
         .par-send-btn {
           width: 32px; height: 32px; border-radius: 50%; border: none;
           background: linear-gradient(135deg, var(--par-accent-1), var(--par-accent-2));
-          color: #fff; cursor: pointer;
+          color: var(--text-primary); cursor: pointer;
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0; transition: opacity .15s ease, transform .1s ease;
         }

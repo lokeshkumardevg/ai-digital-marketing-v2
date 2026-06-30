@@ -8,34 +8,35 @@ const platforms = ['All', 'Meta', 'Google', 'X', 'LinkedIn'];
 
 const ToggleSwitch: React.FC<{ isActive: boolean; onToggle: () => void; disabled?: boolean }> = ({ isActive, onToggle, disabled }) => {
   return (
-    <div 
-      onClick={() => !disabled && onToggle()}
-      style={{
-        width: '38px',
-        height: '20px',
-        borderRadius: '999px',
-        background: disabled ? 'rgba(255,255,255,0.05)' : isActive ? 'var(--blue)' : 'rgba(255,255,255,0.15)',
-        position: 'relative',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        transition: 'background-color 0.2s',
-        opacity: disabled ? 0.4 : 1,
-        display: 'inline-block'
-      }}
-    >
-      <div 
-        style={{
-          width: '14px',
-          height: '14px',
-          borderRadius: '50%',
-          background: '#fff',
-          position: 'absolute',
-          top: '3px',
-          left: isActive ? '21px' : '3px',
-          transition: 'left 0.2s ease-in-out',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-        }}
-      />
-    </div>
+    <div
+  onClick={() => !disabled && onToggle()}
+  style={{
+    width: '38px',
+    height: '20px',
+    borderRadius: '999px',
+    backgroundColor: isActive ? '#2563eb' : '#d1d5db',
+    position: 'relative',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    transition: 'all 0.2s ease',
+    opacity: disabled ? 0.4 : 1,
+    display: 'inline-block',
+    border: '1px solid #9ca3af'
+  }}
+>
+  <div
+    style={{
+      position: 'absolute',
+      top: '2px',
+      left: isActive ? '20px' : '2px',
+      width: '16px',
+      height: '16px',
+      borderRadius: '50%',
+      backgroundColor: '#fff',
+      transition: 'left 0.2s ease',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+    }}
+  />
+</div>
   );
 };
 
@@ -343,7 +344,7 @@ export const AdsManager: React.FC = () => {
                   padding: '8px 16px', 
                   borderRadius: '8px', 
                   background: '#ef4444', 
-                  color: '#fff', 
+                  color: 'var(--text-primary)', 
                   textDecoration: 'none', 
                   fontWeight: 600, 
                   fontSize: '0.78rem', 
@@ -496,7 +497,7 @@ export const AdsManager: React.FC = () => {
           bottom: '24px',
           right: '24px',
           background: toast.type === 'success' ? '#10b981' : toast.type === 'error' ? '#ef4444' : '#3b82f6',
-          color: '#fff',
+          color: 'var(--text-primary)',
           padding: '12px 24px',
           borderRadius: '10px',
           boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
@@ -506,7 +507,7 @@ export const AdsManager: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          border: '1px solid rgba(255,255,255,0.1)'
+          border: '1px solid var(--glass-border)'
         }}>
           {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle size={15} />}
           {toast.message}

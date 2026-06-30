@@ -399,7 +399,7 @@ export const Settings: React.FC = () => {
                           marginTop: '12px',
                           padding: '10px 20px',
                           background: 'linear-gradient(135deg, #4285f4, #34a853)',
-                          color: 'white',
+                          color: 'var(--text-primary)',
                           border: 'none',
                           borderRadius: '8px',
                           fontWeight: 600,
@@ -449,7 +449,7 @@ export const Settings: React.FC = () => {
                           marginTop: '12px',
                           padding: '10px 20px',
                           background: 'linear-gradient(135deg, #1877f2, #0e5a8a)',
-                          color: 'white',
+                          color: 'var(--text-primary)',
                           border: 'none',
                           borderRadius: '8px',
                           fontWeight: 600,
@@ -462,7 +462,7 @@ export const Settings: React.FC = () => {
                     </div>
 
                     {/* X Ads Credentials */}
-                    <div style={{ marginBottom: '32px', padding: '20px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                    <div style={{ marginBottom: '32px', padding: '20px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
                       <h4 style={{ fontSize: '1rem', marginBottom: '16px', color: '#e7e9ea', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <SettingsIcon size={16} /> X (Twitter) Ads API Credentials
                       </h4>
@@ -499,7 +499,7 @@ export const Settings: React.FC = () => {
                           marginTop: '12px',
                           padding: '10px 20px',
                           background: 'linear-gradient(135deg, #000000, #333333)',
-                          color: 'white',
+                          color: 'var(--text-primary)',
                           border: 'none',
                           borderRadius: '8px',
                           fontWeight: 600,
@@ -521,7 +521,7 @@ export const Settings: React.FC = () => {
                           style={{
                             padding: '12px',
                             background: 'linear-gradient(135deg, #4285f4, #34a853)',
-                            color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'default'
+                            color: 'var(--text-primary)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'default'
                           }}
                         >
                           🔗 Google Ads Auto-System Active ✓
@@ -533,7 +533,7 @@ export const Settings: React.FC = () => {
                           style={{
                             padding: '12px',
                             background: user?.metaAccessToken ? '#d1d5db' : 'linear-gradient(135deg, #1877f2, #0e5a8a)',
-                            color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.metaAccessToken ? 'default' : 'pointer'
+                            color: 'var(--text-primary)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.metaAccessToken ? 'default' : 'pointer'
                           }}
                         >
                           𝕄 {user?.metaAccessToken ? 'Meta Ads Connected ✓' : 'Connect Meta Ads'}
@@ -545,7 +545,7 @@ export const Settings: React.FC = () => {
                           style={{
                             padding: '12px',
                             background: user?.twitterAccessToken ? '#d1d5db' : 'linear-gradient(135deg, #000000, #333333)',
-                            color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.twitterAccessToken ? 'default' : 'pointer'
+                            color: 'var(--text-primary)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.twitterAccessToken ? 'default' : 'pointer'
                           }}
                         >
                           𝕏 {user?.twitterAccessToken ? 'X Ads Connected ✓' : 'Connect X Ads'}
@@ -557,7 +557,7 @@ export const Settings: React.FC = () => {
                           style={{
                             padding: '12px',
                             background: user?.linkedinAccessToken ? '#d1d5db' : 'linear-gradient(135deg, #0a66c2, #004182)',
-                            color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.linkedinAccessToken ? 'default' : 'pointer'
+                            color: 'var(--text-primary)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.linkedinAccessToken ? 'default' : 'pointer'
                           }}
                         >
                           💼 {user?.linkedinAccessToken ? 'LinkedIn Ads Connected ✓' : 'Connect LinkedIn'}

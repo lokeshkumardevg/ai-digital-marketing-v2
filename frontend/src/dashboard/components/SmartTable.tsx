@@ -32,16 +32,16 @@ export const SmartTable: React.FC<SmartTableProps> = ({
 
   // ── Dark palette tokens (only used when dark=true) ─────────────
   const D = {
-    surface:     '#050a18',
+    surface: 'var(--bg-primary)',
     surfaceAlt:  '#0a1128',
     border:      'rgba(255, 255, 255, 0.08)',
     borderHover: 'rgba(255, 255, 255, 0.15)',
-    purple:      '#0665ff',
+    purple: 'var(--accent-primary)',
     purpleSoft:  'rgba(38, 49, 214, 0.12)',
     purpleText:  '#3b82f6',
     textPrimary: '#f8fafc',
-    textMuted:   '#94a3b8',
-    textDim:     '#64748b',
+    textMuted: 'var(--text-secondary)',
+    textDim: 'var(--text-dim)',
     rowHover:    'rgba(255,255,255,0.04)',
     inputBg:     'rgba(255,255,255,0.05)',
     btnBg:       'rgba(255,255,255,0.06)',
@@ -159,7 +159,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({
         </table>
 
         {/* Pagination */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderTop: `1px solid ${D.border}`, background: 'rgba(255,255,255,0.02)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderTop: `1px solid ${D.border}`, background: 'var(--bg-card)' }}>
           <div style={{ fontSize: '0.82rem', color: D.textDim, fontWeight: 500 }}>
             Showing {filteredData.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} – {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} records
           </div>

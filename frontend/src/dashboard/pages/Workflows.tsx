@@ -137,7 +137,7 @@ export const Workflows: React.FC = () => {
                    sortable: true,
                    render: (row) => (
                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ flex: 1, height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', width: '60px' }}>
+                        <div style={{ flex: 1, height: '4px', background: 'var(--bg-card)', borderRadius: '2px', width: '60px' }}>
                            <div style={{ width: `${row.successRate}%`, height: '100%', background: '#0665ff', borderRadius: '2px' }} />
                         </div>
                         <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{row.successRate}%</div>

@@ -13,6 +13,7 @@ import { rolesReducer } from './slices/rolesSlice';
 import { workflowsReducer } from './slices/workflowsSlice';
 import { linkedinCrmReducer } from './slices/linkedinCrmSlice';
 import reviewsReducer from './slices/reviewsSlice';
+import themeReducer from './slices/themeSlice';
 import { fetchBrands } from './slices/workspaceSlice';
 
 export const store = configureStore({
@@ -31,6 +32,7 @@ export const store = configureStore({
     linkedinCrm: linkedinCrmReducer,
     reputation: reputationReducer,
     reviews: reviewsReducer,
+    theme: themeReducer,
   },
 });
 

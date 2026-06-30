@@ -210,7 +210,7 @@ const GLOBAL_CSS = `
 
   @keyframes spin { to { transform: rotate(360deg) } }
   .spinner { width: 13px; height: 13px; border: 2px solid #2563eb44; border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
-  .spinner-white { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+  .spinner-white { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,.3); border-top-color: var(--text-primary); border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
 
   @keyframes pulse-dot { 0%,100% { opacity:1 } 50% { opacity:.4 } }
   .fb-post { background: #fff; border: 1px solid #E4E6EB; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
@@ -287,7 +287,7 @@ function MetaPreview({ brandName, logoUrl, caption, cta, imageUrl }: PreviewProp
       </div>
       <div style={{ padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#F8FAFF", borderTop: "1px solid #E2E8F4" }}>
         <div style={{ fontSize: 11, color: "#8A97B0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 160 }}>{caption}</div>
-        <button style={{ background: "#2563EB", color: "#fff", border: "none", borderRadius: 6, padding: "6px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{cta}</button>
+        <button style={{ background: "#2563EB", color: 'var(--text-primary)', border: "none", borderRadius: 6, padding: "6px 16px", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>{cta}</button>
       </div>
       <div style={{ display: "flex", borderTop: "1px solid #E2E8F4" }}>
         {["👍 Like", "💬 Comment", "↗ Share"].map(l => (
@@ -302,7 +302,7 @@ function GooglePreview({ brandName, caption, imageUrl }: PreviewProps) {
   return (
     <div className="google-ad">
       <div style={{ fontSize: 10, color: "#8A97B0", marginBottom: 4, display: "flex", alignItems: "center", gap: 4 }}>
-        <span style={{ background: "#34a853", color: "#fff", fontSize: 9, padding: "1px 5px", borderRadius: 3, fontWeight: 700 }}>Ad</span>
+        <span style={{ background: "#34a853", color: 'var(--text-primary)', fontSize: 9, padding: "1px 5px", borderRadius: 3, fontWeight: 700 }}>Ad</span>
         <span>{brandName}</span>
       </div>
       <div style={{ fontSize: 16, color: "#1558D6", fontWeight: 500, marginBottom: 4, lineHeight: 1.4 }}>{caption?.slice(0, 60) || "Powerful Solutions for Every Business"}</div>
@@ -345,7 +345,7 @@ function XPreview({ brandName, logoUrl, caption, cta, imageUrl }: PreviewProps) 
             </div>}
           <div style={{ background: "#F8FAFF", border: "1px solid #E2E8F4", borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span style={{ fontSize: 13, color: "#8A97B0" }}>brandname.com</span>
-            <button style={{ background: "#0F1733", color: "#fff", border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{cta}</button>
+            <button style={{ background: "#0F1733", color: 'var(--text-primary)', border: "none", borderRadius: 20, padding: "6px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" }}>{cta}</button>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12 }}>
             {["💬 24", "🔁 89", "❤️ 412", "📤"].map(a => (
@@ -917,7 +917,7 @@ export function TopBar({
     <div style={{ display: "flex", gap: 8, padding: "10px 16px", borderBottom: "1px solid var(--bdr)", background: "#fff", alignItems: "flex-end", flexWrap: "wrap", flexShrink: 0, position: "relative" }}>
       {isNotConnected ? (
         <div style={{ flex: 1, display: "flex", justifyContent: "center", padding: "5px 0" }}>
-          <div onClick={handleConnect} className="tb-sel" style={{ background: "linear-gradient(135deg, #1877f2, #0e5a8a)", border: "none", borderRadius: 8, padding: "8px 20px", color: "white", fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 600 }}>
+          <div onClick={handleConnect} className="tb-sel" style={{ background: "linear-gradient(135deg, #1877f2, #0e5a8a)", border: "none", borderRadius: 8, padding: "8px 20px", color: 'var(--text-primary)', fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontWeight: 600 }}>
             Connect {getPlatformName()}
           </div>
         </div>
@@ -1528,7 +1528,7 @@ function CreativeStudio({ adCopy, activePlatformId, isEnabled, brandAssetImages,
                 <div style={{ fontSize: 10, fontWeight: 700, color: "var(--purple)", marginBottom: 7, display: "flex", alignItems: "center", gap: 5, textTransform: "uppercase", letterSpacing: ".5px" }}><I.Sparkle /> AI Image Generator</div>
                 <textarea className="pt-ta" value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} placeholder={`e.g. "Solar panels on a rooftop at golden hour"`} rows={2} style={{ width: "100%", background: "#fff", border: "1px solid var(--purple-bdr)", borderRadius: 7, padding: "8px 10px", color: "var(--t1)", fontSize: 11, lineHeight: 1.5, resize: "vertical", fontFamily: "inherit" }} />
                 {aiErr && <div style={{ fontSize: 10, color: "var(--red)", marginTop: 5, background: "#FEF2F2", padding: "5px 8px", borderRadius: 6, lineHeight: 1.4, border: "1px solid #FCA5A5" }}>{aiErr}</div>}
-                <button className="gen-btn" onClick={generate} disabled={loading || !aiPrompt.trim()} style={{ marginTop: 8, width: "100%", background: "var(--purple)", color: "#fff", border: "none", borderRadius: 7, padding: "8px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                <button className="gen-btn" onClick={generate} disabled={loading || !aiPrompt.trim()} style={{ marginTop: 8, width: "100%", background: "var(--purple)", color: 'var(--text-primary)', border: "none", borderRadius: 7, padding: "8px 0", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
                   {loading ? <><span className="spinner" /><span>Generating…</span></> : <><I.Sparkle /><span>Generate Image</span></>}
                 </button>
               </div>
@@ -1585,7 +1585,7 @@ interface PublishPlanModalProps { isOpen: boolean; onClose: () => void; onSelect
 function PublishPlanModal({ isOpen, onClose, onSelectPlan }: PublishPlanModalProps) {
   const [billing, setBilling] = useState<BillingCycle>("monthly");
   const plans: Plan[] = [
-    { id: "free", name: "3-Day Trial", price: "$0", features: ["Valid for 3 days only", "1 campaign/month", "Basic analytics", "Standard publishing", "Limited AI images"], color: "#64748b" },
+    { id: "free", name: "3-Day Trial", price: "$0", features: ["Valid for 3 days only", "1 campaign/month", "Basic analytics", "Standard publishing", "Limited AI images"], color: 'var(--text-dim)' },
     { id: "silver", name: "Silver", price: billing === "monthly" ? "$29" : "$290", features: ["10 campaigns/month", "Advanced analytics", "Priority support", "Scheduled publishing", "Unlimited AI images", "A/B testing"], color: "#2563EB", popular: true },
     { id: "gold", name: "Gold", price: billing === "monthly" ? "$79" : "$790", features: ["Unlimited campaigns", "Real-time analytics", "24/7 support", "Advanced scheduling", "Unlimited AI images", "A/B testing", "Multi-platform", "Custom integrations"], color: "#D97706" },
   ];
@@ -1603,7 +1603,7 @@ function PublishPlanModal({ isOpen, onClose, onSelectPlan }: PublishPlanModalPro
             {(["monthly", "yearly"] as BillingCycle[]).map(b => (
               <button key={b} onClick={() => setBilling(b)} style={{ padding: "7px 22px", borderRadius: 32, border: "none", background: billing === b ? "var(--blue)" : "transparent", color: billing === b ? "#fff" : "var(--t2)", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all .2s", fontFamily: "inherit", position: "relative" }}>
                 {b.charAt(0).toUpperCase() + b.slice(1)}
-                {b === "yearly" && <span style={{ position: "absolute", top: -8, right: -8, background: "var(--green)", color: "#fff", fontSize: 9, padding: "2px 5px", borderRadius: 10, fontWeight: 700 }}>-20%</span>}
+                {b === "yearly" && <span style={{ position: "absolute", top: -8, right: -8, background: "var(--green)", color: 'var(--text-primary)', fontSize: 9, padding: "2px 5px", borderRadius: 10, fontWeight: 700 }}>-20%</span>}
               </button>
             ))}
           </div>
@@ -1611,7 +1611,7 @@ function PublishPlanModal({ isOpen, onClose, onSelectPlan }: PublishPlanModalPro
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 24 }}>
           {plans.map(plan => (
             <div key={plan.id} className="plan-card" onClick={() => onSelectPlan(plan.id)} style={{ border: `${plan.popular ? "2px" : "1px"} solid ${plan.popular ? plan.color + "44" : "var(--bdr)"}`, borderRadius: 16, padding: 22, background: plan.popular ? `${plan.color}08` : "var(--surface)", cursor: "pointer", transition: "all .2s", position: "relative" }}>
-              {plan.popular && <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: plan.color, color: "#fff", padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>Most Popular</div>}
+              {plan.popular && <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: plan.color, color: 'var(--text-primary)', padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>Most Popular</div>}
               <div style={{ textAlign: "center", marginBottom: 16 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "var(--t1)", marginBottom: 6, fontFamily: "'Space Grotesk', sans-serif" }}>{plan.name}</div>
                 <div><span style={{ fontSize: 32, fontWeight: 800, color: plan.color }}>{plan.price}</span><span style={{ fontSize: 12, color: "var(--t3)" }}>/{billing === "monthly" ? "mo" : "yr"}</span></div>

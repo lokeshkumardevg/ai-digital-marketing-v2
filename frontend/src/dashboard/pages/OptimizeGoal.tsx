@@ -3,32 +3,32 @@ import { MapPin, DollarSign, Monitor, Zap, ChevronDown, ChevronRight, Plus, Edit
 
 // ─── Dark Theme Tokens ────────────────────────────────────────────────────────
 const D = {
-  bg:          '#080d1a',
-  surface:     '#0f1629',
-  surfaceAlt:  '#141d35',
-  surfaceHover:'rgba(255,255,255,0.04)',
-  border:      'rgba(99,102,241,0.18)',
+  bg: 'var(--bg-primary)',
+  surface: 'var(--bg-elevated)',
+  surfaceAlt: 'var(--bg-card)',
+  surfaceHover: 'var(--bg-elevated)',
+  border: 'var(--glass-border)',
   borderFocus: '#0665ff',
   borderGlow:  'rgba(124,58,237,0.35)',
-  purple:      '#0665ff',
-  purpleSoft:  'rgba(124,58,237,0.15)',
-  purpleText:  '#a78bfa',
-  green:       '#10b981',
+  purple: 'var(--accent-primary)',
+  purpleSoft: 'var(--accent-secondary)',
+  purpleText: 'var(--accent-primary)',
+  green: 'var(--success)',
   greenSoft:   'rgba(16,185,129,0.12)',
-  greenText:   '#34d399',
+  greenText: 'var(--success)',
   red:         '#ef4444',
   redSoft:     'rgba(239,68,68,0.12)',
   yellow:      '#f59e0b',
   yellowSoft:  'rgba(245,158,11,0.12)',
-  textPrimary: '#f1f5f9',
-  textMuted:   '#94a3b8',
-  textDim:     '#475569',
-  inputBg:     'rgba(255,255,255,0.04)',
+  textPrimary: 'var(--text-primary)',
+  textMuted: 'var(--text-secondary)',
+  textDim: 'var(--text-dim)',
+  inputBg: 'var(--bg-card)',
   tagBg:       'rgba(124,58,237,0.18)',
   tagBorder:   'rgba(124,58,237,0.35)',
-  white004:    'rgba(255,255,255,0.04)',
-  white008:    'rgba(255,255,255,0.08)',
-  white012:    'rgba(255,255,255,0.12)',
+  white004: 'var(--bg-card)',
+  white008: 'var(--bg-elevated)',
+  white012: 'var(--glass-border)',
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -295,7 +295,7 @@ export const OptimizeGoal: React.FC = () => {
         {hasChanges && (
           <button
             onClick={handleSave}
-            style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: D.purple, color: '#fff', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'opacity 0.2s' }}
+            style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: D.purple, color: 'var(--text-primary)', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'opacity 0.2s' }}
           >
             <Save size={13}/> {saved ? 'Saved ✓' : 'Save Changes'}
           </button>
@@ -459,7 +459,7 @@ export const OptimizeGoal: React.FC = () => {
                             onChange={e => updateStrategy({ kpiType: e.target.value })}
                             style={{ padding: '7px 22px 7px 8px', borderRadius: 7, border: `1px solid ${D.border}`, fontSize: '0.78rem', fontWeight: 600, color: D.textPrimary, outline: 'none', background: D.inputBg, appearance: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
                           >
-                            {KPI_TYPES.map(k => <option key={k} value={k} style={{ background: '#0f1629' }}>{k}</option>)}
+                            {KPI_TYPES.map(k => <option key={k} value={k} style={{ background: 'var(--bg-card)' }}>{k}</option>)}
                           </select>
                           <ChevronDown size={10} style={{ position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)', color: D.textDim, pointerEvents: 'none' }}/>
                         </div>
@@ -555,7 +555,7 @@ export const OptimizeGoal: React.FC = () => {
                         autoFocus
                       />
                       <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                        <button onClick={() => saveEditSkill(skill.id)} style={{ padding: '5px 12px', borderRadius: 6, border: 'none', background: D.purple, color: '#fff', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Save</button>
+                        <button onClick={() => saveEditSkill(skill.id)} style={{ padding: '5px 12px', borderRadius: 6, border: 'none', background: D.purple, color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Save</button>
                         <button onClick={() => setEditingSkillId(null)} style={{ padding: '5px 12px', borderRadius: 6, border: `1px solid ${D.border}`, background: D.white004, color: D.textMuted, cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600 }}>Cancel</button>
                       </div>
                     </div>
@@ -639,10 +639,10 @@ export const OptimizeGoal: React.FC = () => {
 const DarkSection: React.FC<{ title: string; sub: string; children: React.ReactNode }> = ({ title, sub, children }) => (
   <div style={{ marginBottom: 20 }}>
     <div style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f1f5f9', marginBottom: 2 }}>{title}</div>
+      <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>{title}</div>
       <div style={{ fontSize: '0.75rem', color: '#475569' }}>{sub}</div>
     </div>
-    <div style={{ background: '#0f1629', border: '1px solid rgba(99,102,241,0.18)', borderRadius: 12, padding: '18px 20px' }}>
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 12, padding: '18px 20px' }}>
       {children}
     </div>
   </div>
@@ -739,8 +739,8 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
 
   // ── Modal backdrop + card ──
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, backdropFilter: 'blur(4px)' }}>
-      <div style={{ background: '#0f1629', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 20, width: 520, maxHeight: '88vh', overflow: 'auto', boxShadow: '0 24px 80px rgba(0,0,0,0.6)', animation: 'fadeUp .2s ease-out' }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'var(--glass-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, backdropFilter: 'blur(4px)' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: 20, width: 520, maxHeight: '88vh', overflow: 'auto', boxShadow: '0 24px 80px rgba(0,0,0,0.6)', animation: 'fadeUp .2s ease-out' }}>
 
         {/* Header */}
         <div style={{ padding: '20px 24px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -750,7 +750,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
                 ← Back
               </button>
             )}
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: '#f1f5f9' }}>
+            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
               {step === 'list' ? 'Connect Ad Platform' : platInfo?.label}
             </div>
             <div style={{ fontSize: '0.72rem', color: '#475569', marginTop: 2 }}>
@@ -759,7 +759,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
           </div>
           <button
             onClick={onClose}
-            style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(99,102,241,0.18)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', color: '#94a3b8', flexShrink: 0 }}
+            style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)', flexShrink: 0 }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.10)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
           >✕</button>
@@ -785,7 +785,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
                         {plat.icon}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 600, fontSize: '0.88rem', color: '#f1f5f9', marginBottom: 2 }}>{plat.label}</div>
+                        <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)', marginBottom: 2 }}>{plat.label}</div>
                         {connected && acc ? (
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block' }}/>
@@ -820,7 +820,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
                   {platInfo.icon}
                 </div>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>{platInfo.label}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{platInfo.label}</div>
                   <a href={platInfo.docsUrl} target="_blank" rel="noreferrer" style={{ fontSize: '0.7rem', color: platInfo.color }}>View API docs ↗</a>
                 </div>
               </div>
@@ -828,15 +828,15 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
                 <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>Permissions requested</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {platInfo.permissions.map(p => (
-                    <span key={p} style={{ padding: '3px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(99,102,241,0.18)', fontSize: '0.7rem', color: '#94a3b8', fontFamily: 'monospace' }}>{p}</span>
+                    <span key={p} style={{ padding: '3px 10px', borderRadius: 20, background: 'var(--bg-card)', border: '1px solid var(--glass-border)', fontSize: '0.7rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>{p}</span>
                   ))}
                 </div>
               </div>
-              <button onClick={startOAuth} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${platInfo.color}, ${platInfo.color}cc)`, color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
+              <button onClick={startOAuth} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${platInfo.color}, ${platInfo.color}cc)`, color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 }}>
                 <span style={{ fontSize: '1rem' }}>{platInfo.icon}</span> Connect with {platInfo.label.split(' ')[0]}
               </button>
               <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#475569', marginBottom: 12 }}>— or set up manually —</div>
-              <button onClick={() => setStep('manual')} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(99,102,241,0.18)', background: 'rgba(255,255,255,0.04)', color: '#94a3b8', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}>
+              <button onClick={() => setStep('manual')} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid var(--glass-border)', background: 'var(--bg-card)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}>
                 Enter Access Token Manually
               </button>
             </div>
@@ -854,13 +854,13 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
                 { label: 'Access Token', placeholder: 'Paste your access token here...', value: manualToken, set: setManualToken },
               ].map(field => (
                 <div key={field.label} style={{ marginBottom: 12 }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: '#94a3b8', display: 'block', marginBottom: 5 }}>{field.label}</label>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>{field.label}</label>
                   <input
                     value={field.value}
                     onChange={e => field.set(e.target.value)}
                     placeholder={field.placeholder}
                     type={field.label.includes('Token') ? 'password' : 'text'}
-                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(99,102,241,0.18)', fontSize: '0.82rem', color: '#f1f5f9', outline: 'none', background: 'rgba(255,255,255,0.04)', boxSizing: 'border-box' as const, fontFamily: 'monospace' }}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--glass-border)', fontSize: '0.82rem', color: 'var(--text-primary)', outline: 'none', background: 'var(--bg-card)', boxSizing: 'border-box' as const, fontFamily: 'monospace' }}
                     onFocus={e => (e.target.style.borderColor = platInfo.color)}
                     onBlur={e => (e.target.style.borderColor = 'rgba(99,102,241,0.18)')}
                   />
@@ -885,7 +885,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
               {connectStatus === 'waiting' && (
                 <>
                   <div style={{ width: 48, height: 48, border: `4px solid rgba(255,255,255,0.08)`, borderTopColor: platInfo.color, borderRadius: '50%', animation: 'spin .8s linear infinite', margin: '0 auto 16px' }}/>
-                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#f1f5f9', marginBottom: 6 }}>Waiting for authorization...</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: 6 }}>Waiting for authorization...</div>
                   <div style={{ fontSize: '0.78rem', color: '#475569', marginBottom: 16 }}>Complete the sign-in in the popup window.</div>
                   <button onClick={() => setStep('manual')} style={{ fontSize: '0.75rem', color: '#0665ff', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>No popup? Enter token manually</button>
                 </>
@@ -904,7 +904,7 @@ const ConnectPlatformModal: React.FC<ConnectPlatformModalProps> = ({ connectedAc
                   <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#ef4444', marginBottom: 6 }}>Connection failed</div>
                   <div style={{ fontSize: '0.78rem', color: '#475569', marginBottom: 16 }}>{errorMsg}</div>
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                    <button onClick={() => { setStep('detail'); setConnectStatus('idle'); }} style={{ padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(99,102,241,0.18)', background: 'rgba(255,255,255,0.04)', color: '#94a3b8', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}>Try Again</button>
+                    <button onClick={() => { setStep('detail'); setConnectStatus('idle'); }} style={{ padding: '9px 20px', borderRadius: 8, border: '1px solid var(--glass-border)', background: 'var(--bg-card)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}>Try Again</button>
                     <button onClick={() => { setStep('manual'); setConnectStatus('idle'); }} style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: '#0665ff', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}>Manual Setup</button>
                   </div>
                 </>

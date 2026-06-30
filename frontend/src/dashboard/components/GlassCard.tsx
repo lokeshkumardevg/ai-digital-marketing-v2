@@ -18,7 +18,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({ children, className = '', 
         cursor: onClick ? 'pointer' : 'default',
         position: 'relative',
         background: 'rgba(255, 255, 255, 0.03)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        border: '1px solid var(--glass-border)',
         borderRadius: 'var(--radius-lg)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
         ...style

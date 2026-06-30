@@ -84,14 +84,14 @@ const RecSkeleton: React.FC = () => (
       <div
         style={{
           width: '40px', height: '40px', borderRadius: '10px',
-          background: 'rgba(255,255,255,0.05)',
+          background: 'var(--bg-card)',
           animation: 'pulse 1.5s ease-in-out infinite', flexShrink: 0,
         }}
       />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ height: '16px', width: '55%', borderRadius: '6px', background: 'rgba(255,255,255,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }} />
-        <div style={{ height: '12px', width: '90%', borderRadius: '6px', background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s ease-in-out infinite' }} />
-        <div style={{ height: '12px', width: '70%', borderRadius: '6px', background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ height: '12px', width: '90%', borderRadius: '6px', background: 'var(--bg-card)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ height: '12px', width: '70%', borderRadius: '6px', background: 'var(--bg-card)', animation: 'pulse 1.5s ease-in-out infinite' }} />
       </div>
     </div>
   </GlassCard>
@@ -154,7 +154,7 @@ const InsightCard: React.FC<InsightCardProps> = ({ section, value, isOpen, onTog
 
       {/* Expanded content */}
       {isOpen && (
-        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--glass-border)' }}>
           {section.isList && Array.isArray(value) ? (
             <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {value.map((post, i) => (
@@ -164,7 +164,7 @@ const InsightCard: React.FC<InsightCardProps> = ({ section, value, isOpen, onTog
                     padding: '12px 14px',
                     background: 'rgba(255,255,255,0.03)',
                     borderRadius: '8px',
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    border: '1px solid var(--glass-border)',
                     fontSize: '0.85rem',
                     lineHeight: 1.6,
                     color: 'var(--text-primary)',

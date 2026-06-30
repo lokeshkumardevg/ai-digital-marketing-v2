@@ -30,25 +30,25 @@ const ChartLine: React.FC<{ data: number[]; color: string; height: number; width
   );
 };
 
-// ── Dark token palette (matches landing page) ──────────────────
+// ── Theme variables mapped to tokens ──────────────────
 const D = {
-  bg:         '#0a0f1e',          // deepest background
-  surface:    '#0f1629',          // card surfaces
-  surfaceAlt: '#141d35',          // slightly lighter card
-  border:     'rgba(99,102,241,0.18)',
-  borderGlow: 'rgba(112,51,245,0.35)',
-  purple:     '#0665ff',
-  purpleSoft: 'rgba(124,58,237,0.15)',
-  purpleText: '#a78bfa',
-  green:      '#10b981',
-  greenSoft:  'rgba(16,185,129,0.15)',
-  greenText:  '#34d399',
-  textPrimary:'#f1f5f9',
-  textMuted:  '#94a3b8',
-  textDim:    '#64748b',
-  white005:   'rgba(255,255,255,0.05)',
-  white010:   'rgba(255,255,255,0.08)',
-  inputBg:    'rgba(255,255,255,0.04)',
+  bg: 'var(--bg-secondary)',
+  surface: 'var(--bg-elevated)',
+  surfaceAlt: 'var(--bg-card)',
+  border: 'var(--glass-border)',
+  borderGlow: 'var(--glass-border)',
+  purple: 'var(--accent-primary)',
+  purpleSoft: 'var(--accent-secondary)',
+  purpleText: 'var(--accent-primary)',
+  green: 'var(--success)',
+  greenSoft: 'rgba(16,185,129,0.15)',
+  greenText: 'var(--success)',
+  textPrimary: 'var(--text-primary)',
+  textMuted: 'var(--text-secondary)',
+  textDim: 'var(--text-dim)',
+  white005: 'var(--bg-card)',
+  white010: 'var(--bg-elevated)',
+  inputBg: 'var(--bg-card)',
 };
 
 export const Crm: React.FC = () => {
@@ -508,7 +508,7 @@ export const Crm: React.FC = () => {
         {/* ── Audience Segments ── */}
         <div style={{ marginBottom: 32 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)' }}>
               <Users size={16} />
             </div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: D.textPrimary }}>Intelligence Audience Segments</h3>
