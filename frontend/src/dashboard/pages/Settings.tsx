@@ -31,6 +31,9 @@ export const Settings: React.FC = () => {
   const [metaBusinesses, setMetaBusinesses] = useState<any[]>([]);
   const [selectedMetaBusiness, setSelectedMetaBusiness] = useState('');
 
+  const [xAdAccounts, setXAdAccounts] = useState<any[]>([]);
+  const [selectedXAdAccount, setSelectedXAdAccount] = useState('');
+
   React.useEffect(() => {
     if (user) {
       setName(user.name || '');
@@ -59,6 +62,17 @@ export const Settings: React.FC = () => {
           api.get('/auth/meta/businesses').then(res => {
             if (res.data && res.data.data) {
               setMetaBusinesses(res.data.data);
+            }
+          }).catch(console.error);
+        });
+      }
+
+      if (user.twitterAccessToken) {
+        setSelectedXAdAccount(user.twitterAdAccountId || '');
+        import('../../api/axios').then(({ api }) => {
+          api.get('/auth/x/adaccounts').then(res => {
+            if (res.data && res.data.data) {
+              setXAdAccounts(res.data.data);
             }
           }).catch(console.error);
         });
@@ -651,6 +665,43 @@ export const Settings: React.FC = () => {
                     >
                       𝕏 {user?.twitterAccessToken ? 'X Ads Connected ✓' : 'Connect X Ads'}
                     </button>
+
+                    {user?.twitterAccessToken && xAdAccounts.length > 0 && (
+                      <div style={{ gridColumn: '1 / -1', padding: '16px', background: 'rgba(0, 0, 0, 0.05)', borderRadius: '8px', marginTop: '8px' }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>Select Active X Ad Account</label>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                          <select
+                            value={selectedXAdAccount}
+                            onChange={(e) => setSelectedXAdAccount(e.target.value)}
+                            style={{ flex: 1, padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+                          >
+                            <option value="">-- Select Ad Account --</option>
+                            {xAdAccounts.map((acc: any) => {
+                              return (
+                                <option key={acc.id} value={acc.id}>{acc.name} ({acc.id})</option>
+                              );
+                            })}
+                          </select>
+                          <button
+                            onClick={async () => {
+                              if (!selectedXAdAccount) return;
+                              const acc = xAdAccounts.find(a => a.id === selectedXAdAccount);
+                              try {
+                                const { api } = await import('../../api/axios');
+                                await api.post('/auth/x/adaccount', { adAccountId: selectedXAdAccount, adAccountName: acc?.name || 'Selected Account' });
+                                toast.success('X Ad Account updated successfully!');
+                                dispatch(hydrateSession());
+                              } catch (err) {
+                                toast.error('Failed to update X Ad Account');
+                              }
+                            }}
+                            style={{ padding: '8px 16px', background: '#000000', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                          >
+                            Save Selected
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     <button
                       onClick={connectLinkedIn}

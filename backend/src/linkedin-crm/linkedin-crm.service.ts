@@ -974,6 +974,7 @@ export class LinkedInCrmService {
           headers: {
             Authorization: `Bearer ${account.accessToken}`,
             'X-Restli-Protocol-Version': '2.0.0',
+            'LinkedIn-Version': '202606', // REST API version
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),

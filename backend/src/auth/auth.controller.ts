@@ -78,7 +78,7 @@ export class AuthController {
 
     const userId = state;
     const frontendUrl = process.env.FRONTEND_URL;
-    const redirectBase = `${frontendUrl}/dashboard/crm`;
+    const redirectBase = `${frontendUrl}/settings`;
 
     try {
       await this.authService.handleGoogleCallback(userId, code);
@@ -181,7 +181,7 @@ export class AuthController {
     @Query('state') state: string,
   ) {
     const frontendUrl = process.env.FRONTEND_URL;
-    const redirectBase = `${frontendUrl}/dashboard/crm`;
+    const redirectBase = `${frontendUrl}/settings`;
 
     // eslint-disable-next-line no-console
     console.log('[AuthController] metaCallback hit', {
@@ -235,13 +235,28 @@ export class AuthController {
     return { url: this.authService.getXAuthUrl(req.user.id) };
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @Get('x/adaccounts')
+  async getXAdAccounts(@Request() req: any) {
+    return { data: await this.authService.getXAdAccounts(req.user.id) };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('x/adaccount')
+  async updateXAdAccount(
+    @Request() req: any,
+    @Body() body: { adAccountId: string; adAccountName: string }
+  ) {
+    return this.authService.updateXAdAccount(req.user.id, body.adAccountId, body.adAccountName);
+  }
+
   @Get('x/callback')
   async xCallback(
     @Query('code') code: string,
     @Query('state') state: string,
   ) {
     const frontendUrl = process.env.FRONTEND_URL;
-    const redirectBase = `${frontendUrl}/dashboard/crm`;
+    const redirectBase = `${frontendUrl}/settings`;
 
     if (!code || !state) {
       return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?xConnected=error&reason=missing_params" /></head><body>Redirecting...</body></html>`;
@@ -271,7 +286,7 @@ export class AuthController {
     @Query('state') state: string,
   ) {
     const frontendUrl = process.env.FRONTEND_URL;
-    const redirectBase = `${frontendUrl}/dashboard/crm`;
+    const redirectBase = `${frontendUrl}/settings`;
 
     if (!code || !state) {
       return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?linkedinConnected=error&reason=missing_params" /></head><body>Redirecting...</body></html>`;

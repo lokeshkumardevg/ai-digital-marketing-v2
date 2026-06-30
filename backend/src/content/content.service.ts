@@ -316,10 +316,9 @@ export class ContentService {
     }
 
     const imageUrl = await this.aiService.generateImage({
-  prompt: `Cinematic visualization supporting: ${data.topic}`,
-  size: '1024x1024',
-  quality: 'auto',
-});
+      prompt: `Cinematic visualization supporting: ${data.topic}`,
+      size: '1024x1024'
+    });
     const seoMetrics = {
       keywordDensity: Math.floor(Math.random() * 5) + 1,
       readabilityScore: Math.floor(Math.random() * 30) + 60,
@@ -548,9 +547,7 @@ Variation ${index + 1} of ${count}
               await this.aiService.generateImage(
                 {
                   prompt: finalPrompt,
-                  size: finalSize,
-                  quality:
-                    data.quality || 'auto',
+                  size: finalSize
                 },
               );
           }

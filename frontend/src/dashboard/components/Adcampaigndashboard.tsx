@@ -54,6 +54,7 @@ interface PlatformCreative {
   primaryText: string;
   cta: string;
   image: string | null;
+  aiImgs?: string[];
 
   // Meta specific
   metaObjective?: string;
@@ -1453,10 +1454,10 @@ type ImageTab = "brand" | "ai" | "upload";
 function CreativeStudio({ adCopy, activePlatformId, isEnabled, brandAssetImages, generatingImages, creative, onCreativeChange }: CreativeStudioProps) {
   const [sIdx, setSIdx] = useState<number>(0);
   const [aiPrompt, setAiPrompt] = useState<string>("");
-  const [aiImgs, setAiImgs] = useState<string[]>([]);
+  const [aiImgs, setAiImgs] = useState<string[]>(creative.aiImgs || []);
   const [loading, setLoading] = useState<boolean>(false);
   const [aiErr, setAiErr] = useState<string | null>(null);
-  const [imgTab, setImgTab] = useState<ImageTab>("brand");
+  const [imgTab, setImgTab] = useState<ImageTab>(creative.aiImgs && creative.aiImgs.length > 0 ? "ai" : "brand");
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadedImgs, setUploadedImgs] = useState<string[]>([]);
 
@@ -1472,16 +1473,22 @@ function CreativeStudio({ adCopy, activePlatformId, isEnabled, brandAssetImages,
     if (!aiPrompt.trim()) return;
     setLoading(true); setAiErr(null);
     try {
-      const key = (window as any).__OPENAI_KEY || "";
-      if (!key) throw new Error("No OpenAI key — set window.__OPENAI_KEY");
-      const r = await fetch("https://api.openai.com/v1/images/generations", {
-        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        body: JSON.stringify({ model: "dall-e-3", prompt: aiPrompt, n: 1, size: "1024x1024" }),
+      const r = await fetch(`${API_BASE}/ai/generate-image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+        body: JSON.stringify({ prompt: aiPrompt }),
       });
-      if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || `API ${r.status}`); }
+      if (!r.ok) { const e = await r.json(); throw new Error(e.message || e.error || `API ${r.status}`); }
       const d = await r.json();
-      const url: string = d.data[0]?.url || "";
-      if (url) { setAiImgs(p => [url, ...p].slice(0, 6)); pickImg(url); }
+      const url: string = d.url || "";
+      if (url) { 
+        const newImgs = [url, ...aiImgs].slice(0, 6);
+        setAiImgs(newImgs); 
+        onCreativeChange({ image: url, aiImgs: newImgs });
+      }
     } catch (e) { setAiErr(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
   };
@@ -1957,6 +1964,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     primaryText: draftPlatformData?.primaryText || draftPlatformData?.caption || defaultPrimaryText,
     cta: draftPlatformData?.cta || defaultCta,
     image: draftPlatformData?.image || draftPlatformData?.imageUrl || null,
+    aiImgs: draftPlatformData?.aiImgs || [],
 
     metaObjective: draftPlatformData?.metaObjective || "SALES",
     metaBuyingType: draftPlatformData?.metaBuyingType || "AUCTION",
@@ -2170,6 +2178,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
           primaryText: c.primaryText,
           cta: c.cta,
           image: c.image,
+          aiImgs: c.aiImgs, // Save generated AI images list
           budget: adBudget,
           event: adEvent,
           schedule: adSchedule,

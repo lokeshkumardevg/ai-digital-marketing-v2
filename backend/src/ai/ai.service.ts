@@ -467,14 +467,15 @@ Return data in this exact structure:
 async generateImage(data: {
   prompt: string;
   size?: string;
-  quality?: 'low' | 'medium' | 'high' | 'auto';
+  quality?: 'standard' | 'hd';
 }): Promise<string> {
   try {
     const response = await this.openai.images.generate({
-      model: 'gpt-image-1',
+      model: 'dall-e-3',
       prompt: data.prompt,
+      n: 1,
       size: (data.size || '1024x1024') as any,
-      quality: data.quality || 'auto',
+      quality: data.quality || 'standard',
     });
 
     const imageData = response?.data?.[0];

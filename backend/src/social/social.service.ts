@@ -21,7 +21,7 @@ export class SocialService {
     private readonly usersService: UsersService,
     private readonly socialAuthService: SocialAuthService,
     private readonly notifService: NotificationsService,
-  ) {}
+  ) { }
 
   async findAll(userId: string, workspaceId?: string): Promise<SocialPost[]> {
     const filter: Record<string, string> = { userId };
@@ -113,7 +113,7 @@ export class SocialService {
         headers: {
           Authorization: `Bearer ${user.linkedinAccessToken}`,
           'X-Restli-Protocol-Version': '2.0.0',
-          'LinkedIn-Version': '202605',
+          'LinkedIn-Version': '202606',
         },
       });
       return response.data?.id || response.headers['x-restli-id'];

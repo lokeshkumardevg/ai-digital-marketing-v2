@@ -92,6 +92,12 @@ export class User {
   @Prop()
   twitterName?: string; // Display name (e.g. Wheedle Technologies)
 
+  @Prop({ required: false })
+  twitterAdAccountId?: string;
+
+  @Prop({ required: false })
+  twitterAdAccountName?: string;
+
   @Prop()
   instagramAccessToken?: string;
 

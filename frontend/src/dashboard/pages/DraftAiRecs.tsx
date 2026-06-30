@@ -716,7 +716,6 @@ function PlatformPreview({ platformId, brandName, logoUrl, caption, cta, imageUr
     </div>
   );
 }
-
 /* ─── CREATIVE STUDIO ─────────────────────────────────────── */
 type ImageTab = 'brand' | 'ai' | 'upload';
 interface CreativeStudioProps {
@@ -748,11 +747,16 @@ function CreativeStudio({ adCopy, activePlatformId, brandAssetImages, onSubheadi
     if (!aiPrompt.trim()) return;
     setLoading(true); setAiErr(null);
     try {
-      const key = (window as any).__OPENAI_KEY || '';
-      if (!key) throw new Error('No OpenAI key — set window.__OPENAI_KEY');
-      const r = await fetch('https://api.openai.com/v1/images/generations', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` }, body: JSON.stringify({ model: 'dall-e-3', prompt: aiPrompt, n: 1, size: '1024x1024' }) });
-      if (!r.ok) { const e = await r.json(); throw new Error(e.error?.message || `API ${r.status}`); }
-      const d = await r.json(); const url = d.data[0]?.url || '';
+      const r = await fetch(`${API_BASE}/ai/generate-image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+        },
+        body: JSON.stringify({ prompt: aiPrompt }),
+      });
+      if (!r.ok) { const e = await r.json(); throw new Error(e.message || e.error || `API ${r.status}`); }
+      const d = await r.json(); const url = d.url || '';
       if (url) { setAiImgs(p => [url, ...p].slice(0, 6)); pickImg(url); }
     } catch (e) { setAiErr(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
@@ -1222,7 +1226,7 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
       budget: selectedCampaign.budgetDaily,
       event: selectedCampaign.data?.event,
     };
-    
+
     return (
       <AdCampaignDashboard
         brandDetails={brandDetails}

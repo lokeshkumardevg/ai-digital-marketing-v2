@@ -1,5 +1,5 @@
 
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -931,6 +931,16 @@ export class AuthService {
         status: 'ACTIVE',
       }
     ];
+  }
+
+  async updateXAdAccount(userId: string, adAccountId: string, adAccountName: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new BadRequestException('User not found');
+    await this.usersService.update(userId, { 
+      twitterAdAccountId: adAccountId,
+      twitterAdAccountName: adAccountName
+    });
+    return { success: true, message: 'X Ad Account updated successfully' };
   }
 }
 

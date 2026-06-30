@@ -73,6 +73,22 @@ export class AiController {
     };
   }
 
+  @Post('generate-image')
+  @UseGuards(AuthGuard('jwt'))
+  async generateImage(@Body() body: { prompt: string }) {
+    if (!body.prompt) {
+      throw new Error('Prompt is required');
+    }
+    const result = await this.aiService.generateImage({
+      prompt: body.prompt,
+      size: '1024x1024'
+    });
+    return {
+      success: true,
+      url: result,
+    };
+  }
+
   // ── SEO AUDIT ─────────────────────────────────────────────
 
   @UseGuards(AuthGuard('jwt'))
