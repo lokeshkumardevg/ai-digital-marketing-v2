@@ -34,6 +34,7 @@ import { GoogleBusinessModule } from './google-business/google-business.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MetaReviewsModule } from './meta-reviews/meta-reviews.module';
 import { ReviewAgentModule } from './reviewagent/reviewagent.module';
+import { LinkedInReviewsModule } from './linkedin-reviews/linkedin-reviews.module'
 
 @Module({
   imports: [
@@ -90,7 +91,8 @@ import { ReviewAgentModule } from './reviewagent/reviewagent.module';
     CallingModule,
     GoogleBusinessModule,
     MetaReviewsModule,
-    ReviewAgentModule
+    ReviewAgentModule,
+    LinkedInReviewsModule
   ],
   controllers: [AppController],
   providers: [AppService],

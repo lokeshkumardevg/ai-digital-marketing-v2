@@ -37,6 +37,14 @@ interface MetaPage {
   picture: string | null;
 }
 
+// LinkedIn organization (no per-page token — uses the user's bearer token)
+interface LinkedInOrg {
+  pageId: string;   // numeric org id
+  pageUrn: string;  // urn:li:organization:xxxx — used in API paths
+  pageName: string;
+  picture: string | null;
+}
+
 interface DbReply {
   replyId: string;
   parentCommentId: string;
@@ -236,28 +244,41 @@ function ComingSoonBanner({ platform }: { platform: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// AiReplyBubble — shows AI reply + "Post on Facebook" button
+// AiReplyBubble — shows AI reply + "Post" button
+// Works for both Meta (pageAccessToken in body) and LinkedIn (targetUrn only)
 // ─────────────────────────────────────────────────────────────────────────
-function AiReplyBubble({ reply, generatedAt, commentId, pageAccessToken, onPosted }: {
+function AiReplyBubble({
+  reply, generatedAt, commentId, pageAccessToken, platform, postLabel, actorUrn, onPosted,
+}: {
   reply: string;
   generatedAt?: string;
   commentId: string;
-  pageAccessToken: string;
+  pageAccessToken: string; // unused for linkedin
+  platform: PlatformTabKey;
+  postLabel: string; // "Facebook" | "LinkedIn"
+  actorUrn?: string; // required for linkedin
   onPosted?: () => void;
 }) {
   const [posting, setPosting]     = useState(false);
   const [posted, setPosted]       = useState(false);
   const [postError, setPostError] = useState('');
 
-  const handlePostToFb = async (e: React.MouseEvent) => {
+  const handlePost = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (posting || posted) return;
     setPosting(true); setPostError('');
     try {
-      await apiFetch<{ success: boolean; commentId: string }>(
-        `/meta-reviews/comments/${commentId}/reply`,
-        { method: 'POST', body: JSON.stringify({ message: reply, pageAccessToken }) },
-      );
+      if (platform === 'linkedin') {
+        await apiFetch<{ success: boolean; commentId: string }>(
+          `/linkedin-reviews/comments/reply`,
+          { method: 'POST', body: JSON.stringify({ targetUrn: commentId, message: reply, actorUrn }) },
+        );
+      } else {
+        await apiFetch<{ success: boolean; commentId: string }>(
+          `/meta-reviews/comments/${commentId}/reply`,
+          { method: 'POST', body: JSON.stringify({ message: reply, pageAccessToken }) },
+        );
+      }
       setPosted(true);
       onPosted?.();
     } catch (e: any) {
@@ -278,16 +299,16 @@ function AiReplyBubble({ reply, generatedAt, commentId, pageAccessToken, onPoste
       <div className="par-ai-bubble-footer">
         {postError && <p className="par-ai-post-error">{postError}</p>}
         <button
-          onClick={handlePostToFb}
+          onClick={handlePost}
           disabled={posting || posted}
           className={`par-post-fb-btn${posted ? ' par-post-fb-btn-done' : ''}`}
-          title={posted ? 'Reply posted on Facebook' : 'Post this reply on Facebook'}
+          title={posted ? `Reply posted on ${postLabel}` : `Post this reply on ${postLabel}`}
         >
           {posting
             ? <><Loader size={11} className="par-spin" />Posting…</>
             : posted
-              ? <><CheckCircle size={11} />Posted on Facebook</>
-              : <><Send size={11} />Post on Facebook</>
+              ? <><CheckCircle size={11} />Posted on {postLabel}</>
+              : <><Send size={11} />Post on {postLabel}</>
           }
         </button>
       </div>
@@ -298,12 +319,14 @@ function AiReplyBubble({ reply, generatedAt, commentId, pageAccessToken, onPoste
 // ─────────────────────────────────────────────────────────────────────────
 // SyncBar — sync info + Sync button + global Generate All AI Replies button
 // ─────────────────────────────────────────────────────────────────────────
-function SyncBar({ syncedAt, status, result, onSync, totalPending, onGenerateAll, generatingAll }: {
+function SyncBar({ syncedAt, status, result, onSync, totalPending, onGenerateAll, generatingAll, platformLabel, syncDisabled }: {
   syncedAt: string | null; status: SyncStatus;
   result: SyncResult | null; onSync: () => void;
   totalPending: number;
   onGenerateAll: () => void;
   generatingAll: boolean;
+  platformLabel: string;
+  syncDisabled?: boolean;
 }) {
   return (
     <div className="par-sync-bar">
@@ -335,10 +358,10 @@ function SyncBar({ syncedAt, status, result, onSync, totalPending, onGenerateAll
             : <><Zap size={12} />AI All ({totalPending})</>
           }
         </button>
-        <button onClick={onSync} disabled={status === 'syncing'} className="par-sync-btn" aria-label="Sync page from Facebook">
+        <button onClick={onSync} disabled={status === 'syncing' || syncDisabled} className="par-sync-btn" aria-label={`Sync page from ${platformLabel}`}>
           {status === 'syncing'
             ? <><Loader size={12} className="par-spin" />Syncing…</>
-            : <><RefreshCw size={12} />Sync from Facebook</>
+            : <><RefreshCw size={12} />Sync from {platformLabel}</>
           }
         </button>
       </div>
@@ -349,9 +372,9 @@ function SyncBar({ syncedAt, status, result, onSync, totalPending, onGenerateAll
 // ─────────────────────────────────────────────────────────────────────────
 // PostCard
 // ─────────────────────────────────────────────────────────────────────────
-function PostCard({ post, pageName, pagePicture, commentCount, compact = false }: {
+function PostCard({ post, pageName, pagePicture, commentCount, compact = false, platformLabel }: {
   post: DbPost; pageName: string; pagePicture: string | null;
-  commentCount: number; compact?: boolean;
+  commentCount: number; compact?: boolean; platformLabel: string;
 }) {
   return (
     <div className={`par-post-card${compact ? ' par-post-card-compact' : ''}`}>
@@ -378,7 +401,7 @@ function PostCard({ post, pageName, pagePicture, commentCount, compact = false }
         </span>
         {post.permalink && (
           <a href={post.permalink} target="_blank" rel="noreferrer" className="par-post-link" onClick={(e) => e.stopPropagation()}>
-            View on Facebook <ExternalLink size={11} />
+            View on {platformLabel} <ExternalLink size={11} />
           </a>
         )}
       </div>
@@ -388,15 +411,23 @@ function PostCard({ post, pageName, pagePicture, commentCount, compact = false }
 
 // ─────────────────────────────────────────────────────────────────────────
 // CommentCard — with AI generate reply button
+// Platform-aware: meta uses commentId + pageAccessToken; linkedin uses
+// comment/post URNs and the bearer-token-only endpoints.
 // ─────────────────────────────────────────────────────────────────────────
-function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated, onReplySuccess, compact = false }: {
+function CommentCard({
+  comment, postId, pageAccessToken, aiEntry, onAiGenerated, onReplySuccess,
+  compact = false, platform, postLabel, actorUrn,
+}: {
   comment: DbComment;
-  postId: string;
-  pageAccessToken: string;
-  aiEntry?: AiGeneratedEntry;         // existing ai-generated reply for this comment
+  postId: string; // urn for linkedin, numeric id for meta
+  pageAccessToken: string; // unused for linkedin
+  aiEntry?: AiGeneratedEntry;
   onAiGenerated: (commentId: string, entry: AiGeneratedEntry) => void;
   onReplySuccess?: () => void;
   compact?: boolean;
+  platform: PlatformTabKey;
+  postLabel: string;
+  actorUrn?: string; // required for linkedin replies
 }) {
   const [replying, setReplying]     = useState(false);
   const [message, setMessage]       = useState('');
@@ -413,7 +444,6 @@ function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated,
   const [aiError, setAiError]             = useState('');
   const [localAiEntry, setLocalAiEntry]   = useState<AiGeneratedEntry | undefined>(aiEntry);
 
-  // Sync prop changes (when parent refreshes posts after bulk generate)
   useEffect(() => { setLocalAiEntry(aiEntry); }, [aiEntry]);
 
   const displayReplies: (DbReply | LiveReply)[] = liveReplies ?? comment.replies ?? [];
@@ -423,16 +453,22 @@ function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated,
   const fetchLiveReplies = useCallback(async () => {
     setLoadingReplies(true); setRepliesError('');
     try {
-      const data = await apiFetch<LiveReply[]>(
-        `/meta-reviews/comments/${comment.commentId}/replies?pageAccessToken=${encodeURIComponent(pageAccessToken)}`,
-      );
-      setLiveReplies(data);
+      const data = platform === 'linkedin'
+        ? (await apiFetch<{ replies: LiveReply[] }>(
+            `/linkedin-reviews/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(comment.commentId)}/replies`,
+          )).replies ?? (await apiFetch<LiveReply[]>(
+            `/linkedin-reviews/posts/${encodeURIComponent(postId)}/comments/${encodeURIComponent(comment.commentId)}/replies`,
+          ))
+        : await apiFetch<LiveReply[]>(
+            `/meta-reviews/comments/${comment.commentId}/replies?pageAccessToken=${encodeURIComponent(pageAccessToken)}`,
+          );
+      setLiveReplies(Array.isArray(data) ? data : []);
     } catch (e: any) {
       setRepliesError(e.message || 'Failed to load replies');
     } finally {
       setLoadingReplies(false);
     }
-  }, [comment.commentId, pageAccessToken]);
+  }, [comment.commentId, pageAccessToken, platform, postId]);
 
   const toggleReplies = () => {
     const next = !showReplies;
@@ -444,10 +480,17 @@ function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated,
     if (!message.trim() || sending) return;
     setSending(true); setReplyError('');
     try {
-      await apiFetch<{ success: boolean; commentId: string }>(
-        `/meta-reviews/comments/${comment.commentId}/reply`,
-        { method: 'POST', body: JSON.stringify({ message: message.trim(), pageAccessToken }) },
-      );
+      if (platform === 'linkedin') {
+        await apiFetch<{ success: boolean; commentId: string }>(
+          `/linkedin-reviews/comments/reply`,
+          { method: 'POST', body: JSON.stringify({ targetUrn: comment.commentId, message: message.trim(), actorUrn }) },
+        );
+      } else {
+        await apiFetch<{ success: boolean; commentId: string }>(
+          `/meta-reviews/comments/${comment.commentId}/reply`,
+          { method: 'POST', body: JSON.stringify({ message: message.trim(), pageAccessToken }) },
+        );
+      }
       setReplying(false); setMessage('');
       setShowReplies(true);
       fetchLiveReplies();
@@ -464,10 +507,10 @@ function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated,
     e.stopPropagation();
     setGeneratingAi(true); setAiError('');
     try {
-      const result = await apiFetch<GenerateMetaReplyResult>(
-        `/generate-meta-reply/${encodeURIComponent(postId)}/${encodeURIComponent(comment.commentId)}`,
-        { method: 'POST' },
-      );
+      const endpoint = platform === 'linkedin'
+        ? `/generate-linkedin-reply/${encodeURIComponent(postId)}/${encodeURIComponent(comment.commentId)}`
+        : `/generate-meta-reply/${encodeURIComponent(postId)}/${encodeURIComponent(comment.commentId)}`;
+      const result = await apiFetch<GenerateMetaReplyResult>(endpoint, { method: 'POST' });
       const entry: AiGeneratedEntry = { reply: result.reply, generatedAt: new Date().toISOString() };
       setLocalAiEntry(entry);
       onAiGenerated(comment.commentId, entry);
@@ -528,6 +571,9 @@ function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated,
               generatedAt={localAiEntry.generatedAt}
               commentId={comment.commentId}
               pageAccessToken={pageAccessToken}
+              platform={platform}
+              postLabel={postLabel}
+              actorUrn={actorUrn}
             />
           )}
 
@@ -584,10 +630,12 @@ function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated,
 // ─────────────────────────────────────────────────────────────────────────
 // FeedPostSection
 // ─────────────────────────────────────────────────────────────────────────
-function FeedPostSection({ post, pageName, pagePicture, view, onOpenComments, onPostUpdated }: {
+function FeedPostSection({ post, pageName, pagePicture, view, onOpenComments, onPostUpdated, platform, platformLabel }: {
   post: DbPost; pageName: string; pagePicture: string | null;
   view: ViewMode; onOpenComments: (post: DbPost) => void;
   onPostUpdated: (updatedPost: DbPost) => void;
+  platform: PlatformTabKey;
+  platformLabel: string;
 }) {
   const compact = view === 'grid';
   const comments = post.comments ?? [];
@@ -600,11 +648,12 @@ function FeedPostSection({ post, pageName, pagePicture, view, onOpenComments, on
   const [postBulkDone, setPostBulkDone]     = useState(false);
 
   const handleGenerateForPost = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // don't open panel
+    e.stopPropagation();
     if (generatingPost || pendingCount === 0) return;
     setGeneratingPost(true); setPostBulkDone(false);
     try {
-      const result = await apiFetch<GenerateMetaRepliesResult>('/generate-meta-replies', { method: 'POST' });
+      const endpoint = platform === 'linkedin' ? '/generate-linkedin-replies' : '/generate-meta-replies';
+      const result = await apiFetch<GenerateMetaRepliesResult>(endpoint, { method: 'POST' });
       const nextMap = { ...aiGenerated };
       for (const r of result.results) {
         if (r.postId === post.postId) {
@@ -628,7 +677,7 @@ function FeedPostSection({ post, pageName, pagePicture, view, onOpenComments, on
       aria-label={`Open comments for ${post.title || 'this post'}`}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenComments(post); } }}
     >
-      <PostCard post={post} pageName={pageName} pagePicture={pagePicture} commentCount={comments.length} compact={compact} />
+      <PostCard post={post} pageName={pageName} pagePicture={pagePicture} commentCount={comments.length} compact={compact} platformLabel={platformLabel} />
 
       <div className={`par-comments-toggle${hasComments ? '' : ' is-disabled'}`}>
         <span className="par-comments-toggle-label">
@@ -666,12 +715,15 @@ function FeedPostSection({ post, pageName, pagePicture, view, onOpenComments, on
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// CommentsSidePanel — comments + per-comment AI generate + Post on FB
+// CommentsSidePanel — comments + per-comment AI generate + Post button
 // ─────────────────────────────────────────────────────────────────────────
-function CommentsSidePanel({ post, pageName, pagePicture, pageAccessToken, onClose, onPostUpdated }: {
+function CommentsSidePanel({ post, pageName, pagePicture, pageAccessToken, onClose, onPostUpdated, platform, platformLabel, actorUrn }: {
   post: DbPost; pageName: string; pagePicture: string | null;
   pageAccessToken: string; onClose: () => void;
   onPostUpdated: (updatedPost: DbPost) => void;
+  platform: PlatformTabKey;
+  platformLabel: string;
+  actorUrn?: string;
 }) {
   const [aiGenerated, setAiGenerated] = useState<Record<string, AiGeneratedEntry>>(
     post['ai-generated'] ?? {},
@@ -723,7 +775,7 @@ function CommentsSidePanel({ post, pageName, pagePicture, pageAccessToken, onClo
           {post.thumbnail && <img src={post.thumbnail} alt="" className="par-panel-post-image" loading="lazy" />}
           {post.permalink && (
             <a href={post.permalink} target="_blank" rel="noreferrer" className="par-panel-post-link">
-              View on Facebook <ExternalLink size={11} />
+              View on {platformLabel} <ExternalLink size={11} />
             </a>
           )}
 
@@ -748,6 +800,9 @@ function CommentsSidePanel({ post, pageName, pagePicture, pageAccessToken, onClo
                   pageAccessToken={pageAccessToken}
                   aiEntry={aiGenerated[c.commentId]}
                   onAiGenerated={handleSingleAiGenerated}
+                  platform={platform}
+                  postLabel={platformLabel}
+                  actorUrn={actorUrn}
                 />
               ))}
             </div>
@@ -764,6 +819,7 @@ function CommentsSidePanel({ post, pageName, pagePicture, pageAccessToken, onClo
 export default function PostAdReviews() {
   const [tab, setTab] = useState<PlatformTabKey>('meta');
 
+  // ── Meta state ──
   const [pages, setPages]                   = useState<MetaPage[]>([]);
   const [selectedPageId, setSelectedPageId] = useState<string>('');
   const [loadingPages, setLoadingPages]     = useState(false);
@@ -776,6 +832,14 @@ export default function PostAdReviews() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
   const [pageStats, setPageStats]   = useState<DbPageStats | null>(null);
+
+  // ── LinkedIn state (parallel, live — no DB/sync layer yet) ──
+  const [liOrgs, setLiOrgs]                       = useState<LinkedInOrg[]>([]);
+  const [selectedLiOrgUrn, setSelectedLiOrgUrn]   = useState<string>('');
+  const [loadingLiOrgs, setLoadingLiOrgs]         = useState(false);
+  const [liPosts, setLiPosts]                     = useState<DbPost[]>([]);
+  const [loadingLiPosts, setLoadingLiPosts]       = useState(false);
+  const [liLastFetchedAt, setLiLastFetchedAt]     = useState<string | null>(null);
 
   const [selectedPostId, setSelectedPostId] = useState<string>('all');
   const [search, setSearch]                 = useState('');
@@ -790,14 +854,27 @@ export default function PostAdReviews() {
   const LIMIT = 12;
 
   const selectedPage = useMemo(() => pages.find(p => p.pageId === selectedPageId) ?? null, [pages, selectedPageId]);
+  const selectedLiOrg = useMemo(() => liOrgs.find(o => o.pageUrn === selectedLiOrgUrn) ?? null, [liOrgs, selectedLiOrgUrn]);
+
+  // Active platform's data, unified so the rest of the render logic is shared
+  const activePosts = tab === 'linkedin' ? liPosts : dbPosts;
+  const activeLoadingPosts = tab === 'linkedin' ? loadingLiPosts : loadingPosts;
+  const activePlatformLabel = PLATFORM_CONFIG[tab].label;
+  const activePageName = tab === 'linkedin' ? (selectedLiOrg?.pageName ?? '') : (selectedPage?.pageName ?? '');
+  const activePagePicture = tab === 'linkedin' ? (selectedLiOrg?.picture ?? null) : (selectedPage?.picture ?? null);
+  const activeAccessToken = tab === 'linkedin' ? '' : (selectedPage?.pageAccessToken ?? '');
 
   // ── Update a post in state (called from panel when ai-generated map changes) ──
   const handlePostUpdated = useCallback((updatedPost: DbPost) => {
-    setDbPosts(prev => prev.map(p => p.postId === updatedPost.postId ? updatedPost : p));
-    // Also update panelPost so the panel re-renders with fresh data
+    if (tab === 'linkedin') {
+      setLiPosts(prev => prev.map(p => p.postId === updatedPost.postId ? updatedPost : p));
+    } else {
+      setDbPosts(prev => prev.map(p => p.postId === updatedPost.postId ? updatedPost : p));
+    }
     setPanelPost(prev => prev?.postId === updatedPost.postId ? updatedPost : prev);
-  }, []);
+  }, [tab]);
 
+  // ───────────────────────────── Meta loaders ─────────────────────────────
   const loadPages = useCallback(async () => {
     setError(''); setLoadingPages(true);
     try {
@@ -821,7 +898,7 @@ export default function PostAdReviews() {
     } catch { setPageStats(null); }
   }, [selectedPageId]);
 
-  useEffect(() => { loadPageStats(); }, [loadPageStats]);
+  useEffect(() => { if (tab === 'meta') loadPageStats(); }, [loadPageStats, tab]);
 
   const loadDbPosts = useCallback(async (page = 1) => {
     if (!selectedPageId) return;
@@ -843,15 +920,16 @@ export default function PostAdReviews() {
   }, [selectedPageId, search]);
 
   useEffect(() => {
+    if (tab !== 'meta') return;
     setDbPosts([]); setCurrentPage(1); setSelectedPostId('all'); setPanelPost(null);
     if (selectedPageId) loadDbPosts(1);
-  }, [selectedPageId]);
+  }, [selectedPageId, tab]);
 
   useEffect(() => {
-    if (!selectedPageId) return;
+    if (tab !== 'meta' || !selectedPageId) return;
     const t = setTimeout(() => loadDbPosts(1), 400);
     return () => clearTimeout(t);
-  }, [search]);
+  }, [search, tab]);
 
   const handleSync = useCallback(async () => {
     if (!selectedPage || syncStatus === 'syncing') return;
@@ -870,27 +948,107 @@ export default function PostAdReviews() {
   }, [selectedPage, syncStatus, loadDbPosts, loadPageStats]);
 
   useEffect(() => {
-    if (selectedPage && !loadingPosts && dbPosts.length === 0 && syncStatus === 'idle' && pageStats !== null && pageStats.totalPosts === 0) {
+    if (tab === 'meta' && selectedPage && !loadingPosts && dbPosts.length === 0 && syncStatus === 'idle' && pageStats !== null && pageStats.totalPosts === 0) {
       handleSync();
     }
-  }, [selectedPage, loadingPosts, dbPosts.length, syncStatus, pageStats]);
+  }, [selectedPage, loadingPosts, dbPosts.length, syncStatus, pageStats, tab]);
 
+  // ──────────────────────────── LinkedIn loaders ────────────────────────────
+  const loadLiOrgs = useCallback(async () => {
+    setError(''); setLoadingLiOrgs(true);
+    try {
+      const data = await apiFetch<LinkedInOrg[]>('/linkedin-reviews/organizations');
+      setLiOrgs(data);
+      if (data.length > 0) setSelectedLiOrgUrn(prev => prev || data[0].pageUrn);
+    } catch (e: any) {
+      setError(e.message || 'Failed to load Organizations. Make sure LinkedIn is connected.');
+    } finally {
+      setLoadingLiOrgs(false);
+    }
+  }, []);
+
+  useEffect(() => { if (tab === 'linkedin') loadLiOrgs(); }, [tab, loadLiOrgs]);
+
+  // LinkedIn comments endpoint requires MDP partner approval — fetch is best-effort,
+  // posts still render even if a given post's comments call fails.
+  const loadLiPosts = useCallback(async () => {
+    if (!selectedLiOrgUrn) return;
+    setError(''); setLoadingLiPosts(true);
+    try {
+      const rawPosts = await apiFetch<any[]>(
+        `/linkedin-reviews/pages/${encodeURIComponent(selectedLiOrgUrn)}/posts?limit=20`,
+      );
+
+      const withComments: DbPost[] = await Promise.all(
+        rawPosts.map(async (p) => {
+          let comments: DbComment[] = [];
+          try {
+            const raw = await apiFetch<any[]>(
+              `/linkedin-reviews/posts/${encodeURIComponent(p.postUrn)}/comments?limit=25`,
+            );
+            comments = (raw || []).map((c: any) => ({
+              commentId: c.commentId,
+              authorName: c.authorName,
+              authorInitial: c.authorInitial,
+              text: c.text,
+              createdAt: c.createdAt,
+              likeCount: c.likeCount ?? 0,
+              replyCount: c.replyCount ?? 0,
+              replies: [],
+            }));
+          } catch {
+            // comments endpoint needs MDP approval — leave empty, post still shows
+          }
+          return {
+            postId: p.postUrn,
+            pageId: selectedLiOrgUrn,
+            pageName: selectedLiOrg?.pageName ?? '',
+            message: p.message,
+            title: p.title,
+            permalink: p.permalink,
+            thumbnail: p.thumbnail,
+            postedAt: p.createdAt,
+            commentCount: comments.length,
+            comments,
+            syncedAt: new Date().toISOString(),
+            'ai-generated': {},
+          };
+        }),
+      );
+
+      setLiPosts(withComments);
+      setLiLastFetchedAt(new Date().toISOString());
+    } catch (e: any) {
+      setError(e.message || 'Failed to load LinkedIn posts.');
+    } finally {
+      setLoadingLiPosts(false);
+    }
+  }, [selectedLiOrgUrn, selectedLiOrg]);
+
+  useEffect(() => {
+    if (tab !== 'linkedin') return;
+    setLiPosts([]); setSelectedPostId('all'); setPanelPost(null);
+    if (selectedLiOrgUrn) loadLiPosts();
+  }, [selectedLiOrgUrn, tab]);
+
+  // ──────────────────────────── Shared derived data ────────────────────────────
   const displayedPosts = useMemo(() => {
-    if (selectedPostId === 'all') return dbPosts;
-    return dbPosts.filter(p => p.postId === selectedPostId);
-  }, [dbPosts, selectedPostId]);
+    const base = selectedPostId === 'all' ? activePosts : activePosts.filter(p => p.postId === selectedPostId);
+    if (!search) return base;
+    return base.filter(p => (p.message || '').toLowerCase().includes(search.toLowerCase()));
+  }, [activePosts, selectedPostId, search]);
 
-  const totalComments = useMemo(() => dbPosts.reduce((sum, p) => sum + (p.comments?.length ?? 0), 0), [dbPosts]);
+  const totalComments = useMemo(() => activePosts.reduce((sum, p) => sum + (p.comments?.length ?? 0), 0), [activePosts]);
   const totalAiGenerated = useMemo(
-    () => dbPosts.reduce((sum, p) => sum + Object.keys(p['ai-generated'] ?? {}).length, 0),
-    [dbPosts],
+    () => activePosts.reduce((sum, p) => sum + Object.keys(p['ai-generated'] ?? {}).length, 0),
+    [activePosts],
   );
   const totalPending = useMemo(
-    () => dbPosts.reduce((sum, p) => {
+    () => activePosts.reduce((sum, p) => {
       const ai = p['ai-generated'] ?? {};
       return sum + (p.comments ?? []).filter(c => !ai[c.commentId]).length;
     }, 0),
-    [dbPosts],
+    [activePosts],
   );
 
   // Global "Generate All" — generates AI replies for every pending comment across all loaded posts
@@ -898,9 +1056,9 @@ export default function PostAdReviews() {
     if (globalGenerating || totalPending === 0) return;
     setGlobalGenerating(true);
     try {
-      const result = await apiFetch<GenerateMetaRepliesResult>('/generate-meta-replies', { method: 'POST' });
-      // Patch each post in state with newly generated replies
-      setDbPosts(prev => prev.map(post => {
+      const endpoint = tab === 'linkedin' ? '/generate-linkedin-replies' : '/generate-meta-replies';
+      const result = await apiFetch<GenerateMetaRepliesResult>(endpoint, { method: 'POST' });
+      const patch = (prev: DbPost[]) => prev.map(post => {
         const nextMap = { ...(post['ai-generated'] ?? {}) };
         for (const r of result.results) {
           if (r.postId === post.postId) {
@@ -908,8 +1066,8 @@ export default function PostAdReviews() {
           }
         }
         return { ...post, 'ai-generated': nextMap };
-      }));
-      // Also update panelPost if open
+      });
+      if (tab === 'linkedin') setLiPosts(patch); else setDbPosts(patch);
       setPanelPost(prev => {
         if (!prev) return prev;
         const nextMap = { ...(prev['ai-generated'] ?? {}) };
@@ -925,14 +1083,24 @@ export default function PostAdReviews() {
     } finally {
       setGlobalGenerating(false);
     }
-  }, [globalGenerating, totalPending]);
+  }, [globalGenerating, totalPending, tab]);
 
-  const emptyMessage = !selectedPage
-    ? 'Connect your Facebook Page in Settings to get started.'
-    : syncStatus === 'syncing'
-      ? 'Syncing posts from Facebook…'
-      : dbPosts.length === 0
-        ? 'No posts synced yet. Click "Sync from Facebook" to pull your posts.'
+  const isLinkedIn = tab === 'linkedin';
+  const isMeta = tab === 'meta';
+
+  const hasSelectedSource = isLinkedIn ? !!selectedLiOrg : !!selectedPage;
+  const sourceLoading = isLinkedIn ? loadingLiOrgs : loadingPages;
+  const sourceList = isLinkedIn
+    ? liOrgs.map(o => ({ id: o.pageUrn, name: o.pageName }))
+    : pages.map(p => ({ id: p.pageId, name: p.pageName }));
+  const selectedSourceId = isLinkedIn ? selectedLiOrgUrn : selectedPageId;
+
+  const emptyMessage = !hasSelectedSource
+    ? `Connect your ${activePlatformLabel} account in Settings to get started.`
+    : activeLoadingPosts
+      ? `Loading posts from ${activePlatformLabel}…`
+      : activePosts.length === 0
+        ? `No posts loaded yet. Click "Sync from ${activePlatformLabel}" to pull your posts.`
         : 'No posts match the current filter.';
 
   return (
@@ -946,7 +1114,7 @@ export default function PostAdReviews() {
       {/* Stats */}
       <div className="par-stats">
         <StatCard icon={Inbox} label="Comments in view" value={totalComments} tint="linear-gradient(135deg,#5B6EF5,#7C6EF5)" />
-        <StatCard icon={Clock} label="Posts loaded" value={pageStats?.totalPosts ?? dbPosts.length} tint="linear-gradient(135deg,#FBBF24,#F59E0B)" />
+        <StatCard icon={Clock} label="Posts loaded" value={pageStats && isMeta ? pageStats.totalPosts : activePosts.length} tint="linear-gradient(135deg,#FBBF24,#F59E0B)" />
         <StatCard icon={Bot} label="AI replies generated" value={totalAiGenerated} tint="linear-gradient(135deg,#34D399,#059669)" />
       </div>
 
@@ -957,40 +1125,57 @@ export default function PostAdReviews() {
         ))}
       </div>
 
-      {tab !== 'meta' && <ComingSoonBanner platform={PLATFORM_CONFIG[tab].label} />}
+      {tab === 'x' && <ComingSoonBanner platform={PLATFORM_CONFIG[tab].label} />}
 
-      {tab === 'meta' && (
+      {isLinkedIn && (
+        <div className="par-banner par-banner-warning" style={{ marginBottom: 16 }}>
+          Comments &amp; replies on LinkedIn require Marketing Developer Platform partner approval from LinkedIn.
+          If your app isn't approved yet, posts will still load but comment counts may show as 0.
+        </div>
+      )}
+
+      {(isMeta || isLinkedIn) && (
         <>
           {error && <ErrorBanner message={error} />}
 
-          {/* Page selector */}
+          {/* Source selector */}
           <div className="par-selectors">
             <div className="par-field">
               <div className="par-field-label-row">
-                <p className="par-field-label">Facebook Page</p>
-                <button onClick={loadPages} disabled={loadingPages} className="par-refresh-btn" aria-label="Refresh pages list">
-                  <RefreshCw size={12} className={loadingPages ? 'par-spin' : ''} /> Refresh
+                <p className="par-field-label">{isLinkedIn ? 'LinkedIn organization' : 'Facebook Page'}</p>
+                <button
+                  onClick={isLinkedIn ? loadLiOrgs : loadPages}
+                  disabled={sourceLoading}
+                  className="par-refresh-btn"
+                  aria-label={`Refresh ${isLinkedIn ? 'organizations' : 'pages'} list`}
+                >
+                  <RefreshCw size={12} className={sourceLoading ? 'par-spin' : ''} /> Refresh
                 </button>
               </div>
               <SelectBox
-                label="Facebook Page" value={selectedPageId}
-                onChange={(v) => { setSelectedPageId(v); setDbPosts([]); setSelectedPostId('all'); setSyncStatus('idle'); setSyncResult(null); setPageStats(null); setPanelPost(null); }}
-                disabled={loadingPages || pages.length === 0}
+                label={isLinkedIn ? 'LinkedIn organization' : 'Facebook Page'}
+                value={selectedSourceId}
+                onChange={(v) => {
+                  if (isLinkedIn) setSelectedLiOrgUrn(v); else setSelectedPageId(v);
+                  setSelectedPostId('all'); setPanelPost(null);
+                  if (isMeta) { setSyncStatus('idle'); setSyncResult(null); setPageStats(null); }
+                }}
+                disabled={sourceLoading || sourceList.length === 0}
               >
-                {loadingPages ? <option>Loading Pages…</option>
-                  : pages.length === 0 ? <option>No Pages found — connect Facebook in Settings</option>
-                  : pages.map(p => <option key={p.pageId} value={p.pageId}>{p.pageName}</option>)}
+                {sourceLoading ? <option>Loading…</option>
+                  : sourceList.length === 0 ? <option>None found — connect {activePlatformLabel} in Settings</option>
+                  : sourceList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </SelectBox>
             </div>
 
             <div className="par-field">
               <p className="par-field-label">Filter by post</p>
-              <SelectBox label="Filter by post" value={selectedPostId} onChange={setSelectedPostId} disabled={loadingPosts || dbPosts.length === 0}>
-                {loadingPosts ? <option>Loading posts…</option>
-                  : dbPosts.length === 0 ? <option>No posts yet — sync first</option>
+              <SelectBox label="Filter by post" value={selectedPostId} onChange={setSelectedPostId} disabled={activeLoadingPosts || activePosts.length === 0}>
+                {activeLoadingPosts ? <option>Loading posts…</option>
+                  : activePosts.length === 0 ? <option>No posts yet</option>
                   : <>
-                      <option value="all">All posts ({pageStats?.totalComments ?? totalComments} comments)</option>
-                      {dbPosts.map(p => (
+                      <option value="all">All posts ({totalComments} comments)</option>
+                      {activePosts.map(p => (
                         <option key={p.postId} value={p.postId}>
                           {p.title} ({p.comments?.length ?? 0} comments)
                         </option>
@@ -1001,15 +1186,16 @@ export default function PostAdReviews() {
           </div>
 
           {/* Sync bar */}
-          {selectedPage && (
+          {hasSelectedSource && (
             <SyncBar
-              syncedAt={pageStats?.lastSyncedAt ?? null}
-              status={syncStatus}
-              result={syncResult}
-              onSync={handleSync}
+              syncedAt={isLinkedIn ? liLastFetchedAt : (pageStats?.lastSyncedAt ?? null)}
+              status={isLinkedIn ? (loadingLiPosts ? 'syncing' : 'idle') : syncStatus}
+              result={isMeta ? syncResult : null}
+              onSync={isLinkedIn ? loadLiPosts : handleSync}
               totalPending={totalPending}
               onGenerateAll={handleGlobalGenerateAll}
               generatingAll={globalGenerating}
+              platformLabel={activePlatformLabel}
             />
           )}
 
@@ -1028,13 +1214,13 @@ export default function PostAdReviews() {
             </div>
           </div>
 
-          {/* Result count + pagination */}
+          {/* Result count + pagination (Meta only — LinkedIn loads all at once for now) */}
           <div className="par-result-row">
             <p className="par-result-count">
-              {loadingPosts ? 'Loading posts…'
-                : `Showing ${displayedPosts.length} post${displayedPosts.length === 1 ? '' : 's'}` + (dbMeta ? ` of ${dbMeta.total} total` : '')}
+              {activeLoadingPosts ? 'Loading posts…'
+                : `Showing ${displayedPosts.length} post${displayedPosts.length === 1 ? '' : 's'}` + (isMeta && dbMeta ? ` of ${dbMeta.total} total` : '')}
             </p>
-            {dbMeta && dbMeta.totalPages > 1 && (
+            {isMeta && dbMeta && dbMeta.totalPages > 1 && (
               <div className="par-pagination">
                 <button onClick={() => loadDbPosts(currentPage - 1)} disabled={currentPage <= 1 || loadingPosts} className="par-page-btn">‹ Prev</button>
                 <span className="par-page-info">{currentPage} / {dbMeta.totalPages}</span>
@@ -1044,18 +1230,18 @@ export default function PostAdReviews() {
           </div>
 
           {/* Feed */}
-          {syncStatus === 'syncing' && dbPosts.length === 0 ? (
+          {activeLoadingPosts && activePosts.length === 0 ? (
             <div className="par-sync-loading">
               <Loader size={28} className="par-spin" />
-              <p>Fetching all posts, comments and replies from Facebook…</p>
+              <p>Fetching all posts, comments and replies from {activePlatformLabel}…</p>
               <p className="par-sync-loading-sub">This may take a moment for large pages.</p>
             </div>
-          ) : !loadingPosts && displayedPosts.length === 0 ? (
+          ) : !activeLoadingPosts && displayedPosts.length === 0 ? (
             <div className="par-empty">
               <p>{emptyMessage}</p>
-              {dbPosts.length === 0 && selectedPage && syncStatus !== 'syncing' && (
-                <button onClick={handleSync} className="par-sync-btn par-sync-btn-cta">
-                  <RefreshCw size={13} /> Sync from Facebook
+              {activePosts.length === 0 && hasSelectedSource && !activeLoadingPosts && (
+                <button onClick={isLinkedIn ? loadLiPosts : handleSync} className="par-sync-btn par-sync-btn-cta">
+                  <RefreshCw size={13} /> Sync from {activePlatformLabel}
                 </button>
               )}
             </div>
@@ -1065,11 +1251,13 @@ export default function PostAdReviews() {
                 <FeedPostSection
                   key={post.postId}
                   post={post}
-                  pageName={selectedPage?.pageName ?? post.pageName ?? ''}
-                  pagePicture={selectedPage?.picture ?? null}
+                  pageName={activePageName || post.pageName || ''}
+                  pagePicture={activePagePicture}
                   view={view}
                   onOpenComments={setPanelPost}
                   onPostUpdated={handlePostUpdated}
+                  platform={tab}
+                  platformLabel={activePlatformLabel}
                 />
               ))}
             </div>
@@ -1079,11 +1267,14 @@ export default function PostAdReviews() {
           {panelPost && (
             <CommentsSidePanel
               post={panelPost}
-              pageName={selectedPage?.pageName ?? panelPost.pageName ?? ''}
-              pagePicture={selectedPage?.picture ?? null}
-              pageAccessToken={selectedPage?.pageAccessToken ?? ''}
+              pageName={activePageName || panelPost.pageName || ''}
+              pagePicture={activePagePicture}
+              pageAccessToken={activeAccessToken}
               onClose={() => setPanelPost(null)}
               onPostUpdated={handlePostUpdated}
+              platform={tab}
+              platformLabel={activePlatformLabel}
+              actorUrn={selectedLiOrgUrn}
             />
           )}
         </>
@@ -1151,7 +1342,6 @@ export default function PostAdReviews() {
         .par-sync-time { font-size: 12px; color: var(--par-text-tertiary); }
         .par-sync-result { display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--par-success); }
         .par-sync-result-error { color: var(--par-danger); }
-        /* sync-actions: groups the two right-side buttons */
         .par-sync-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
         .par-sync-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600; border: 1px solid rgba(91,110,245,0.35); background: rgba(91,110,245,0.12); color: #A5B4FC; cursor: pointer; transition: all .15s; flex-shrink: 0; white-space: nowrap; }
         .par-sync-btn:hover:not(:disabled) { background: rgba(91,110,245,0.22); border-color: rgba(91,110,245,0.55); }
@@ -1161,13 +1351,11 @@ export default function PostAdReviews() {
         .par-sync-loading p { margin: 0; font-size: 14px; }
         .par-sync-loading-sub { font-size: 12px; color: var(--par-text-tertiary) !important; }
 
-        /* Per-post generate button (on feed card) */
         .par-post-gen-btn { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; padding: 7px 10px; border-radius: 8px; font-size: 11.5px; font-weight: 700; border: 1px solid var(--par-ai-border); background: var(--par-ai-bg); color: var(--par-ai-accent); cursor: pointer; transition: all .15s; white-space: nowrap; }
         .par-post-gen-btn:hover:not(:disabled) { background: rgba(167,139,250,0.16); border-color: rgba(167,139,250,0.38); }
         .par-post-gen-btn:disabled { opacity: 0.55; cursor: not-allowed; }
         .par-post-gen-btn-done { background: rgba(52,211,153,0.07); border-color: rgba(52,211,153,0.2); color: var(--par-success); }
 
-        /* Post on Facebook button (inside AI bubble) */
         .par-ai-bubble-footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
         .par-ai-post-error { margin: 0; font-size: 10.5px; color: var(--par-danger); flex: 1; }
         .par-post-fb-btn { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 7px; font-size: 11.5px; font-weight: 700; border: 1px solid rgba(91,110,245,0.3); background: rgba(91,110,245,0.1); color: #A5B4FC; cursor: pointer; transition: all .15s; white-space: nowrap; }
@@ -1175,7 +1363,6 @@ export default function PostAdReviews() {
         .par-post-fb-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .par-post-fb-btn-done { border-color: rgba(52,211,153,0.25); background: rgba(52,211,153,0.08); color: var(--par-success); }
 
-        /* AI count label in panel heading */
         .par-panel-ai-count { font-size: 11px; font-weight: 600; color: var(--par-ai-accent); margin-left: 2px; }
 
         .par-selectors { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
@@ -1254,28 +1441,23 @@ export default function PostAdReviews() {
         .par-comments-toggle-label { display: flex; align-items: center; gap: 6px; }
         .par-comments-toggle-right { display: flex; align-items: center; gap: 8px; }
 
-        /* AI badge on feed card */
         .par-ai-badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 999px; font-size: 10px; font-weight: 700; background: var(--par-ai-bg); border: 1px solid var(--par-ai-border); color: var(--par-ai-accent); }
 
-        /* Generate All AI button (inside SyncBar) */
         .par-ai-generate-all-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; border: 1px solid var(--par-ai-border); background: rgba(167,139,250,0.12); color: var(--par-ai-accent); cursor: pointer; transition: all .15s; flex-shrink: 0; white-space: nowrap; }
         .par-ai-generate-all-btn:hover:not(:disabled) { background: rgba(167,139,250,0.22); border-color: rgba(167,139,250,0.38); }
         .par-ai-generate-all-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Per-comment AI Generate button */
         .par-ai-gen-btn { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; height: 22px; border-radius: 999px; font-size: 10.5px; font-weight: 700; border: 1px solid var(--par-ai-border); background: var(--par-ai-bg); color: var(--par-ai-accent); cursor: pointer; transition: all .15s; white-space: nowrap; }
         .par-ai-gen-btn:hover:not(:disabled) { background: rgba(167,139,250,0.18); border-color: rgba(167,139,250,0.4); }
         .par-ai-gen-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .par-ai-gen-btn-regen { background: transparent; border-color: rgba(167,139,250,0.15); color: var(--par-text-tertiary); }
         .par-ai-gen-btn-regen:hover:not(:disabled) { background: var(--par-ai-bg); color: var(--par-ai-accent); border-color: var(--par-ai-border); }
 
-        /* AI reply bubble */
         .par-ai-bubble { margin-top: 6px; padding: 9px 12px; background: var(--par-ai-bg); border: 1px solid var(--par-ai-border); border-radius: 12px; border-top-left-radius: 4px; }
         .par-ai-bubble-header { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; font-size: 10.5px; font-weight: 700; color: var(--par-ai-accent); text-transform: uppercase; letter-spacing: 0.04em; }
         .par-ai-bubble-time { font-weight: 400; color: var(--par-text-tertiary); text-transform: none; letter-spacing: 0; margin-left: 2px; }
         .par-ai-bubble-text { margin: 0; font-size: 12.5px; color: #D1D5DB; line-height: 1.55; }
 
-        /* Comment thread */
         .par-comment-thread { min-width: 0; }
         .par-comment-row { display: flex; gap: 8px; align-items: flex-start; min-width: 0; }
         .par-comment-row-nested { margin-top: 8px; margin-left: 14px; padding-left: 12px; border-left: 2px solid rgba(165,180,252,0.3); }
@@ -1302,7 +1484,6 @@ export default function PostAdReviews() {
         .par-send-btn:not(:disabled):hover { transform: translateY(-1px); }
         .par-reply-error { margin: 2px 0 0 12px; font-size: 11px; color: var(--par-danger); }
 
-        /* Side panel */
         .par-panel-layer { position: fixed; inset: 0; z-index: 1000; }
         .par-panel-backdrop { position: absolute; inset: 0; background: rgba(8,9,14,0.6); backdrop-filter: blur(2px); animation: par-fade-in .18s ease; }
         .par-panel { position: absolute; top: 0; right: 0; height: 100%; width: min(440px, 100vw); background: #14151C; border-left: 1px solid var(--par-border-strong); box-shadow: -16px 0 40px rgba(0,0,0,0.35); display: flex; flex-direction: column; animation: par-slide-in .22s cubic-bezier(.16,1,.3,1); }
