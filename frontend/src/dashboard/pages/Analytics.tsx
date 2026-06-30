@@ -126,8 +126,8 @@ export const Analytics: React.FC = () => {
               <YAxis yAxisId="right" orientation="right" stroke="var(--text-secondary)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `$${val / 1000}k`} />
               
               <Tooltip 
-                contentStyle={{ background: '#0f172a', border: '1px solid var(--glass-border)', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
-                itemStyle={{ color: '#fff', fontSize: '0.9rem' }}
+                contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+                itemStyle={{ color: 'var(--text-primary)', fontSize: '0.9rem' }}
                 labelStyle={{ color: 'var(--text-secondary)', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '4px' }}
                 formatter={(value: any, name: any) => [
                   name.includes('Revenue') ? `$${value}` : value, 

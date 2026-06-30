@@ -406,7 +406,7 @@ export const Presentation: React.FC = () => {
                           }}
                         />
                       </div>
-                      <p className="slide-subtitle animate-up stagger-2" style={{ textAlign: 'left', margin: 0, fontSize: '2rem', fontWeight: 300, color: '#94a3b8' }}>
+                      <p className="slide-subtitle animate-up stagger-2" style={{ textAlign: 'left', margin: 0, fontSize: '2rem', fontWeight: 300, color: 'var(--text-secondary)' }}>
                         {slide.subtitle}
                       </p>
                     </div>
@@ -436,7 +436,7 @@ export const Presentation: React.FC = () => {
                       >
                         <div className="feature-icon" style={{ width: '60px', height: '60px', marginBottom: '20px' }}>{p.icon}</div>
                         <h4 style={{ fontSize: '1.4rem', marginBottom: '12px', fontWeight: 700 }}>{p.title}</h4>
-                        <p style={{ fontSize: '0.95rem', color: '#94a3b8', lineHeight: 1.5 }}>{p.desc}</p>
+                        <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{p.desc}</p>
                       </div>
                     ))}
                   </div>
@@ -455,7 +455,7 @@ export const Presentation: React.FC = () => {
                   }}>
                     <div style={{ fontSize: '5rem', fontWeight: 900, color: '#818cf8', letterSpacing: '-2px' }}>{slide.stats}</div>
                     <div>
-                      <div style={{ fontSize: '1.2rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '4px', fontWeight: 600 }}>{slide.statLabel}</div>
+                      <div style={{ fontSize: '1.2rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '4px', fontWeight: 600 }}>{slide.statLabel}</div>
                       <div style={{ color: '#6366f1', marginTop: '4px', fontWeight: 600 }}>Verified by Orchestrator Engine</div>
                     </div>
                   </div>
@@ -508,7 +508,7 @@ export const Presentation: React.FC = () => {
       <div style={{ position: 'fixed', top: '40px', left: '60px', zIndex: 100 }}>
         <div style={{
           height: '70px',
-          background: 'rgba(255, 255, 255, 0.02)',
+          background: 'var(--bg-card)',
           backdropFilter: 'blur(30px)',
           borderRadius: '20px',
           display: 'flex',
@@ -524,7 +524,7 @@ export const Presentation: React.FC = () => {
             borderRadius: '10px',
             fontSize: '0.85rem',
             fontWeight: 900,
-            color: 'white',
+            color: 'var(--text-primary)',
             letterSpacing: '1px',
             boxShadow: '0 0 20px rgba(40, 54, 255, 0.4)'
           }}>

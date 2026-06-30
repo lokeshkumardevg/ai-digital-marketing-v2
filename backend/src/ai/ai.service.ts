@@ -11,6 +11,7 @@ import OpenAI from 'openai';
 import { GoogleGenAI } from '@google/genai';
 import axios from 'axios';
 import { AiAnalysis, AiAnalysisDocument } from './schemas/ai-analysis.schema';
+import { BrandProfile, BrandProfileDocument } from './schemas/brand-profile.schema';
 
 @Injectable()
 export class AiService {
@@ -21,7 +22,9 @@ export class AiService {
   constructor(
     private configService: ConfigService,
     @InjectModel(AiAnalysis.name)
-    private aiAnalysisModel: Model<AiAnalysisDocument>,
+    private readonly aiAnalysisModel: Model<AiAnalysisDocument>,
+    @InjectModel(BrandProfile.name)
+    private readonly brandProfileModel: Model<BrandProfileDocument>,
   ) {
     const apiKey = this.configService.get<string>('OPENAI_API_KEY');
     if (!apiKey) {
@@ -427,6 +430,18 @@ Return data in this exact structure:
         brand: parsed,
       },
     };
+  }
+
+  async getBrandProfile(projectId: string) {
+    return this.brandProfileModel.findOne({ projectId }).lean();
+  }
+
+  async saveBrandProfile(projectId: string, url: string, brandName: string, data: any) {
+    return this.brandProfileModel.findOneAndUpdate(
+      { projectId },
+      { url, brandName, data },
+      { upsert: true, new: true }
+    );
   }
 
   // ── HISTORY ───────────────────────────────────────────────

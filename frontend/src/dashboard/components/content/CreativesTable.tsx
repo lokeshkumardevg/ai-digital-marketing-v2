@@ -100,8 +100,8 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
       <div
         style={{
           borderRadius: '24px',
-          border: '1px solid #2a2a38',
-          background: '#18181f',
+          border: '1px solid var(--glass-border)',
+          background: 'var(--bg-secondary)',
           padding: '64px 24px',
           textAlign: 'center',
         }}
@@ -111,14 +111,14 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
             width: '64px',
             height: '64px',
             borderRadius: '999px',
-            background: '#1e1e27',
+            background: 'var(--bg-elevated)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 16px',
           }}
         >
-          <ImageIcon size={28} color="#5a5a72" />
+          <ImageIcon size={28} color="var(--text-dim)" />
         </div>
 
         <h3
@@ -126,7 +126,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
             margin: 0,
             fontSize: '1rem',
             fontWeight: 700,
-            color: '#f4f4f6',
+            color: 'var(--text-primary)',
           }}
         >
           No content found
@@ -136,7 +136,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
           style={{
             margin: '6px 0 0',
             fontSize: '0.92rem',
-            color: '#8b8b9e',
+            color: 'var(--text-secondary)',
           }}
         >
           AI generated content will appear here after you add it to Content Hub.
@@ -163,8 +163,8 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
               style={{
                 overflow: 'hidden',
                 borderRadius: '24px',
-                border: '1px solid #2a2a38',
-                background: '#18181f',
+                border: '1px solid var(--glass-border)',
+                background: 'var(--bg-card)',
                 boxShadow: isHovered
                   ? '0 18px 40px rgba(0, 0, 0, 0.45)'
                   : '0 4px 12px rgba(0, 0, 0, 0.25)',
@@ -180,7 +180,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                   height: '190px',
                   width: '100%',
                   overflow: 'hidden',
-                  background: '#14141c',
+                  background: 'var(--bg-elevated)',
                 }}
               >
                 {imageSrc ? (
@@ -192,7 +192,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                       height: '100%',
                       objectFit: 'cover',
                       display: 'block',
-                      background: '#14141c',
+                      background: 'var(--bg-elevated)',
                     }}
                   />
                 ) : (
@@ -203,23 +203,23 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      background: '#14141c',
+                      background: 'var(--bg-elevated)',
                     }}
                   >
                     {creative.type === 'video' ? (
                       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 5v14l11-7z" fill="#2a2a38"/>
+                        <path d="M8 5v14l11-7z" fill="var(--glass-border)"/>
                       </svg>
                     ) : creative.type === 'text' || creative.contentType === 'blog' ? (
                       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#2a2a38"/>
-                        <polyline points="14,2 14,8 20,8" fill="#2a2a38"/>
-                        <line x1="16" y1="13" x2="8" y2="13" stroke="#2a2a38" strokeWidth="1"/>
-                        <line x1="16" y1="17" x2="8" y2="17" stroke="#2a2a38" strokeWidth="1"/>
-                        <polyline points="10,9 9,9 8,9" stroke="#2a2a38" strokeWidth="1"/>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="var(--glass-border)"/>
+                        <polyline points="14,2 14,8 20,8" fill="var(--glass-border)"/>
+                        <line x1="16" y1="13" x2="8" y2="13" stroke="var(--glass-border)" strokeWidth="1"/>
+                        <line x1="16" y1="17" x2="8" y2="17" stroke="var(--glass-border)" strokeWidth="1"/>
+                        <polyline points="10,9 9,9 8,9" stroke="var(--glass-border)" strokeWidth="1"/>
                       </svg>
                     ) : (
-                      <ImageIcon size={40} color="#2a2a38" />
+                      <ImageIcon size={40} color="var(--glass-border)" />
                     )}
                   </div>
                 )}
@@ -257,8 +257,8 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                       height: '40px',
                       borderRadius: '999px',
                       border: 'none',
-                      background: 'rgba(30, 30, 39, 0.96)',
-                      color: '#f87171',
+                      background: 'var(--glass-bg)',
+                      color: 'var(--error)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -285,8 +285,8 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                         height: '40px',
                         borderRadius: '999px',
                         border: 'none',
-                        background: 'rgba(30, 30, 39, 0.96)',
-                        color: '#f4f4f6',
+                        background: 'var(--glass-bg)',
+                        color: 'var(--text-primary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -325,8 +325,8 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                         height: '40px',
                         borderRadius: '999px',
                         border: 'none',
-                        background: 'rgba(30, 30, 39, 0.96)',
-                        color: '#a78bfa',
+                        background: 'var(--glass-bg)',
+                        color: 'var(--accent-primary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -362,7 +362,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
 
               <div
                 style={{
-                  borderTop: '1px solid #222230',
+                  borderTop: '1px solid var(--glass-border)',
                   padding: '12px 14px 14px',
                 }}
               >
@@ -372,7 +372,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                     margin: 0,
                     fontSize: '0.98rem',
                     fontWeight: 500,
-                    color: '#f4f4f6',
+                    color: 'var(--text-primary)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -397,7 +397,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                         margin: 0,
                         fontSize: '0.72rem',
                         fontWeight: 400,
-                        color: '#5a5a72',
+                        color: 'var(--text-dim)',
                         lineHeight: 1.2,
                       }}
                     >
@@ -408,7 +408,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#f4f4f6',
+                        color: 'var(--text-primary)',
                         lineHeight: 1.2,
                       }}
                     >
@@ -422,7 +422,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                         margin: 0,
                         fontSize: '0.72rem',
                         fontWeight: 400,
-                        color: '#5a5a72',
+                        color: 'var(--text-dim)',
                         lineHeight: 1.2,
                       }}
                     >
@@ -433,7 +433,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#f4f4f6',
+                        color: 'var(--text-primary)',
                         lineHeight: 1.2,
                       }}
                     >
@@ -447,7 +447,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                         margin: 0,
                         fontSize: '0.72rem',
                         fontWeight: 400,
-                        color: '#5a5a72',
+                        color: 'var(--text-dim)',
                         lineHeight: 1.2,
                       }}
                     >
@@ -458,7 +458,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#f4f4f6',
+                        color: 'var(--text-primary)',
                         lineHeight: 1.2,
                       }}
                     >
@@ -472,7 +472,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                         margin: 0,
                         fontSize: '0.72rem',
                         fontWeight: 400,
-                        color: '#5a5a72',
+                        color: 'var(--text-dim)',
                         lineHeight: 1.2,
                       }}
                     >
@@ -483,7 +483,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
                         margin: '8px 0 0',
                         fontSize: '0.78rem',
                         fontWeight: 700,
-                        color: '#f4f4f6',
+                        color: 'var(--text-primary)',
                         lineHeight: 1.2,
                       }}
                     >
@@ -580,9 +580,9 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
             min-width: 38px;
             height: 38px;
             border-radius: 12px;
-            border: 1px solid #2a2a38;
-            background: #18181f;
-            color: #f4f4f6;
+            border: 1px solid var(--glass-border);
+            background: var(--bg-card);
+            color: var(--text-primary);
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -594,15 +594,15 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
 
           .creatives-pagination-arrow:hover:not(:disabled),
           .creatives-pagination-page:hover:not(.active) {
-            border-color: #3a3a50;
-            background: #1e1e27;
+            border-color: var(--text-dim);
+            background: var(--bg-elevated);
           }
 
           .creatives-pagination-page.active {
-            background: #6d28d9;
-            border-color: #6d28d9;
-            color: #ffffff;
-            box-shadow: 0 10px 24px rgba(109, 40, 217, 0.35);
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+            box-shadow: var(--accent-glow);
           }
 
           .creatives-pagination-arrow:disabled {
@@ -613,7 +613,7 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
           .creatives-pagination-ellipsis {
             min-width: 24px;
             text-align: center;
-            color: #5a5a72;
+            color: var(--text-dim);
             font-weight: 700;
           }
         `}

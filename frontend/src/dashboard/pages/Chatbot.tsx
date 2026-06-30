@@ -333,7 +333,7 @@ export const ChatbotBuilder: React.FC = () => {
                 value={inputText}
                 onChange={e => setInputText(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
-                style={{ flex: 1, padding: '10px', background: 'rgba(255,255,255,0.02)' }}
+                style={{ flex: 1, padding: '10px', background: 'var(--bg-card)' }}
               />
               <button className="btn btn-primary" onClick={handleSendMessage} disabled={isTyping} style={{ padding: '10px' }}>
                 <Send size={16} />

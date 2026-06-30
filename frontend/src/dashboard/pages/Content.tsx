@@ -660,7 +660,7 @@ const filtered = creatives.filter((c) => {
   );
 });
   return (
-    <div style={{ minHeight: '100%', background: '#0f1117' }}>
+    <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
       <ContentTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div style={{ padding: '20px 32px' }}>
@@ -695,7 +695,7 @@ const filtered = creatives.filter((c) => {
       style={{
         position: 'absolute',
         inset: 0,
-        background: 'rgba(15,17,23,0.65)',
+        // background: 'rgba(15,17,23,0.65)',
         backdropFilter: 'blur(2px)',
         borderRadius: '20px',
         display: 'flex',
@@ -744,7 +744,7 @@ const filtered = creatives.filter((c) => {
           genType: payload.type,
           selectedImages: [],
           promptOnly: true,
-          workspaceType: payload.type, // ✅ ADD
+          workspaceType: payload.type, 
         },
       });
 
@@ -788,11 +788,11 @@ const filtered = creatives.filter((c) => {
       style={{
         width: '100%',
         maxWidth: '860px',
-        background: '#1a1d27',
+        background: 'var(--bg-card)',
         borderRadius: '32px',
         padding: '24px',
         boxShadow: '0 30px 80px rgba(0, 0, 0, 0.6)',
-        border: '1px solid #2a2d3a',
+        border: '1px solid var(--glass-border)',
       }}
     >
       <div
@@ -805,10 +805,10 @@ const filtered = creatives.filter((c) => {
         }}
       >
         <div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f0f0f5' }}>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
             {previewCreative.name}
           </div>
-          <div style={{ marginTop: '4px', fontSize: '0.9rem', color: '#6b7280' }}>
+          <div style={{ marginTop: '4px', fontSize: '0.9rem', color: 'var(--text-dim)' }}>
             {previewCreative.platform} • {previewCreative.uploadDate}
           </div>
         </div>
@@ -821,10 +821,10 @@ const filtered = creatives.filter((c) => {
             height: '42px',
             borderRadius: '999px',
             border: '1px solid #2e3141',
-            background: '#22253a',
+            background: 'var(--glass-border)',
             cursor: 'pointer',
             fontSize: '1.2rem',
-            color: '#a0a0b0',
+            color: 'var(--text-secondary)',
           }}
         >
           ×
@@ -839,7 +839,7 @@ const filtered = creatives.filter((c) => {
           borderRadius: '20px',
           overflow: 'hidden',
           maxHeight: '70vh',
-          background: '#12141e',
+          background: 'var(--bg-elevated)',
         }}
       >
         <img
@@ -877,23 +877,23 @@ const filtered = creatives.filter((c) => {
       style={{
         width: '100%',
         maxWidth: '520px',
-        background: '#1a1d27',
+        background: 'var(--bg-card)',
         borderRadius: '28px',
         padding: '24px',
         boxShadow: '0 24px 60px rgba(0, 0, 0, 0.5)',
-        border: '1px solid #2a2d3a',
+        border: '1px solid var(--glass-border)',
       }}
     >
-      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#f0f0f5', marginBottom: '18px' }}>
+      <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '18px' }}>
         Creative Details
       </div>
 
-      <div style={{ display: 'grid', gap: '12px', color: '#c9cad4' }}>    
-        <div><strong style={{ color: '#f0f0f5' }}>Name:</strong> {watchCreative.name}</div>
-        <div><strong style={{ color: '#f0f0f5' }}>Status:</strong> {watchCreative.status}</div>
-        <div><strong style={{ color: '#f0f0f5' }}>Upload Date:</strong> {watchCreative.uploadDate}</div>
-        <div><strong style={{ color: '#f0f0f5' }}>Lifetime Start:</strong> {watchCreative.lifetimeStartRaw ? new Date(watchCreative.lifetimeStartRaw).toLocaleDateString() : '-'}</div>
-        <div><strong style={{ color: '#f0f0f5' }}>Lifetime End:</strong> {watchCreative.lifetimeEndRaw ? new Date(watchCreative.lifetimeEndRaw).toLocaleDateString() : '-'}</div>
+      <div style={{ display: 'grid', gap: '12px', color: 'var(--text-primary)' }}>    
+        <div><strong style={{ color: 'var(--text-primary)' }}>Name:</strong> {watchCreative.name}</div>
+        <div><strong style={{ color: 'var(--text-primary)' }}>Status:</strong> {watchCreative.status}</div>
+        <div><strong style={{ color: 'var(--text-primary)' }}>Upload Date:</strong> {watchCreative.uploadDate}</div>
+        <div><strong style={{ color: 'var(--text-primary)' }}>Lifetime Start:</strong> {watchCreative.lifetimeStartRaw ? new Date(watchCreative.lifetimeStartRaw).toLocaleDateString() : '-'}</div>
+        <div><strong style={{ color: 'var(--text-primary)' }}>Lifetime End:</strong> {watchCreative.lifetimeEndRaw ? new Date(watchCreative.lifetimeEndRaw).toLocaleDateString() : '-'}</div>
       </div>
     </div>
   </div>
@@ -917,7 +917,7 @@ const filtered = creatives.filter((c) => {
         width: '100%',
         maxWidth: '520px',
         height: '100vh',
-        background: '#1a1d27',
+        background: 'var(--bg-card)',
         boxShadow: '-20px 0 60px rgba(0, 0, 0, 0.5)',
         padding: '28px 28px 24px',
         overflowY: 'auto',
@@ -931,7 +931,7 @@ const filtered = creatives.filter((c) => {
           marginBottom: '28px',
         }}
       >
-        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f0f0f5' }}>
+        <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
           Edit
         </div>
 
@@ -943,10 +943,10 @@ const filtered = creatives.filter((c) => {
             height: '42px',
             borderRadius: '999px',
             border: '1px solid #2e3141',
-            background: '#22253a',
+            background: 'var(--glass-border)',
             cursor: 'pointer',
             fontSize: '1.2rem',
-            color: '#a0a0b0',
+            color: 'var(--text-secondary)',
           }}
         >
           ×
@@ -954,7 +954,7 @@ const filtered = creatives.filter((c) => {
       </div>
 
       <div style={{ marginBottom: '22px' }}>
-        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 700, color: '#f0f0f5' }}>
+        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 700, color: 'var(--text-primary)' }}>
           Creative Name
         </label>
         <input
@@ -969,14 +969,14 @@ const filtered = creatives.filter((c) => {
             padding: '0 18px',
             fontSize: '1rem',
             outline: 'none',
-            background: '#12141e',
-            color: '#f0f0f5',
+            background: 'var(--bg-elevated)',
+            color: 'var(--text-primary)',
           }}
         />
       </div>
 
       <div style={{ marginBottom: '22px' }}>
-        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 700, color: '#f0f0f5' }}>
+        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 700, color: 'var(--text-primary)' }}>
           Limited Lifetime
         </label>
 
@@ -993,8 +993,8 @@ const filtered = creatives.filter((c) => {
               padding: '0 18px',
               fontSize: '1rem',
               outline: 'none',
-              background: '#12141e',
-              color: '#f0f0f5',
+              background: 'var(--bg-elevated)',
+              color: 'var(--text-primary)',
               colorScheme: 'dark',
             }}
           />
@@ -1011,8 +1011,8 @@ const filtered = creatives.filter((c) => {
               padding: '0 18px',
               fontSize: '1rem',
               outline: 'none',
-              background: '#12141e',
-              color: '#f0f0f5',
+              background: 'var(--bg-elevated)',
+              color: 'var(--text-primary)',
               colorScheme: 'dark',
             }}
           />
@@ -1029,8 +1029,8 @@ const filtered = creatives.filter((c) => {
             padding: '0 24px',
             borderRadius: '999px',
             border: '1px solid #2e3141',
-            background: '#22253a',
-            color: '#c9cad4',
+            background: 'var(--glass-border)',
+            color: 'var(--text-primary)',
             fontWeight: 700,
             cursor: 'pointer',
           }}
@@ -1049,7 +1049,7 @@ const filtered = creatives.filter((c) => {
             borderRadius: '999px',
             border: 'none',
             background: 'linear-gradient(90deg, #8b5cf6 0%, #6d28d9 100%)',
-            color: '#fff',
+            color: 'var(--text-primary)',
             fontWeight: 700,
             cursor: isUpdatingCreative ? 'not-allowed' : 'pointer',
             opacity: isUpdatingCreative ? 0.75 : 1,

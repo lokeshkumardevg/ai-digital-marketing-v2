@@ -220,14 +220,14 @@ export const Social: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(400px, 1fr) 1fr', gap: '24px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <GlassCard>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc'}}>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)'}}>
               <Share2 size={20} color="#6366f1" /> Platform Connections
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
               Connect OAuth accounts and choose destinations for each post.
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: '#f8fafc' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: 'var(--text-primary)' }}>
               {platformCards.map((platform) => (
                 <div
                   key={platform.id}
@@ -252,7 +252,7 @@ export const Social: React.FC = () => {
                         height: '32px',
                         borderRadius: '8px',
                         background: platform.color,
-                        color: '#fff',
+                        color: 'var(--text-primary)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -440,7 +440,7 @@ export const Social: React.FC = () => {
                   <input
                     type="datetime-local"
                     className="input-field"
-                    style={{ padding: '6px 12px', height: 'auto', background: 'rgba(255,255,255,0.05)', fontSize: '0.85rem' }}
+                    style={{ padding: '6px 12px', height: 'auto', background: 'var(--bg-card)', fontSize: '0.85rem' }}
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
                   />

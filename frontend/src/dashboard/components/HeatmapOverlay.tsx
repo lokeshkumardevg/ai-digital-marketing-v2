@@ -20,13 +20,13 @@ export const HeatmapOverlay: React.FC = () => {
         <div style={{ display: 'flex', background: 'var(--bg-secondary)', padding: '4px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
            <button 
              onClick={() => setActiveTab('clicks')}
-             style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: activeTab === 'clicks' ? 'var(--accent-primary)' : 'transparent', color: '#fff', cursor: 'pointer', fontSize: '0.8rem' }}
+             style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: activeTab === 'clicks' ? 'var(--accent-primary)' : 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.8rem' }}
            >
              Click Density
            </button>
            <button 
              onClick={() => setActiveTab('scroll')}
-             style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: activeTab === 'scroll' ? 'var(--accent-primary)' : 'transparent', color: '#fff', cursor: 'pointer', fontSize: '0.8rem' }}
+             style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: activeTab === 'scroll' ? 'var(--accent-primary)' : 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.8rem' }}
            >
              Scroll Depth
            </button>

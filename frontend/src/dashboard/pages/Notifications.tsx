@@ -16,15 +16,15 @@ import type { AppDispatch } from '../../store';
 import toast from 'react-hot-toast';
 
 const D = {
-  bg: '#080d1a',
-  surface: '#0f1629',
-  surfaceAlt: '#141d35',
-  border: 'rgba(99,102,241,0.18)',
+  bg: 'var(--bg-primary)',
+  surface: 'var(--bg-elevated)',
+  surfaceAlt: 'var(--bg-card)',
+  border: 'var(--glass-border)',
   borderGlow: 'rgba(124,58,237,0.35)',
-  purple: '#0665ff',
+  purple: 'var(--accent-primary)',
   purpleSoft: 'rgba(124,58,237,0.12)',
-  purpleText: '#a78bfa',
-  green: '#10b981',
+  purpleText: 'var(--accent-primary)',
+  green: 'var(--success)',
   greenSoft: 'rgba(16,185,129,0.12)',
   red: '#ef4444',
   redSoft: 'rgba(239,68,68,0.12)',
@@ -32,12 +32,12 @@ const D = {
   yellowSoft: 'rgba(245,158,11,0.12)',
   blue: '#3b82f6',
   blueSoft: 'rgba(59,130,246,0.12)',
-  textPrimary: '#f1f5f9',
-  textMuted: '#94a3b8',
-  textDim: '#475569',
-  inputBg: 'rgba(255,255,255,0.04)',
-  white004: 'rgba(255,255,255,0.04)',
-  white008: 'rgba(255,255,255,0.08)',
+  textPrimary: 'var(--text-primary)',
+  textMuted: 'var(--text-secondary)',
+  textDim: 'var(--text-dim)',
+  inputBg: 'var(--bg-card)',
+  white004: 'var(--bg-card)',
+  white008: 'var(--bg-elevated)',
 };
 
 const TYPE_CONFIG: Record<string, { color: string; bg: string; Icon: any }> = {

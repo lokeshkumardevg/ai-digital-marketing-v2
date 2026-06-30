@@ -5,7 +5,10 @@ export type BrandProfileDocument = HydratedDocument<BrandProfile>;
 
 @Schema()
 export class BrandProfile {
-@Prop({ required: true })
+  @Prop({ required: true, index: true })
+  projectId!: string;
+
+  @Prop({ required: true })
   url!: string;
 
   @Prop({ required: true })

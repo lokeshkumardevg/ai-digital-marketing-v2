@@ -1283,6 +1283,36 @@ export default function PostAdReviews() {
         .par-replies-wrap { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
         .par-replies-status { margin: 0; padding-left: 12px; font-size: 11.5px; color: var(--par-text-tertiary); }
         .par-comment-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+
+        .par-avatar {
+          border-radius: 50%;
+          background: linear-gradient(135deg, var(--par-accent-1), var(--par-accent-2));
+          display: flex; align-items: center; justify-content: center;
+          font-weight: 700; color: var(--text-primary); flex-shrink: 0;
+        }
+        .par-avatar-img { object-fit: cover; }
+
+        .par-comment-bubble {
+          background: var(--par-bubble-bg);
+          border-radius: 16px;
+          padding: 8px 12px;
+          display: inline-block;
+          max-width: 100%;
+        }
+        .par-comment-bubble-own { background: var(--par-bubble-bg-own); }
+        .par-bubble-author {
+          margin: 0 0 1px; font-size: 12.5px; font-weight: 700; color: var(--par-text-primary);
+          overflow-wrap: break-word; word-break: break-word;
+        }
+        .par-bubble-text {
+          margin: 0; font-size: 13px; color: #D1D5DB; line-height: 1.5;
+          overflow-wrap: break-word; word-break: break-word;
+        }
+
+        .par-comment-meta-row {
+          display: flex; align-items: center; gap: 12px;
+          padding-left: 12px; flex-wrap: wrap;
+        }
         .par-avatar { border-radius: 50%; background: linear-gradient(135deg, var(--par-accent-1), var(--par-accent-2)); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; flex-shrink: 0; }
         .par-avatar-img { object-fit: cover; border-radius: 50%; }
         .par-comment-bubble { background: var(--par-bubble-bg); border-radius: 16px; padding: 8px 12px; display: inline-block; max-width: 100%; }
@@ -1297,6 +1327,13 @@ export default function PostAdReviews() {
         .par-reply-row-inline { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
         .par-reply-input { flex: 1; min-width: 0; height: 34px; border-radius: 999px; border: 1px solid var(--par-border); background: rgba(255,255,255,0.05); color: var(--par-text-primary); font-size: 12.5px; padding: 0 14px; outline: none; transition: border-color .15s; }
         .par-reply-input:focus { border-color: rgba(91,110,245,0.5); }
+        .par-send-btn {
+          width: 32px; height: 32px; border-radius: 50%; border: none;
+          background: linear-gradient(135deg, var(--par-accent-1), var(--par-accent-2));
+          color: var(--text-primary); cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; transition: opacity .15s ease, transform .1s ease;
+        }
         .par-send-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: linear-gradient(135deg,var(--par-accent-1),var(--par-accent-2)); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity .15s, transform .1s; }
         .par-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .par-send-btn:not(:disabled):hover { transform: translateY(-1px); }

@@ -12,6 +12,7 @@ export class BrandService {
   constructor(
     @InjectModel(Brand.name)
     private readonly brandModel: Model<BrandDocument>,
+  ) { }
     private readonly aiService: AiService,
   ) {}
 
@@ -33,11 +34,11 @@ export class BrandService {
   private resolveBrandName(incoming: any, body: any): string | null {
     // Try every possible location the name could live
     return (
-      incoming?.brand?.name     ||  // { brand: { name } } ← discover API shape
-      incoming?.brandName       ||  // flat brandName field
-      incoming?.name            ||  // direct name
-      body?.brandDetails?.brand?.name  ||  // double-nested fallback
-      body?.name                ||
+      incoming?.brand?.name ||  // { brand: { name } } ← discover API shape
+      incoming?.brandName ||  // flat brandName field
+      incoming?.name ||  // direct name
+      body?.brandDetails?.brand?.name ||  // double-nested fallback
+      body?.name ||
       null
     );
   }
@@ -45,9 +46,9 @@ export class BrandService {
   private mergeAssets(incoming: any, body: any): Record<string, any> {
     // Campaigns.tsx mirrors assets at top level AND inside brandDetails.assets
     // Merge both — prefer non-empty values
-    const fromTopLevel    = body?.assets            ?? {};
-    const fromBrandDetails = incoming?.assets       ?? {};
-    const logoPreview     = incoming?.logoPreview   ?? incoming?.logo ?? null;
+    const fromTopLevel = body?.assets ?? {};
+    const fromBrandDetails = incoming?.assets ?? {};
+    const logoPreview = incoming?.logoPreview ?? incoming?.logo ?? null;
 
     return {
       ...fromBrandDetails,
@@ -61,13 +62,16 @@ export class BrandService {
 
   private normaliseBrandRecord(doc: BrandDocument) {
     return {
-      id:           (doc._id as any).toString(),
-      name:         doc.name,
-      url:          doc.url,
-      status:       doc.status,
-      industry:     doc.industry,
-      tagline:      doc.tagline,
+      id: (doc._id as any).toString(),
+      name: doc.name,
+      url: doc.url,
+      status: doc.status,
+      industry: doc.industry,
+      tagline: doc.tagline,
       overallScore: doc.overallScore,
+      campaignId: doc.campaignId,
+      assets: doc.assets,
+      savedAt: doc.savedAt,
       campaignId:   doc.campaignId,
       assets:       doc.assets,
       savedAt:      doc.savedAt,
@@ -86,7 +90,7 @@ export class BrandService {
     }
 
     return {
-      ok:     true,
+      ok: true,
       brands: [this.normaliseBrandRecord(brand)],
     };
   }
@@ -107,7 +111,7 @@ export class BrandService {
     if (!brandName) {
       console.error('[brand-save] Could not resolve brand name from body:', JSON.stringify(body, null, 2));
       return {
-        ok:      false,
+        ok: false,
         message: 'Brand name could not be resolved from the request payload.',
       };
     }
@@ -116,43 +120,43 @@ export class BrandService {
     const assets = this.mergeAssets(incoming, body);
 
     // ── Step 4: Conflict check ────────────────────────────────
-// ── Step 4: Conflict check ────────────────────────────────
-const existing = await this.brandModel.findOne({ userId });
+    // ── Step 4: Conflict check ────────────────────────────────
+    const existing = await this.brandModel.findOne({ userId });
 
-if (existing && !forceReplace && (existing.name || '').trim().toLowerCase() !== brandName.trim().toLowerCase()) {
-  throw new (await import('@nestjs/common')).ConflictException({
-    ok: false,
-    replaceRequired: true,
-    message: 'Brand already exists',
+    if (existing && !forceReplace && (existing.name || '').trim().toLowerCase() !== brandName.trim().toLowerCase()) {
+      throw new (await import('@nestjs/common')).ConflictException({
+        ok: false,
+        replaceRequired: true,
+        message: 'Brand already exists',
 
-    existingBrand: {
-      id: existing._id,
-      name:
-        existing.name ||
-        existing.brandDetails?.brand?.name ||
-        '',
-    },
+        existingBrand: {
+          id: existing._id,
+          name:
+            existing.name ||
+            existing.brandDetails?.brand?.name ||
+            '',
+        },
 
-    newBrand: {
-      name: brandName,
-    },
-  });
-}
+        newBrand: {
+          name: brandName,
+        },
+      });
+    }
 
     // ── Step 5: Upsert into brands collection ─────────────────
     const payload = {
       userId,
-      name:         brandName,
-      url:          incoming?.website   || incoming?.url || incoming?.brandUrl || '',
-      status:       'active' as const,
-      industry:     incoming?.brand?.industry  || incoming?.industry,
-      tagline:      incoming?.brand?.tagline   || incoming?.tagline,
+      name: brandName,
+      url: incoming?.website || incoming?.url || incoming?.brandUrl || '',
+      status: 'active' as const,
+      industry: incoming?.brand?.industry || incoming?.industry,
+      tagline: incoming?.brand?.tagline || incoming?.tagline,
       overallScore: incoming?.brand?.overallScore || incoming?.overallScore,
-      campaignId:   incoming?.campaignId || body?.campaignId,
+      campaignId: incoming?.campaignId || body?.campaignId,
       assets,
       brandDetails: incoming,   // full snapshot for recovery
       isActiveBrand: true,
-      savedAt:      new Date().toISOString(),
+      savedAt: new Date().toISOString(),
     };
 
     const updated = await this.brandModel.findOneAndUpdate(
@@ -167,10 +171,10 @@ if (existing && !forceReplace && (existing.name || '').trim().toLowerCase() !== 
     this.generateAndSaveProfileInBackground(userId, brandName, updated.url);
 
     return {
-      ok:       true,
+      ok: true,
       replaced: !!existing,
-      message:  existing ? 'Brand replaced successfully' : 'Brand saved successfully',
-      brand:    this.normaliseBrandRecord(updated),
+      message: existing ? 'Brand replaced successfully' : 'Brand saved successfully',
+      brand: this.normaliseBrandRecord(updated),
     };
   }
 

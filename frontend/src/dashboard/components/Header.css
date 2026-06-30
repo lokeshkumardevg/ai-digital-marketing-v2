@@ -6,7 +6,7 @@
   --header-height: 68px;
   --accent-primary: #0665ff;
   --accent-gradient: linear-gradient(135deg, #0665ff 50%, #22d3ee 100%);
-  --glass-border: #0a0f1e;
+  --glass-border: rgba(0, 0, 0, 0.1);
   --radius-pill: 999px;
   --error: #ef4444;
   --success: #10b981;
@@ -21,13 +21,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #0a0f1e;
+  background: var(--bg-secondary);
   border-bottom: 1px solid var(--glass-border);
   position: sticky;
   top: 0;
   z-index: 90;
   gap: 12px;
   box-sizing: border-box;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 /* ── Search ── */
@@ -52,14 +53,14 @@
   width: 100%;
   height: 40px;
   padding: 0 16px 0 42px;
-  background: #0a0f1e;;
-  border: 1px solid #141a36;
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
   font-size: 0.875rem;
   outline: none;
-  color: #1e293b;
+  color: var(--text-primary);
   box-sizing: border-box;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.3s ease, color 0.3s ease;
 }
 
 .header-search__input:focus {
@@ -123,7 +124,7 @@
 
 .wallet-trigger__label {
   font-size: 0.62rem;
-  color: #64748b;
+  color: var(--text-dim);
   font-weight: 500;
   letter-spacing: 0.01em;
 }
@@ -147,11 +148,11 @@
   top: calc(100% + 10px);
   right: 0;
   width: 300px;
-  background: rgba(15, 22, 41, 0.95);
+  background: var(--glass-bg);
   backdrop-filter: blur(25px);
   border-radius: 14px;
-  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--glass-shadow);
+  border: 1px solid var(--glass-border);
   z-index: 300;
   overflow: hidden;
   animation: fadeSlideDown 0.18s ease;
@@ -171,7 +172,7 @@
 .wallet-dropdown__title {
   font-size: 1rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -180,7 +181,7 @@
   cursor: pointer;
   background: none;
   border: none;
-  color: #94a3b8;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   border-radius: 6px;
@@ -215,7 +216,7 @@
 .wallet-dropdown__add-label {
   font-size: 0.82rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
   margin-bottom: 8px;
   display: block;
 }
@@ -230,7 +231,7 @@
   flex: 1;
   padding: 7px 4px;
   background: #f1f5f9;
-  color: #64748b;
+  color: var(--text-dim);
   border: none;
   border-radius: 7px;
   cursor: pointer;
@@ -255,7 +256,7 @@
   margin-bottom: 14px;
   box-sizing: border-box;
   transition: border-color 0.2s;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .wallet-dropdown__custom-input:focus {
@@ -286,7 +287,7 @@
   padding: 9px;
   margin-top: 10px;
   background: #f1f5f9;
-  color: #64748b;
+  color: var(--text-dim);
   border: none;
   border-radius: 7px;
   font-weight: 500;
@@ -350,7 +351,7 @@
   position: absolute;
   right: 0;
   pointer-events: none;
-  color: #94a3b8;
+  color: var(--text-secondary);
   display: flex;
 }
 
@@ -436,7 +437,7 @@
   background: #ef4444;
   border-radius: 10px;
   border: 2px solid #fff;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 9px;
   display: flex;
   align-items: center;
@@ -458,11 +459,11 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: rgba(15, 22, 41, 0.95);
+  background: var(--glass-bg);
   backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
   border-radius: 14px;
-  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--glass-shadow);
   animation: fadeSlideDown 0.18s ease;
 }
 
@@ -477,7 +478,7 @@
 .notif-dropdown__title {
   font-weight: 700;
   font-size: 1rem;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .notif-dropdown__header-actions {
@@ -555,7 +556,7 @@
 .notif-item__title {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .notif-item__message {
@@ -566,7 +567,7 @@
 
 .notif-item__time {
   font-size: 0.72rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
   margin-top: 2px;
 }
 
@@ -595,7 +596,7 @@
 .header-user__name {
   font-size: 0.875rem;
   font-weight: 700;
-  color: #fffdfd;
+  color: var(--text-primary);
   white-space: nowrap;
 }
 
@@ -617,7 +618,7 @@
   justify-content: center;
   font-size: 1.05rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
   box-shadow: 0 4px 12px rgba(112, 51, 245, 0.22);
   flex-shrink: 0;
 }
@@ -665,7 +666,7 @@
   background: rgba(15, 22, 41, 0.98);
   backdrop-filter: blur(30px);
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--glass-border);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
   animation: fadeSlideDown 0.22s ease;
 }
@@ -680,7 +681,7 @@
   font-size: 1.5rem;
   font-weight: 800;
   margin: 0;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
 .text-gradient {
@@ -726,7 +727,7 @@
   transition: border-color 0.2s, box-shadow 0.2s;
   width: 100%;
   box-sizing: border-box;
-  color: #f1f5f9;
+  color: var(--text-primary);
 }
 
 .modal-panel .input-field:focus {

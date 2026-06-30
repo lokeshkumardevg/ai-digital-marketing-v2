@@ -256,7 +256,7 @@ export const Agents: React.FC = () => {
             justify-content: center;
             align-items: center;
             position: relative;
-            color: #e2e8f0;
+            color: var(--text-primary);
             overflow: hidden;
             margin: -20px;
         }
@@ -306,10 +306,10 @@ export const Agents: React.FC = () => {
         .right-column { align-items: flex-start; }
 
         .agent-btn {
-            background: rgba(30, 41, 59, 0.6);
+            background: var(--bg-elevated);
             backdrop-filter: blur(12px);
-            color: #e2e8f0;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
             border-radius: 16px;
             padding: 16px 24px;
             font-size: 15px;
@@ -358,7 +358,7 @@ export const Agents: React.FC = () => {
         .status-sleeping { background: #64748b; }
 
         .premium-btn {
-            background: rgba(15, 23, 42, 0.8);
+            background: var(--glass-bg);
             border: 1px solid rgba(245, 158, 11, 0.3);
             box-shadow: 0 0 20px rgba(245, 158, 11, 0.1);
         }
@@ -372,44 +372,44 @@ export const Agents: React.FC = () => {
 
         .center-logo {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            gap: 16px; z-index: 20; background: rgba(15, 23, 42, 0.6);
+            gap: 16px; z-index: 20; background: var(--bg-card);
             backdrop-filter: blur(24px); padding: 40px; border-radius: 50%;
             width: 220px; height: 220px; border: 1px solid rgba(139, 92, 246, 0.2);
             box-shadow: 0 0 60px rgba(139, 92, 246, 0.15); transition: all 0.4s ease;
         }
         .center-logo:hover { transform: scale(1.05); border-color: rgba(139, 92, 246, 0.4); }
-        .center-logo h1 { font-size: 24px; font-weight: 800; color: #fff; margin: 0; }
+        .center-logo h1 { font-size: 24px; font-weight: 800; color: var(--text-primary); margin: 0; }
 
         .modal {
             position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
+            background-color: var(--glass-bg); backdrop-filter: blur(8px);
             display: flex; justify-content: center; align-items: center;
         }
 
         .modal-content {
-            background-color: #0a0f1e; 
+            background-color: var(--bg-secondary); 
             padding: 32px; border-radius: 24px;
             width: 90%; max-width: 580px; max-height: 85vh; overflow-y: auto;
             box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7); position: relative;
-            color: #e2e8f0;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
             backdrop-filter: blur(20px);
         }
         .modal-content.wide { max-width: 850px; }
 
         .close-btn {
             position: absolute; top: 24px; right: 24px; font-size: 24px; cursor: pointer;
-            color: #94a3b8; background: rgba(255,255,255,0.05); border: none;
+            color: var(--text-secondary); background: var(--bg-elevated); border: none;
             width: 36px; height: 36px; border-radius: 50%; display: flex;
             justify-content: center; align-items: center; transition: all 0.2s;
         }
-        .close-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .close-btn:hover { color: #fff; background: 'var(--glass-border)'; }
 
         .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; color: #cbd5e1; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 14px; color: var(--text-secondary); }
         .form-group input, .form-group textarea {
-            width: 100%; padding: 14px; border: 1px solid #334155; border-radius: 12px;
-            outline: none; color: #fff; background: #0f172a; font-size: 15px;
+            width: 100%; padding: 14px; border: 1px solid var(--glass-border); border-radius: 12px;
+            outline: none; color: var(--text-primary); background: var(--bg-elevated); font-size: 15px;
         }
         .form-group input:focus, .form-group textarea:focus { border-color: #0766f5; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15); }
 
@@ -423,22 +423,22 @@ export const Agents: React.FC = () => {
         #triggerAgentBtn:disabled { opacity: 0.7; cursor: not-allowed; }
 
         pre {
-            background: #0f172a; padding: 16px; border-radius: 12px;
+            background: var(--bg-elevated); padding: 16px; border-radius: 12px;
             font-size: 14px; overflow-x: auto; margin-top: 8px;
-            white-space: pre-wrap; border: 1px solid #334155; color: #e2e8f0;
+            white-space: pre-wrap; border: 1px solid var(--glass-border); color: var(--text-primary);
         }
         
         .action-btn {
-            flex: 1; background: rgba(255,255,255,0.05); color: white;
-            border: 1px solid rgba(255, 255, 255, 0.1); padding: 14px;
+            flex: 1; background: var(--bg-elevated); color: var(--text-primary);
+            border: 1px solid var(--glass-border); padding: 14px;
             border-radius: 10px; cursor: pointer; font-weight: 600;
             display: flex; justify-content: center; align-items: center; gap: 10px;
             transition: all 0.3s;
         }
-        .action-btn:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .action-btn:hover { background: 'var(--glass-border)'; transform: translateY(-2px); }
 
         /* PDF hidden area */
-        #pdf-content-area { background: #050a18; color: white; padding: 40px; font-family: 'Inter', sans-serif; }
+        #pdf-content-area { background: var(--bg-primary); color: var(--text-primary); padding: 40px; font-family: 'Inter', sans-serif; }
       `}</style>
 
       <div className="background-effects">
@@ -463,7 +463,7 @@ export const Agents: React.FC = () => {
         <div style={{
           width: '36px', height: '36px', borderRadius: '10px',
           // background: 'var(--accent-gradient)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', color: '#fff',
+          alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)',
           // boxShadow: '0 8px 16px rgba(112,51,245,0.25)', flexShrink: 0,
         }}>
           <div style={{
@@ -491,7 +491,7 @@ export const Agents: React.FC = () => {
           Wheedle Technologies.ai
         </h2>
       </div>
-          <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>Agent Ecosystem</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>Agent Ecosystem</p>
         </div>
 
         <div className="agent-column right-column">
@@ -509,8 +509,8 @@ export const Agents: React.FC = () => {
         <div className="modal" onClick={(e) => e.target === e.currentTarget && setSelectedAgentKey(null)}>
           <div className={`modal-content ${isWebsiteBuilder ? 'wide' : ''}`}>
             <button className="close-btn" onClick={() => { setSelectedAgentKey(null); setResponseText(''); }}>&times;</button>
-            <h2 style={{ marginBottom: '10px', color: '#fff', fontSize: '1.5rem', fontWeight: 'bold' }}>{selectedConfig.title}</h2>
-            <p style={{ color: '#94a3b8', marginBottom: '24px', fontSize: '14px' }}>Fill in the parameters to trigger the AI workflow.</p>
+            <h2 style={{ marginBottom: '10px', color: 'var(--text-primary)', fontSize: '1.5rem', fontWeight: 'bold' }}>{selectedConfig.title}</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '14px' }}>Fill in the parameters to trigger the AI workflow.</p>
 
             <div id="formContainer" style={{ marginBottom: '20px' }}>
               {selectedConfig.fields.map((field: any) => (
@@ -527,7 +527,7 @@ export const Agents: React.FC = () => {
                     <select
                       onChange={(e) => setFormData({ ...formData, [field.id]: e.target.value })}
                       value={formData[field.id] || ''}
-                      style={{ width: '100%', padding: '14px', border: '1px solid #334155', borderRadius: '12px', outline: 'none', color: '#fff', background: '#0f172a', fontSize: '15px' }}
+                      style={{ width: '100%', padding: '14px', border: '1px solid var(--glass-border)', borderRadius: '12px', outline: 'none', color: 'var(--text-primary)', background: 'var(--bg-elevated)', fontSize: '15px' }}
                     >
                       <option value="">-- Choose Theme --</option>
                       {field.options.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
@@ -554,9 +554,9 @@ export const Agents: React.FC = () => {
               <div style={{ marginTop: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
                   <span style={{ color: '#8b5cf6', fontWeight: '600' }}>{loadingStage}</span>
-                  <span style={{ color: '#94a3b8' }}>{Math.round(progress)}%</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>{Math.round(progress)}%</span>
                 </div>
-                <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', overflow: 'hidden' }}>
+                <div style={{ width: '100%', height: '6px', background: 'var(--glass-border)', borderRadius: '10px', overflow: 'hidden' }}>
                   <div
                     style={{
                       width: `${progress}%`,
@@ -573,7 +573,7 @@ export const Agents: React.FC = () => {
             {responseText && (
               <div id="responseContainer" style={{ marginTop: '30px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                  <h3 style={{ fontSize: '1.1rem', color: '#fff', margin: 0 }}>Agent Output:</h3>
+                  <h3 style={{ fontSize: '1.1rem', color: 'var(--text-primary)', margin: 0 }}>Agent Output:</h3>
                   <button className="action-btn" style={{ padding: '8px 16px', fontSize: '12px' }} onClick={downloadAsPdf}>
                     <i className="fa-solid fa-file-pdf"></i> Save as PDF
                   </button>
@@ -586,12 +586,12 @@ export const Agents: React.FC = () => {
                       <p>Topic: {formData.topic}</p>
                       <div dangerouslySetInnerHTML={{ __html: responseText }} />
                     </div>
-                    <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', background: '#0f172a' }}>
-                      <div style={{ background: '#1e293b', padding: '12px 20px', display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>localhost — Preview</span>
+                    <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid var(--glass-border)', background: 'var(--bg-elevated)' }}>
+                      <div style={{ background: 'var(--bg-card)', padding: '12px 20px', display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>localhost — Preview</span>
                         <span style={{ color: '#3b82f6', fontSize: '12px' }}>AI Architect v1.0</span>
                       </div>
-                      <div style={{ height: '500px', background: '#050a18', borderRadius: '0 0 16px 16px' }}>
+                      <div style={{ height: '500px', background: 'var(--bg-primary)', borderRadius: '0 0 16px 16px' }}>
                         <iframe srcDoc={responseText} style={{ width: '100%', height: '100%', border: 'none' }} />
                       </div>
                     </div>
@@ -610,7 +610,7 @@ export const Agents: React.FC = () => {
                     </div>
                   </>
                 ) : (
-                  <div id="pdf-content-area" className="result-preview" style={{ background: 'rgba(255,255,255,0.02)', color: '#fff', padding: '24px', borderRadius: '12px', maxHeight: '500px', overflowY: 'auto', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div id="pdf-content-area" className="result-preview" style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', padding: '24px', borderRadius: '12px', maxHeight: '500px', overflowY: 'auto', border: '1px solid var(--glass-border)' }}>
                     {responseText.trim().startsWith('<') ? (
                       <div dangerouslySetInnerHTML={{ __html: responseText }} />
                     ) : (

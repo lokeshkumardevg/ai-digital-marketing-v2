@@ -43,6 +43,7 @@ import { LinkedInCrm } from './dashboard/pages/LinkedInCrm';
 
 import { Templates } from './dashboard/pages/Templates';
 import { hydrateSession } from './store/slices/authSlice';
+import { setTheme } from './store/slices/themeSlice';
 import { addNotification, fetchNotifications } from './store/slices/notificationSlice';
 import AiCreativeWorkspacePage from './dashboard/pages/AiCreativeWorkspacePage';
 import { Notifications } from './dashboard/pages/Notifications';
@@ -117,7 +118,7 @@ const DashboardLayoutFull = ({ children }: { children: React.ReactNode }) => {
 // Dark theme version for CRM
 const DarkDashboardLayoutFull = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="app-container dark-theme">
+    <div className="app-container">
       <Sidebar />
       <div className="main-content" style={{ minWidth: 0 }}>
         <Header />
@@ -146,6 +147,17 @@ const CampaignLayout = ({ children }: { children: React.ReactNode }) => {
 const App: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated } = useSelector((state: any) => state.auth);
+  const { mode } = useSelector((state: any) => state.theme);
+
+  useEffect(() => {
+    // Initialize theme from localStorage or default to dark
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      dispatch(setTheme(savedTheme));
+    } else {
+      dispatch(setTheme('dark'));
+    }
+  }, [dispatch]);
 
   useEffect(() => {
     // Only attempt hydration if a token exists to avoid race condition on boot

@@ -279,7 +279,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
             padding: '22px',
             position: 'relative',
             borderRadius: '28px',
-            background: '#1a1d27',
+            background: 'var(--bg-elevated)',
             boxShadow: '0 30px 80px rgba(0, 0, 0, 0.6)',
             width: '100%',
             height: '100%',
@@ -297,8 +297,8 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
               height: '38px',
               borderRadius: '999px',
               border: 'none',
-              background: '#22253a',
-              color: '#6b7280',
+              background: 'var(--glass-bg)',
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -322,10 +322,10 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
           >
             <div
               style={{
-                border: '1px solid #2a2d3a',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '24px',
                 padding: '20px 18px',
-                background: '#12141e',
+                background: 'var(--bg-card)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -341,7 +341,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       marginBottom: '10px',
                       fontSize: '1rem',
                       fontWeight: 600,
-                      color: '#f0f0f5',
+                      color: 'var(--text-primary)',
                     }}
                   >
                     Select Type
@@ -424,11 +424,11 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
     width: '100%',
     height: '50px',
     borderRadius: '999px',
-    border: '1.5px solid #2e3141',
+    border: '1.5px solid var(--glass-border)',
     padding: '0 48px 0 18px',
     fontSize: '0.96rem',
-    color: '#f0f0f5',
-    background: '#1a1d27',
+    color: 'var(--text-primary)',
+    background: 'var(--bg-elevated)',
     outline: 'none',
     appearance: 'none',
     WebkitAppearance: 'none',
@@ -448,7 +448,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                         right: '18px',
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        color: '#6b7280',
+                        color: 'var(--text-secondary)',
                         pointerEvents: 'none',
                       }}
                     />
@@ -464,18 +464,18 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       marginBottom: '10px',
                       fontSize: '1rem',
                       fontWeight: 600,
-                      color: '#f0f0f5',
+                      color: 'var(--text-primary)',
                     }}
                   >
-                    <span style={{ color: '#e11d48' }}>*</span>
+                    <span style={{ color: 'var(--error)' }}>*</span>
                     Product URL
                     <span
                       style={{
                         width: '20px',
                         height: '20px',
                         borderRadius: '999px',
-                        background: '#22253a',
-                        color: '#6b7280',
+                        background: 'var(--glass-bg)',
+                        color: 'var(--text-secondary)',
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -494,12 +494,12 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       width: '100%',
                       height: '50px',
                       borderRadius: '999px',
-                      border: '1.5px solid #2e3141',
+                      border: '1.5px solid var(--glass-border)',
                       padding: '0 18px',
                       fontSize: '0.96rem',
-                      color: '#f0f0f5',
+                      color: 'var(--text-primary)',
                       outline: 'none',
-                      background: '#1a1d27',
+                      background: 'var(--bg-elevated)',
                     }}
                   />
 
@@ -508,7 +508,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       style={{
                         margin: '10px 0 0',
                         fontSize: '0.88rem',
-                        color: '#f87171',
+                        color: 'var(--error)',
                         lineHeight: 1.4,
                         minHeight: '20px',
                       }}
@@ -526,9 +526,9 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                     width: '100%',
                     height: '52px',
                     borderRadius: '999px',
-                    border: '1.5px solid #4c2a7a',
-                    background: '#22253a',
-                    color: canFetchImages ? '#c084fc' : '#4b5563',
+                    border: '1.5px solid var(--accent-primary)',
+                    background: 'var(--accent-primary)',
+                    color: '#fff',
                     fontWeight: 700,
                     fontSize: '0.98rem',
                     cursor: canFetchImages ? 'pointer' : 'not-allowed',
@@ -553,8 +553,8 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                 <div
                   style={{
                     borderRadius: '18px',
-                    background: '#1e1530',
-                    border: '1px solid #3b2a5a',
+                    background: 'var(--accent-primary)',
+                    border: '1px solid var(--accent-primary)',
                     padding: '12px 14px',
                   }}
                 >
@@ -562,7 +562,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                     style={{
                       fontSize: '0.92rem',
                       fontWeight: 700,
-                      color: '#c084fc',
+                      color: '#fff',
                       marginBottom: '4px',
                     }}
                   >
@@ -571,7 +571,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                   <div
                     style={{
                       fontSize: '0.82rem',
-                      color: '#6b7280',
+                      color: '#fff',
                       lineHeight: 1.45,
                     }}
                   >
@@ -584,7 +584,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                     style={{
                       margin: 0,
                       fontSize: '0.88rem',
-                      color: '#f87171',
+                      color: 'var(--error)',
                       lineHeight: 1.4,
                     }}
                   >
@@ -609,9 +609,9 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
     width: '100%',
     height: '52px',
     borderRadius: '999px',
-    border: '1.5px solid #d8b4fe',
-    background: '#fff',
-    color: '#7c3aed',
+    border: '1.5px solid var(--accent-primary)',
+    background: 'var(--bg-primary)',
+    color: 'var(--accent-primary)',
     fontWeight: 700,
     fontSize: '0.96rem',
     cursor: 'pointer',
@@ -646,8 +646,8 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                   height: '56px',
                   borderRadius: '999px',
                   border: 'none',
-                  background: 'linear-gradient(90deg, #b794f6 0%, #1e035e 100%)',
-                  color: '#fff',
+                  background: 'linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-glow) 100%)',
+                  color: 'var(--text-primary)',
                   fontSize: '1rem',
                   fontWeight: 700,
                   cursor: !canContinue || generating ? 'not-allowed' : 'pointer',
@@ -663,9 +663,9 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
 
             <div
               style={{
-                border: '1px solid #2a2d3a',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '24px',
-                background: '#12141e',
+                background: 'var(--bg-card)',
                 padding: '18px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -689,11 +689,11 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       width: '36px',
                       height: '36px',
                       borderRadius: '12px',
-                      background: 'linear-gradient(135deg, #2e2250, #3b2a5a)',
+                      background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-primary))',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#a78bfa',
+                      color: '#fff',
                       flexShrink: 0,
                     }}
                   >
@@ -706,7 +706,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                         margin: 0,
                         fontSize: '1rem',
                         fontWeight: 700,
-                        color: '#f0f0f5',
+                        color: 'var(--text-primary)',
                       }}
                     >
                       Scraped Images Preview
@@ -715,7 +715,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       style={{
                         margin: '4px 0 0',
                         fontSize: '0.88rem',
-                        color: '#6b7280',
+                        color: 'var(--text-secondary)',
                       }}
                     >
                       Select up to 4 images to continue
@@ -728,9 +728,9 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                     style={{
                       fontSize: '0.82rem',
                       fontWeight: 700,
-                      color: '#a78bfa',
-                      background: '#1e1530',
-                      border: '1px solid #3b2a5a',
+                      color: 'var(--accent-primary)',
+                      background: 'var(--glass-bg)',
+                      border: '1px solid var(--glass-border)',
                       padding: '8px 12px',
                       borderRadius: '999px',
                     }}
@@ -746,8 +746,8 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                     marginBottom: '14px',
                     borderRadius: '18px',
                     overflow: 'hidden',
-                    border: '1px solid #3b2a5a',
-                    background: '#1a1d27',
+                    border: '1px solid var(--glass-border)',
+                    background: 'var(--bg-elevated)',
                     height: '170px',
                     flexShrink: 0,
                   }}
@@ -760,7 +760,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       height: '100%',
                       objectFit: 'contain',
                       display: 'block',
-                      background: '#1a1d27',
+                      background: 'var(--bg-elevated)',
                     }}
                     onError={() => handleImageError(heroImage)}
                   />
@@ -772,8 +772,8 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                   flex: 1,
                   minHeight: 0,
                   borderRadius: '20px',
-                  border: '1px dashed #3b2a5a',
-                  background: '#1a1d27',
+                  border: '1px dashed var(--glass-border)',
+                  background: 'var(--bg-elevated)',
                   padding: '16px',
                   overflowY: 'auto',
                   overflowX: 'hidden',
@@ -787,7 +787,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                       textAlign: 'center',
-                      color: '#4b5563',
+                      color: 'var(--text-dim)',
                       padding: '20px',
                       fontSize: '0.95rem',
                     }}
@@ -805,7 +805,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                       justifyContent: 'center',
                       flexDirection: 'column',
                       gap: '12px',
-                      color: '#a78bfa',
+                      color: 'var(--accent-primary)',
                     }}
                   >
                     <Loader2 size={28} style={{ animation: 'spin 1s linear infinite' }} />
@@ -836,8 +836,8 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                             position: 'relative',
                             borderRadius: '16px',
                             overflow: 'hidden',
-                            background: '#12141e',
-                            border: isSelected ? '2px solid #7c3aed' : '1px solid #2e3141',
+                            background: 'var(--bg-card)',
+                            border: isSelected ? '2px solid var(--accent-primary)' : '1px solid var(--glass-border)',
                             height: '120px',
                             padding: 0,
                             cursor: 'pointer',
@@ -855,7 +855,7 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                               height: '100%',
                               objectFit: 'cover',
                               display: 'block',
-                              background: '#1a1d27',
+                              background: 'var(--bg-elevated)',
                             }}
                             onError={() => handleImageError(img)}
                           />
@@ -868,12 +868,12 @@ const AiCreativeModal: React.FC<AiCreativeModalProps> = ({
                               width: '24px',
                               height: '24px',
                               borderRadius: '999px',
-                              background: isSelected ? '#7c3aed' : 'rgba(18,20,30,0.85)',
-                              color: isSelected ? '#fff' : '#6b7280',
+                              background: isSelected ? 'var(--accent-primary)' : 'var(--glass-bg)',
+                              color: isSelected ? '#fff' : 'var(--text-secondary)',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              border: isSelected ? 'none' : '1px solid #2e3141',
+                              border: isSelected ? 'none' : '1px solid var(--glass-border)',
                               boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
                             }}
                           >

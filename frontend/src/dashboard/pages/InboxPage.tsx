@@ -141,7 +141,7 @@ const ReviewCard: React.FC<{
             borderRadius: '12px',
             background: 'var(--accent-gradient)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 700, fontSize: '0.9rem', flexShrink: 0,
+            color: 'var(--text-primary)', fontWeight: 700, fontSize: '0.9rem', flexShrink: 0,
             transition: 'transform 0.3s ease, border-radius 0.3s ease',
             transform: isHovered ? 'scale(1.1) rotate(-5deg)' : 'scale(1) rotate(0deg)',
           }}>
@@ -332,7 +332,7 @@ const ReviewSidePanel: React.FC<{
         {/* Header */}
         <div style={{
           padding: '20px 24px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid var(--glass-border)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -341,7 +341,7 @@ const ReviewSidePanel: React.FC<{
               borderRadius: '12px',
               background: 'var(--accent-gradient)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontWeight: 700, fontSize: '0.95rem',
+              color: 'var(--text-primary)', fontWeight: 700, fontSize: '0.95rem',
             }}>
               {review.reviewerName?.charAt(0) ?? '?'}
             </div>
@@ -358,8 +358,8 @@ const ReviewSidePanel: React.FC<{
             <button
               onClick={onClose}
               style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--glass-border)',
                 borderRadius: '8px', padding: '6px',
                 color: '#9ca3af', cursor: 'pointer',
                 display: 'flex', alignItems: 'center',
@@ -448,7 +448,7 @@ const ReviewSidePanel: React.FC<{
                 style={{
                   width: '100%', maxWidth: '100%', boxSizing: 'border-box',
                   background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  border: '1px solid var(--glass-border)',
                   borderRadius: '10px', padding: '14px',
                   color: '#e5e7eb', fontSize: '0.85rem', lineHeight: 1.6,
                   resize: 'vertical', outline: 'none', fontFamily: 'inherit',
@@ -491,9 +491,9 @@ const ReviewSidePanel: React.FC<{
                     disabled={isResolving}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '6px',
-                      background: 'rgba(255,255,255,0.05)',
+                      background: 'var(--bg-card)',
                       color: 'var(--text-secondary)',
-                      border: '1px solid rgba(255,255,255,0.08)',
+                      border: '1px solid var(--glass-border)',
                       borderRadius: '10px', padding: '12px 18px',
                       fontSize: '0.85rem',
                       cursor: isResolving ? 'not-allowed' : 'pointer',
@@ -674,7 +674,7 @@ const InboxPage: React.FC = () => {
           return (
             <div key={i} style={{
               background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.06)',
+              border: '1px solid var(--glass-border)',
               borderRadius: '16px', padding: '16px 20px',
               display: 'flex', alignItems: 'center', gap: '12px',
               animation: `fadeInUp 0.4s ease ${i * 0.1}s both`,
@@ -729,8 +729,8 @@ const InboxPage: React.FC = () => {
             style={{
               width: '100%', boxSizing: 'border-box',
               paddingLeft: '42px', paddingRight: '16px', height: '44px',
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--glass-border)',
               borderRadius: '12px', color: '#e5e7eb',
               fontSize: '0.85rem', outline: 'none',
               transition: 'all 0.3s ease',
@@ -758,8 +758,8 @@ const InboxPage: React.FC = () => {
             value={localFilters[f.key as keyof LocalFilters] || 'all'}
             onChange={e => handleFilterChange(f.key, e.target.value)}
             style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--glass-border)',
               borderRadius: '12px', color: '#e5e7eb',
               padding: '10px 14px', fontSize: '0.8rem',
               outline: 'none', cursor: 'pointer',
@@ -772,14 +772,14 @@ const InboxPage: React.FC = () => {
               <>
                 <option value="">All Ratings</option>
                 {f.options.filter(o => o !== '').map(o => (
-                  <option key={o} value={o} style={{ background: '#0f172a' }}>
+                  <option key={o} value={o} style={{ background: 'var(--bg-elevated)' }}>
                     {o} Star{o !== '1' ? 's' : ''}
                   </option>
                 ))}
               </>
             ) : (
               f.options.map(o => (
-                <option key={o} value={o} style={{ background: '#0f172a' }}>
+                <option key={o} value={o} style={{ background: 'var(--bg-elevated)' }}>
                   {o === 'all' ? `All ${f.label}s` : o.charAt(0).toUpperCase() + o.slice(1)}
                 </option>
               ))
@@ -789,9 +789,9 @@ const InboxPage: React.FC = () => {
 
         {/* Grid / List toggle */}
         <div style={{
-          display: 'flex', background: 'rgba(255,255,255,0.04)',
+          display: 'flex', background: 'var(--bg-card)',
           borderRadius: '12px', padding: '4px',
-          border: '1px solid rgba(255,255,255,0.08)',
+          border: '1px solid var(--glass-border)',
         }}>
           {(['grid', 'list'] as const).map(mode => (
             <button
@@ -953,14 +953,14 @@ const InboxPage: React.FC = () => {
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: '12px', paddingTop: '24px',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
+          borderTop: '1px solid var(--glass-border)',
         }}>
           <button
             onClick={() => dispatch(setReviewsPage(currentPage - 1))}
             disabled={currentPage === 1}
             style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--glass-border)',
               borderRadius: '10px', padding: '10px 18px',
               color: '#9ca3af',
               cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
@@ -1003,8 +1003,8 @@ const InboxPage: React.FC = () => {
             onClick={() => dispatch(setReviewsPage(currentPage + 1))}
             disabled={currentPage === totalPages}
             style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--glass-border)',
               borderRadius: '10px', padding: '10px 18px',
               color: '#9ca3af',
               cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',

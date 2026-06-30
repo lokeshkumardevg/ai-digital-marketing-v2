@@ -339,23 +339,23 @@ const AiCreativeWorkspace: React.FC<AiCreativeWorkspaceProps> = ({
 
   // ─── Dark theme tokens ───────────────────────────────────────────────────────
   const dk = {
-    bg: '#0f0f12',
-    surface: '#18181f',
-    surfaceElevated: '#1e1e27',
-    border: '#2a2a38',
-    borderSubtle: '#222230',
-    borderAccent: '#4c1d95',
-    text: '#f4f4f6',
-    textMuted: '#8b8b9e',
-    textDim: '#5a5a72',
-    accent: '#a78bfa',
-    accentDeep: '#7c3aed',
-    accentBg: '#1e1040',
-    accentBgHover: '#2a1557',
-    danger: '#f87171',
-    inputBg: '#14141c',
-    inputBorder: '#303040',
-    skeletonBg: '#252530',
+    bg: 'var(--bg-secondary)',
+    surface: 'var(--bg-card)',
+    surfaceElevated: 'var(--glass-border)',
+    border: 'var(--glass-border)',
+    borderSubtle: 'var(--bg-elevated)',
+    borderAccent: 'var(--accent-primary)',
+    text: 'var(--text-primary)',
+    textMuted: 'var(--text-secondary)',
+    textDim: 'var(--text-dim)',
+    accent: 'var(--accent-primary)',
+    accentDeep: 'var(--accent-primary)',
+    accentBg: 'var(--glass-bg)',
+    accentBgHover: 'var(--bg-elevated)',
+    danger: 'var(--error)',
+    inputBg: 'var(--bg-elevated)',
+    inputBorder: 'var(--glass-border)',
+    skeletonBg: 'var(--glass-border)',
   };
 
   const inputStyle: React.CSSProperties = {
@@ -904,8 +904,8 @@ onClick={() => handleGenerateCreative()}
                 height: '56px',
                 borderRadius: '999px',
                 border: 'none',
-                background: 'linear-gradient(90deg, #6d28d9 0%, #4c1d95 100%)',
-                color: '#fff',
+                background: 'linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-glow) 100%)',
+                color: 'var(--text-primary)',
                 fontSize: '1rem',
                 fontWeight: 700,
                 cursor: canSubmit && !isGenerating ? 'pointer' : 'not-allowed',
@@ -1198,7 +1198,7 @@ onClick={() => handleGenerateCreative()}
                             width: '42px',
                             height: '42px',
                             borderRadius: '999px',
-                            background: 'linear-gradient(135deg, #2e1065 0%, #4c1d95 100%)',
+                            background: 'linear-gradient(135deg, var(--glass-bg) 0%, var(--accent-primary) 100%)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -1489,8 +1489,8 @@ onClick={() => handleGenerateCreative()}
                   padding: '0 28px',
                   borderRadius: '999px',
                   border: 'none',
-                  background: 'linear-gradient(90deg, #6d28d9 0%, #4c1d95 100%)',
-                  color: '#fff',
+                  background: 'linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-glow) 100%)',
+                  color: 'var(--text-primary)',
                   fontWeight: 700,
                   fontSize: '0.98rem',
                   cursor: isSavingToHub ? 'not-allowed' : 'pointer',
@@ -1545,12 +1545,12 @@ onClick={() => handleGenerateCreative()}
           }
 
           input::placeholder {
-            color: #5a5a72;
+            color: var(--text-dim);
           }
 
           select option {
-            background: #18181f;
-            color: #f4f4f6;
+            background: var(--bg-card);
+            color: var(--text-primary);
           }
         `}
       </style>

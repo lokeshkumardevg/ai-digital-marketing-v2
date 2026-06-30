@@ -5,7 +5,7 @@
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #050a18;
+  background: var(--bg-primary);
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
@@ -16,17 +16,27 @@
 }
 
 .presentation-root {
+  /* Force dark mode variables for presentation */
+  --bg-primary: #050a18 !important;
+  --bg-secondary: #0a0f1e !important;
+  --bg-card: rgba(10, 15, 30, 0.8) !important;
+  --bg-elevated: #0f172a !important;
+  --text-primary: #f8fafc !important;
+  --text-secondary: #94a3b8 !important;
+  --text-dim: #64748b !important;
+  --accent-primary: #0665ff !important;
+
   --primary-gradient: linear-gradient(135deg, #2836ff 0%, #0665ff 100%);
   --secondary-gradient: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
   --accent-glow: 0 0 24px rgba(40, 54, 255, 0.4);
-  --dark-bg: #050a18;
+  --dark-bg: var(--bg-primary);
   --glass-bg: rgba(15, 22, 41, 0.85);
   --glass-border: rgba(99, 102, 241, 0.18);
   
   height: 100vh;
   width: 100vw;
   background-color: var(--dark-bg);
-  color: white;
+  color: var(--text-primary);
   font-family: 'Outfit', 'Inter', sans-serif;
   overflow: hidden;
   position: relative;
@@ -42,7 +52,7 @@
   background-image: 
     radial-gradient(circle at top, rgba(49, 88, 255, 0.25), transparent 45%),
     radial-gradient(circle at 80% 80%, rgba(38, 49, 214, 0.18), transparent 45%),
-    linear-gradient(180deg, #050a18 0%, #080d1a 100%);
+    linear-gradient(180deg, var(--bg-primary) 0%, #080d1a 100%);
   z-index: 0;
   transition: transform 0.2s cubic-bezier(0.1, 0, 0.3, 1);
 }
@@ -235,7 +245,7 @@
   justify-content: center;
   margin-bottom: 28px;
   position: relative;
-  color: white;
+  color: var(--text-primary);
   box-shadow: 0 8px 16px rgba(40, 54, 255, 0.3);
   animation: iconFloat 3s ease-in-out infinite;
 }
@@ -277,7 +287,7 @@
   border-radius: 50%;
   border: none;
   background: transparent;
-  color: white;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -330,7 +340,7 @@
     padding: 0;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    background-color: #050a18 !important;
+    background-color: var(--bg-primary) !important;
   }
 
   .nav-controls, .logo-container, .particle, .progress-dots { 
@@ -339,7 +349,7 @@
 
   .presentation-root { 
     height: auto !important; 
-    background: #050a18 !important; 
+    background: var(--bg-primary) !important; 
     overflow: visible !important;
     padding: 0 !important;
   }
@@ -351,7 +361,7 @@
     z-index: -1 !important;
     background: radial-gradient(circle at top, rgba(49, 88, 255, 0.25), transparent 45%),
                 radial-gradient(circle at 80% 80%, rgba(38, 49, 214, 0.18), transparent 45%),
-                linear-gradient(180deg, #050a18 0%, #080d1a 100%) !important;
+                linear-gradient(180deg, var(--bg-primary) 0%, #080d1a 100%) !important;
   }
 
   .slide-container { 

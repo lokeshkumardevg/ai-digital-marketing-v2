@@ -334,6 +334,80 @@ export const Settings: React.FC = () => {
                       <label>Full Name</label>
                       <input type="text" className="input-field" value={name} onChange={e => setName(e.target.value)} />
                     </div>
+
+                    {/* Google Ads Credentials */}
+                    <div style={{ marginBottom: '32px', padding: '20px', background: 'rgba(66, 133, 244, 0.05)', borderRadius: '12px', border: '1px solid rgba(66, 133, 244, 0.2)' }}>
+                      <h4 style={{ fontSize: '1rem', marginBottom: '16px', color: '#4285f4', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <SettingsIcon size={16} /> Google Ads API Credentials
+                      </h4>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                        Set your own Google Ads API credentials. These will be stored securely in your account.
+                      </p>
+
+                      <div className="input-group">
+                        <label>Client ID</label>
+                        <input
+                          type="text"
+                          placeholder="123456789-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com"
+                          className="input-field"
+                          value={googleClientId}
+                          onChange={e => setGoogleClientId(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="input-group">
+                        <label>Client Secret</label>
+                        <input
+                          type="password"
+                          placeholder="GOCSPX-..."
+                          className="input-field"
+                          value={googleClientSecret}
+                          onChange={e => setGoogleClientSecret(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="input-group">
+                        <label>Developer Token</label>
+                        <input
+                          type="password"
+                          placeholder="ABcdeFGHijklMNopqrsTUVwxyZ..."
+                          className="input-field"
+                          value={googleDeveloperToken}
+                          onChange={e => setGoogleDeveloperToken(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="input-group">
+                        <label>Customer ID</label>
+                        <input
+                          type="text"
+                          placeholder="123-456-7890"
+                          className="input-field"
+                          value={googleCustomerId}
+                          onChange={e => setGoogleCustomerId(e.target.value)}
+                        />
+                        <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '6px' }}>
+                          Required for live Google Ads insights. This is the Ads customer ID for your account.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => handleSaveApiCredentials('google')}
+                        disabled={!googleClientId || !googleClientSecret}
+                        style={{
+                          marginTop: '12px',
+                          padding: '10px 20px',
+                          background: 'linear-gradient(135deg, #4285f4, #34a853)',
+                          color: 'var(--text-primary)',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                          cursor: (!googleClientId || !googleClientSecret) ? 'not-allowed' : 'pointer',
+                          opacity: (!googleClientId || !googleClientSecret) ? 0.6 : 1
+                        }}
+                      >
+                        Save Google Credentials
+                      </button>
                     <div className="input-group">
                       <label>Email Address</label>
                       <input type="email" className="input-field" value={user?.email || 'admin@example.com'} disabled />
@@ -393,6 +467,44 @@ export const Settings: React.FC = () => {
                     />
                   </div>
 
+                      <button
+                        onClick={() => handleSaveApiCredentials('meta')}
+                        disabled={!metaAppId || !metaAppSecret}
+                        style={{
+                          marginTop: '12px',
+                          padding: '10px 20px',
+                          background: 'linear-gradient(135deg, #1877f2, #0e5a8a)',
+                          color: 'var(--text-primary)',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                          cursor: (!metaAppId || !metaAppSecret) ? 'not-allowed' : 'pointer',
+                          opacity: (!metaAppId || !metaAppSecret) ? 0.6 : 1
+                        }}
+                      >
+                        Save Meta Credentials
+                      </button>
+                    </div>
+
+                    {/* X Ads Credentials */}
+                    <div style={{ marginBottom: '32px', padding: '20px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                      <h4 style={{ fontSize: '1rem', marginBottom: '16px', color: '#e7e9ea', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <SettingsIcon size={16} /> X (Twitter) Ads API Credentials
+                      </h4>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                        Set your X Ads Access Token and Access Token Secret directly to connect.
+                      </p>
+
+                      <div className="input-group">
+                        <label>Access Token</label>
+                        <input
+                          type="text"
+                          placeholder="2012447571302817792-..."
+                          className="input-field"
+                          value={xAccessToken}
+                          onChange={e => setXAccessToken(e.target.value)}
+                        />
+                      </div>
                   <div className="input-group">
                     <label>Developer Token</label>
                     <input
@@ -437,6 +549,78 @@ export const Settings: React.FC = () => {
                   </button>
                 </div>
 
+                      <button
+                        onClick={() => handleSaveApiCredentials('x')}
+                        disabled={!xAccessToken}
+                        style={{
+                          marginTop: '12px',
+                          padding: '10px 20px',
+                          background: 'linear-gradient(135deg, #000000, #333333)',
+                          color: 'var(--text-primary)',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                          cursor: !xAccessToken ? 'not-allowed' : 'pointer',
+                          opacity: !xAccessToken ? 0.6 : 1
+                        }}
+                      >
+                        Save X Credentials
+                      </button>
+                    </div>
+
+                    {/* OAuth Connections */}
+                    <div style={{ paddingTop: '20px', borderTop: '1px solid var(--glass-border)' }}>
+                      <h4 style={{ fontSize: '1rem', marginBottom: '16px', color: 'var(--text-secondary)' }}>OAuth Connections</h4>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                        <button
+                          disabled={true}
+                          style={{
+                            padding: '12px',
+                            background: 'linear-gradient(135deg, #4285f4, #34a853)',
+                            color: 'var(--text-primary)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'default'
+                          }}
+                        >
+                          🔗 Google Ads Auto-System Active ✓
+                        </button>
+
+                        <button
+                          onClick={connectMeta}
+                          disabled={!user?.id}
+                          style={{
+                            padding: '12px',
+                            background: user?.metaAccessToken ? '#d1d5db' : 'linear-gradient(135deg, #1877f2, #0e5a8a)',
+                            color: 'var(--text-primary)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.metaAccessToken ? 'default' : 'pointer'
+                          }}
+                        >
+                          𝕄 {user?.metaAccessToken ? 'Meta Ads Connected ✓' : 'Connect Meta Ads'}
+                        </button>
+
+                        <button
+                          onClick={connectX}
+                          disabled={!user?.id}
+                          style={{
+                            padding: '12px',
+                            background: user?.twitterAccessToken ? '#d1d5db' : 'linear-gradient(135deg, #000000, #333333)',
+                            color: 'var(--text-primary)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.twitterAccessToken ? 'default' : 'pointer'
+                          }}
+                        >
+                          𝕏 {user?.twitterAccessToken ? 'X Ads Connected ✓' : 'Connect X Ads'}
+                        </button>
+
+                        <button
+                          onClick={connectLinkedIn}
+                          disabled={!user?.id}
+                          style={{
+                            padding: '12px',
+                            background: user?.linkedinAccessToken ? '#d1d5db' : 'linear-gradient(135deg, #0a66c2, #004182)',
+                            color: 'var(--text-primary)', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: user?.linkedinAccessToken ? 'default' : 'pointer'
+                          }}
+                        >
+                          💼 {user?.linkedinAccessToken ? 'LinkedIn Ads Connected ✓' : 'Connect LinkedIn'}
+                        </button>
+                      </div>
+                    </div>
                 {/* Meta Ads Credentials */}
                 <div style={{ marginBottom: '32px', padding: '20px', background: 'rgba(24, 119, 242, 0.05)', borderRadius: '12px', border: '1px solid rgba(24, 119, 242, 0.2)' }}>
                   <h4 style={{ fontSize: '1rem', marginBottom: '16px', color: '#1877f2', display: 'flex', alignItems: 'center', gap: '8px' }}>

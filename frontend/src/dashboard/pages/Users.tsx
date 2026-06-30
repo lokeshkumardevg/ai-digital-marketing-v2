@@ -164,13 +164,13 @@ export const Users: React.FC = () => {
   if (!canView) {
     return (
       <div className="animate-fade-in" style={{ padding: '40px 24px' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', background: 'rgba(15,23,42,0.95)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.08)', padding: 32 }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', background: 'rgba(15,23,42,0.95)', borderRadius: 24, border: '1px solid var(--glass-border)', padding: 32 }}>
           <h1 style={{ fontSize: '2rem', marginBottom: 12 }}>User Management</h1>
-          <p style={{ color: '#94a3b8', marginBottom: 24 }}>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>
             Your account does not have permission to view the Users section. Contact an administrator if you believe this is incorrect.
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <span style={{ padding: '10px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.05)', color: '#cbd5e1' }}>Required permission: view_users</span>
+            <span style={{ padding: '10px 14px', borderRadius: 999, background: 'var(--bg-card)', color: '#cbd5e1' }}>Required permission: view_users</span>
             <span style={{ padding: '10px 14px', borderRadius: 999, background: 'rgba(59,130,246,0.12)', color: '#bfdbfe' }}>Manage users if granted: manage_users</span>
           </div>
         </div>
@@ -183,7 +183,7 @@ export const Users: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '18px', marginBottom: '28px' }}>
         <div>
           <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>User Management</h1>
-          <p style={{ color: '#94a3b8', maxWidth: '640px' }}>
+          <p style={{ color: 'var(--text-secondary)', maxWidth: '640px' }}>
             Manage registered users, control who can view the Users section, and keep access locked down to SuperAdmin and approved managers.
           </p>
         </div>
@@ -206,19 +206,19 @@ export const Users: React.FC = () => {
             key: 'name',
             label: 'Name',
             sortable: true,
-            render: (row) => <div style={{ fontWeight: 600, color: '#f8fafc' }}>{row.name}</div>,
+            render: (row) => <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{row.name}</div>,
           },
           {
             key: 'email',
             label: 'Email',
             sortable: true,
-            render: (row) => <div style={{ color: '#94a3b8' }}>{row.email}</div>,
+            render: (row) => <div style={{ color: 'var(--text-secondary)' }}>{row.email}</div>,
           },
           {
             key: 'role',
             label: 'Role',
             render: (row) => (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.05)', color: '#f8fafc', fontSize: '0.8rem' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 999, background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '0.8rem' }}>
                 <ShieldAlert size={12} /> {row.role || 'client'}
               </span>
             ),
@@ -237,7 +237,7 @@ export const Users: React.FC = () => {
             key: 'createdAt',
             label: 'Created',
             sortable: true,
-            render: (row) => <span style={{ color: '#94a3b8' }}>{formatDate(row.createdAt || row.createdAt)}</span>,
+            render: (row) => <span style={{ color: 'var(--text-secondary)' }}>{formatDate(row.createdAt || row.createdAt)}</span>,
           },
           {
             key: 'permissions',
@@ -249,7 +249,7 @@ export const Users: React.FC = () => {
                     {perm}
                   </span>
                 ))}
-                {sanitizePermissions(row.permissions).length === 0 && <span style={{ color: '#64748b' }}>No special access</span>}
+                {sanitizePermissions(row.permissions).length === 0 && <span style={{ color: 'var(--text-dim)' }}>No special access</span>}
               </div>
             ),
           },
@@ -282,7 +282,7 @@ export const Users: React.FC = () => {
       />
 
       {!canManage && (
-        <div style={{ marginTop: 20, padding: '16px 20px', borderRadius: 16, background: 'rgba(255,255,255,0.04)', color: '#94a3b8' }}>
+        <div style={{ marginTop: 20, padding: '16px 20px', borderRadius: 16, background: 'var(--bg-card)', color: 'var(--text-secondary)' }}>
           <strong>Read-only access:</strong> Your account can view the Users section, but only SuperAdmin or users with the <code>manage_users</code> permission can add, edit, or delete user records.
         </div>
       )}
@@ -293,9 +293,9 @@ export const Users: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div>
                 <h2 style={{ margin: 0, fontSize: '1.45rem' }}>{editingUser ? 'Edit User' : 'Add New User'}</h2>
-                <p style={{ color: '#94a3b8', marginTop: 8 }}>{editingUser ? 'Update user role, status, and permissions.' : 'Create a new account and assign access immediately.'}</p>
+                <p style={{ color: 'var(--text-secondary)', marginTop: 8 }}>{editingUser ? 'Update user role, status, and permissions.' : 'Create a new account and assign access immediately.'}</p>
               </div>
-              <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'transparent', color: '#94a3b8', cursor: 'pointer' }}>
+              <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <X size={22} />
               </button>
             </div>
@@ -379,7 +379,7 @@ export const Users: React.FC = () => {
         </div>
       )}
 
-      {loading && <div style={{ marginTop: 14, color: '#94a3b8' }}>Loading users…</div>}
+      {loading && <div style={{ marginTop: 14, color: 'var(--text-secondary)' }}>Loading users…</div>}
     </div>
   );
 };

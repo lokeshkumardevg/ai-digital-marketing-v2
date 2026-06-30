@@ -70,7 +70,7 @@ export const ChatEmbed: React.FC = () => {
       {/* Header */}
       <div 
         className="px-4 py-3 flex items-center gap-3 shadow-sm z-10"
-        style={{ backgroundColor: themeColor, color: '#fff' }}
+        style={{ backgroundColor: themeColor, color: 'var(--text-primary)' }}
       >
         <div className="relative">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center border border-white/30">

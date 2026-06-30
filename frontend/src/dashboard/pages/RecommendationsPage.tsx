@@ -33,6 +33,20 @@ const sentimentStyle = (s: string) => {
 // ── Skeleton ──────────────────────────────────────────────────
 const Skeleton: React.FC = () => (
   <GlassCard style={{ padding: '24px' }}>
+    <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+      <div
+        style={{
+          width: '40px', height: '40px', borderRadius: '10px',
+          background: 'var(--bg-card)',
+          animation: 'pulse 1.5s ease-in-out infinite', flexShrink: 0,
+        }}
+      />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ height: '16px', width: '55%', borderRadius: '6px', background: 'rgba(255,255,255,0.06)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ height: '12px', width: '90%', borderRadius: '6px', background: 'var(--bg-card)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+        <div style={{ height: '12px', width: '70%', borderRadius: '6px', background: 'var(--bg-card)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+      </div>
+    </div>
     {[55, 90, 70].map((w, i) => (
       <div key={i} style={{ height: i === 0 ? 16 : 12, width: `${w}%`, borderRadius: 6, background: 'rgba(255,255,255,0.06)', marginBottom: 10, animation: 'pulse 1.5s ease-in-out infinite' }} />
     ))}
@@ -104,6 +118,25 @@ const InsightCard: React.FC<{ record: RecommendationRecord }> = ({ record }) => 
             <Lightbulb size={13} /> Recommendations
           </div>
 
+      {/* Expanded content */}
+      {isOpen && (
+        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--glass-border)' }}>
+          {section.isList && Array.isArray(value) ? (
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {value.map((post, i) => (
+                <li
+                  key={i}
+                  style={{
+                    padding: '12px 14px',
+                    background: 'rgba(255,255,255,0.03)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--glass-border)',
+                    fontSize: '0.85rem',
+                    lineHeight: 1.6,
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  {post}
           {record.recommendations?.length ? (
             <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {record.recommendations.map((rec, i) => (

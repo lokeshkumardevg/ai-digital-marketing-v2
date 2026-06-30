@@ -86,6 +86,41 @@
 
   --transition-fast:   0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-medium: 0.3s  cubic-bezier(0.4, 0, 0.2, 1);
+
+  --body-gradient-1: rgba(49, 88, 255, 0.18);
+  --body-gradient-2: rgba(124, 58, 237, 0.12);
+  --body-gradient-bg-start: #050a18;
+  --body-gradient-bg-end: #080d1a;
+}
+
+:root.light {
+  --bg-primary:    #ffffff;
+  --bg-secondary:  #f8fafc;
+  --bg-card:       rgba(255, 255, 255, 0.8);
+  --bg-elevated:   #f1f5f9;
+  --text-primary:  #0f172a;
+  --text-secondary:#475569;
+  --text-dim:      #94a3b8;
+  --accent-gradient: linear-gradient(135deg, #0665ff 50%, #22d3ee 100%);
+
+  --accent-primary:   #0665ff;
+  --accent-secondary: #e0e7ff;
+  --accent-glow:      0 0 24px rgba(6, 101, 255, 0.2);
+
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error:   #ef4444;
+  --info:    #0665ff;
+
+  --glass-bg:     rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(99, 102, 241, 0.18);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  --glass-blur:   blur(12px);
+
+  --body-gradient-1: rgba(49, 88, 255, 0.08);
+  --body-gradient-2: rgba(124, 58, 237, 0.05);
+  --body-gradient-bg-start: #ffffff;
+  --body-gradient-bg-end: #f8fafc;
 }
 
 @layer base {
@@ -103,10 +138,11 @@ body {
   overflow-x: hidden;
   /* Subtle mesh gradient background */
   background-image:
-    radial-gradient(circle at top, rgba(49, 88, 255, 0.18), transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.12), transparent 40%),
-    linear-gradient(180deg, #050a18 0%, #080d1a 100%);
+    radial-gradient(circle at top, var(--body-gradient-1), transparent 40%),
+    radial-gradient(circle at 80% 80%, var(--body-gradient-2), transparent 40%),
+    linear-gradient(180deg, var(--body-gradient-bg-start) 0%, var(--body-gradient-bg-end) 100%);
   background-attachment: fixed;
+  transition: background-color var(--transition-medium), color var(--transition-medium), background-image var(--transition-medium);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -301,6 +337,12 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
 }
+.logo-text {
+  color: #ffffff;
+}
+
+html.light .logo-text {
+  color: #000000;
 
 /* Ads Manager Responsive Briefing */
 .briefing-grid {

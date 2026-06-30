@@ -124,7 +124,7 @@ export const Dashboard: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {((data as any)?.orchestratorStatus || []).map((model: any, i: number) => (
               <div key={i} style={{
-                background: 'rgba(255,255,255,0.02)',
+                background: 'var(--bg-card)',
                 padding: '16px', borderRadius: '12px', border: '1px solid var(--glass-border)',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center'
               }}>

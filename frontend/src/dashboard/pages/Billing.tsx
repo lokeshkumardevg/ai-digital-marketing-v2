@@ -99,15 +99,15 @@ type ChartRange = '1m' | '3m' | '6m';
 const STYLES = `
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
-:root {
-  --bg-base:   #080c14;
-  --bg-1:      #0d1420;
-  --bg-2:      #111827;
-  --bg-3:      #1a2236;
-  --bg-4:      #1e2a40;
-  --border:    rgba(59,130,246,.14);
-  --border2:   rgba(59,130,246,.28);
-  --border3:   rgba(59,130,246,.45);
+.bl {
+  --bg-base: var(--bg-primary);
+  --bg-1: var(--bg-card);
+  --bg-2: var(--bg-elevated);
+  --bg-3: var(--bg-elevated);
+  --bg-4: var(--glass-border);
+  --border: var(--glass-border);
+  --border2: var(--glass-border);
+  --border3: var(--glass-border);
   --blue:      #3b82f6;
   --blue-dim:  #1d4ed8;
   --blue-glow: rgba(59,130,246,.18);
@@ -119,9 +119,9 @@ const STYLES = `
   --red-soft:  rgba(239,68,68,.1);
   --amber:     #f59e0b;
   --amber-soft:rgba(245,158,11,.1);
-  --text:      #f1f5f9;
-  --text2:     #94a3b8;
-  --text3:     #4b5a72;
+  --text: var(--text-primary);
+  --text2: var(--text-secondary);
+  --text3: var(--text-dim);
   --r:         10px;
   --r-lg:      14px;
   --r-xl:      18px;
@@ -278,7 +278,7 @@ const STYLES = `
 .bl-btn-sm { padding: 7px 14px; font-size: .72rem; }
 
 .bl-wallet {
-  background: linear-gradient(145deg, #0d1a2e 0%, #091324 100%);
+  background: var(--bg-elevated); border: 1px solid var(--accent-primary);
   border: 1px solid var(--border2); border-radius: var(--r-xl); padding: 26px;
   display: flex; flex-direction: column; gap: 22px;
   position: relative; overflow: hidden;
@@ -388,11 +388,11 @@ table.bl-table { width: 100%; border-collapse: collapse; }
 
 .bl-spinner {
   width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.2);
-  border-top-color: #fff; border-radius: 50%; animation: blSpin .65s linear infinite; display: inline-block;
+  border-top-color: var(--text-primary); border-radius: 50%; animation: blSpin .65s linear infinite; display: inline-block;
 }
 @keyframes blSpin { to{transform:rotate(360deg)} }
 .bl-skeleton {
-  background: linear-gradient(90deg,#0d1420 25%,#111827 50%,#0d1420 75%);
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-elevated) 50%, var(--bg-card) 75%);
   background-size: 200% 100%; animation: blShim 1.5s infinite; border-radius: 12px;
 }
 @keyframes blShim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }

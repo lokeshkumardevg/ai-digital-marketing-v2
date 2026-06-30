@@ -61,8 +61,10 @@ interface GenStep {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const initials = (name: string) =>
-  name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+const initials = (name: string) => {
+  if (!name) return '??';
+  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+};
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
@@ -118,6 +120,70 @@ export const BrandProfile: React.FC = () => {
   const [liLoading, setLiLoading] = useState<boolean>(false);
   const [activeAudienceIdx, setActiveAudienceIdx] = useState(0);
 
+  // Fetch profile from DB on mount or URL change
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!activeBrand) return;
+
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/ai/brand-profile?projectId=${activeBrand.id}&url=${encodeURIComponent(activeBrand.url)}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('access_token') || ''}`,
+          },
+        });
+        
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            const raw = json.data?.data?.brand || json.data?.brand || json.data || {};
+            setBrandData(transformRawData(raw));
+            setPhase('result');
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching brand profile', e);
+      }
+      
+      // If we reach here, no valid profile exists, or URL changed. Instantly start analysis.
+      startAnalysis(false);
+    };
+    
+    fetchProfile();
+  }, [activeBrand?.id, activeBrand?.url]);
+
+  const transformRawData = (raw: any): BrandData => ({
+    name: raw?.name || activeBrand?.name || 'Unknown Brand',
+    url: raw.website,
+    description: raw.description,
+    lifecycle: raw.lifecycle,
+    companySize: raw.company_size,
+    businessModel: raw.business_model,
+    targetMarket: raw.target_market,
+
+    tags: raw.brand_tone,
+
+    brandDna: {
+      brandTone: raw.brand_tone?.join(', '),
+      marketKeywords: raw.market_keywords,
+    },
+
+    coreAdvantages: {
+      valueProposition: raw.value_proposition,
+      differentiators: raw.differentiators,
+    },
+
+    features: raw.features,
+    targetAudience: raw.target_audience,
+    competitors: raw.competitors,
+
+    reachAndEcosystem: {
+      marketingChannels: raw.marketing_channels,
+      customerHangouts: raw.customer_hangouts,
+    },
+
+    impactAnalysis: raw.impact_analysis,
+  });
   // Load brand profile on active brand change
   useEffect(() => {
     if (!activeBrand) return;
@@ -169,7 +235,7 @@ export const BrandProfile: React.FC = () => {
 
   // ── Start analysis ──────────────────────────────────────────────────────────
 
-  const startAnalysis = async () => {
+  const startAnalysis = async (force: boolean = false) => {
     if (!activeBrand) return;
     setPhase('generating');
     setError(null);
@@ -200,7 +266,7 @@ export const BrandProfile: React.FC = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('access_token') || ''}`,
         },
-        body: JSON.stringify({ url: activeBrand.url, brandName: activeBrand.name }),
+        body: JSON.stringify({ projectId: activeBrand.id, url: activeBrand.url, brandName: activeBrand.name }),
       });
 
       if (!res.ok) {
@@ -219,6 +285,7 @@ export const BrandProfile: React.FC = () => {
       advance(3);
       await delay(500);
 
+      setBrandData(transformRawData(raw));
       // Merge with workspace brand info
       const transformed: BrandData = {
         name: raw.name,
@@ -267,6 +334,8 @@ export const BrandProfile: React.FC = () => {
     }
   };
 
+  const forceReanalyze = () => {
+    startAnalysis(true);
   const resetAnalysis = () => {
     if (!activeBrand) return;
     localStorage.removeItem(`brand_profile_${activeBrand.id}`);
@@ -302,7 +371,7 @@ export const BrandProfile: React.FC = () => {
         </div>
         {phase === 'result' && (
           <button
-            onClick={resetAnalysis}
+            onClick={forceReanalyze}
             style={{ padding: '8px 18px', borderRadius: '8px', border: '1px solid var(--glass-border)', background: 'var(--bg-card)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}
           >
             Re-analyse
@@ -313,28 +382,28 @@ export const BrandProfile: React.FC = () => {
       {/* ════════════════════════════════════════
           IDLE — prompt to start
       ════════════════════════════════════════ */}
-      {phase === 'idle' && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)' }}>
-          <div style={{ background: 'var(--bg-card)', borderRadius: '20px', padding: '40px 44px', width: '420px', boxShadow: '0 8px 40px rgba(0,0,0,0.5)', textAlign: 'center' }}>
-            <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: 'linear-gradient(135deg,#0665ff,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', margin: '0 auto 18px' }}>✦</div>
-            <h2 style={{ margin: '0 0 8px', fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Create Brand Profile</h2>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 20px' }}>
-              AI will analyse <strong style={{ color: 'var(--text-primary)' }}>{activeBrand?.name || 'your brand'}</strong> at{' '}
-              <span style={{ color: '#0665ff', wordBreak: 'break-all' }}>{activeBrand?.url}</span> and generate a complete brand profile.
-            </p>
-            <div style={{ background: 'var(--bg-elevated)', borderRadius: '10px', padding: '10px 14px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '0.85rem' }}>⏱</span>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>2-3 min for AI to complete brand profile analysis</span>
+        {/* {phase === 'idle' && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)' }}>
+            <div style={{ background: 'var(--bg-card)', borderRadius: '20px', padding: '40px 44px', width: '420px', boxShadow: '0 8px 40px rgba(0,0,0,0.5)', textAlign: 'center' }}>
+              <div style={{ width: '60px', height: '60px', borderRadius: '16px', background: 'linear-gradient(135deg,#0665ff,#a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', margin: '0 auto 18px' }}>✦</div>
+              <h2 style={{ margin: '0 0 8px', fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>Create Brand Profile</h2>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 20px' }}>
+                AI will analyse <strong style={{ color: 'var(--text-primary)' }}>{activeBrand?.name || 'your brand'}</strong> at{' '}
+                <span style={{ color: '#0665ff', wordBreak: 'break-all' }}>{activeBrand?.url}</span> and generate a complete brand profile.
+              </p>
+              <div style={{ background: 'var(--bg-elevated)', borderRadius: '10px', padding: '10px 14px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.85rem' }}>⏱</span>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>2-3 min for AI to complete brand profile analysis</span>
+              </div>
+              <button
+                onClick={startAnalysis}
+                style={{ width: '100%', padding: '13px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg,#0665ff,#1e27a8)', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                <span>✦</span> Start Analysis
+              </button>
             </div>
-            <button
-              onClick={startAnalysis}
-              style={{ width: '100%', padding: '13px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg,#0665ff,#1e27a8)', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-            >
-              <span>✦</span> Start Analysis
-            </button>
           </div>
-        </div>
-      )}
+        )} */}
 
       {/* ════════════════════════════════════════
           GENERATING — progress panel
@@ -413,7 +482,7 @@ export const BrandProfile: React.FC = () => {
                 <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '12px', marginTop: '12px' }}>
                   <div style={{ fontWeight: 600, fontSize: '0.82rem', color: '#dc2626', marginBottom: '4px' }}>Analysis failed</div>
                   <div style={{ fontSize: '0.75rem', color: '#ef4444' }}>{error}</div>
-                  <button onClick={resetAnalysis} style={{ marginTop: '10px', padding: '6px 14px', borderRadius: '6px', border: '1px solid #fecaca', background: 'var(--bg-card)', color: '#dc2626', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>Retry</button>
+                  <button onClick={forceReanalyze} style={{ marginTop: '10px', padding: '6px 14px', borderRadius: '6px', border: '1px solid #fecaca', background: 'var(--bg-card)', color: '#dc2626', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>Retry</button>
                 </div>
               )}
             </div>
