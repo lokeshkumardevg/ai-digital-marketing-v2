@@ -1,6 +1,7 @@
-import { Controller, Post, Body, Get, Param, Patch, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, Query, UseGuards, Req } from '@nestjs/common';
 import { CrmService } from './crm.service';
 import { AnalyticsService } from '../analytics/analytics.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('crm')
 export class CrmController {
@@ -10,8 +11,10 @@ export class CrmController {
   ) {}
 
   @Get('dashboard')
-  async getCrmDashboard(@Query('dateRange') dateRange?: string) {
-    return this.analyticsService.getDashboardMetrics(dateRange);
+  @UseGuards(AuthGuard('jwt'))
+  async getCrmDashboard(@Req() req: any, @Query('dateRange') dateRange?: string) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.analyticsService.getDashboardMetrics(userId, dateRange);
   }
 
   @Post('contact')

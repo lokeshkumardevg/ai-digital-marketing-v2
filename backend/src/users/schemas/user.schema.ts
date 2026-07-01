@@ -106,6 +106,12 @@ export class User {
 
   @Prop({ type: [String], default: [] })
   permissions: string[]; // e.g., ['dashboard', 'ads', 'analytics', 'superadmin']
+
+  @Prop({ default: 'INR' })
+  currency: string;
+
+  @Prop({ default: 'India' })
+  country: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

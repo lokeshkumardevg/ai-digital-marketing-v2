@@ -33,6 +33,19 @@ const DonutChart: React.FC<{
 
 
 
+const getCurrencySymbol = (currency: string) => {
+  switch (currency?.toUpperCase()) {
+    case 'INR': return '₹';
+    case 'USD': return '$';
+    case 'GBP': return '£';
+    case 'EUR': return '€';
+    case 'CAD': return '$';
+    case 'AUD': return '$';
+    case 'AED': return 'د.إ';
+    default: return '₹';
+  }
+};
+
 export const AdInsights: React.FC = () => {
   const [activePlatform, setActivePlatform] = useState('Meta');
   const [loading, setLoading] = useState(true);
@@ -40,6 +53,7 @@ export const AdInsights: React.FC = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const { user } = useSelector((state: any) => state.auth);
+  const cur = getCurrencySymbol(user?.currency || 'INR');
 
   const platformMap: { [key: string]: string } = {
     'Meta': 'meta',
@@ -156,8 +170,8 @@ export const AdInsights: React.FC = () => {
                     {(aud.tags || []).map((tag: string) => <span key={tag} style={{ padding: '2px 8px', borderRadius: '5px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{tag}</span>)}
                   </div>
                   <div style={{ fontSize: '0.75rem', display: 'flex', gap: '12px' }}>
-                    <span style={{ color: '#0665ff', fontWeight: 700 }}>{aud.cpa || '0'} CPA</span>
-                    <span style={{ color: 'var(--text-dim)' }}>${aud.spend || 0} spend</span>
+                    <span style={{ color: '#0665ff', fontWeight: 700 }}>{cur}{aud.cpa || '0'} CPA</span>
+                    <span style={{ color: 'var(--text-dim)' }}>{cur}{aud.spend || 0} spend</span>
                   </div>
                 </div>
               )) : <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>No top audiences found.</div>}
@@ -190,7 +204,7 @@ export const AdInsights: React.FC = () => {
                   <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)', marginBottom: '4px', wordBreak: 'break-all' }}>{page.label || page.url}</div>
                   <div style={{ fontSize: '0.75rem', display: 'flex', gap: '12px' }}>
                     <span style={{ color: '#0665ff', fontWeight: 700 }}>{page.cvr || '0'} CVR</span>
-                    <span style={{ color: 'var(--text-dim)' }}>${page.spend || 0} spend</span>
+                    <span style={{ color: 'var(--text-dim)' }}>{cur}{page.spend || 0} spend</span>
                   </div>
                 </div>
               )) : <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>No top pages found.</div>}
@@ -217,7 +231,7 @@ export const AdInsights: React.FC = () => {
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>CPA</div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Outfit' }}>${c.cpa}</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Outfit' }}>{cur}{c.cpa}</div>
                     </div>
                     <div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>CTR</div>
@@ -225,7 +239,7 @@ export const AdInsights: React.FC = () => {
                     </div>
                     <div>
                       <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>Spend</div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-secondary)', fontFamily: 'Outfit' }}>${c.spend}</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-secondary)', fontFamily: 'Outfit' }}>{cur}{c.spend}</div>
                     </div>
                   </div>
                 </div>

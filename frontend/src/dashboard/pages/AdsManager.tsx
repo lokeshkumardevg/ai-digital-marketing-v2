@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { BrainCircuit, TrendingUp, Zap, BarChart2, RefreshCw, Search, ArrowUpRight, CheckCircle, AlertCircle } from 'lucide-react';
+import { BrainCircuit, TrendingUp, Zap, BarChart2, RefreshCw, Search, ArrowUpRight, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
 import { SmartTable } from '../components/SmartTable';
 import { EditGoogleCampaignModal } from '../components/EditGoogleCampaignModal';
 import { api } from '../../api/axios';
@@ -41,9 +41,23 @@ const ToggleSwitch: React.FC<{ isActive: boolean; onToggle: () => void; disabled
   );
 };
 
+const getCurrencySymbol = (currency: string) => {
+  switch (currency?.toUpperCase()) {
+    case 'INR': return '₹';
+    case 'USD': return '$';
+    case 'GBP': return '£';
+    case 'EUR': return '€';
+    case 'CAD': return '$';
+    case 'AUD': return '$';
+    case 'AED': return 'د.إ';
+    default: return '₹';
+  }
+};
+
 export const AdsManager: React.FC = () => {
   const { user } = useSelector((state: any) => state.auth);
   const userId = user?._id || '';
+  const cur = getCurrencySymbol(user?.currency || 'INR');
 
   const [activePlatform, setActivePlatform] = useState('All');
   const [search, setSearch] = useState('');
@@ -89,8 +103,8 @@ export const AdsManager: React.FC = () => {
                 platform: 'Meta',
                 status: 'active',
                 delivery: 'ACTIVE',
-                spend: '$0.00',
-                budget: '$35/day',
+                spend: `${cur}0.00`,
+                budget: `${cur}35/day`,
                 roas: '0.0x',
                 ctr: '0.00%',
                 impressions: '0',
@@ -166,16 +180,17 @@ export const AdsManager: React.FC = () => {
               platform: plat,
               status: statusVal,
               delivery: deliveryVal,
-              spend: `$${spendVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-              budget: `$${budgetVal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/day`,
+              spend: `${cur}${spendVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+              budget: `${cur}${budgetVal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/day`,
               roas: `${Number(roasVal || 0).toFixed(1)}x`,
               ctr: `${Number(ctrVal || 0).toFixed(2)}%`,
               impressions: impressionsVal >= 1000 ? `${(impressionsVal / 1000).toFixed(0)}K` : impressionsVal.toString(),
               reach: reachVal >= 1000 ? `${(reachVal / 1000).toFixed(0)}K` : reachVal.toString(),
               results: `${resultsVal} (${resultTypeVal || 'Landing Page Views'})`,
-              costPerResult: costPerResultVal > 0 ? `$${costPerResultVal.toFixed(2)}` : '—',
+              costPerResult: costPerResultVal > 0 ? `${cur}${costPerResultVal.toFixed(2)}` : '—',
               bidStrategy: bidStrategyVal || 'Lowest Cost',
-              score: Math.floor(Number(c.aiStrategy?.performanceScore || (60 + sM1 * 35)) || 70)
+              score: Math.floor(Number(c.aiStrategy?.performanceScore || (60 + sM1 * 35)) || 70),
+              isReal: isReal,
             };
           } catch (itemErr) {
             console.error('Failed mapping campaign item:', c, itemErr);
@@ -198,8 +213,8 @@ export const AdsManager: React.FC = () => {
               platform: plat,
               status: 'active',
               delivery: 'ACTIVE',
-              spend: '$0.00',
-              budget: '$35/day',
+              spend: `${cur}0.00`,
+              budget: `${cur}35/day`,
               roas: '0.0x',
               ctr: '0.00%',
               impressions: '0',
@@ -207,7 +222,8 @@ export const AdsManager: React.FC = () => {
               results: '0 (Landing Page Views)',
               costPerResult: '—',
               bidStrategy: 'Lowest Cost',
-              score: 70
+              score: 70,
+              isReal: false,
             };
           }
         });
@@ -297,6 +313,19 @@ export const AdsManager: React.FC = () => {
 
   // Dynamic metrics calculations from the campaign list
   const totalSpendVal = ads.reduce((sum, ad) => sum + parseFloat((ad.spend || '$0.00').replace(/[^0-9.]/g, '') || '0'), 0);
+  const activeSpendVal = ads.reduce((sum, ad) => {
+    if (ad.status === 'active') {
+      return sum + parseFloat((ad.spend || '$0.00').replace(/[^0-9.]/g, '') || '0');
+    }
+    return sum;
+  }, 0);
+  const realSpendVal = ads.reduce((sum, ad) => {
+    if (ad.isReal && ad.status === 'active') {
+      return sum + parseFloat((ad.spend || '$0.00').replace(/[^0-9.]/g, '') || '0');
+    }
+    return sum;
+  }, 0);
+
   const totalRoasVal = ads.reduce((sum, ad) => sum + parseFloat((ad.roas || '0.0x').replace(/[^0-9.]/g, '') || '0'), 0);
   const avgRoasVal = ads.length > 0 ? (totalRoasVal / ads.length).toFixed(1) : '0.0';
   const totalScoreVal = ads.reduce((sum, ad) => sum + (ad.score || 0), 0);
@@ -323,9 +352,11 @@ export const AdsManager: React.FC = () => {
 
       <div style={{ padding: '24px 32px' }}>
         {/* Insight Briefing */}
-        <div className="briefing-grid" style={{ background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--glass-border)', padding: '20px 24px', marginBottom: '20px' }}>
+        <div className="briefing-grid" style={{ marginBottom: '20px' }}>
           {[
-            { label: 'Total Spend', value: `$${totalSpendVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sub: 'Active campaigns', icon: BarChart2, color: '#0665ff' },
+            { label: 'Total Spend', value: `${cur}${totalSpendVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sub: 'All campaigns', icon: BarChart2, color: '#0665ff' },
+            { label: 'Active Spend', value: `${cur}${activeSpendVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sub: 'Active campaigns', icon: TrendingUp, color: '#0665ff' },
+            { label: 'Real Active Spend', value: `${cur}${realSpendVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, sub: 'Live campaigns', icon: DollarSign, color: '#10b981' },
             { label: 'Avg ROAS', value: `${avgRoasVal}x`, sub: 'Average return', icon: TrendingUp, color: '#16a34a' },
             { label: 'Active Ads', value: String(activeCount), sub: `${pausedCount} paused, ${draftCount} draft`, icon: Zap, color: '#d97706' },
             { label: 'AI Score', value: `${avgScoreVal}/100`, sub: 'Average optimization rating', icon: BrainCircuit, color: '#0665ff' },

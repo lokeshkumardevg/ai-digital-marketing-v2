@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { logout } from '../../store/slices/authSlice';
+import { logout, updateUser } from '../../store/slices/authSlice';
+import { api } from '../../api/axios';
 
 import {
   setActiveWebsite,
@@ -18,7 +19,6 @@ import { markAllReadAsync, markOneReadAsync, deleteOneAsync, fetchNotifications 
 import { toggleTheme } from '../../store/slices/themeSlice';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import { api } from '../../api/axios';
 import './Header.css';
 
 
@@ -27,10 +27,24 @@ const API_BASE = import.meta.env.VITE_API_URL;
 type PayStep = 'select' | 'qr' | 'url' | 'card' | 'upi' | 'processing' | 'success';
 type PayMethod = 'qr' | 'url' | 'card' | 'upi';
 
+const getCurrencySymbol = (currency: string) => {
+  switch (currency?.toUpperCase()) {
+    case 'INR': return '₹';
+    case 'USD': return '$';
+    case 'GBP': return '£';
+    case 'EUR': return '€';
+    case 'CAD': return '$';
+    case 'AUD': return '$';
+    case 'AED': return 'د.إ';
+    default: return '₹';
+  }
+};
+
 export const Header: React.FC = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state: any) => state.auth);
+  const cur = getCurrencySymbol(user?.currency || 'INR');
   const { websites, activeWebsiteId } = useSelector((state: any) => state.workspace);
   const { items, unreadCount, total } = useSelector((state: any) => state.notifications);
   const themeMode = useSelector((state: any) => state.theme?.mode || 'dark');
@@ -62,6 +76,7 @@ export const Header: React.FC = () => {
   const [newSiteUrl, setNewSiteUrl] = useState('');
   const [walletBalance, setWalletBalance] = useState(0);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // ── Ask W-AI Modal State ──
   const [showAiModal, setShowAiModal] = useState(false);
@@ -491,7 +506,7 @@ export const Header: React.FC = () => {
               <div className="wallet-trigger__text">
                 <span className="wallet-trigger__label">Available Balance</span>
                 <span className="wallet-trigger__amount">
-                  {isLoadingBalance ? '…' : `$${walletBalance.toLocaleString()}`}
+                  {isLoadingBalance ? '…' : `${cur}${walletBalance.toLocaleString()}`}
                 </span>
               </div>
               <span className="wallet-trigger__chevron"><ChevronDown size={13} /></span>
@@ -514,7 +529,7 @@ export const Header: React.FC = () => {
                   {/* Balance band — always visible */}
                   <div className="wallet-dropdown__balance-card">
                     <div className="wallet-dropdown__balance-label">Current Balance</div>
-                    <div className="wallet-dropdown__balance-amount">${walletBalance.toLocaleString()}</div>
+                    <div className="wallet-dropdown__balance-amount">{cur}{walletBalance.toLocaleString()}</div>
                   </div>
 
                   {/* ── STEP 1: Amount + Method select ── */}
@@ -528,7 +543,7 @@ export const Header: React.FC = () => {
                             className={`wallet-dropdown__preset-btn${addFundsAmount === amount ? ' wallet-dropdown__preset-btn--active' : ''}`}
                             onClick={() => setAddFundsAmount(amount)}
                           >
-                            ${amount >= 1000 ? `${amount / 1000}k` : amount}
+                            {cur}{amount >= 1000 ? `${amount / 1000}k` : amount}
                           </button>
                         ))}
                       </div>
@@ -609,7 +624,7 @@ export const Header: React.FC = () => {
                         </svg>
                         <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>Scan with any UPI or payment app</div>
                         <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--color-text-primary)', margin: '4px 0' }}>
-                          ${addFundsAmount.toLocaleString()}
+                          {cur}{addFundsAmount.toLocaleString()}
                         </div>
                         {/* Timer bar */}
                         <div style={{ height: 3, background: 'var(--color-border-tertiary, #eee)', borderRadius: 2, margin: '8px 0 4px', overflow: 'hidden' }}>
@@ -650,7 +665,7 @@ export const Header: React.FC = () => {
                         </div>
                         <div style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>Share to collect</div>
                         <div style={{ fontSize: 20, fontWeight: 500, color: 'var(--color-text-primary)', marginTop: 2 }}>
-                          ${addFundsAmount.toLocaleString()}
+                          {cur}{addFundsAmount.toLocaleString()}
                         </div>
                       </div>
 
@@ -669,7 +684,7 @@ export const Header: React.FC = () => {
 
                       <div style={{ background: 'var(--color-background-secondary)', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
                         {[
-                          ['Amount', `$${addFundsAmount.toLocaleString()}`],
+                          ['Amount', `${cur}${addFundsAmount.toLocaleString()}`],
                           ['Status', 'Active'],
                           ['Expires', '24 hours'],
                         ].map(([k, v]) => (
@@ -719,7 +734,7 @@ export const Header: React.FC = () => {
                         }
                         setPayError('');
                       }}>
-                        Pay ${addFundsAmount.toLocaleString()}
+                        Pay {cur}{addFundsAmount.toLocaleString()}
                       </button>
                       <p style={{ fontSize: 11, textAlign: 'center', color: 'var(--color-text-secondary)', marginTop: 6 }}>
                         Test card: 4242 4242 4242 4242 · 12/28 · 123
@@ -763,7 +778,7 @@ export const Header: React.FC = () => {
                         if (!upiId.includes('@')) { setPayError('Enter a valid UPI ID.'); return; }
                         setPayError('');
                       }}>
-                        Pay ${addFundsAmount.toLocaleString()}
+                        Pay {cur}{addFundsAmount.toLocaleString()}
                       </button>
                     </>
                   )}
@@ -802,10 +817,10 @@ export const Header: React.FC = () => {
                         Wallet topped up
                       </div>
                       <div style={{ fontSize: 26, fontWeight: 500, color: 'var(--color-text-success)', marginBottom: 4 }}>
-                        +${addFundsAmount.toLocaleString()}
+                        +{cur}{addFundsAmount.toLocaleString()}
                       </div>
                       <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 14 }}>
-                        New balance: ${walletBalance.toLocaleString()}
+                        New balance: {cur}{walletBalance.toLocaleString()}
                       </div>
                       <div style={{ background: 'var(--color-background-secondary)', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -855,6 +870,52 @@ export const Header: React.FC = () => {
 
           {/* ── Bell + User ── */}
           <div className="header-right-group">
+            {/* ── Currency Switcher ── */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--glass-border)', borderRadius: '10px', padding: '4px 10px', height: '36px', marginRight: '6px' }}>
+              <Globe size={13} color="var(--text-secondary)" />
+              <select
+                value={user?.currency || 'INR'}
+                onChange={async (e) => {
+                  const newCurrency = e.target.value;
+                  const countryMap: Record<string, string> = {
+                    'INR': 'India',
+                    'USD': 'United States',
+                    'GBP': 'United Kingdom',
+                    'EUR': 'Europe',
+                    'CAD': 'Canada',
+                    'AUD': 'Australia',
+                    'AED': 'United Arab Emirates'
+                  };
+                  const newCountry = countryMap[newCurrency] || 'India';
+                  try {
+                    await api.post('/auth/update', { currency: newCurrency, country: newCountry });
+                    dispatch(updateUser({ currency: newCurrency, country: newCountry }));
+                    toast.success(`Currency switched to ${newCurrency}`);
+                  } catch (err) {
+                    console.error("Failed to update currency:", err);
+                  }
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  outline: 'none',
+                  cursor: 'pointer',
+                  paddingRight: '4px'
+                }}
+              >
+                <option value="INR" style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>INR (₹)</option>
+                <option value="USD" style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>USD ($)</option>
+                <option value="GBP" style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>GBP (£)</option>
+                <option value="EUR" style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>EUR (€)</option>
+                <option value="CAD" style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>CAD ($)</option>
+                <option value="AUD" style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>AUD ($)</option>
+                <option value="AED" style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)' }}>AED (د.إ)</option>
+              </select>
+            </div>
+
             <div ref={dropdownRef} style={{ position: 'relative' }}>
               <div
                 onClick={handleBellClick}
@@ -998,11 +1059,11 @@ export const Header: React.FC = () => {
 
             {/* User */}
             <div className="header-user">
-              <div className="header-user__info">
+              <div className="header-user__info" style={{ cursor: 'pointer' }} onClick={() => setShowProfileModal(true)}>
                 <div className="header-user__name">{user?.name || 'Administrator'}</div>
                 <div className="header-user__tier">{user?.subscriptionTier || 'Free'}</div>
               </div>
-              <div className="header-user__avatar">{user?.name?.charAt(0) || 'A'}</div>
+              <div className="header-user__avatar" style={{ cursor: 'pointer' }} onClick={() => setShowProfileModal(true)}>{user?.name?.charAt(0) || 'A'}</div>
               <button className="header-user__logout" onClick={handleLogout} title="Log Out">
                 <LogOut size={15} />
               </button>
@@ -1049,6 +1110,15 @@ export const Header: React.FC = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {showProfileModal && (
+        <ProfileModal
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          user={user}
+          dispatch={dispatch}
+        />
       )}
 
       <ReplaceBrandModal
@@ -1306,5 +1376,131 @@ export const Header: React.FC = () => {
         </div>
       )}
     </>
+  );
+};
+
+interface ProfileModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  user: any;
+  dispatch: any;
+}
+
+const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, dispatch }) => {
+  const [name, setName] = useState(user?.name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [country, setCountry] = useState(user?.country || 'India');
+  const [currency, setCurrency] = useState(user?.currency || 'INR');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      toast.error('Name is required.');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await api.post('/auth/update', { name: name.trim(), country, currency });
+      dispatch(updateUser({ name: name.trim(), country, currency }));
+      toast.success('Profile updated successfully!');
+      onClose();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to update profile settings.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }} style={{ zIndex: 3000 }}>
+      <div className="modal-panel" style={{ maxWidth: '440px' }} onClick={e => e.stopPropagation()}>
+        <div className="modal-panel__header">
+          <h2 className="modal-panel__title">Profile <span className="text-gradient">Settings</span></h2>
+          <button className="modal-panel__close" onClick={onClose}><X size={16} /></button>
+        </div>
+
+        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Full Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '12px 16px', color: 'var(--text-primary)', fontSize: '0.88rem' }}
+              placeholder="Your name"
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Email Address</label>
+            <input
+              type="email"
+              value={email}
+              disabled
+              style={{ width: '100%', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '12px 16px', color: 'var(--text-dim)', fontSize: '0.88rem', cursor: 'not-allowed' }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Country</label>
+            <select
+              value={country}
+              onChange={e => {
+                const newCountry = e.target.value;
+                setCountry(newCountry);
+                const currencyMap: Record<string, string> = {
+                  'India': 'INR',
+                  'United States': 'USD',
+                  'United Kingdom': 'GBP',
+                  'Europe': 'EUR',
+                  'Canada': 'CAD',
+                  'Australia': 'AUD',
+                  'United Arab Emirates': 'AED'
+                };
+                if (currencyMap[newCountry]) {
+                  setCurrency(currencyMap[newCountry]);
+                }
+              }}
+              style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '12px 16px', color: 'var(--text-primary)', fontSize: '0.88rem', outline: 'none' }}
+            >
+              <option value="India">India</option>
+              <option value="United States">United States</option>
+              <option value="United Kingdom">United Kingdom</option>
+              <option value="Europe">Europe</option>
+              <option value="Canada">Canada</option>
+              <option value="Australia">Australia</option>
+              <option value="United Arab Emirates">United Arab Emirates</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Currency</label>
+            <select
+              value={currency}
+              onChange={e => setCurrency(e.target.value)}
+              style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '12px 16px', color: 'var(--text-primary)', fontSize: '0.88rem', outline: 'none' }}
+            >
+              <option value="INR">INR (₹)</option>
+              <option value="USD">USD ($)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="CAD">CAD ($)</option>
+              <option value="AUD">AUD ($)</option>
+              <option value="AED">AED (د.إ)</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSaving}
+            style={{ width: '100%', padding: '12px 24px', background: 'linear-gradient(135deg, #0665ff, #1e27a8)', border: 'none', borderRadius: '12px', color: '#fff', fontWeight: 600, fontSize: '0.88rem', cursor: 'pointer', transition: '0.2s', marginTop: '8px' }}
+          >
+            {isSaving ? 'Saving Changes...' : 'Save Settings'}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 };

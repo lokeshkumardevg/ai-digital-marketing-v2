@@ -25,4 +25,12 @@ export class UpdateUserDto {
   @ArrayUnique()
   @IsOptional()
   permissions?: string[];
+
+  @IsString()
+  @IsOptional()
+  currency?: string;
+
+  @IsString()
+  @IsOptional()
+  country?: string;
 }

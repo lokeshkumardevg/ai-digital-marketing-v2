@@ -343,43 +343,34 @@ button {
 
 html.light .logo-text {
   color: #000000;
+}
+}
 
-/* Ads Manager Responsive Briefing */
+/* Ads Manager Responsive Briefing (Top-level CSS) */
 .briefing-grid {
-  display: flex;
-  flex-direction: row;
-  gap: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
   width: 100%;
 }
 
 .briefing-item {
-  flex: 1;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  padding-right: 32px;
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
 }
 
-.briefing-item:last-child {
-  border-right: none;
-  padding-right: 0;
-}
-
-@media (max-width: 1024px) {
-  .briefing-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-  .briefing-item {
-    border-right: none;
-    padding-right: 0;
-  }
+.briefing-item:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 102, 241, 0.4);
 }
 
 @media (max-width: 640px) {
   .briefing-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
   }
 }
-}
-}
+

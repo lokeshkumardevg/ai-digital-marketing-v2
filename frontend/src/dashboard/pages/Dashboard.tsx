@@ -8,16 +8,14 @@ import {
   TrendingUp, Target, MousePointerClick,
   ArrowUpRight, BrainCircuit, Wand2
 } from 'lucide-react';
-
-
+import { api } from '../../api/axios';
 
 export const Dashboard: React.FC = () => {
   const [data, setData] = useState<{ daily: any[], summary: any } | null>(null);
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/analytics/dashboard`)
-      .then(res => res.json())
-      .then(d => setData(d))
+    api.get('/analytics/dashboard')
+      .then(res => setData(res.data))
       .catch(console.error);
   }, []);
 

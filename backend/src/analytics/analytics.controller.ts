@@ -20,8 +20,10 @@ export class AnalyticsController {
   ) {}
 
   @Get('dashboard')
-  async getDashboard(@Query('dateRange') dateRange?: string) {
-    return this.analyticsService.getDashboardMetrics(dateRange);
+  @UseGuards(AuthGuard('jwt'))
+  async getDashboard(@Req() req: any, @Query('dateRange') dateRange?: string) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.analyticsService.getDashboardMetrics(userId, dateRange);
   }
 
   @Post('disconnect/meta')

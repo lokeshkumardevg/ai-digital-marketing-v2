@@ -53,6 +53,19 @@ const D = {
   inputBg: 'rgba(255,255,255,0.04)',
 };
 
+const getCurrencySymbol = (currency: string) => {
+  switch (currency?.toUpperCase()) {
+    case 'INR': return '₹';
+    case 'USD': return '$';
+    case 'GBP': return '£';
+    case 'EUR': return '€';
+    case 'CAD': return '$';
+    case 'AUD': return '$';
+    case 'AED': return 'د.إ';
+    default: return '₹';
+  }
+};
+
 export const Crm: React.FC = () => {
   const [activeRange, setActiveRange] = useState('Last 7 days');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
@@ -62,13 +75,14 @@ export const Crm: React.FC = () => {
   // const [rechargeAmount, setRechargeAmount] = useState(500);
   // const [walletBalance, setWalletBalance] = useState(0);
   const { user } = useSelector((state: any) => state.auth);
+  const cur = getCurrencySymbol(user?.currency || 'INR');
   const [kpis, setKpis] = useState([
-    { label: 'Spend', value: '$0.00', color: D.purple, checked: true, key: 'spend' },
-    { label: 'CPM', value: '$0.00', color: D.textDim, checked: false, key: 'cpm' },
-    { label: 'CPC', value: '$0.00', color: D.textDim, checked: false, key: 'cpc' },
+    { label: 'Spend', value: `${cur}0.00`, color: D.purple, checked: true, key: 'spend' },
+    { label: 'CPM', value: `${cur}0.00`, color: D.textDim, checked: false, key: 'cpm' },
+    { label: 'CPC', value: `${cur}0.00`, color: D.textDim, checked: false, key: 'cpc' },
     { label: 'CTR', value: '0.00%', color: D.textDim, checked: false, key: 'ctr' },
     { label: 'ROAS', value: '0.00', color: D.green, checked: true, key: 'roas' },
-    { label: 'Purchase Value', value: '$0.00', color: D.textDim, checked: false, key: 'purchaseValue' },
+    { label: 'Purchase Value', value: `${cur}0.00`, color: D.textDim, checked: false, key: 'purchaseValue' },
   ]);
 
   const fetchData = useCallback(async () => {
@@ -84,10 +98,10 @@ export const Crm: React.FC = () => {
       setKpis(prev => prev.map(k => {
         const rawValue = summary?.[k.key];
         if (rawValue === undefined || rawValue === null)
-          return { ...k, value: k.key === 'ctr' ? '0%' : k.key === 'roas' ? '0.00' : '$0.00' };
+          return { ...k, value: k.key === 'ctr' ? '0%' : k.key === 'roas' ? '0.00' : `${cur}0.00` };
         const formattedValue = (k.key === 'ctr' || k.key === 'roas')
           ? (typeof rawValue === 'string' ? rawValue : Number(rawValue).toFixed(2)) + (k.key === 'ctr' ? '%' : '')
-          : `$${parseFloat(String(rawValue)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          : `${cur}${parseFloat(String(rawValue)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         return { ...k, value: formattedValue };
       }));
       setLoading(false);
@@ -575,9 +589,9 @@ export const Crm: React.FC = () => {
               title="Daily Performance Analytics"
               columns={[
                 { key: 'date', label: 'Node Date', sortable: true, render: (row) => <span style={{ fontWeight: 700, color: D.textPrimary }}>{row.date}</span> },
-                { key: 'spend', label: 'Daily Spend', sortable: true, render: (row) => <span style={{ fontWeight: 800, color: D.purpleText }}>${row.spend?.toFixed(2) ?? '0.00'}</span> },
-                { key: 'cpm', label: 'CPM', sortable: true, render: (r) => <span style={{ color: D.textMuted }}>${r.cpm?.toFixed(2) ?? '0.00'}</span> },
-                { key: 'cpc', label: 'CPC', sortable: true, render: (r) => <span style={{ color: D.textMuted }}>${r.cpc?.toFixed(2) ?? '0.00'}</span> },
+                { key: 'spend', label: 'Daily Spend', sortable: true, render: (row) => <span style={{ fontWeight: 800, color: D.purpleText }}>{cur}{row.spend?.toFixed(2) ?? '0.00'}</span> },
+                { key: 'cpm', label: 'CPM', sortable: true, render: (r) => <span style={{ color: D.textMuted }}>{cur}{r.cpm?.toFixed(2) ?? '0.00'}</span> },
+                { key: 'cpc', label: 'CPC', sortable: true, render: (r) => <span style={{ color: D.textMuted }}>{cur}{r.cpc?.toFixed(2) ?? '0.00'}</span> },
                 { key: 'ctr', label: 'CTR Matrix', sortable: true, render: (r) => <span style={{ fontWeight: 600, color: D.textPrimary }}>{r.ctr?.toFixed(2) ?? '0.00'}%</span> },
                 { key: 'roas', label: 'ROAS Factor', sortable: true, render: (r) => <span style={{ fontWeight: 800, color: D.greenText }}>{r.roas?.toFixed(2) ?? '0.00'}x</span> },
               ]}

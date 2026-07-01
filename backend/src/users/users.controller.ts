@@ -62,8 +62,17 @@ export class UsersController {
 
   @Patch(':id')
   async updateUser(@Request() req: any, @Param('id') id: string, @Body() updateDto: UpdateUserDto) {
-    if (!hasPermission(req.user, 'manage_users')) {
-      throw new ForbiddenException('Only super admins or user managers can update users.');
+    const isSelf = req.user && req.user.id === id;
+    const isAdmin = hasPermission(req.user, 'manage_users');
+
+    if (!isSelf && !isAdmin) {
+      throw new ForbiddenException('Only super admins or user managers can update other users.');
+    }
+
+    if (isSelf && !isAdmin) {
+      if (updateDto.role !== undefined || updateDto.isActive !== undefined || updateDto.permissions !== undefined) {
+        throw new ForbiddenException('You cannot modify your own role, permissions, or activation status.');
+      }
     }
 
     if (id === req.user.id && updateDto.isActive === false) {

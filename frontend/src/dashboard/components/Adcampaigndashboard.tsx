@@ -1449,7 +1449,7 @@ interface CreativeStudioProps {
   onCreativeChange: (patch: Partial<PlatformCreative>) => void;
 }
 
-type ImageTab = "brand" | "ai" | "upload";
+type ImageTab = "brand" | "hub" | "ai" | "upload";
 
 function CreativeStudio({ adCopy, activePlatformId, isEnabled, brandAssetImages, generatingImages, creative, onCreativeChange }: CreativeStudioProps) {
   const [sIdx, setSIdx] = useState<number>(0);
@@ -1460,6 +1460,33 @@ function CreativeStudio({ adCopy, activePlatformId, isEnabled, brandAssetImages,
   const [imgTab, setImgTab] = useState<ImageTab>(creative.aiImgs && creative.aiImgs.length > 0 ? "ai" : "brand");
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadedImgs, setUploadedImgs] = useState<string[]>([]);
+  const [hubImages, setHubImages] = useState<string[]>([]);
+  const [loadingHub, setLoadingHub] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchHubImages = async () => {
+      setLoadingHub(true);
+      try {
+        const r = await fetch(`${API_BASE}/content`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          },
+        });
+        if (r.ok) {
+          const data = await r.json();
+          const urls = (Array.isArray(data) ? data : [])
+            .map((item: any) => item.imageUrl || item.thumbnailUrl)
+            .filter(Boolean);
+          setHubImages(Array.from(new Set(urls)));
+        }
+      } catch (err) {
+        console.error("Failed to load Creative Hub images:", err);
+      } finally {
+        setLoadingHub(false);
+      }
+    };
+    fetchHubImages();
+  }, []);
 
   // Sync headline/cta from adCopy defaults when platform changes
   useEffect(() => {
@@ -1554,9 +1581,10 @@ function CreativeStudio({ adCopy, activePlatformId, isEnabled, brandAssetImages,
         {/* Ad Creative */}
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, color: "var(--t2)", textTransform: "uppercase", letterSpacing: ".5px", marginBottom: 10 }}><I.Image /> Ad Creative</div>
-          <div style={{ display: "flex", gap: 6, marginBottom: 12, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 6, marginBottom: 12, alignItems: "center", flexWrap: "wrap" }}>
             {([
               { id: "brand" as ImageTab, label: generatingImages ? "Brand (loading…)" : `Brand (${brandAssetImages.length})` },
+              { id: "hub" as ImageTab, label: `Creative Hub (${hubImages.length})` },
               { id: "ai" as ImageTab, label: "AI Gen" },
               { id: "upload" as ImageTab, label: "Uploaded" },
             ]).map(t => (
@@ -1586,6 +1614,37 @@ function CreativeStudio({ adCopy, activePlatformId, isEnabled, brandAssetImages,
                   {brandAssetImages.map((url, i) => (
                     <div key={i} className={`brand-asset-img${creative.image === url ? " sel" : ""}`} onClick={() => pickImg(url)} style={{ aspectRatio: "1", position: "relative", overflow: "hidden", border: `2px solid ${creative.image === url ? "var(--blue)" : "var(--bdr)"}`, cursor: "pointer" }}>
                       <img src={url} alt={`Brand asset ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      {creative.image === url && (
+                        <div style={{ position: "absolute", inset: 0, background: "#2563eb1a", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", padding: 4 }}>
+                          <div style={{ width: 18, height: 18, borderRadius: "50%", background: "var(--blue)", display: "flex", alignItems: "center", justifyContent: "center" }}><I.Check /></div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {imgTab === "hub" && (
+            <>
+              {loadingHub ? (
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, background: "var(--blue-lt)", border: "1px solid var(--blue-bdr)", borderRadius: 8, padding: "7px 10px" }}>
+                    <span style={{ width: 8, height: 8, border: "1.5px solid var(--blue-bdr)", borderTopColor: "var(--blue)", borderRadius: "50%", animation: "spin .7s linear infinite", display: "inline-block", flexShrink: 0 }} />
+                    <span style={{ fontSize: 10, color: "var(--blue)", fontWeight: 600 }}>Loading Creative Hub images…</span>
+                  </div>
+                  <BrandImageSkeletons count={4} />
+                </div>
+              ) : hubImages.length === 0 ? (
+                <div style={{ background: "var(--surface2)", border: "1.5px dashed var(--bdr2)", borderRadius: 10, padding: "20px 14px", textAlign: "center", color: "var(--t3)", fontSize: 11, lineHeight: 1.7 }}>
+                  <I.Image /><div style={{ marginTop: 8 }}>No Creative Hub assets found.</div>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 6 }}>
+                  {hubImages.map((url, i) => (
+                    <div key={i} className={`brand-asset-img${creative.image === url ? " sel" : ""}`} onClick={() => pickImg(url)} style={{ aspectRatio: "1", position: "relative", overflow: "hidden", border: `2px solid ${creative.image === url ? "var(--blue)" : "var(--bdr)"}`, cursor: "pointer", borderRadius: 8 }}>
+                      <img src={url} alt={`Hub asset ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       {creative.image === url && (
                         <div style={{ position: "absolute", inset: 0, background: "#2563eb1a", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", padding: 4 }}>
                           <div style={{ width: 18, height: 18, borderRadius: "50%", background: "var(--blue)", display: "flex", alignItems: "center", justifyContent: "center" }}><I.Check /></div>
@@ -1660,10 +1719,12 @@ interface PublishPlanModalProps { isOpen: boolean; onClose: () => void; onSelect
 
 function PublishPlanModal({ isOpen, onClose, onSelectPlan }: PublishPlanModalProps) {
   const [billing, setBilling] = useState<BillingCycle>("monthly");
+  const { user } = useSelector((state: any) => state.auth);
+  const cur = getCurrencySymbol(user?.currency || 'INR');
   const plans: Plan[] = [
-    { id: "free", name: "3-Day Trial", price: "$0", features: ["Valid for 3 days only", "1 campaign/month", "Basic analytics", "Standard publishing", "Limited AI images"], color: 'var(--text-dim)' },
-    { id: "silver", name: "Silver", price: billing === "monthly" ? "$29" : "$290", features: ["10 campaigns/month", "Advanced analytics", "Priority support", "Scheduled publishing", "Unlimited AI images", "A/B testing"], color: "#2563EB", popular: true },
-    { id: "gold", name: "Gold", price: billing === "monthly" ? "$79" : "$790", features: ["Unlimited campaigns", "Real-time analytics", "24/7 support", "Advanced scheduling", "Unlimited AI images", "A/B testing", "Multi-platform", "Custom integrations"], color: "#D97706" },
+    { id: "free", name: "3-Day Trial", price: `${cur}0`, features: ["Valid for 3 days only", "1 campaign/month", "Basic analytics", "Standard publishing", "Limited AI images"], color: 'var(--text-dim)' },
+    { id: "silver", name: "Silver", price: billing === "monthly" ? `${cur}29` : `${cur}290`, features: ["10 campaigns/month", "Advanced analytics", "Priority support", "Scheduled publishing", "Unlimited AI images", "A/B testing"], color: "#2563EB", popular: true },
+    { id: "gold", name: "Gold", price: billing === "monthly" ? `${cur}79` : `${cur}790`, features: ["Unlimited campaigns", "Real-time analytics", "24/7 support", "Advanced scheduling", "Unlimited AI images", "A/B testing", "Multi-platform", "Custom integrations"], color: "#D97706" },
   ];
   if (!isOpen) return null;
   return (
@@ -1740,6 +1801,19 @@ function Toast({ message, type }: { message: string; type: ToastType }) {
   return <div className={`acd-toast ${type}`}><span style={{ width: 7, height: 7, borderRadius: "50%", background: dot, display: "inline-block" }} />{message}</div>;
 }
 
+const getCurrencySymbol = (currency: string) => {
+  switch (currency?.toUpperCase()) {
+    case 'INR': return '₹';
+    case 'USD': return '$';
+    case 'GBP': return '£';
+    case 'EUR': return '€';
+    case 'CAD': return '$';
+    case 'AUD': return '$';
+    case 'AED': return 'د.إ';
+    default: return '₹';
+  }
+};
+
 /* ─── SEED DATA ─────────────────────────────────────────── */
 const SEED = {
   event: "Purchase", budget: "5.83 USD/day", schedule: "May 08, 2026",
@@ -1807,7 +1881,9 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
 
   /* ── Budget / location defaults ── */
   const budgetVal = promoData?.dailyBudget ?? promoData?.budget;
-  const budgetStr = budgetVal !== undefined ? `${budgetVal} ${promoData?.currency ?? "USD"}/day` : SEED.budget;
+  const userCurrency = user?.currency || 'INR';
+  const rawBudgetStr = budgetVal !== undefined ? `${budgetVal} ${promoData?.currency ?? userCurrency}/day` : SEED.budget;
+  const budgetStr = rawBudgetStr.replace(/USD/g, userCurrency);
   const locationStr = promoData?.targetLocations || promoData?.targetLocation || SEED.location;
 
   /* ── Shared ad settings (same across all platforms) ── */
