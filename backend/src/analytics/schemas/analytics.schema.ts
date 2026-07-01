@@ -57,4 +57,4 @@ export class Analytics {
 
 export const AnalyticsSchema = SchemaFactory.createForClass(Analytics);
 
-AnalyticsSchema.index({ date: 1, platform: 1 }, { unique: true });
+AnalyticsSchema.index({ date: 1, platform: 1, workspaceId: 1 }, { unique: true });

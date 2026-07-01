@@ -55,6 +55,13 @@ export class AnalyticsController {
   }
 
 
+  @Post('sync/all')
+  @UseGuards(AuthGuard('jwt'))
+  async syncAll(@Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.analyticsService.syncAll(userId);
+  }
+
   @Post('sync/meta')
   @UseGuards(AuthGuard('jwt'))
   async syncMeta(@Req() req: any) {

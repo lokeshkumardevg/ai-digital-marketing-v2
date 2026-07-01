@@ -3048,6 +3048,69 @@ Return ONLY JSON.
     }
   }
 
+  private async uploadImageToLinkedin(imageUrl: string, authorUrn: string, accessToken: string): Promise<string | null> {
+    try {
+      this.logger.log(`Fetching image to upload to LinkedIn: ${imageUrl}`);
+      const imageRes = await fetch(imageUrl);
+      if (!imageRes.ok) throw new Error(`Failed to fetch image: ${imageRes.statusText}`);
+      const arrayBuffer = await imageRes.arrayBuffer();
+
+      this.logger.log(`Registering upload on LinkedIn for ${authorUrn}...`);
+      const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'X-Restli-Protocol-Version': '2.0.0',
+          'LinkedIn-Version': '202606',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          registerUploadRequest: {
+            recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+            owner: authorUrn,
+            serviceRelationships: [
+              {
+                relationshipType: 'OWNER',
+                identifier: 'urn:li:userGeneratedContent'
+              }
+            ]
+          }
+        })
+      });
+
+      if (!registerRes.ok) {
+        const err = await registerRes.text();
+        this.logger.warn(`LinkedIn registerUpload failed: ${err}`);
+        return null;
+      }
+
+      const registerData = await registerRes.json();
+      const uploadUrl = registerData.value.uploadMechanism['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'].uploadUrl;
+      const assetUrn = registerData.value.asset;
+
+      this.logger.log(`Uploading binary data to LinkedIn...`);
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: Buffer.from(arrayBuffer)
+      });
+
+      if (!uploadRes.ok) {
+        const err = await uploadRes.text();
+        this.logger.warn(`LinkedIn binary upload failed: ${err}`);
+        return null;
+      }
+
+      this.logger.log(`Successfully uploaded image to LinkedIn. Asset URN: ${assetUrn}`);
+      return assetUrn;
+    } catch (e: any) {
+      this.logger.error(`Error uploading image to LinkedIn: ${e.message}`);
+      return null;
+    }
+  }
+
   async publishLinkedinCampaign(userId: string, payload: any) {
     this.logger.log(`Publishing LinkedIn Campaign for ${userId}`);
     const user = await this.usersService.findById(userId);
@@ -3095,6 +3158,58 @@ Return ONLY JSON.
     let linkedinPostId = null;
     let apiError = null;
     let responseText = '';
+
+    const imageUrl = linkedinData.imageUrl || linkedinData.mediaUrl || payload.mediaUrl || payload.imageUrl;
+    let uploadedAssetUrn: string | null = null;
+    let orgShareUrn: string | null = null;
+
+    if (imageUrl) {
+      const uploaderUrn = payload.linkedinPageId 
+        ? (payload.linkedinPageId.startsWith('urn:li:') ? payload.linkedinPageId : `urn:li:organization:${payload.linkedinPageId}`)
+        : authorUrn;
+      uploadedAssetUrn = await this.uploadImageToLinkedin(imageUrl, uploaderUrn, user.linkedinAccessToken);
+      
+      if (uploadedAssetUrn && payload.linkedinPageId) {
+        const orgUrn = payload.linkedinPageId.startsWith('urn:li:') ? payload.linkedinPageId : `urn:li:organization:${payload.linkedinPageId}`;
+        this.logger.log(`Creating Organization Share for Sponsored Update on ${orgUrn}...`);
+        const dscRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${user.linkedinAccessToken}`,
+                'X-Restli-Protocol-Version': '2.0.0',
+                'Content-Type': 'application/json',
+                'LinkedIn-Version': '202606',
+            },
+            body: JSON.stringify({
+                author: orgUrn,
+                lifecycleState: 'PUBLISHED',
+                specificContent: {
+                    'com.linkedin.ugc.ShareContent': {
+                        shareCommentary: { text: caption },
+                        shareMediaCategory: 'IMAGE',
+                        media: [{
+                            status: 'READY',
+                            description: { text: caption.substring(0, 200) },
+                            media: uploadedAssetUrn,
+                            title: { text: headline.substring(0, 200) }
+                        }]
+                    }
+                },
+                visibility: {
+                    'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC'
+                }
+            })
+        });
+        if (dscRes.ok) {
+           const dscData = await dscRes.json();
+           orgShareUrn = dscData.id;
+           this.logger.log(`Created Organization Share: ${orgShareUrn}`);
+        } else {
+           const err = await dscRes.text();
+           this.logger.warn(`Failed to create org share for sponsored update: ${err}`);
+        }
+      }
+    }
 
     // ==========================================
     // 1. ATTEMPT LINKEDIN MARKETING API (ADS)
@@ -3219,7 +3334,7 @@ Return ONLY JSON.
                 campaignGroup: campaignGroupUrn,
                 name: campaignName || 'LinkedIn AI Campaign',
                 objectiveType: 'BRAND_AWARENESS',
-                type: 'TEXT_AD',
+                type: orgShareUrn ? 'SPONSORED_UPDATES' : 'TEXT_AD',
                 dailyBudget: { amount: budget.toString(), currencyCode: 'USD' },
                 unitCost: { amount: "2.00", currencyCode: 'USD' },
                 costType: 'CPM',
@@ -3278,7 +3393,9 @@ Return ONLY JSON.
                   campaign: campaignUrn,
                   intendedStatus: 'ACTIVE',
                   name: campaignName ? campaignName.substring(0, 50) : 'AI Ad Creative',
-                  content: {
+                  content: orgShareUrn ? {
+                    reference: orgShareUrn
+                  } : {
                     textAd: {
                       headline: headline ? headline.substring(0, 25) : 'AI Ad Title',
                       description: caption ? caption.substring(0, 75) : 'AI Generated Text',
@@ -3330,7 +3447,15 @@ Return ONLY JSON.
         specificContent: {
           'com.linkedin.ugc.ShareContent': {
             shareCommentary: { text: caption },
-            shareMediaCategory: 'NONE'
+            shareMediaCategory: uploadedAssetUrn ? 'IMAGE' : 'NONE',
+            media: uploadedAssetUrn ? [
+              {
+                status: 'READY',
+                description: { text: caption.substring(0, 200) },
+                media: uploadedAssetUrn,
+                title: { text: headline.substring(0, 200) }
+              }
+            ] : undefined
           }
         },
         visibility: {
