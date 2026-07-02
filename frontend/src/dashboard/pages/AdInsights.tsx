@@ -1,37 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../api/axios';
 import { useSelector } from 'react-redux';
+import { Activity, BarChart2, DollarSign, MousePointerClick, Target, TrendingUp, Users } from 'lucide-react';
 
 const platforms = ['Meta', 'Google', 'X', 'LinkedIn'];
-
-// Donut chart SVG helper
-const DonutChart: React.FC<{
-  data: { label: string; value: number; color: string }[];
-  size?: number;
-}> = ({ data, size = 140 }) => {
-  const total = data.reduce((s, d) => s + d.value, 0);
-  const r = 46; const cx = size / 2; const cy = size / 2;
-  let offset = -Math.PI / 2;
-  const slices = data.map(d => {
-    const angle = (d.value / total) * 2 * Math.PI;
-    const x1 = cx + r * Math.cos(offset);
-    const y1 = cy + r * Math.sin(offset);
-    offset += angle;
-    const x2 = cx + r * Math.cos(offset);
-    const y2 = cy + r * Math.sin(offset);
-    const la = angle > Math.PI ? 1 : 0;
-    const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${la} 1 ${x2} ${y2} Z`;
-    return { path, color: d.color };
-  });
-  return (
-    <svg width={size} height={size}>
-      {slices.map((s, i) => <path key={i} d={s.path} fill={s.color} />)}
-      <circle cx={cx} cy={cy} r={r * 0.55} fill="var(--bg-card)" />
-    </svg>
-  );
-};
-
-
 
 const getCurrencySymbol = (currency: string) => {
   switch (currency?.toUpperCase()) {
@@ -44,6 +16,10 @@ const getCurrencySymbol = (currency: string) => {
     case 'AED': return 'د.إ';
     default: return '₹';
   }
+};
+
+const formatNumber = (num: number) => {
+  return new Intl.NumberFormat('en-US').format(Math.floor(num));
 };
 
 export const AdInsights: React.FC = () => {
@@ -82,7 +58,7 @@ export const AdInsights: React.FC = () => {
         } else {
           setError('Unable to fetch ad insights. Please refresh or check your integration settings.');
         }
-        setData({ audiences: [], pages: [], creatives: [] });
+        setData({ kpis: { spend: 0, impressions: 0, clicks: 0, conversions: 0, ctr: 0, cpc: 0, cpa: 0 }, campaigns: [] });
       } finally {
         setLoading(false);
       }
@@ -94,161 +70,188 @@ export const AdInsights: React.FC = () => {
     setRefreshKey(prev => prev + 1);
   };
 
+  const getPlatformColor = (platform: string) => {
+    switch(platform) {
+      case 'Meta': return '#1877f2';
+      case 'Google': return '#34a853';
+      case 'X': return '#0F1733';
+      case 'LinkedIn': return '#0a66c2';
+      default: return '#1877f2';
+    }
+  };
+
+  const pColor = getPlatformColor(activePlatform);
+
   if (loading || !data) return (
     <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
-      <div className="animate-fade-in" style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Analyzing {activePlatform} Performance...</div>
+      <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+        <div style={{ width: '40px', height: '40px', border: `3px solid ${pColor}40`, borderTopColor: pColor, borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <div style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Fetching live data from {activePlatform}...</div>
+      </div>
     </div>
   );
+
+  const { kpis, campaigns } = data;
 
   return (
     <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
       {/* Header */}
-      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--glass-border)', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>Ad Insights</span>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>Live Data from {activePlatform}</span>
+      <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--glass-border)', padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <h1 style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1.2rem', margin: '0 0 4px 0' }}>Ads Manager</h1>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>Native real-time analytics from connected ad accounts</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Last updated: Just now</div>
           <button 
             onClick={handleRefresh}
-            style={{ fontSize: '0.78rem', color: '#0665ff', background: 'none', border: '1px solid #c4b5fd', padding: '4px 12px', borderRadius: '5px', fontWeight: 500, cursor: 'pointer' }}
+            style={{ fontSize: '0.85rem', color: '#fff', background: pColor, border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'opacity 0.2s' }}
+            onMouseOver={e => e.currentTarget.style.opacity = '0.9'}
+            onMouseOut={e => e.currentTarget.style.opacity = '1'}
           >
-            🔄 Refresh
+            <Activity size={14} /> Refresh Data
           </button>
         </div>
-        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Data cached 30min • Redis powered</div>
       </div>
+      
       {error && (
         <div style={{ margin: '16px 32px 0', padding: '14px 18px', borderRadius: '12px', background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c' }}>
           {error}
         </div>
       )}
 
-      <div style={{ padding: '0' }}>
-        {/* Platform Tabs */}
-        <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid #f1f5f9', padding: '0 32px', display: 'flex', gap: '0' }}>
-          {platforms.map(p => (
+      {/* Platform Tabs */}
+      <div style={{ padding: '24px 32px 0', display: 'flex', gap: '8px' }}>
+        {platforms.map(p => {
+          const isActive = activePlatform === p;
+          const color = getPlatformColor(p);
+          return (
             <button key={p} onClick={() => setActivePlatform(p)} style={{
-              padding: '14px 24px', border: 'none', background: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', fontWeight: 600,
-              color: activePlatform === p ? '#eaecf3' : '#94a3b8',
-              borderBottom: activePlatform === p ? '2px solid #0665ff' : '2px solid transparent',
+              padding: '12px 24px', border: isActive ? `1px solid ${color}40` : '1px solid transparent', 
+              background: isActive ? `${color}10` : 'transparent', 
+              borderRadius: '12px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: 600,
+              color: isActive ? color : 'var(--text-secondary)',
+              transition: 'all 0.2s ease',
             }}>
-              <span style={{ fontSize: '1rem' }}>
+              <span style={{ fontSize: '1.1rem' }}>
                 {p === 'Meta' ? '𝕄' : p === 'Google' ? 'G' : p === 'X' ? '𝕏' : p === 'LinkedIn' ? '💼' : 'Ꞵ'}
               </span>
               {p}
             </button>
-          ))}
-        </div>
+          )
+        })}
+      </div>
 
-        <div style={{ padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          {/* Left: Audience Insight */}
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ width: '3px', height: '18px', background: '#0665ff', borderRadius: '2px' }} />
-              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>Audience Insight</span>
+      <div style={{ padding: '24px 32px' }}>
+        
+        {/* KPI Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+          
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              <DollarSign size={16} color={pColor} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Amount Spent</span>
             </div>
-
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '14px' }}>Spend Distribution</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
-              <DonutChart data={data.audiences || []} size={130} />
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                {data.audiences?.map((d: any) => (
-                  <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: d.color, flexShrink: 0 }} />
-                    {d.label}
-                  </div>
-                )) || <div>No audience data</div>}
-              </div>
-            </div>
-
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '10px' }}>Top Audiences</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {(data.audiences || []).length > 0 ? (data.audiences || []).map((aud: any, i: number) => (
-                <div key={i} style={{ padding: '12px 0', borderBottom: i < data.audiences.length - 1 ? '1px dashed #f1f5f9' : 'none' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '6px' }}>{aud.label || aud.name}</div>
-                  <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '5px' }}>
-                    {(aud.tags || []).map((tag: string) => <span key={tag} style={{ padding: '2px 8px', borderRadius: '5px', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>{tag}</span>)}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', display: 'flex', gap: '12px' }}>
-                    <span style={{ color: '#0665ff', fontWeight: 700 }}>{cur}{aud.cpa || '0'} CPA</span>
-                    <span style={{ color: 'var(--text-dim)' }}>{cur}{aud.spend || 0} spend</span>
-                  </div>
-                </div>
-              )) : <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>No top audiences found.</div>}
-            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>{cur}{formatNumber(kpis?.spend || 0)}</div>
           </div>
 
-          {/* Right: Page Insights */}
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ width: '3px', height: '18px', background: '#3b82f6', borderRadius: '2px' }} />
-              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>Page Insights</span>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              <Users size={16} color={pColor} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Impressions</span>
             </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(kpis?.impressions || 0)}</div>
+          </div>
 
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '14px' }}>Spend Distribution</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
-              <DonutChart data={data.pages || []} size={130} />
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                {data.pages?.map((d: any) => (
-                  <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: d.color, flexShrink: 0 }} />
-                    <span style={{ fontSize: '0.72rem', wordBreak: 'break-all' }}>{d.label}</span>
-                  </div>
-                )) || <div>No page data</div>}
-              </div>
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              <MousePointerClick size={16} color={pColor} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Clicks</span>
             </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(kpis?.clicks || 0)}</div>
+          </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {(data.pages || []).length > 0 ? (data.pages || []).map((page: any, i: number) => (
-                <div key={i} style={{ padding: '12px 0', borderBottom: i < data.pages.length - 1 ? '1px dashed #f1f5f9' : 'none' }}>
-                  <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)', marginBottom: '4px', wordBreak: 'break-all' }}>{page.label || page.url}</div>
-                  <div style={{ fontSize: '0.75rem', display: 'flex', gap: '12px' }}>
-                    <span style={{ color: '#0665ff', fontWeight: 700 }}>{page.cvr || '0'} CVR</span>
-                    <span style={{ color: 'var(--text-dim)' }}>{cur}{page.spend || 0} spend</span>
-                  </div>
-                </div>
-              )) : <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>No top pages found.</div>}
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              <Target size={16} color={pColor} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Results</span>
             </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>{formatNumber(kpis?.conversions || 0)}</div>
+          </div>
+
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              <TrendingUp size={16} color={pColor} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Cost per Result</span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>{cur}{(kpis?.cpa || 0).toFixed(2)}</div>
+          </div>
+
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+              <BarChart2 size={16} color={pColor} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Avg. CTR</span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)' }}>{(kpis?.ctr || 0).toFixed(2)}%</div>
+          </div>
+
+        </div>
+
+        {/* Data Table */}
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-border)', background: 'var(--bg-elevated)' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Campaigns</h3>
+          </div>
+          
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Campaign Name</th>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Status</th>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right', whiteSpace: 'nowrap' }}>Amount Spent</th>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right', whiteSpace: 'nowrap' }}>Impressions</th>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right', whiteSpace: 'nowrap' }}>Clicks</th>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right', whiteSpace: 'nowrap' }}>Results</th>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right', whiteSpace: 'nowrap' }}>Cost / Result</th>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right', whiteSpace: 'nowrap' }}>CTR</th>
+                  <th style={{ padding: '14px 20px', borderBottom: '1px solid var(--glass-border)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right', whiteSpace: 'nowrap' }}>CPC</th>
+                </tr>
+              </thead>
+              <tbody>
+                {campaigns?.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                      No active campaigns found for {activePlatform}.
+                    </td>
+                  </tr>
+                ) : (
+                  campaigns?.map((campaign: any, i: number) => (
+                    <tr key={campaign.id || i} style={{ borderBottom: '1px solid var(--glass-border)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                      <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 500 }}>{campaign.name}</td>
+                      <td style={{ padding: '14px 20px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: 600, padding: '4px 8px', borderRadius: '4px', background: campaign.status?.toUpperCase() === 'ACTIVE' || campaign.status?.toUpperCase() === 'ENABLED' ? '#10b98120' : 'var(--bg-elevated)', color: campaign.status?.toUpperCase() === 'ACTIVE' || campaign.status?.toUpperCase() === 'ENABLED' ? '#10b981' : 'var(--text-secondary)' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: campaign.status?.toUpperCase() === 'ACTIVE' || campaign.status?.toUpperCase() === 'ENABLED' ? '#10b981' : 'var(--text-dim)' }} />
+                          {campaign.status?.toUpperCase() || 'UNKNOWN'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--text-primary)', textAlign: 'right' }}>{cur}{(campaign.spend || 0).toFixed(2)}</td>
+                      <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--text-primary)', textAlign: 'right' }}>{formatNumber(campaign.impressions || 0)}</td>
+                      <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--text-primary)', textAlign: 'right' }}>{formatNumber(campaign.clicks || 0)}</td>
+                      <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--text-primary)', textAlign: 'right' }}>{formatNumber(campaign.conversions || 0)}</td>
+                      <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--text-primary)', textAlign: 'right' }}>{cur}{(campaign.cpa || 0).toFixed(2)}</td>
+                      <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--text-primary)', textAlign: 'right' }}>{(campaign.ctr || 0).toFixed(2)}%</td>
+                      <td style={{ padding: '14px 20px', fontSize: '0.9rem', color: 'var(--text-primary)', textAlign: 'right' }}>{cur}{(campaign.cpc || 0).toFixed(2)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Creative Insight Section */}
-        <div style={{ padding: '0 32px 24px' }}>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <div style={{ width: '3px', height: '18px', background: '#f97316', borderRadius: '2px' }} />
-              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>Creative Insight</span>
-            </div>
-            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '14px' }}>Creative Performance (CPA vs CTR)</div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-              {data.creatives?.map((c: any, i: number) => (
-                <div key={i} style={{ padding: '14px', borderRadius: '10px', border: '1px solid var(--glass-border)', background: 'var(--bg-elevated)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: c.color }} />
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>CPA</div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Outfit' }}>{cur}{c.cpa}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>CTR</div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: c.color, fontFamily: 'Outfit' }}>{c.ctr}%</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontWeight: 600, textTransform: 'uppercase', marginBottom: '2px' }}>Spend</div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-secondary)', fontFamily: 'Outfit' }}>{cur}{c.spend}</div>
-                    </div>
-                  </div>
-                </div>
-              )) || <div>No creative data available</div>}
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
 };
-

@@ -6,18 +6,37 @@ import {
 } from 'recharts';
 import {
   TrendingUp, Target, MousePointerClick,
-  ArrowUpRight, BrainCircuit, Wand2
+  ArrowUpRight, BrainCircuit, Wand2, RefreshCw
 } from 'lucide-react';
 import { api } from '../../api/axios';
+import { toast } from 'react-hot-toast';
 
 export const Dashboard: React.FC = () => {
   const [data, setData] = useState<{ daily: any[], summary: any } | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  useEffect(() => {
+  const fetchDashboard = () => {
     api.get('/analytics/dashboard')
       .then(res => setData(res.data))
       .catch(console.error);
+  };
+
+  useEffect(() => {
+    fetchDashboard();
   }, []);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await api.post('/analytics/sync/all');
+      toast.success('Live data synced successfully!');
+      fetchDashboard();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to sync data');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const chartData = data?.daily && data.daily.length > 0 ? data.daily.map((d: any) => ({
     name: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
@@ -35,9 +54,9 @@ export const Dashboard: React.FC = () => {
           <p style={{ color: 'var(--text-secondary)' }}>AI-driven insights & automated campaign management</p>
         </div>
         <div style={{ display: 'flex', gap: '16px' }}>
-          <button className="btn btn-secondary">
-            <Wand2 size={18} />
-            Generate Report
+          <button className="btn btn-secondary" onClick={handleSync} disabled={isSyncing}>
+            <RefreshCw size={18} className={isSyncing ? "spin-animation" : ""} />
+            {isSyncing ? 'Syncing...' : 'Sync Live Data'}
           </button>
           <button className="btn btn-primary">
             <BrainCircuit size={18} />
