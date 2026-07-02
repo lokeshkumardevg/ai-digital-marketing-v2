@@ -4,11 +4,22 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as express from 'express';
 import { ValidationPipe } from '@nestjs/common';
-
 import * as path from 'path';
+import { AppLogger } from './logger/app-logger.service';
+import { LogsService } from './logs/logs.service';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  
+  const appLogger = await app.resolve(AppLogger);
+  const logsService = app.get(LogsService);
+  appLogger.setLogsService(logsService);
+  
+  app.useLogger(appLogger);
+  
+  app.useGlobalFilters(new AllExceptionsFilter());
+  
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.use(express.json({ limit: '15mb' }));
   app.use(express.urlencoded({ limit: '15mb', extended: true }));

@@ -13,7 +13,7 @@ export class UploadController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 15 * 1024 * 1024 }), // 15MB limit
-          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|gif)$/i }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|gif|mp4|mov|avi|webm)$/i }),
         ],
         exceptionFactory: (error) => new BadRequestException(error),
       }),
@@ -24,7 +24,7 @@ export class UploadController {
       throw new BadRequestException('File is required');
     }
 
-    const url = await this.uploadService.processAndSaveImage(file);
+    const url = await this.uploadService.processAndSaveMedia(file);
 
     return {
       success: true,

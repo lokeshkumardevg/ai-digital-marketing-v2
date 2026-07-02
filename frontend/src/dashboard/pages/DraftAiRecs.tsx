@@ -40,12 +40,20 @@ interface CampaignDoc {
     finalUrl?: string;
     location?: string;
     advantagePlus?: boolean;
+    adCopy?: {
+      headlines?: string[];
+      primaryTexts?: string[];
+    };
   };
   aiGeneratedContent?: {
     headline?: string;
     primaryText?: string;
     description?: string;
     imageUrl?: string;
+    adCopy?: {
+      headlines?: string[];
+      primaryTexts?: string[];
+    };
   };
   aiStrategy?: {
     performanceScore?: number;
@@ -823,9 +831,15 @@ function CreativeStudio({ adCopy, activePlatformId, brandAssetImages, onSubheadi
           )}
           {imgTab === 'upload' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={upload} />
+              <input ref={fileRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={upload} />
               <button onClick={() => fileRef.current?.click()} style={{ width: '100%', background: 'var(--bg-elevated)', border: '1.5px dashed #1e3660', borderRadius: 9, padding: '14px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', transition: 'all 0.2s ease' }}><I.Upload /> Upload from folder</button>
-              {uploadedImgs.length > 0 && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>{uploadedImgs.map((url, i) => <div key={i} className={`img-th${selImg === url ? ' sel' : ''}`} onClick={() => pickImg(url)} style={{ aspectRatio: '1', borderRadius: 7, overflow: 'hidden', border: `2px solid ${selImg === url ? '#22d3ee' : '#1a2d50'}`, position: 'relative' }}><img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>)}</div>}
+              {uploadedImgs.length > 0 && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>{uploadedImgs.map((url, i) => <div key={i} className={`img-th${selImg === url ? ' sel' : ''}`} onClick={() => pickImg(url)} style={{ aspectRatio: '1', borderRadius: 7, overflow: 'hidden', border: `2px solid ${selImg === url ? '#22d3ee' : '#1a2d50'}`, position: 'relative' }}>
+                {url.match(/\.(mp4|mov|avi|webm)$/i) ? (
+                  <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted loop playsInline />
+                ) : (
+                  <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                )}
+              </div>)}</div>}
             </div>
           )}
         </div>
@@ -952,9 +966,21 @@ export function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showTo
   const activePlat = PLATFORM_LIST.find(p => p.id === activePid) || PLATFORM_LIST[0];
   const campaignTitle = campaign.name || `${brandName}_Campaign_${activePlat.name}`;
 
+  const aiAdCopy = (saved && saved.adCopy) || (aiContent && aiContent.adCopy) || {};
+  const safeHeadlines = Array.isArray(aiAdCopy.headlines) ? aiAdCopy.headlines : [];
+  const safeHeadline = (aiContent && aiContent.headline) ? [aiContent.headline] : [];
+  const genHeadlines = safeHeadlines.length > 0 ? safeHeadlines : safeHeadline;
+
+  const safePrimaryTexts = Array.isArray(aiAdCopy.primaryTexts) ? aiAdCopy.primaryTexts : [];
+  const safeCaption = (aiContent && aiContent.primaryText) ? [aiContent.primaryText] : ((saved && saved.caption) ? [saved.caption] : []);
+  const genPrimaryTexts = safePrimaryTexts.length > 0 ? safePrimaryTexts : safeCaption;
+
+  const finalHeadlines = Array.from(new Set([...genHeadlines, ...SEED.headlines])).slice(0, Math.max(3, genHeadlines.length));
+  const finalPrimaryTexts = Array.from(new Set([...genPrimaryTexts, ...SEED.primaryTexts])).slice(0, Math.max(3, genPrimaryTexts.length));
+
   const adCopy: AdCopy = {
-    headlines: [aiContent.headline || SEED.headlines[0], ...SEED.headlines.slice(1)],
-    primaryTexts: [pvCaption, ...SEED.primaryTexts.slice(1)],
+    headlines: finalHeadlines as string[],
+    primaryTexts: finalPrimaryTexts as string[],
     callToAction: pvCta,
   };
 

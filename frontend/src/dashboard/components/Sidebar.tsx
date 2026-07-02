@@ -26,6 +26,7 @@ import {
   TrendingUp,
   Lightbulb,
   ChevronsDown,
+  Terminal,
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 
@@ -121,6 +122,7 @@ const BASE_MENU_ITEMS: MenuItem[] = [
   { path: '/linkedin-crm', label: 'LinkedIn CRM', icon: Briefcase, permission: 'dashboard' },
   { path: '/users', label: 'Users', icon: UserPlus, permission: 'view_users' },
   { path: '/roles', label: 'Roles & Access', icon: ShieldAlert, permission: 'superadmin' },
+  { path: '/log', label: 'System Logs', icon: Terminal, permission: 'superadmin' },
   { path: '/settings', label: 'Settings', icon: Settings, permission: 'settings' },
 ];
 

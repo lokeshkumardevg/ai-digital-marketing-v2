@@ -46,6 +46,11 @@ interface PromoData {
   advantagePlus?: boolean;
   estimatedAudience?: string;
   keywords?: string | string[];
+  adCopy?: {
+    headlines?: string[];
+    primaryTexts?: string[];
+    callToAction?: string;
+  };
 }
 
 /** Per-platform creative state */
@@ -1926,9 +1931,9 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
    * PER-PLATFORM CREATIVE STATE
    * Each enabled platform gets its own headline/primaryText/cta/image
    * ───────────────────────────────────────────────────────── */
-  const defaultHeadline = promoData?.headlines?.[0] || SEED.headlines[0];
-  const defaultPrimaryText = promoData?.primaryTexts?.[0] || SEED.primaryTexts[0];
-  const defaultCta = promoData?.callToAction || SEED.cta;
+  const defaultHeadline = promoData?.adCopy?.headlines?.[0] || promoData?.headlines?.[0] || SEED.headlines[0];
+  const defaultPrimaryText = promoData?.adCopy?.primaryTexts?.[0] || promoData?.primaryTexts?.[0] || SEED.primaryTexts[0];
+  const defaultCta = promoData?.adCopy?.callToAction || promoData?.callToAction || SEED.cta;
 
   const resolveDefaultKeywords = (): string[] => {
     if (globalDraftData?.googleKeywords && globalDraftData.googleKeywords.length > 0) {
@@ -2348,9 +2353,16 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     onSaveDraft, showToast,
   ]);
 
+  const aiAdCopy = promoData?.adCopy || initialDraftData?.adCopy || {};
+  const genHeadlines = Array.isArray(aiAdCopy.headlines) && aiAdCopy.headlines.length > 0 ? aiAdCopy.headlines : (promoData?.headlines || []);
+  const genPrimaryTexts = Array.isArray(aiAdCopy.primaryTexts) && aiAdCopy.primaryTexts.length > 0 ? aiAdCopy.primaryTexts : (promoData?.primaryTexts || []);
+
+  const finalHeadlines = Array.from(new Set([...genHeadlines, ...SEED.headlines])).slice(0, Math.max(3, genHeadlines.length));
+  const finalPrimaryTexts = Array.from(new Set([...genPrimaryTexts, ...SEED.primaryTexts])).slice(0, Math.max(3, genPrimaryTexts.length));
+
   const adCopy: AdCopy = {
-    headlines: promoData?.headlines?.length ? promoData.headlines : SEED.headlines,
-    primaryTexts: promoData?.primaryTexts?.length ? promoData.primaryTexts : SEED.primaryTexts,
+    headlines: finalHeadlines as string[],
+    primaryTexts: finalPrimaryTexts as string[],
     callToAction: activeCreative.cta,
   };
 

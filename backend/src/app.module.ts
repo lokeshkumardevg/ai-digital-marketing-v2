@@ -35,9 +35,11 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MetaReviewsModule } from './meta-reviews/meta-reviews.module';
 import { UploadModule } from './upload/upload.module';
 import { ReviewAgentModule } from './reviewagent/reviewagent.module';
+import { LogsModule } from './logs/logs.module';
 
 @Module({
   imports: [
+    LogsModule,
     ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,

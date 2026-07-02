@@ -22,6 +22,9 @@ PricingPage from './landing/pages/PricingPage';
 import // @ts-ignore
 Resources from './landing/pages/Resources';
 import Register from './landing/pages/Register';
+// @ts-ignore
+import Contact from './landing/pages/Contact';
+import AgentEcosystem from './landing/pages/AgentEcosystem';
 import { Settings } from './dashboard/pages/Settings';
 import { Seo } from './dashboard/pages/Seo';
 import { Social } from './dashboard/pages/Social';
@@ -47,6 +50,7 @@ import { setTheme } from './store/slices/themeSlice';
 import { addNotification, fetchNotifications } from './store/slices/notificationSlice';
 import AiCreativeWorkspacePage from './dashboard/pages/AiCreativeWorkspacePage';
 import { Notifications } from './dashboard/pages/Notifications';
+import { Logs } from './dashboard/pages/Logs';
 
 import io from 'socket.io-client';
 import type { AppDispatch } from './store';
@@ -218,6 +222,8 @@ const App: React.FC = () => {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Register />} />
         <Route path="/signup" element={<Register />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/agent-ecosystem" element={<AgentEcosystem />} />
         <Route path="/chatbot-embed/:id" element={<ChatEmbed />} />
         <Route path="/presentation" element={<Presentation />} />
 
@@ -240,6 +246,7 @@ const App: React.FC = () => {
         <Route path="/workflows" element={<ProtectedRoute><DashboardLayout><Workflows /></DashboardLayout></ProtectedRoute>} />
         <Route path="/messaging" element={<ProtectedRoute><DashboardLayout><Messaging /></DashboardLayout></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><Notifications /></DashboardLayout></ProtectedRoute>} />
+        <Route path="/log" element={<ProtectedRoute requiredPermission="superadmin"><DashboardLayout><Logs /></DashboardLayout></ProtectedRoute>} />
 
         {/* AI Optimize Sub-routes */}
         <Route path="/ai/ads-manager" element={<ProtectedRoute requiredPermission="ads"><DashboardLayoutFull><AdsManager /></DashboardLayoutFull></ProtectedRoute>} />

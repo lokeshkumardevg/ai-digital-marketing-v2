@@ -125,11 +125,16 @@ Return ONLY raw valid JSON with these exact keys:
     const prompt = `You are an elite advertising copywriter. Generate high-converting ad copy for "${brandName}" at ${url}.
 Return ONLY raw valid JSON with these exact keys:
 {
-  "headlines": [{ "text": "headline text", "type": "Awareness|Consideration|Conversion", "platform": "Google|Meta|Both" }],
-  "bodyCopy": [{ "text": "body copy text", "platform": "Google|Meta", "tone": "tone description" }],
+  "campaignName": "A highly specific, descriptive campaign name based on the business context (e.g. 'Solar Panel B2B Lead Gen - Q3')",
+  "adCopy": {
+    "headlines": ["Array of 4 COMPLETELY UNIQUE and DISTINCT conversion-focused headlines"],
+    "primaryTexts": ["Array of 3 COMPLETELY UNIQUE primary texts/captions. Each must be distinct and contextually align with the headlines."],
+    "callToAction": "LEARN_MORE"
+  },
   "ctas": ["CTA1", "CTA2", "CTA3"],
   "valuePropositions": ["prop1", "prop2", "prop3"],
   "hooks": ["hook1", "hook2", "hook3"],
+  "searchKeywords": ["highly", "specific", "commercial", "intent", "keywords", "relevant", "to", "the", "business"],
   "toneSummary": "overall brand voice description"
 }`;
 
