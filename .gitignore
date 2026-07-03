@@ -51,3 +51,6 @@ test-ads-update.js
 *.csv
 latest_tasks_for_excel.csv
 todays_work_report.csv
+
+# Scratch scripts
+backend/scratch/

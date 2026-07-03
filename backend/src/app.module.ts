@@ -28,6 +28,7 @@ import { PlatformPostsModule } from './platformposts/platformposts.module';
 import { LinkedInCrmModule } from './linkedin-crm/linkedin-crm.module';
 import { LinkedinScraperModule } from './linkedin-scraper/linkedin-scraper.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { AppLogger } from './logger/app-logger.service';
 import { ReputationModule } from './reputation/reputation.module';
 import { CallingModule } from './calling/calling.module';
 import { GoogleBusinessModule } from './google-business/google-business.module';
@@ -97,7 +98,7 @@ import { LogsModule } from './logs/logs.module';
     ReviewAgentModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AppLogger],
 })
 export class AppModule { }
 

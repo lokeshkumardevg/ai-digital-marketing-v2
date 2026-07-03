@@ -42,7 +42,7 @@ export const Dashboard: React.FC = () => {
     name: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
     traffic: d.impressions || 0,
     conversion: d.conversions || 0
-  })).reverse() : [];
+  })) : [];
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>
