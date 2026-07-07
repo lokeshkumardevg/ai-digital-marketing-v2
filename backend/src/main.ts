@@ -26,10 +26,24 @@ async function bootstrap() {
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // Enable Global CORS for React Frontend Client
-  const allowedOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [];
+  const rawOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [];
+  const allowedOrigins = new Set<string>();
+  
+  rawOrigins.forEach(origin => {
+    const trimmed = origin.trim();
+    if (trimmed) {
+      allowedOrigins.add(trimmed);
+      // Automatically allow www version if it's a non-www domain, and vice versa
+      if (trimmed.startsWith('https://') && !trimmed.startsWith('https://www.')) {
+        allowedOrigins.add(trimmed.replace('https://', 'https://www.'));
+      } else if (trimmed.startsWith('https://www.')) {
+        allowedOrigins.add(trimmed.replace('https://www.', 'https://'));
+      }
+    }
+  });
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: Array.from(allowedOrigins),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
