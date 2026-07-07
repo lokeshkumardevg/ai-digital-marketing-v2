@@ -41,7 +41,7 @@ const getCurrencySymbol = (currency: string) => {
 };
 
 export const Header: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<any>();
   const navigate = useNavigate();
   const { user } = useSelector((state: any) => state.auth);
   const cur = getCurrencySymbol(user?.currency || 'INR');
@@ -1386,9 +1386,9 @@ interface ProfileModalProps {
   dispatch: any;
 }
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, user, dispatch }) => {
+const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen: _isOpen, onClose, user, dispatch }) => {
   const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
+  const email = user?.email || '';
   const [country, setCountry] = useState(user?.country || 'India');
   const [currency, setCurrency] = useState(user?.currency || 'INR');
   const [isSaving, setIsSaving] = useState(false);

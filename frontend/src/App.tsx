@@ -151,7 +151,7 @@ const CampaignLayout = ({ children }: { children: React.ReactNode }) => {
 const App: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated } = useSelector((state: any) => state.auth);
-  const { mode } = useSelector((state: any) => state.theme);
+  // const { mode } = useSelector((state: any) => state.theme);
 
   useEffect(() => {
     // Initialize theme from localStorage or default to dark

@@ -63,7 +63,7 @@ import React, { useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
     MessageSquare, Star, ThumbsUp, ThumbsDown,
-    TrendingUp, Hash, MessageCircle, Globe,
+    Hash, MessageCircle,
 } from 'lucide-react';
 import {
     AreaChart, Area,
@@ -100,7 +100,7 @@ const TT = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────
-const fmtMonth = (v: string) => {
+const fmtMonth = (v: any) => {
     const [y, m] = (v || '').split('-');
     if (!y || !m) return v;
     return new Date(Number(y), Number(m) - 1).toLocaleString('default', { month: 'short', year: '2-digit' });
@@ -388,7 +388,7 @@ const AnalyticsPage: React.FC = () => {
                                 <YAxis yAxisId="right" orientation="right" domain={[0, 5]} stroke="#4b5563" tick={{ fontSize: 11 }} />
                                 <Tooltip
                                     {...TT}
-                                    formatter={(v: any, name: string) => {
+                                    formatter={(v: any, name: any) => {
                                         if (name === 'avgRating') return [v != null ? `${v} ★` : 'N/A', 'Avg Rating (Google)'];
                                         if (name === 'googleCount') return [v, 'Google Reviews'];
                                         if (name === 'fbCount')     return [v, 'FB Comments'];
@@ -463,7 +463,7 @@ const AnalyticsPage: React.FC = () => {
                                 <YAxis stroke="#4b5563" tick={{ fontSize: 11 }} allowDecimals={false} />
                                 <Tooltip
                                     {...TT}
-                                    formatter={(v: any, name: string) => {
+                                    formatter={(v: any, name: any) => {
                                         const l: Record<string, string> = {
                                             positive: '✅ Positive (Google)',
                                             negative: '❌ Negative (Google)',

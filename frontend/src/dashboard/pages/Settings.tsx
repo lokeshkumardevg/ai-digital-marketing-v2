@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GlassCard } from '../components/GlassCard';
-import { User, Key, Bell, Shield, Save, Settings as SettingsIcon, LogOut, CheckCircle2, ChevronRight, Edit2, X } from 'lucide-react';
+import { User, Key, Shield, Settings as SettingsIcon, CheckCircle2, ChevronRight, Edit2 } from 'lucide-react';
 import { updateUser, hydrateSession } from '../../store/slices/authSlice';
-import { addNotification } from '../../store/slices/notificationSlice';
 import type { AppDispatch } from '../../store';
 import toast from 'react-hot-toast';
 
@@ -160,9 +159,9 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const connectGoogle = async () => {
-    try { const { api } = await import('../../api/axios'); const response = await api.get('/auth/google'); window.location.href = response.data.url; } catch (error) { toast.error('Failed to initiate connection'); }
-  };
+  // const connectGoogle = async () => {
+  //   try { const { api } = await import('../../api/axios'); const response = await api.get('/auth/google'); window.location.href = response.data.url; } catch (error) { toast.error('Failed to initiate connection'); }
+  // };
   const connectMeta = async () => {
     try { const { api } = await import('../../api/axios'); const response = await api.get('/auth/meta'); window.location.href = response.data.url; } catch (error) { toast.error('Failed to initiate connection'); }
   };

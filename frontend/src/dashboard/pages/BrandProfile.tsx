@@ -104,7 +104,7 @@ const transformRawProfile = (raw: any): BrandData => {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const BrandProfile: React.FC = () => {
+export const BrandProfile = () => {
   const websites = useSelector((s: RootState) => s.workspace.websites);
   const activeId = useSelector((s: RootState) => s.workspace.activeWebsiteId);
   const activeBrand = websites.find(w => w.id === activeId);
@@ -235,7 +235,7 @@ export const BrandProfile: React.FC = () => {
 
   // ── Start analysis ──────────────────────────────────────────────────────────
 
-  const startAnalysis = async (force: boolean = false) => {
+  const startAnalysis = async (_force: boolean = false) => {
     if (!activeBrand) return;
     setPhase('generating');
     setError(null);
@@ -336,6 +336,8 @@ export const BrandProfile: React.FC = () => {
 
   const forceReanalyze = () => {
     startAnalysis(true);
+  };
+  /*
   const resetAnalysis = () => {
     if (!activeBrand) return;
     localStorage.removeItem(`brand_profile_${activeBrand.id}`);
@@ -348,6 +350,7 @@ export const BrandProfile: React.FC = () => {
       brandProfile: null,
     }));
   };
+  */
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -839,4 +842,4 @@ const Pill: React.FC<{ label: string; outline?: boolean }> = ({ label, outline }
 
 const KeywordPill: React.FC<{ label: string }> = ({ label }) => (
   <span style={{ padding: '3px 10px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 500, background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', color: 'var(--text-secondary)' }}>{label}</span>
-);}
+);

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star, MessageSquareText, Send, HeartHandshake,
-  BarChart3, MapPin, Users, Filter, Paintbrush, Settings, CheckCircle2, Bot
+  BarChart3, MapPin, Users, Filter, Paintbrush, Settings, CheckCircle2
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+
 
 // @ts-ignore
 import Navbar from '../components/Navbar';
@@ -127,7 +127,6 @@ const AGENTS = [
 
 export default function AgentEcosystem() {
   const [activeTab, setActiveTab] = useState(AGENTS[0].id);
-  const navigate = useNavigate();
 
   const activeAgent = AGENTS.find(a => a.id === activeTab) || AGENTS[0];
 
