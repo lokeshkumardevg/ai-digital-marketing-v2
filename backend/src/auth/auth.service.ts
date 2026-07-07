@@ -120,8 +120,10 @@ export class AuthService {
 
     // Step 3: Find or create user
     let user = await this.usersService.findByEmail(userInfo.email);
+    console.log('[Google Login] findByEmail returned:', user);
 
     if (!user) {
+      console.log('[Google Login] User not found, creating new user...');
       const randomPass = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
       const salt = await bcrypt.genSalt(10);
       const hash = await bcrypt.hash(randomPass, salt);
@@ -130,6 +132,7 @@ export class AuthService {
         email: userInfo.email,
         passwordHash: hash,
       });
+      console.log('[Google Login] usersService.create returned:', user);
     }
 
     // Step 4: Save tokens to DB so GoogleBusinessService can use them
@@ -146,7 +149,8 @@ export class AuthService {
       console.log('[Google Login] No refresh token in response (user already consented before)');
     }
 
-    const userId = user._id ? user._id.toString() : (user as any).id ? (user as any).id.toString() : '';
+    const userId = user?._id ? user._id.toString() : (user as any)?.id ? (user as any).id.toString() : '';
+    console.log('[Google Login] Resolved userId:', userId);
     if (userId) {
       await this.usersService.update(userId, updateData);
     }
