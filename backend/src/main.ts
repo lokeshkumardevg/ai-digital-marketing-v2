@@ -47,7 +47,7 @@ async function bootstrap() {
   allowedOrigins.add('https://www.wheedletechnologies.tech');
 
   app.enableCors({
-    origin: Array.from(allowedOrigins),
+    origin: true, // Allow all origins dynamically
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
