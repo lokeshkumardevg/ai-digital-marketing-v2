@@ -25,17 +25,19 @@ export class AuthService {
   }
 
   async login(user: any) {
+    if (!user) throw new UnauthorizedException('User is undefined');
+    const userId = user._id ? user._id.toString() : user.id ? user.id.toString() : '';
     // Auto-fix for new/existing users without permissions
     if (!user.permissions || user.permissions.length === 0) {
       user.permissions = ['*']; // Grant full access by default
       if (user.save) {
         await user.save();
-      } else {
-        await this.usersService.update(user._id || user.id, { permissions: ['*'] });
+      } else if (userId) {
+        await this.usersService.update(userId, { permissions: ['*'] });
       }
     }
 
-    const payload = { email: user.email, sub: user._id ? user._id.toString() : user.id };
+    const payload = { email: user.email, sub: userId };
     const { passwordHash, ...userData } = user.toObject ? user.toObject() : user;
     return {
       access_token: this.jwtService.sign(payload),
@@ -144,7 +146,10 @@ export class AuthService {
       console.log('[Google Login] No refresh token in response (user already consented before)');
     }
 
-    await this.usersService.update(user._id.toString(), updateData);
+    const userId = user._id ? user._id.toString() : (user as any).id ? (user as any).id.toString() : '';
+    if (userId) {
+      await this.usersService.update(userId, updateData);
+    }
 
     return this.login(user);
   }
