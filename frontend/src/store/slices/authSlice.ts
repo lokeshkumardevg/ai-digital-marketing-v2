@@ -105,6 +105,7 @@ const authSlice = createSlice({
         state.status          = 'failed';
         state.isAuthenticated = false;
         state.user            = null;
+        localStorage.removeItem('access_token'); // ← prevent infinite redirect loop
         clearAuthUser();                     // ← token invalid, wipe storage
       })
 
