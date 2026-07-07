@@ -11,15 +11,15 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
-  
+
   const appLogger = await app.resolve(AppLogger);
   const logsService = app.get(LogsService);
   appLogger.setLogsService(logsService);
-  
+
   app.useLogger(appLogger);
-  
+
   app.useGlobalFilters(new AllExceptionsFilter());
-  
+
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.use(express.json({ limit: '15mb' }));
   app.use(express.urlencoded({ limit: '15mb', extended: true }));
@@ -28,7 +28,7 @@ async function bootstrap() {
   // Enable Global CORS for React Frontend Client
   const rawOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [];
   const allowedOrigins = new Set<string>();
-  
+
   rawOrigins.forEach(origin => {
     const trimmed = origin.trim();
     if (trimmed) {
@@ -41,6 +41,10 @@ async function bootstrap() {
       }
     }
   });
+
+  // Explicitly add production URLs just in case FRONTEND_URL is missing in server .env
+  allowedOrigins.add('https://wheedletechnologies.tech');
+  allowedOrigins.add('https://www.wheedletechnologies.tech');
 
   app.enableCors({
     origin: Array.from(allowedOrigins),
