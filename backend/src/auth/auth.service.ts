@@ -187,7 +187,7 @@ export class AuthService {
     const redirectUri = `${backendUrl}/auth/google/callback`;
 
     const scope = [
-      'https://www.googleapis.com/auth/adwords',
+      // 'https://www.googleapis.com/auth/adwords',
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
     ].join(' ');
