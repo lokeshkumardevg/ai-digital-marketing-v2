@@ -187,7 +187,7 @@ export class AuthService {
     const redirectUri = `${backendUrl}/auth/google/callback`;
 
     const scope = [
-      // 'https://www.googleapis.com/auth/adwords',
+      'https://www.googleapis.com/auth/adwords',
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
     ].join(' ');
@@ -216,9 +216,9 @@ export class AuthService {
     const scope = [
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
-      // 'https://www.googleapis.com/auth/webmasters',
-      // 'https://www.googleapis.com/auth/webmasters.readonly',
-      // 'https://www.googleapis.com/auth/admanager',
+      'https://www.googleapis.com/auth/webmasters',
+      'https://www.googleapis.com/auth/webmasters.readonly',
+      'https://www.googleapis.com/auth/admanager',
     ].join(' ');
 
     return `https://accounts.google.com/o/oauth2/v2/auth?` +
