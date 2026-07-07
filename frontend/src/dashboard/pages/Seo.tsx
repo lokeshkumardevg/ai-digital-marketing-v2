@@ -25,6 +25,17 @@ export const Seo: React.FC = () => {
   // const dispatch = useDispatch<AppDispatch>();
 
   const { brands, activeBrandId } = useSelector((s: RootState) => s.workspace);
+  const { user } = useSelector((s: RootState) => s.auth);
+
+  const connectSearchConsole = async () => {
+    try {
+      const { api } = await import('../../api/axios');
+      const response = await api.get('/auth/google/gsc');
+      window.location.href = response.data.url;
+    } catch (error) {
+      toast.error('Failed to initiate connection');
+    }
+  };
 
   const activeBrand = useMemo(() => {
     if (!brands?.length || !activeBrandId) return null;
@@ -387,15 +398,28 @@ export const Seo: React.FC = () => {
       <div style={{ marginBottom: '24px', background: 'rgba(255, 255, 255, 0.03)', padding: '16px 24px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
            <div>
-             <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-               SEO Intelligence Suite
-               {result?.semrush?.overview?.isGsc && (
-                 <span style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', padding: '2px 8px', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', border: '1px solid rgba(59, 130, 246, 0.2)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                   <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#3b82f6', display: 'inline-block' }} />
-                   Google Search Console Live
-                 </span>
-               )}
-             </div>
+              <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                SEO Intelligence Suite
+                {result?.semrush?.overview?.isGsc ? (
+                  <span style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '2px 8px', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', border: '1px solid rgba(16, 185, 129, 0.2)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+                    Google Search Console Live
+                  </span>
+                ) : user?.googleSearchConsoleConnected ? (
+                  <span style={{ background: 'rgba(244, 180, 0, 0.1)', color: '#f4b400', padding: '2px 8px', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', border: '1px solid rgba(244, 180, 0, 0.2)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    GSC Connected (Domain not in account)
+                  </span>
+                ) : (
+                  <button
+                    onClick={connectSearchConsole}
+                    style={{ background: 'rgba(244, 180, 0, 0.1)', color: '#f4b400', padding: '4px 10px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', border: '1px solid rgba(244, 180, 0, 0.2)', display: 'inline-flex', alignItems: 'center', gap: '4px', cursor: 'pointer', outline: 'none', transition: 'all 0.2s' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(244, 180, 0, 0.2)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(244, 180, 0, 0.1)'; }}
+                  >
+                    ⚠️ Connect Search Console
+                  </button>
+                )}
+              </div>
              <h1 style={{ fontSize: '1.2rem', fontWeight: 900, color: '#f8fafc', margin: '2px 0' }}>
                {result ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>{url} <ExternalLink size={14} /></span> : 'Market Command Center'}
              </h1>

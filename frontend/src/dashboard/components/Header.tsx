@@ -5,7 +5,8 @@ import {
   X, Sparkles, Wallet, RefreshCw, Globe, PlusCircle, ChevronDown, Send, Bot,
   Sun, Moon
 } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { useAppDispatch } from '../../store/hooks';
 import { useNavigate } from 'react-router-dom';
 import { logout, updateUser } from '../../store/slices/authSlice';
 import { api } from '../../api/axios';
@@ -41,7 +42,7 @@ const getCurrencySymbol = (currency: string) => {
 };
 
 export const Header: React.FC = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state: any) => state.auth);
   const cur = getCurrencySymbol(user?.currency || 'INR');

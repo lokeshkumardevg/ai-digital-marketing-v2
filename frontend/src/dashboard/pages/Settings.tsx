@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { GlassCard } from '../components/GlassCard';
-import { User, Key, Bell, Shield, Save, Settings as SettingsIcon, LogOut, CheckCircle2, ChevronRight, Edit2, X } from 'lucide-react';
+import { User, Key, Shield, Settings as SettingsIcon, CheckCircle2, ChevronRight, Edit2 } from 'lucide-react';
 import { updateUser, hydrateSession } from '../../store/slices/authSlice';
-import { addNotification } from '../../store/slices/notificationSlice';
 import type { AppDispatch } from '../../store';
 import toast from 'react-hot-toast';
 
@@ -95,17 +94,20 @@ export const Settings: React.FC = () => {
       const metaConnected = url.searchParams.get('metaConnected');
       const xConnected = url.searchParams.get('xConnected');
       const googleConnected = url.searchParams.get('googleConnected');
+      const gscConnected = url.searchParams.get('gscConnected');
 
       if (linkedinConnected === 'success') toast.success('LinkedIn account connected successfully!');
       if (metaConnected === 'success') toast.success('Meta Ads account connected successfully!');
       if (xConnected === 'success') toast.success('X Ads account connected successfully!');
       if (googleConnected === 'success') toast.success('Google Ads account connected successfully!');
+      if (gscConnected === 'success') toast.success('Google Search Console connected successfully!');
 
       let changed = false;
       if (linkedinConnected) { url.searchParams.delete('linkedinConnected'); changed = true; }
       if (metaConnected) { url.searchParams.delete('metaConnected'); changed = true; }
       if (xConnected) { url.searchParams.delete('xConnected'); changed = true; }
       if (googleConnected) { url.searchParams.delete('googleConnected'); changed = true; }
+      if (gscConnected) { url.searchParams.delete('gscConnected'); changed = true; }
 
       if (changed) {
         url.searchParams.delete('reason');
@@ -162,6 +164,9 @@ export const Settings: React.FC = () => {
 
   const connectGoogle = async () => {
     try { const { api } = await import('../../api/axios'); const response = await api.get('/auth/google'); window.location.href = response.data.url; } catch (error) { toast.error('Failed to initiate connection'); }
+  };
+  const connectSearchConsole = async () => {
+    try { const { api } = await import('../../api/axios'); const response = await api.get('/auth/google/gsc'); window.location.href = response.data.url; } catch (error) { toast.error('Failed to initiate connection'); }
   };
   const connectMeta = async () => {
     try { const { api } = await import('../../api/axios'); const response = await api.get('/auth/meta'); window.location.href = response.data.url; } catch (error) { toast.error('Failed to initiate connection'); }
@@ -383,6 +388,56 @@ export const Settings: React.FC = () => {
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10, 102, 194, 0.1)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(10, 102, 194, 0.2)' }}>
                         <span style={{ color: '#0a66c2', fontSize: '0.9rem', fontWeight: 500 }}>Sync is Active</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Google Ads Card */}
+                  <div style={{ padding: '24px', border: user?.googleAccessToken ? '1px solid rgba(66, 133, 244, 0.4)' : '1px solid var(--glass-border)', borderRadius: '12px', background: user?.googleAccessToken ? 'rgba(66, 133, 244, 0.03)' : 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#4285f4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>G</div>
+                        <div>
+                          <h4 style={{ fontSize: '1.05rem', margin: 0 }}>Google Ads</h4>
+                          <span style={{ fontSize: '0.8rem', color: user?.googleAccessToken ? '#4285f4' : 'var(--text-secondary)' }}>
+                            {user?.googleAccessToken ? 'Connected' : 'Not Connected'}
+                          </span>
+                        </div>
+                      </div>
+                      {user?.googleAccessToken && <CheckCircle2 size={18} color="#4285f4" />}
+                    </div>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '24px', flex: 1 }}>Automate, launch, and monitor your Google search campaigns and ad metrics.</p>
+                    
+                    {!user?.googleAccessToken ? (
+                      <button onClick={connectGoogle} disabled={!user?.id} style={{ width: '100%', padding: '10px', background: 'linear-gradient(135deg, #4285f4, #2a56c6)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500, cursor: 'pointer' }}>Connect Google Ads</button>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(66, 133, 244, 0.1)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(66, 133, 244, 0.2)' }}>
+                        <span style={{ color: '#4285f4', fontSize: '0.9rem', fontWeight: 500 }}>Sync is Active</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Google Search Console Card */}
+                  <div style={{ padding: '24px', border: user?.googleSearchConsoleConnected ? '1px solid rgba(244, 180, 0, 0.4)' : '1px solid var(--glass-border)', borderRadius: '12px', background: user?.googleSearchConsoleConnected ? 'rgba(244, 180, 0, 0.03)' : 'rgba(255,255,255,0.02)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#f4b400', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1rem' }}>GSC</div>
+                        <div>
+                          <h4 style={{ fontSize: '1.05rem', margin: 0 }}>Search Console</h4>
+                          <span style={{ fontSize: '0.8rem', color: user?.googleSearchConsoleConnected ? '#f4b400' : 'var(--text-secondary)' }}>
+                            {user?.googleSearchConsoleConnected ? 'Connected' : 'Not Connected'}
+                          </span>
+                        </div>
+                      </div>
+                      {user?.googleSearchConsoleConnected && <CheckCircle2 size={18} color="#f4b400" />}
+                    </div>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '24px', flex: 1 }}>Access Search Console live telemetry, keyword clicks, CTR and indexing data.</p>
+                    
+                    {!user?.googleSearchConsoleConnected ? (
+                      <button onClick={connectSearchConsole} disabled={!user?.id} style={{ width: '100%', padding: '10px', background: 'linear-gradient(135deg, #f4b400, #c68a00)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500, cursor: 'pointer' }}>Connect Search Console</button>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(244, 180, 0, 0.1)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(244, 180, 0, 0.2)' }}>
+                        <span style={{ color: '#f4b400', fontSize: '0.9rem', fontWeight: 500 }}>Sync is Active</span>
                       </div>
                     )}
                   </div>
