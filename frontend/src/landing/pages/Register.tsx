@@ -453,11 +453,15 @@ function Register() {
   };
 
   const handleAuthSuccess = (data: { access_token: string; user: any }) => {
-    localStorage.setItem("access_token", data.access_token);
+    console.log('[Register] handleAuthSuccess data:', data);
+    if (!data) return;
+    if (data.access_token) {
+      localStorage.setItem("access_token", data.access_token);
+    }
     saveAuthUser({
-      _id: data.user._id || data.user.id,
-      name: data.user.name || "",
-      email: data.user.email || "",
+      _id: data.user?._id || data.user?.id || "",
+      name: data.user?.name || "",
+      email: data.user?.email || "",
     });
   };
 
