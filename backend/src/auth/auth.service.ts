@@ -19,8 +19,7 @@ export class AuthService {
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
     if (user && await bcrypt.compare(pass, user.passwordHash)) {
-      const { passwordHash, ...result } = user.toObject();
-      return result;
+      return user;
     }
     return null;
   }
@@ -36,13 +35,13 @@ export class AuthService {
       }
     }
 
-    const payload = { email: user.email, sub: user._id || user.id };
+    const payload = { email: user.email, sub: user._id ? user._id.toString() : user.id };
     const { passwordHash, ...userData } = user.toObject ? user.toObject() : user;
     return {
       access_token: this.jwtService.sign(payload),
       user: {
         ...userData,
-        id: user._id || user.id,
+        id: payload.sub,
         permissions: user.permissions
       }
     };
@@ -217,9 +216,9 @@ export class AuthService {
     const scope = [
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/webmasters',
-      'https://www.googleapis.com/auth/webmasters.readonly',
-      'https://www.googleapis.com/auth/admanager',
+      // 'https://www.googleapis.com/auth/webmasters',
+      // 'https://www.googleapis.com/auth/webmasters.readonly',
+      // 'https://www.googleapis.com/auth/admanager',
     ].join(' ');
 
     return `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -970,7 +969,7 @@ export class AuthService {
   async updateXAdAccount(userId: string, adAccountId: string, adAccountName: string) {
     const user = await this.usersService.findById(userId);
     if (!user) throw new BadRequestException('User not found');
-    await this.usersService.update(userId, { 
+    await this.usersService.update(userId, {
       twitterAdAccountId: adAccountId,
       twitterAdAccountName: adAccountName
     });
