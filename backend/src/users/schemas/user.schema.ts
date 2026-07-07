@@ -48,6 +48,9 @@ export class User {
   @Prop()
   googleTokenExpiry?: number;
 
+  @Prop({ default: false })
+  googleSearchConsoleConnected?: boolean;
+
   @Prop()
   metaAppId?: string;
 

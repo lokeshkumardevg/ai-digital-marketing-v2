@@ -5,7 +5,8 @@ import {
   X, Sparkles, Wallet, RefreshCw, Globe, PlusCircle, ChevronDown, Send, Bot,
   Sun, Moon
 } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
+import { useAppDispatch } from '../../store/hooks';
 import { useNavigate } from 'react-router-dom';
 import { logout, updateUser } from '../../store/slices/authSlice';
 import { api } from '../../api/axios';
@@ -41,7 +42,7 @@ const getCurrencySymbol = (currency: string) => {
 };
 
 export const Header: React.FC = () => {
-  const dispatch = useDispatch<any>();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state: any) => state.auth);
   const cur = getCurrencySymbol(user?.currency || 'INR');
@@ -480,12 +481,12 @@ export const Header: React.FC = () => {
         <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
 
           {/* Theme Toggle */}
-          <button 
-            className="theme-toggle-btn" 
+          <button
+            className="theme-toggle-btn"
             onClick={() => dispatch(toggleTheme())}
             title={`Switch to ${themeMode === 'light' ? 'Dark' : 'Light'} Mode`}
-            style={{ 
-              background: 'var(--bg-secondary)', 
+            style={{
+              background: 'var(--bg-secondary)',
               border: '1px solid var(--glass-border)',
               borderRadius: '50%',
               width: '36px', height: '36px',

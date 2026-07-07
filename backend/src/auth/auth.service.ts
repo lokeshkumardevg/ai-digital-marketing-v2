@@ -191,8 +191,6 @@ export class AuthService {
       'https://www.googleapis.com/auth/adwords',
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/webmasters',
-      'https://www.googleapis.com/auth/webmasters.readonly',
     ].join(' ');
 
     return `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -203,6 +201,36 @@ export class AuthService {
       `&access_type=offline` +
       `&prompt=consent` +
       `&state=${userId}`;
+  }
+
+  async getGoogleSearchConsoleAuthUrl(userId: string) {
+    const user = await this.usersService.findById(userId);
+    const clientId = user?.googleClientId || this.configService.get('GOOGLE_CLIENT_ID');
+
+    if (!clientId) {
+      throw new Error('Google Client ID not configured');
+    }
+
+    const backendUrl = this.configService.get<string>('BACKEND_URL');
+    const redirectUri = `${backendUrl}/auth/google/callback`;
+
+    const scope = [
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/webmasters',
+      'https://www.googleapis.com/auth/webmasters.readonly',
+      'https://www.googleapis.com/auth/admanager',
+    ].join(' ');
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${clientId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&access_type=offline` +
+      `&prompt=consent` +
+      `&include_granted_scopes=true` +
+      `&state=${userId}_gsc`;
   }
 
   getMetaAuthUrl(userId: string) {
@@ -308,10 +336,16 @@ export class AuthService {
       console.error('Failed to auto-fetch Google Ads customer ID via google-ads-api', e);
     }
 
+    const isGscGranted = tokens.scope && (
+      tokens.scope.includes('webmasters') ||
+      tokens.scope.includes('webmasters.readonly')
+    );
+
     await this.usersService.update(userId, {
-      googleRefreshToken: tokens.refresh_token,
+      googleRefreshToken: tokens.refresh_token || user.googleRefreshToken,
       googleAccessToken: tokens.access_token,
       googleTokenExpiry: Date.now() + tokens.expires_in * 1000,
+      googleSearchConsoleConnected: isGscGranted ? true : (user.googleSearchConsoleConnected || false),
       ...(customerId && { googleCustomerId: customerId }),
     });
 

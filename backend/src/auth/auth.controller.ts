@@ -53,6 +53,12 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Get('google/gsc')
+  async getGoogleSearchConsoleAuthUrl(@Request() req: any) {
+    return { url: await this.authService.getGoogleSearchConsoleAuthUrl(req.user.id) };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Get('google/ads')
   async getGoogleAds(
     @Request() req: any,
@@ -76,17 +82,22 @@ export class AuthController {
       throw new UnauthorizedException('Missing code or state');
     }
 
-    const userId = state;
+    const stateParts = state.split('_');
+    const userId = stateParts[0];
+    const isGsc = stateParts[1] === 'gsc';
+
     const frontendUrl = process.env.FRONTEND_URL;
     const redirectBase = `${frontendUrl}/settings`;
 
     try {
       await this.authService.handleGoogleCallback(userId, code);
-      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?googleConnected=success" /></head><body>Redirecting...</body></html>`;
+      const queryParam = isGsc ? 'gscConnected=success' : 'googleConnected=success';
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?${queryParam}" /></head><body>Redirecting...</body></html>`;
     } catch (e: any) {
       // eslint-disable-next-line no-console
       console.log('[AuthController] googleCallback error', e?.message || e);
-      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?googleConnected=error" /></head><body>Redirecting...</body></html>`;
+      const queryParam = isGsc ? 'gscConnected=error' : 'googleConnected=error';
+      return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?${queryParam}" /></head><body>Redirecting...</body></html>`;
     }
   }
 
