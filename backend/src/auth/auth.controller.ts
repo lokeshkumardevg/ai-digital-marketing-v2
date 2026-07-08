@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UnauthorizedException, Get, Request, UseGuards, Query } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException, Get, Request, UseGuards, Query, BadRequestException, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -99,6 +99,33 @@ export class AuthController {
       const queryParam = isGsc ? 'gscConnected=error' : 'googleConnected=error';
       return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?${queryParam}" /></head><body>Redirecting...</body></html>`;
     }
+  }
+
+  @Post('google/risc')
+  @HttpCode(HttpStatus.OK)
+  async handleGoogleRisc(@Request() req: any, @Body() body: any) {
+    let token = '';
+    if (typeof body === 'string') {
+      token = body;
+    } else if (body && typeof body === 'object' && body.event_jwt) {
+      token = body.event_jwt;
+    } else if (req.rawBody) {
+      token = req.rawBody.toString('utf8');
+    } else {
+      // Fallback: read stream
+      token = await new Promise<string>((resolve) => {
+        let accum = '';
+        req.on('data', (chunk: any) => { accum += chunk; });
+        req.on('end', () => resolve(accum));
+        req.on('error', () => resolve(''));
+      });
+    }
+
+    if (!token) {
+      throw new BadRequestException('Empty RISC token');
+    }
+
+    return this.authService.handleRiscEvent(token);
   }
 
   // ================= GOOGLE CREDENTIALS =================

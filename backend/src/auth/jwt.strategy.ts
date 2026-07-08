@@ -22,6 +22,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('Tenant identity corrupted.');
     }
+    if (user.isActive === false) {
+      throw new UnauthorizedException('User account is deactivated.');
+    }
+
     const { passwordHash, ...userData } = user.toObject ? user.toObject() : user;
     return {
       ...userData,

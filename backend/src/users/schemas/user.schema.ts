@@ -30,6 +30,10 @@ export class User {
   googleDeveloperToken?: string;
 
   @Prop()
+  googleUserId?: string;
+
+
+  @Prop()
   googleClientId?: string;
 
   @Prop()

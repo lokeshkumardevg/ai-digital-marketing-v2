@@ -11,6 +11,11 @@ export class UsersService {
     return this.userModel.findOne({ email }).exec();
   }
 
+  async findByGoogleUserId(googleUserId: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ googleUserId }).exec();
+  }
+
+
   async create(userDto: Partial<User>): Promise<UserDocument> {
     const createdUser = new this.userModel(userDto);
     return createdUser.save();

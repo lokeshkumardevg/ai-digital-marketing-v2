@@ -119,8 +119,13 @@ export class AuthService {
     }
 
     // Step 3: Find or create user
-    let user = await this.usersService.findByEmail(userInfo.email);
-    console.log('[Google Login] findByEmail returned:', user);
+    let user = userInfo.sub ? await this.usersService.findByGoogleUserId(userInfo.sub) : null;
+    if (!user) {
+      user = await this.usersService.findByEmail(userInfo.email);
+      console.log('[Google Login] findByEmail returned:', user);
+    } else {
+      console.log('[Google Login] findByGoogleUserId returned:', user);
+    }
 
     if (!user) {
       console.log('[Google Login] User not found, creating new user...');
@@ -131,6 +136,7 @@ export class AuthService {
         name: userInfo.name || userInfo.email.split('@')[0],
         email: userInfo.email,
         passwordHash: hash,
+        googleUserId: userInfo.sub,
       });
       console.log('[Google Login] usersService.create returned:', user);
     }
@@ -139,6 +145,7 @@ export class AuthService {
     const updateData: any = {
       googleAccessToken: tokens.access_token,
       googleTokenExpiry: Date.now() + (tokens.expires_in || 3600) * 1000,
+      googleUserId: userInfo.sub,
     };
 
     // refresh_token only comes on first login or when prompt=consent
@@ -162,6 +169,7 @@ export class AuthService {
   async loginWithGoogleIdToken(token: string) {
     let email = '';
     let name = '';
+    let googleUserId = '';
 
     try {
       const userInfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -170,16 +178,22 @@ export class AuthService {
       if (!userInfoRes.data?.email) throw new Error('Invalid response');
       email = userInfoRes.data.email;
       name = userInfoRes.data.name || email.split('@')[0];
+      googleUserId = userInfoRes.data.sub || '';
     } catch (err: any) {
       throw new UnauthorizedException('Invalid Google token');
     }
 
-    let user = await this.usersService.findByEmail(email);
+    let user = googleUserId ? await this.usersService.findByGoogleUserId(googleUserId) : null;
+    if (!user) {
+      user = await this.usersService.findByEmail(email);
+    }
     if (!user) {
       const randomPass = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
       const salt = await bcrypt.genSalt(10);
       const hash = await bcrypt.hash(randomPass, salt);
-      user = await this.usersService.create({ name, email, passwordHash: hash });
+      user = await this.usersService.create({ name, email, passwordHash: hash, googleUserId });
+    } else if (googleUserId && !user.googleUserId) {
+      await this.usersService.update(user._id.toString(), { googleUserId });
     }
     return this.login(user);
   }
@@ -984,6 +998,109 @@ export class AuthService {
     });
     return { success: true, message: 'X Ad Account updated successfully' };
   }
+
+  async handleRiscEvent(token: string) {
+    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    if (!clientId) {
+      throw new BadRequestException('Google client ID is not configured');
+    }
+
+    try {
+      const client = new OAuth2Client();
+      const certsResponse = await client.getFederatedSignonCertsAsync();
+      const certs = certsResponse.certs;
+
+      // Verify signature, audience, and issuer
+      const ticket = await client.verifySignedJwtWithCertsAsync(
+        token,
+        certs,
+        clientId,
+        ['https://accounts.google.com', 'accounts.google.com']
+      );
+
+      const payload = ticket.getPayload() as any;
+      if (!payload) {
+        throw new BadRequestException('Invalid token payload');
+      }
+
+      console.log('[RISC Receiver] Verified Security Event Token:', JSON.stringify(payload));
+
+      const events = payload.events || {};
+      const subject = payload.sub; // Google User ID
+
+      // Locate the user
+      let user = subject ? await this.usersService.findByGoogleUserId(subject) : null;
+
+      // Fallback: search events subject
+      if (!user) {
+        for (const eventType of Object.keys(events)) {
+          const eventData = events[eventType] as any;
+          if (eventData?.subject?.sub) {
+            user = await this.usersService.findByGoogleUserId(eventData.subject.sub);
+          }
+          if (!user && eventData?.subject?.email) {
+            user = await this.usersService.findByEmail(eventData.subject.email);
+          }
+          if (user) break;
+        }
+      }
+
+      if (!user) {
+        console.warn('[RISC Receiver] No matching local user found for RISC event subject');
+        return { status: 'ignored', message: 'No matching user' };
+      }
+
+      console.log(`[RISC Receiver] Processing security events for user: ${user.email} (ID: ${user._id})`);
+
+      let shouldDeactivate = false;
+      let shouldRevokeTokens = false;
+
+      // Check event types
+      const sessionRevocationEvents = [
+        'https://schemas.openid.net/secevent/risc/event-type/sessions-revoked',
+        'https://schemas.openid.net/secevent/oauth/event-type/tokens-revoked'
+      ];
+      const accountDeactivationEvents = [
+        'https://schemas.openid.net/secevent/risc/event-type/account-disabled',
+        'https://schemas.openid.net/secevent/risc/event-type/account-purged'
+      ];
+
+      for (const eventType of Object.keys(events)) {
+        if (sessionRevocationEvents.includes(eventType)) {
+          shouldRevokeTokens = true;
+        }
+        if (accountDeactivationEvents.includes(eventType)) {
+          shouldDeactivate = true;
+          shouldRevokeTokens = true;
+        }
+      }
+
+      const updates: any = {};
+
+      if (shouldRevokeTokens) {
+        updates.googleAccessToken = undefined;
+        updates.googleRefreshToken = undefined;
+        updates.googleTokenExpiry = undefined;
+        updates.googleSearchConsoleConnected = false;
+        console.log(`[RISC Receiver] Revoking Google OAuth tokens for user: ${user.email}`);
+      }
+
+      if (shouldDeactivate) {
+        updates.isActive = false;
+        console.log(`[RISC Receiver] Deactivating account for user: ${user.email}`);
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await this.usersService.update(user._id.toString(), updates);
+      }
+
+      return { status: 'success' };
+    } catch (err: any) {
+      console.error('[RISC Receiver] Verification/processing failed:', err.message || err);
+      throw new BadRequestException(`Verification failed: ${err.message || err}`);
+    }
+  }
 }
+
 
 
