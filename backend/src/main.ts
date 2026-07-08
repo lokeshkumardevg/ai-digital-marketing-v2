@@ -25,6 +25,14 @@ async function bootstrap() {
   app.use(express.urlencoded({ limit: '15mb', extended: true }));
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+  // DEBUG MIDDLEWARE FOR JWT MALFORMED ISSUE
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.headers.authorization) {
+      console.log(`[DEBUG JWT] ${req.method} ${req.originalUrl} | Auth Header: ${req.headers.authorization.substring(0, 30)}...`);
+    }
+    next();
+  });
+
   // Enable Global CORS for React Frontend Client
   const rawOrigins = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [];
   const allowedOrigins = new Set<string>();
