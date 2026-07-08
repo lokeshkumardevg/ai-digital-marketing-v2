@@ -12,7 +12,7 @@ try {
     
     if (pid && pid !== '0') {
       console.log(`Killing process ${pid} on port 3000...`);
-      execSync(`taskkill /F /PID ${pid}`);
+      process.kill(parseInt(pid, 10));
       console.log('Port 3000 is now free.');
     } else {
       console.log('Could not find PID for port 3000.');

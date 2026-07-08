@@ -1,11 +1,1 @@
-{
-  "errors": [
-    {
-      "error_code": {
-        "customer_error": "CREATION_DENIED_INELIGIBLE_MCC"
-      },
-      "message": "This manager account can’t create new accounts. You’ll need to link a Google Ads account that has spent more than $1,000 and has a history of policy compliance. Once the account is linked, this campaign will start running ads within a day. Learn more about linking accounts at https://support.google.com/google-ads/answer/7459601"
-    }
-  ],
-  "request_id": "jQkbmL5k4mROZfGxdyFWmA"
-}
+{}

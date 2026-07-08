@@ -2484,26 +2484,89 @@ Return ONLY JSON.
     }
   }
 
+  async provisionGoogleAdsAccount(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new BadRequestException('User not found');
+
+    if (user.googleCustomerId) {
+      return { success: true, customerId: user.googleCustomerId, message: 'Already provisioned' };
+    }
+
+    const systemMccId = this.configService.get<string>('SYSTEM_GOOGLE_MCC_ID');
+    const systemRefreshToken = this.configService.get<string>('SYSTEM_GOOGLE_REFRESH_TOKEN');
+    const devToken = this.configService.get<string>('GOOGLE_DEVELOPER_TOKEN') || 'lcZ3RRE00HWy2i4quLMNuQ';
+    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    const clientSecret = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+
+    if (!systemMccId || !systemRefreshToken) {
+      throw new Error('SYSTEM_GOOGLE_MCC_ID or SYSTEM_GOOGLE_REFRESH_TOKEN is not configured');
+    }
+
+    const clientAuth = new GoogleAdsApi({
+      client_id: clientId as string,
+      client_secret: clientSecret as string,
+      developer_token: devToken as string,
+    });
+
+    try {
+      const mccCustomer = clientAuth.Customer({
+        customer_id: systemMccId.replace(/-/g, ''),
+        login_customer_id: systemMccId.replace(/-/g, ''),
+        refresh_token: systemRefreshToken,
+      });
+
+      const result = await mccCustomer.customers.createCustomerClient({
+        customer_id: systemMccId.replace(/-/g, ''),
+        customer_client: {
+          descriptive_name: `${user.name || 'Wheedle User'} - ${user.email}`,
+          currency_code: 'INR',
+          time_zone: 'Asia/Calcutta',
+        }
+      } as any);
+
+      const customerId = result.resource_name.split('/')[1];
+
+      await this.usersService.update(userId, { googleCustomerId: customerId });
+      this.logger.log(`Successfully created Client Account: ${customerId} for user ${userId}`);
+      return { success: true, customerId };
+    } catch (createErr: any) {
+      const errMsg = createErr.errors?.[0]?.message || createErr.message;
+      this.logger.error(`Failed to create Google Ads Client Account: ${errMsg}`);
+      throw new BadRequestException(`Google Ads account creation failed: ${errMsg}`);
+    }
+  }
+
   async publishGoogleCampaign(userId: string, data: any) {
     this.logger.log(`Publishing Google Campaign for ${userId}`);
     const user = await this.usersService.findById(userId);
     if (!user) throw new BadRequestException('User not found');
 
     const systemRefreshToken = this.configService.get('SYSTEM_GOOGLE_REFRESH_TOKEN');
-    const systemMccId = this.configService.get('SYSTEM_GOOGLE_MCC_ID');
+    const systemMccId = this.configService.get('SYSTEM_GOOGLE_MCC_ID') || '';
+    const systemCustomerId = this.configService.get('SYSTEM_GOOGLE_CUSTOMER_ID') || '';
     const developerToken = this.configService.get('GOOGLE_DEVELOPER_TOKEN') || 'lcZ3RRE00HWy2i4quLMNuQ';
     const clientId = this.configService.get('GOOGLE_CLIENT_ID');
     const clientSecret = this.configService.get('GOOGLE_CLIENT_SECRET');
 
-    const isClientOwned = !!(user.googleRefreshToken && user.googleCustomerId);
-    const workingRefreshToken = isClientOwned ? user.googleRefreshToken : systemRefreshToken;
+    const rawTargetCustomerId = data.googleAccountId || user.googleCustomerId || systemCustomerId;
+    let targetCustomerId = rawTargetCustomerId ? rawTargetCustomerId.replace(/-/g, '') : '';
+    // Fix bug where old system ID was saved to user profile
+    if (targetCustomerId === '2769788956') targetCustomerId = systemCustomerId.replace(/-/g, '');
+
+    const isClientOwned = !!(user.googleRefreshToken && targetCustomerId && targetCustomerId !== systemCustomerId.replace(/-/g, ''));
+
+    let workingRefreshToken = isClientOwned ? user.googleRefreshToken : systemRefreshToken;
     const workingClientId = isClientOwned ? (user.googleClientId || clientId) : clientId;
     const workingClientSecret = isClientOwned ? (user.googleClientSecret || clientSecret) : clientSecret;
     const workingDeveloperToken = isClientOwned ? (user.googleDeveloperToken || developerToken) : developerToken;
 
     if (!workingRefreshToken || workingRefreshToken === 'your_master_refresh_token_here') {
-      this.logger.warn(`Google Ads credentials missing or not configured. Simulating success and saving to DB.`);
-      return this.simulateGoogleCampaign(userId, data.campaignName, data);
+      this.logger.warn(`Google Ads credentials missing or not configured. Prompting user to connect.`);
+      return {
+        success: false,
+        code: 'GOOGLE_ADS_NOT_CONNECTED',
+        message: 'Google Ads credentials missing. Please connect your account.'
+      };
     }
 
     const { campaignName, dailyBudget } = data;
@@ -2559,8 +2622,13 @@ Return ONLY JSON.
         }
       } else {
         customerId = customerId.replace(/-/g, '');
-        if (customerId !== user.googleCustomerId) {
+        if (customerId !== user.googleCustomerId && customerId !== systemCustomerId.replace(/-/g, '')) {
           await this.usersService.update(userId, { googleCustomerId: customerId });
+        } else if (user.googleCustomerId === systemCustomerId.replace(/-/g, '') || user.googleCustomerId === '2769788956') {
+          // Clean up bug from earlier where system ID (current or old) was saved to user
+          await this.usersService.update(userId, { googleCustomerId: null });
+          // Reset the variable in memory so the rest of the flow correctly sees it as undefined
+          user.googleCustomerId = undefined;
         }
 
         if (isClientOwned) {
@@ -2568,7 +2636,9 @@ Return ONLY JSON.
             const listRes = await clientAuth.listAccessibleCustomers(workingRefreshToken);
             const accessibleCids = (listRes.resource_names || []).map((rn: string) => rn.split('/')[1]);
 
-            if (accessibleCids.includes(customerId)) {
+            let isOwned = accessibleCids.includes(customerId);
+
+            if (isOwned) {
               loginCustomerId = customerId;
             } else if (accessibleCids.length > 0) {
               loginCustomerId = accessibleCids[0]; // Fallback
@@ -2586,6 +2656,7 @@ Return ONLY JSON.
                   `);
                   if (accounts && accounts.length > 0) {
                     loginCustomerId = mccId;
+                    isOwned = true;
                     this.logger.log(`Found exact Manager ID (${mccId}) for Client ID (${customerId})`);
                     break;
                   }
@@ -2593,11 +2664,17 @@ Return ONLY JSON.
                   continue;
                 }
               }
-            } else {
-              loginCustomerId = customerId;
+            }
+
+            // If we STILL couldn't find the customer in the user's accessible list, 
+            // it must be a System-created account. We must switch to system auth!
+            if (!isOwned) {
+              throw new Error("NOT_OWNED");
             }
           } catch (e) {
-            this.logger.warn(`Failed to dynamically resolve manager ID: ${e}`);
+            this.logger.warn(`User token does not have access to ${customerId}, falling back to System Token`);
+            // Switch back to system token
+            workingRefreshToken = systemRefreshToken;
             loginCustomerId = systemMccId.replace(/-/g, '');
           }
         } else {
@@ -2653,8 +2730,8 @@ Return ONLY JSON.
             delivery_method: enums.BudgetDeliveryMethod.STANDARD,
           }
         ]);
-      } catch (e) {
-        throw new Error(`Failed to create campaign budget: ${e.message}`);
+      } catch (e: any) {
+        throw new Error(`Failed to create campaign budget: ${e.errors?.[0]?.message || e.message || JSON.stringify(e)}`);
       }
       const budgetResourceName = budgetResult.results[0].resource_name;
 
@@ -2687,8 +2764,8 @@ Return ONLY JSON.
         }
 
         campaignResult = await workingCustomer.campaigns.create([campaignData]);
-      } catch (e) {
-        throw new Error(`Failed to create campaign: ${e.message}`);
+      } catch (e: any) {
+        throw new Error(`Failed to create campaign: ${e.errors?.[0]?.message || e.message || JSON.stringify(e)}`);
       }
       const campaignResourceName = campaignResult.results[0].resource_name;
 
@@ -2728,7 +2805,7 @@ Return ONLY JSON.
           this.logger.log(`Creating ${googleCriteria.length} campaign location criteria in Google Ads`);
           await workingCustomer.campaignCriteria.create(googleCriteria);
         } catch (e: any) {
-          throw new Error(`Failed to create campaign location criteria: ${e.message}`);
+          throw new Error(`Failed to create campaign location criteria: ${e.errors?.[0]?.message || e.message || JSON.stringify(e)}`);
         }
       }
 
@@ -2744,8 +2821,8 @@ Return ONLY JSON.
             cpc_bid_micros: 1000000
           }
         ]);
-      } catch (e) {
-        throw new Error(`Failed to create ad group: ${e.message}`);
+      } catch (e: any) {
+        throw new Error(`Failed to create ad group: ${e.errors?.[0]?.message || e.message || JSON.stringify(e)}`);
       }
       const adGroupResourceName = adGroupResult.results[0].resource_name;
 
@@ -2799,7 +2876,7 @@ Return ONLY JSON.
           }
         ]);
       } catch (e: any) {
-        throw new Error(`Failed to create AdGroupAd (Ad): ${JSON.stringify(e.errors || e.message)}`);
+        throw new Error(`Failed to create AdGroupAd (Ad): ${e.errors?.[0]?.message || e.message || JSON.stringify(e)}`);
       }
 
       const googleResources: any = {
@@ -2833,6 +2910,22 @@ Return ONLY JSON.
       } catch (e) { }
       const errorMsg = err.errors?.[0]?.message || err.message || JSON.stringify(err.response?.data || err);
       this.logger.error('Google Ads API Error', errorMsg);
+
+      if (errorMsg.includes('invalid_grant') || errorMsg.includes('NOT_ADS_USER')) {
+        return {
+          success: false,
+          code: 'GOOGLE_ADS_NOT_CONNECTED',
+          message: 'Google Ads connection expired or invalid. Please reconnect your account.'
+        };
+      }
+
+      if (errorMsg.includes("User doesn't have permission to access customer")) {
+        return {
+          success: false,
+          code: 'GOOGLE_ADS_PERMISSION_DENIED',
+          message: 'The connected Google account does not have permission to access the selected Ads account.'
+        };
+      }
 
       // Save locally even if Google API fails so it shows in the UI
       return this.simulateGoogleCampaign(userId, campaignName, data, errorMsg);

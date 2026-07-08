@@ -304,4 +304,9 @@ getDrafts(
   async getMetaBillingStatus(@Param('userId') userId: string) {
     return this.service.getMetaBillingStatus(userId);
   }
+
+  @Post('google/provision')
+  async provisionGoogleAds(@Body('userId') userId: string) {
+    return this.service.provisionGoogleAdsAccount(userId);
+  }
 }

@@ -164,14 +164,20 @@ Instructions:
         this.logger.log(`[${platform}] Image generation attempt ${attempt}/${MAX_RETRIES}`);
 
         const response = await this.openai.images.generate({
-          model: 'dall-e-3',
+          model: 'dall-e-2',
           prompt,
           size: PLATFORM_SIZES[platform],
-          response_format: 'b64_json',
         });
 
-        const b64 = response.data?.[0]?.b64_json;
-        return b64 ? `data:image/png;base64,${b64}` : '';
+        const imageUrl = response.data?.[0]?.url;
+        if (imageUrl) {
+          const imageRes = await fetch(imageUrl);
+          const arrayBuffer = await imageRes.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const b64 = buffer.toString('base64');
+          return `data:image/png;base64,${b64}`;
+        }
+        return '';
 
       } catch (err: any) {
         const is429 = err?.status === 429 || err?.code === 'rate_limit_exceeded';

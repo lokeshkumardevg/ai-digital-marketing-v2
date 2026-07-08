@@ -1,6 +1,6 @@
-
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
+import { api } from "../../api/axios";
 
 type PlatformId = "meta" | "google" | "x" | "linkedin";
 type LoadingState = "publish" | "draft" | null;
@@ -711,7 +711,7 @@ export function TopBar({
 
   const isNotConnected = (
     (activePlatformId === 'meta' && !user?.metaAccessToken) ||
-    (activePlatformId === 'google' && !user?.googleAccessToken) ||
+    (activePlatformId === 'google' && !user?.googleRefreshToken) ||
     (activePlatformId === 'linkedin' && !user?.linkedinAccessToken) ||
     (activePlatformId === 'x' && !user?.twitterAccessToken)
   );
@@ -827,6 +827,17 @@ export function TopBar({
     if (activePlatformId === 'google') {
       if (f.label === 'Google Ads Account' || f.label === 'Manager Account') {
         const hasAccounts = googleAccounts.length > 0;
+        if (!user?.googleRefreshToken) {
+          return (
+            <button onClick={() => {
+              api.get('/auth/google/ads').then(res => {
+                window.location.href = res.data.url;
+              });
+            }} style={{ border: 'none', background: 'var(--blue)', color: '#fff', outline: 'none', width: '100%', fontSize: 12, cursor: 'pointer', borderRadius: 4, padding: '4px 0' }}>
+              Connect Google Ads
+            </button>
+          );
+        }
         return (
           <select value={selectedGoogleAccount} onChange={(e) => handleDropdownChange(e, activePlatformId, f.label)} style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: 12, color: (user?.googleCustomerId || hasAccounts) ? '#111' : 'var(--t3)', cursor: 'pointer', appearance: 'none' }}>
             <option value="">{user?.googleCustomerId || f.placeholder}</option>
@@ -954,32 +965,32 @@ export function TopBar({
 }
 
 /* ─── AD SETTING CARD ─────────────────────────────────────── */
-interface AdSettingCardProps { 
-  event: string; 
-  budget: string; 
-  startDate: string; 
-  endDate: string; 
-  finalUrl: string; 
-  enabled: boolean; 
-  onEventChange: (v: string) => void; 
-  onBudgetChange: (v: string) => void; 
-  onStartDateChange: (v: string) => void; 
-  onEndDateChange: (v: string) => void; 
-  onFinalUrlChange: (v: string) => void; 
+interface AdSettingCardProps {
+  event: string;
+  budget: string;
+  startDate: string;
+  endDate: string;
+  finalUrl: string;
+  enabled: boolean;
+  onEventChange: (v: string) => void;
+  onBudgetChange: (v: string) => void;
+  onStartDateChange: (v: string) => void;
+  onEndDateChange: (v: string) => void;
+  onFinalUrlChange: (v: string) => void;
 }
 
-function AdSettingCard({ 
-  event, 
-  budget, 
-  startDate, 
-  endDate, 
-  finalUrl, 
-  enabled, 
-  onEventChange, 
-  onBudgetChange, 
-  onStartDateChange, 
-  onEndDateChange, 
-  onFinalUrlChange 
+function AdSettingCard({
+  event,
+  budget,
+  startDate,
+  endDate,
+  finalUrl,
+  enabled,
+  onEventChange,
+  onBudgetChange,
+  onStartDateChange,
+  onEndDateChange,
+  onFinalUrlChange
 }: AdSettingCardProps) {
   return (
     <div style={{ ...card(), borderTop: "3px solid var(--blue)" }}>
@@ -995,27 +1006,27 @@ function AdSettingCard({
         </div>
       </div>
       <div style={{ borderTop: "1px solid var(--bdr)", margin: "10px 0" }} />
-      
+
       {/* Date Picker Grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
         <div>
           <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}><I.Edit /> Start Date</div>
-          <input 
-            type="date" 
-            className="editable-input" 
-            value={startDate} 
-            onChange={e => onStartDateChange(e.target.value)} 
-            style={{ fontFamily: "inherit" }} 
+          <input
+            type="date"
+            className="editable-input"
+            value={startDate}
+            onChange={e => onStartDateChange(e.target.value)}
+            style={{ fontFamily: "inherit" }}
           />
         </div>
         <div>
           <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}><I.Edit /> End Date</div>
-          <input 
-            type="date" 
-            className="editable-input" 
-            value={endDate} 
-            onChange={e => onEndDateChange(e.target.value)} 
-            style={{ fontFamily: "inherit" }} 
+          <input
+            type="date"
+            className="editable-input"
+            value={endDate}
+            onChange={e => onEndDateChange(e.target.value)}
+            style={{ fontFamily: "inherit" }}
           />
         </div>
       </div>
@@ -1516,9 +1527,9 @@ function CreativeStudio({ adCopy, activePlatformId, isEnabled, brandAssetImages,
       if (!r.ok) { const e = await r.json(); throw new Error(e.message || e.error || `API ${r.status}`); }
       const d = await r.json();
       const url: string = d.url || "";
-      if (url) { 
+      if (url) {
         const newImgs = [url, ...aiImgs].slice(0, 6);
-        setAiImgs(newImgs); 
+        setAiImgs(newImgs);
         onCreativeChange({ image: url, aiImgs: newImgs });
       }
     } catch (e) { setAiErr(e instanceof Error ? e.message : String(e)); }
@@ -1945,7 +1956,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     if (typeof promoData?.keywords === 'string' && promoData.keywords.trim()) {
       return promoData.keywords.split(',').map((s: string) => s.trim()).filter(Boolean);
     }
-    
+
     const bDetails = brandDetails as any;
     let list: string[] = [];
 
@@ -2169,7 +2180,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
       if (targetCid && (activePid as string) !== 'All' && !targetCid.endsWith(`_${activePid}`)) {
         targetCid = `${targetCid}_${activePid}`;
       }
- 
+
       const payload = {
         userId,
         campaignId: targetCid,
@@ -2204,12 +2215,25 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
         liSeniority: activePlatData?.liSeniority,
         liCompanySize: activePlatData?.liCompanySize,
       };
- 
+
       const { api } = await import('../../api/axios');
       if (activePid === 'google') {
         const res = await api.post('/campaign/google/publish', payload);
         if (res.data?.success === false) {
-          showToast(`❌ Google Ads: ${res.data?.error || res.data?.message || 'Publish failed. Check your Google Ads credentials.'}`, 'error');
+          if (res.data?.code === 'GOOGLE_ADS_NOT_CONNECTED') {
+            showToast(`❌ Google Ads not connected. Redirecting to connect...`, 'error');
+            setTimeout(() => {
+              api.get('/auth/google').then((response: any) => {
+                window.location.href = response.data.url;
+              }).catch(() => {
+                showToast('Failed to initiate Google Ads connection', 'error');
+              });
+            }, 1500);
+          } else if (res.data?.code === 'GOOGLE_ADS_PERMISSION_DENIED') {
+            showToast(`❌ Permission Denied: The connected Google account does not have access to this Ads account. Please select a valid account.`, 'error');
+          } else {
+            showToast(`❌ Google Ads: ${res.data?.error || res.data?.message || 'Publish failed. Check your Google Ads credentials.'}`, 'error');
+          }
           return;
         }
         showToast(res.data?.message || '✅ Published to Google Ads successfully!', 'success');
@@ -2419,16 +2443,16 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
               <div style={{ display: "grid", gridTemplateColumns: "minmax(200px,1fr) minmax(260px,1.1fr) minmax(200px,1fr)", gap: 14, alignItems: "start" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <AdSettingCard
-                    event={adEvent} 
-                    budget={adBudget} 
-                    startDate={adStartDate} 
-                    endDate={adEndDate} 
+                    event={adEvent}
+                    budget={adBudget}
+                    startDate={adStartDate}
+                    endDate={adEndDate}
                     finalUrl={adFinalUrl}
                     enabled={isCurrentPlatformEnabled}
-                    onEventChange={setAdEvent} 
+                    onEventChange={setAdEvent}
                     onBudgetChange={setAdBudget}
-                    onStartDateChange={setAdStartDate} 
-                    onEndDateChange={setAdEndDate} 
+                    onStartDateChange={setAdStartDate}
+                    onEndDateChange={setAdEndDate}
                     onFinalUrlChange={setAdFinalUrl}
                   />
                   <TargetAudienceCard

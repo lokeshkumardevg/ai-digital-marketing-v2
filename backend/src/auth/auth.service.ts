@@ -210,6 +210,31 @@ export class AuthService {
     const redirectUri = `${backendUrl}/auth/google/callback`;
 
     const scope = [
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+    ].join(' ');
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${clientId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&include_granted_scopes=true` +
+      `&state=${userId}`;
+  }
+
+  async getGoogleAdsAuthUrl(userId: string) {
+    const user = await this.usersService.findById(userId);
+    const clientId = user?.googleClientId || this.configService.get('GOOGLE_CLIENT_ID');
+
+    if (!clientId) {
+      throw new Error('Google Client ID not configured');
+    }
+
+    const backendUrl = this.configService.get<string>('BACKEND_URL');
+    const redirectUri = `${backendUrl}/auth/google/callback`;
+
+    const scope = [
       'https://www.googleapis.com/auth/adwords',
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
@@ -222,6 +247,7 @@ export class AuthService {
       `&scope=${encodeURIComponent(scope)}` +
       `&access_type=offline` +
       `&prompt=consent` +
+      `&include_granted_scopes=true` +
       `&state=${userId}`;
   }
 

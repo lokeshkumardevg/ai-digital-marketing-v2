@@ -53,6 +53,12 @@ export class AuthController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Get('google/ads')
+  async getGoogleAdsAuthUrl(@Request() req: any) {
+    return { url: await this.authService.getGoogleAdsAuthUrl(req.user.id) };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Get('google/gsc')
   async getGoogleSearchConsoleAuthUrl(@Request() req: any) {
     return { url: await this.authService.getGoogleSearchConsoleAuthUrl(req.user.id) };
