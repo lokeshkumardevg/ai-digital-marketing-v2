@@ -6,6 +6,7 @@ class CampaignGoal(BaseModel):
     budget: float = Field(..., description="Monthly budget in USD")
     industry: str = Field(..., description="Target industry, e.g., 'B2B SaaS'")
     target_audience: str = Field(..., description="Description of the target audience")
+    target_country: str = Field("IN", description="Two-letter country code for targeting (e.g., IN, US, GB)")
     website_url: Optional[str] = Field(None, description="Optional website URL for the AI to read and understand the brand")
 
 class PlatformAllocation(BaseModel):

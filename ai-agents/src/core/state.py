@@ -17,6 +17,11 @@ class OrchestratorState(TypedDict):
     client_goal: CampaignGoal
     plan: CampaignPlan
     brand_context: str
+    competitor_data: str
+    compliance_status: str
+    ad_status: str
+    actions_taken: Annotated[List[str], operator.add]
+    client_report: str
     current_step: str
     errors: Annotated[List[str], operator.add]
     messages: Annotated[List[str], operator.add]
