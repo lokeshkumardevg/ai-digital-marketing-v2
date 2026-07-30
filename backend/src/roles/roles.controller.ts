@@ -5,7 +5,8 @@ import { AuthGuard } from '@nestjs/passport';
 const hasManageRolesPermission = (user: any) => {
   if (!user) return false;
   const perms: string[] = user.permissions || [];
-  return user.role === 'superadmin' || perms.includes('*') || perms.includes('manage_roles');
+  const isAdmin = user.role === 'superadmin' || user.role === 'admin';
+  return user.role === 'superadmin' || (perms.includes('*') && isAdmin) || perms.includes('manage_roles');
 };
 
 @UseGuards(AuthGuard('jwt'))

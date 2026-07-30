@@ -1188,6 +1188,12 @@ export class AnalyticsService {
         clicks: totalClicks,
         conversions: totalConversions,
       },
+      platforms: {
+        meta: metaKpis,
+        google: googleKpis,
+        linkedin: liKpis,
+        twitter: xKpis,
+      },
       daily,
       campaigns: campaignsCount,
       aiContentCount: 0,

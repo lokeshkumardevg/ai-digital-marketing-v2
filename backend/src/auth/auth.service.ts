@@ -29,11 +29,14 @@ export class AuthService {
     const userId = user._id ? user._id.toString() : user.id ? user.id.toString() : '';
     // Auto-fix for new/existing users without permissions
     if (!user.permissions || user.permissions.length === 0) {
-      user.permissions = ['*']; // Grant full access by default
+      const defaultPerms = user.role === 'superadmin' || user.role === 'admin'
+        ? ['*']
+        : ['dashboard', 'ads', 'content', 'analytics', 'automation', 'billing'];
+      user.permissions = defaultPerms;
       if (user.save) {
         await user.save();
       } else if (userId) {
-        await this.usersService.update(userId, { permissions: ['*'] });
+        await this.usersService.update(userId, { permissions: defaultPerms });
       }
     }
 
@@ -74,6 +77,18 @@ export class AuthService {
     }
     const { passwordHash, ...result } = updated.toObject();
     return result;
+  }
+
+  async getFreshProfile(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found.');
+    }
+    const { passwordHash, ...result } = user.toObject ? user.toObject() : user;
+    return {
+      ...result,
+      id: user._id ? user._id.toString() : ''
+    };
   }
 
   // ================= GOOGLE =================
@@ -194,6 +209,87 @@ export class AuthService {
       user = await this.usersService.create({ name, email, passwordHash: hash, googleUserId });
     } else if (googleUserId && !user.googleUserId) {
       await this.usersService.update(user._id.toString(), { googleUserId });
+    }
+    return this.login(user);
+  }
+
+  getFacebookAppId() {
+    return this.configService.get('META_APP_ID') || '1655688389053332';
+  }
+
+  async handleFacebookLoginCallback(code: string) {
+    const appId = this.configService.get('META_APP_ID');
+    const appSecret = this.configService.get('META_APP_SECRET');
+    const backendUrl = this.configService.get<string>('BACKEND_URL') || 'http://localhost:3000';
+    const redirectUri = `${backendUrl}/auth/facebook/callback`;
+
+    // 1. Exchange code for access token
+    const tokenUrl = `https://graph.facebook.com/v20.0/oauth/access_token` +
+      `?client_id=${appId}` +
+      `&client_secret=${appSecret}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&code=${code}`;
+
+    const tokenRes = await axios.get(tokenUrl);
+    const accessToken = tokenRes.data.access_token;
+    if (!accessToken) {
+      throw new Error('Failed to retrieve access token from Facebook');
+    }
+
+    // 2. Fetch user profile from Facebook
+    const profileUrl = `https://graph.facebook.com/v20.0/me?fields=id,name,email&access_token=${accessToken}`;
+    const profileRes = await axios.get(profileUrl);
+    const profile = profileRes.data;
+    if (!profile.email) {
+      throw new Error('Email access is required to log in via Facebook');
+    }
+
+    // 3. Find or create user
+    let user = await this.usersService.findByEmail(profile.email);
+    if (!user) {
+      const randomPass = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(randomPass, salt);
+      user = await this.usersService.create({
+        name: profile.name || profile.email.split('@')[0],
+        email: profile.email,
+        passwordHash: hash
+      });
+    }
+
+    return this.login(user);
+  }
+
+
+  async loginWithFirebase(idToken: string) {
+    let email = '';
+    let name = '';
+
+    const apiKey = this.configService.get('FIREBASE_API_KEY') || 'AIzaSyAFxE6pp5QbmCvdEo4owpkqAbSF6xfk1V0';
+
+    try {
+      const response = await axios.post(
+        `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
+        { idToken }
+      );
+      const firebaseUser = response.data?.users?.[0];
+      if (!firebaseUser || !firebaseUser.email) {
+        throw new Error('Invalid Firebase token or user not found');
+      }
+      email = firebaseUser.email;
+      name = firebaseUser.displayName || email.split('@')[0];
+    } catch (err: any) {
+      console.error('[AuthService] Firebase token lookup failed:', err.response?.data || err.message);
+      throw new UnauthorizedException('Invalid Firebase ID token');
+    }
+
+    // Find or create user
+    let user = await this.usersService.findByEmail(email);
+    if (!user) {
+      const randomPass = Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-10);
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(randomPass, salt);
+      user = await this.usersService.create({ name, email, passwordHash: hash });
     }
     return this.login(user);
   }

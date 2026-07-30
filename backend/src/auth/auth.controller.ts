@@ -30,11 +30,19 @@ export class AuthController {
     return this.authService.loginWithGoogleIdToken(body.access_token);
   }
 
+  @Post('firebase')
+  async firebaseLogin(@Body() body: { idToken: string }) {
+    if (!body.idToken) {
+      throw new UnauthorizedException('No idToken provided');
+    }
+    return this.authService.loginWithFirebase(body.idToken);
+  }
+
 
   @UseGuards(AuthGuard('jwt'))
   @Get('profile')
-  getProfile(@Request() req: any) {
-    return req.user;
+  async getProfile(@Request() req: any) {
+    return this.authService.getFreshProfile(req.user.id);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -78,6 +86,52 @@ export class AuthController {
   async checkGoogleAccounts(@Request() req: any) {
     return this.authService.checkGoogleAccounts(req.user.id);
   }
+
+  @Get('facebook')
+  getFacebookAuthUrl() {
+    const appId = this.authService.getFacebookAppId ? this.authService.getFacebookAppId() : '1655688389053332';
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+    const redirectUri = `${backendUrl}/auth/facebook/callback`;
+    const scope = 'email,public_profile';
+    const url = `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=${encodeURIComponent(scope)}`;
+    return { url };
+  }
+
+  @Get('facebook/callback')
+  async facebookCallback(
+    @Query('code') code: string,
+    @Query('state') state: string,
+  ) {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const redirectBase = `${frontendUrl}/login`;
+    try {
+      const token = await this.authService.handleFacebookLoginCallback(code);
+      const userObj = {
+        _id: token.user?.id || token.user?._id?.toString() || '',
+        name: token.user?.name || '',
+        email: token.user?.email || '',
+      };
+      const redirectUrl = `${frontendUrl}/login?fb_token=${token.access_token}&fb_user=${encodeURIComponent(JSON.stringify(userObj))}`;
+      return `<html>
+        <head>
+          <meta http-equiv="refresh" content="0; url=${redirectUrl}" />
+        </head>
+        <body>Redirecting...</body>
+      </html>`;
+    } catch (e) {
+      console.error('[AuthController] facebookCallback error', e?.message || e);
+      return `<html>
+        <head>
+          <meta http-equiv="refresh" content="0; url=${redirectBase}?facebookLogin=error&reason=${encodeURIComponent(e.message || 'unknown')}" />
+        </head>
+        <body>Redirecting...</body>
+      </html>`;
+    }
+  }
+
 
   @Get('google/callback')
   async googleCallback(

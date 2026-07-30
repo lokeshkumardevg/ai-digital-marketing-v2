@@ -80,6 +80,42 @@ export class CampaignService {
 
       this.validateResponse(parsed);
 
+      // Invoke LangGraph Campaign Creation Agent Workflow (Python Server)
+      try {
+        const pythonResponse = await fetch('http://localhost:8001/api/v1/create-campaign', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            objective: parsed.coreObjective || 'Lead Generation',
+            budget: 5000,
+            industry: parsed.brand?.industry || 'Technology',
+            target_audience: parsed.brand?.tagline || `growth-focused customers for ${body.brandName}`,
+            target_country: 'US',
+            website_url: body.website
+          }),
+        });
+
+        if (pythonResponse.ok) {
+          const state = await pythonResponse.json();
+          // Enrich response with Python LangGraph outputs
+          parsed.plan = state.plan;
+          parsed.brandContext = state.brand_context;
+          parsed.competitorData = state.competitor_data;
+          
+          if (state.plan?.keywords && state.plan.keywords.length > 0) {
+            parsed.keywords = { primary: state.plan.keywords };
+          }
+          if (state.plan?.allocations && state.plan.allocations.length > 0) {
+            parsed.budget = {
+              estimatedAdSpend: `$${state.client_goal?.budget || 5000}`,
+              recommendedChannels: state.plan.allocations.map((a: any) => a.platform)
+            };
+          }
+        }
+      } catch (pythonErr: any) {
+        this.logger.warn(`Failed to call Python campaign creation agent workflow: ${pythonErr.message}`);
+      }
+
       return {
         campaignId,
         ...parsed,
@@ -93,6 +129,7 @@ export class CampaignService {
       };
     }
   }
+
   private mockAudit(name = 'Brand', website = '') {
     return {
       brand: {
@@ -4036,10 +4073,14 @@ Return ONLY JSON.
       const googleAdsRefreshToken = user?.googleRefreshToken;
       const systemRefreshToken = process.env.SYSTEM_GOOGLE_REFRESH_TOKEN;
       const workingRefreshToken = googleAdsRefreshToken || systemRefreshToken;
+      
+      const isSystemAccount = !user?.googleCustomerId;
       let customerId = user?.googleCustomerId || process.env.GOOGLE_ADS_CUSTOMER_ID || process.env.SYSTEM_GOOGLE_CUSTOMER_ID;
       const loginCustomerId = process.env.SYSTEM_GOOGLE_MCC_ID || process.env.GOOGLE_ADS_MANAGER_ID;
 
-      if (workingRefreshToken && loginCustomerId) {
+      // Only fetch unlinked external campaigns if the user has connected their OWN Google Ads account.
+      // If using the system account, we do not want to expose all system campaigns (from other users) to this user.
+      if (workingRefreshToken && loginCustomerId && !isSystemAccount) {
         try {
           const { GoogleAdsApi } = require('google-ads-api');
           const clientAuth = new GoogleAdsApi({

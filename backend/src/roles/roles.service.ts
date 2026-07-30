@@ -2,10 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Role } from './roles.schema';
+import { User, UserDocument } from '../users/schemas/user.schema';
 
 @Injectable()
 export class RolesService {
-  constructor(@InjectModel(Role.name) private roleModel: Model<Role>) {}
+  constructor(
+    @InjectModel(Role.name) private roleModel: Model<Role>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+  ) {}
 
   async findAll(workspaceId: string): Promise<Role[]> {
     const roles = await this.roleModel.find({ workspaceId }).exec();
@@ -26,10 +30,27 @@ export class RolesService {
   }
 
   async update(id: string, dto: any): Promise<Role | null> {
-    return this.roleModel.findByIdAndUpdate(id, dto, { new: true }).exec();
+    const originalRole = await this.roleModel.findById(id).exec();
+    const updated = await this.roleModel.findByIdAndUpdate(id, dto, { new: true }).exec();
+    if (updated && originalRole && dto.permissions) {
+      // Cascade permission update to all users holding this custom role
+      await this.userModel.updateMany(
+        { role: originalRole.name },
+        { $set: { permissions: dto.permissions } }
+      ).exec();
+    }
+    return updated;
   }
 
   async remove(id: string): Promise<any> {
+    const role = await this.roleModel.findById(id).exec();
+    if (role) {
+      const defaultClientPerms = ['dashboard', 'ads', 'content', 'analytics', 'automation', 'billing'];
+      await this.userModel.updateMany(
+        { role: role.name },
+        { $set: { role: 'client', permissions: defaultClientPerms } }
+      ).exec();
+    }
     return this.roleModel.findByIdAndDelete(id).exec();
   }
 }

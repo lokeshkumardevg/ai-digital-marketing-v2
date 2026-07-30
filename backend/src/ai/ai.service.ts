@@ -158,6 +158,61 @@ Return ONLY raw valid JSON with these exact keys:
     return this.analyzeWithAI(prompt, 'creative-testing', url, brandName, userId);
   }
 
+  // ── KEYWORD RESEARCH ──────────────────────────────────────
+
+  async runKeywordResearch(url: string, brandName: string, industry?: string, userId?: string) {
+    const prompt = `You are an expert PPC and SEO keyword strategist at a top-tier performance marketing agency.
+Perform a comprehensive keyword research report for "${brandName}" (URL: ${url}${industry ? `, Industry: ${industry}` : ''}).
+
+Return ONLY raw valid JSON with this exact structure:
+{
+  "summary": "2-3 sentence keyword strategy summary for this brand",
+  "primaryKeywords": [
+    {
+      "keyword": "exact keyword phrase",
+      "matchType": "Exact | Phrase | Broad",
+      "intent": "Commercial | Informational | Navigational | Transactional",
+      "estimatedVolume": "monthly search volume estimate e.g. 1K-10K",
+      "estimatedCpc": "estimated CPC in USD e.g. $1.20",
+      "difficulty": "Easy | Medium | Hard",
+      "priority": "High | Medium | Low"
+    }
+  ],
+  "longTailKeywords": [
+    {
+      "keyword": "long tail keyword phrase",
+      "intent": "Commercial | Informational | Transactional",
+      "estimatedVolume": "monthly search volume estimate",
+      "estimatedCpc": "estimated CPC in USD",
+      "difficulty": "Easy | Medium | Hard",
+      "reason": "why this keyword is valuable"
+    }
+  ],
+  "negativeKeywords": ["keyword1", "keyword2", "keyword3"],
+  "topicClusters": [
+    {
+      "cluster": "Topic cluster name",
+      "pillarKeyword": "main keyword",
+      "supportingKeywords": ["kw1", "kw2", "kw3"]
+    }
+  ],
+  "competitorKeywords": ["competitor kw 1", "competitor kw 2", "competitor kw 3"],
+  "seasonalOpportunities": "Brief note on seasonal trends or peak times",
+  "adGroupStructure": [
+    {
+      "adGroupName": "Ad group name",
+      "keywords": ["keyword1", "keyword2"],
+      "theme": "theme description"
+    }
+  ],
+  "strategyRecommendation": "Specific 3-4 sentence actionable keyword strategy recommendation for this brand"
+}
+
+Generate 10-15 primary keywords and 8-12 long tail keywords. Base all data on the brand's industry, product/service, and likely customer intent.`;
+
+    return this.analyzeWithAI(prompt, 'keyword-research', url, brandName, userId);
+  }
+
   async getMarketingStrategy(url: string): Promise<any> {
     const prompt = `You are an expert marketing strategist. Analyze the website at ${url} and generate a comprehensive digital marketing strategy.
     

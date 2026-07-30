@@ -56,4 +56,72 @@ export class CampaignCronService {
       this.logger.error('Error in daily ad spend cron job', error);
     }
   }
+
+  @Cron(CronExpression.EVERY_12_HOURS)
+  async handleCampaignOptimization() {
+    this.logger.log('Starting campaign optimization cron job...');
+    try {
+      const activeCampaigns = await this.campaignModel.find({ status: 'ACTIVE' });
+      this.logger.log(`Found ${activeCampaigns.length} active campaigns for optimization.`);
+
+      for (const campaign of activeCampaigns) {
+        try {
+          // Construct plan based on current data
+          const currentPlan = {
+            allocations: [
+              {
+                platform: campaign.platform || 'Google Ads',
+                budget_allocation: campaign.data?.budget || 100,
+                strategy_notes: campaign.data?.objective || 'OUTCOME_SALES',
+              }
+            ],
+            creatives: [
+              {
+                headline: campaign.data?.headline || '',
+                description: campaign.data?.caption || '',
+                image_prompt: campaign.data?.imageUrl || '',
+              }
+            ],
+            keywords: campaign.data?.keywords || [],
+            status: 'active'
+          };
+
+          // Call python optimize endpoint
+          const response = await fetch('http://localhost:8001/api/v1/optimize-campaign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentPlan),
+          });
+
+          if (!response.ok) {
+            throw new Error(`FastAPI responded with status ${response.status}`);
+          }
+
+          const state = await response.json();
+          this.logger.log(`Optimization succeeded for campaign: ${campaign.campaignId}`);
+
+          // Save the optimization results / state into campaign.aiGeneratedContent
+          await this.campaignModel.updateOne(
+            { _id: campaign._id },
+            {
+              $set: {
+                aiGeneratedContent: {
+                  ...(campaign.aiGeneratedContent || {}),
+                  optimizedPlan: state.plan,
+                  insights: state.insights,
+                  anomalies: state.anomalies,
+                  budgetShifts: state.budget_shifts,
+                  lastOptimizedAt: new Date().toISOString()
+                }
+              }
+            }
+          );
+        } catch (err: any) {
+          this.logger.error(`Failed to optimize campaign ${campaign.campaignId}: ${err.message}`);
+        }
+      }
+    } catch (e: any) {
+      this.logger.error(`Error in campaign optimization cron: ${e.message}`);
+    }
+  }
 }

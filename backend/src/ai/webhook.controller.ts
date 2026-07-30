@@ -34,79 +34,187 @@ export class WebhookController {
   @Post('review-gen')
   async reviewGen(@Body() body: { customer_name: string; product: string }) {
     this.logger.log('[review-gen] Request received');
-    const prompt = `Act as an Elite Customer Success Manager. Draft a psychology-backed, highly-persuasive review request email for customer ${body.customer_name} who recently purchased ${body.product}. The email must be brief, reduce friction, and use the 'foot-in-the-door' psychological technique to maximize conversion.`;
-    const result = await this.aiService.generateContent(prompt, 'You are an Elite Customer Success Manager. Prioritize customer psychology, conversion rate optimization, and absolute brevity. Do not include placeholder text.', undefined, 'gpt-3.5-turbo', 1500);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/review-gen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: review-gen failed on python agent server: ${e.message}`);
+      const prompt = `Act as an Elite Customer Success Manager. Draft a psychology-backed, highly-persuasive review request email for customer ${body.customer_name} who recently purchased ${body.product}. The email must be brief, reduce friction, and use the 'foot-in-the-door' psychological technique to maximize conversion.`;
+      const result = await this.aiService.generateContent(prompt, 'You are an Elite Customer Success Manager. Prioritize customer psychology, conversion rate optimization, and absolute brevity. Do not include placeholder text.', undefined, 'gpt-3.5-turbo', 1500);
+      return { aiOutput: result };
+    }
   }
 
   // ── REVIEW RESPONSE ───────────────────────────────────────
   @Post('review-response')
   async reviewResponse(@Body() body: { star_rating: string; review_text: string }) {
     this.logger.log('[review-response] Request received');
-    const prompt = `Act as a Senior Crisis Management & CX Specialist. Draft a professional response to this ${body.star_rating}-star customer review: "${body.review_text}". If 1-3 stars, use the 'HEART' framework (Hear, Empathize, Apologize, Resolve, Diagnose) to de-escalate without admitting legal fault. If 4-5 stars, amplify the positive sentiment and softly encourage repeat business.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a Senior Crisis Management & CX Specialist. Adhere strictly to the HEART framework for negative reviews and brand amplification for positive ones.', undefined, 'gpt-3.5-turbo', 1500);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/review-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: review-response failed on python agent server: ${e.message}`);
+      const prompt = `Act as a Senior Crisis Management & CX Specialist. Draft a professional response to this ${body.star_rating}-star customer review: "${body.review_text}". If 1-3 stars, use the 'HEART' framework (Hear, Empathize, Apologize, Resolve, Diagnose) to de-escalate without admitting legal fault. If 4-5 stars, amplify the positive sentiment and softly encourage repeat business.`;
+      const result = await this.aiService.generateContent(prompt, 'You are a Senior Crisis Management & CX Specialist. Adhere strictly to the HEART framework for negative reviews and brand amplification for positive ones.', undefined, 'gpt-3.5-turbo', 1500);
+      return { aiOutput: result };
+    }
   }
 
   // ── SOCIAL PUBLISHING ─────────────────────────────────────
   @Post('social-pub')
   async socialPub(@Body() body: { topic: string }) {
     this.logger.log('[social-pub] Request received');
-    const prompt = `Act as a Viral Social Media Strategist. Create a high-converting post for the following topic: '${body.topic}'. Provide two distinct variations:\n1. LinkedIn (focus on professional storytelling, thought leadership, and formatting with line breaks).\n2. Twitter/X (focus on punchy hooks, thread-style formatting, and brevity).\nInclude optimal emojis and highly-researched hashtags.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a Viral Social Media Strategist. Strictly differentiate between platform algorithms (LinkedIn vs Twitter). Optimize for dwell time and CTR.', undefined, 'gpt-3.5-turbo', 1500);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/social-pub', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: social-pub failed on python agent server: ${e.message}`);
+      const prompt = `Act as a Viral Social Media Strategist. Create a high-converting post for the following topic: '${body.topic}'. Provide two distinct variations:\n1. LinkedIn (focus on professional storytelling, thought leadership, and formatting with line breaks).\n2. Twitter/X (focus on punchy hooks, thread-style formatting, and brevity).\nInclude optimal emojis and highly-researched hashtags.`;
+      const result = await this.aiService.generateContent(prompt, 'You are a Viral Social Media Strategist. Strictly differentiate between platform algorithms (LinkedIn vs Twitter). Optimize for dwell time and CTR.', undefined, 'gpt-3.5-turbo', 1500);
+      return { aiOutput: result };
+    }
   }
 
   // ── SOCIAL ENGAGEMENT ─────────────────────────────────────
   @Post('social-engage')
   async socialEngage(@Body() body: { brand_tone: string; user_comment: string }) {
     this.logger.log('[social-engage] Request received');
-    const prompt = `Act as a Brand Reputation Manager. Draft a reply to the following social media user comment. You MUST strictly adhere to a '${body.brand_tone}' brand tone. Comment: "${body.user_comment}". De-escalate if negative, build community if positive.`;
-    const result = await this.aiService.generateContent(prompt, 'You are an elite Brand Reputation Manager. Maintain absolute strictness to the specified brand tone. Do not sound robotic.', undefined, 'gpt-3.5-turbo', 1500);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/social-engage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: social-engage failed on python agent server: ${e.message}`);
+      const prompt = `Act as a Brand Reputation Manager. Draft a reply to the following social media user comment. You MUST strictly adhere to a '${body.brand_tone}' brand tone. Comment: "${body.user_comment}". De-escalate if negative, build community if positive.`;
+      const result = await this.aiService.generateContent(prompt, 'You are an elite Brand Reputation Manager. Maintain absolute strictness to the specified brand tone. Do not sound robotic.', undefined, 'gpt-3.5-turbo', 1500);
+      return { aiOutput: result };
+    }
   }
 
   // ── REPORTING ─────────────────────────────────────────────
   @Post('reporting')
   async reporting(@Body() body: { metrics: string }) {
     this.logger.log('[reporting] Request received');
-    const prompt = `Act as a Fractional Chief Marketing Officer (CMO). Analyze the following raw metrics data: ${body.metrics}. Do not just repeat the numbers. Synthesize this data into exactly 3 bullet points focusing purely on: 1. Return on Investment (ROI), 2. Customer Acquisition Cost (CAC) implications, and 3. Immediate actionable business pivots required.`;
-    const result = await this.aiService.generateContent(prompt, 'You are an elite Fractional CMO and Data Scientist. Provide strictly high-level, strategic business insights. No fluff.', undefined, 'gpt-3.5-turbo', 1500);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/reporting', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: reporting failed on python agent server: ${e.message}`);
+      const prompt = `Act as our Fractional Chief Marketing Officer (CMO). Analyze the following rich marketing performance datasets, which include overall paid ads metrics, detailed platform breakdowns (Meta, Google, LinkedIn, Twitter/X), brand profile context, and organic search SEO metrics:
+
+${body.metrics}
+
+Generate a comprehensive executive-level Digital Marketing Report in Markdown. Address the following areas explicitly:
+1. Executive Strategy & Brand Alignment: Review the brand positioning, description, tone, target audience, and key value proposition. Assess how the overall digital presence aligns with this identity.
+2. Paid Media Performance (Ads Platforms Breakdown): Differentiate and compare performance across active platforms (Facebook/Meta, Google Ads, LinkedIn, Twitter/X). Analyze CTR, CPC, Spend, and Conversions.
+3. Organic Visibility & Technical SEO Analysis: Evaluate site load speed, domain authority, organic traffic volume, and search console indexing. Provide feedback on meta tags and keywords.
+4. Strategic Pivots & Blended CAC Optimization: Provide tactical recommendations, budget adjustments, keyword targets, and pivots to lower CAC and maximize ROI.
+
+Deliver a detailed, structured marketing report.`;
+      const result = await this.aiService.generateContent(prompt, 'You are a World-Class Fractional CMO & Senior Growth Marketing Consultant. Generate comprehensive, data-driven, and highly actionable Marketing Performance Reports.', undefined, 'gpt-4o', 3000);
+      return { aiOutput: result };
+    }
   }
 
   // ── LISTINGS OPTIMIZATION ─────────────────────────────────
   @Post('listings-opt')
   async listingsOpt(@Body() body: { business_name: string; keywords: string }) {
     this.logger.log('[listings-opt] Request received');
-    const prompt = `Act as a Local SEO Architect. Write an optimized Google Business Profile (GBP) description for the business '${body.business_name}'. Strategically implement these keywords via Latent Semantic Indexing (LSI) without keyword stuffing: ${body.keywords}. Optimize for local map pack rankings and high CTR.`;
-    const result = await this.aiService.generateContent(prompt, 'You are an elite Local SEO Architect. Follow strict Google Business Profile guidelines. Maximize local keyword density naturally.', undefined, 'gpt-3.5-turbo', 1500);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/listings-opt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: listings-opt failed on python agent server: ${e.message}`);
+      const prompt = `Act as a Local SEO Architect. Write an optimized Google Business Profile (GBP) description for the business '${body.business_name}'. Strategically implement these keywords via Latent Semantic Indexing (LSI) without keyword stuffing: ${body.keywords}. Optimize for local map pack rankings and high CTR.`;
+      const result = await this.aiService.generateContent(prompt, 'You are an elite Local SEO Architect. Follow strict Google Business Profile guidelines. Maximize local keyword density naturally.', undefined, 'gpt-3.5-turbo', 1500);
+      return { aiOutput: result };
+    }
   }
 
   // ── LEAD GENERATION ───────────────────────────────────────
   @Post('lead-gen')
   async leadGen(@Body() body: { industry: string; region: string }) {
     this.logger.log('[lead-gen] Request received');
-    const prompt = `Act as a B2B/B2C Growth Hacker. Formulate a highly accurate, real-world lead generation strategy for the industry '${body.industry}' in the region '${body.region}'. Mandate real-world tactics (e.g., Boolean search strings, specific local databases, scraping methodologies) instead of generic advice. DO NOT hallucinate fake names.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a strict, data-driven Growth Hacker. Provide only real, actionable methodologies, precise Boolean search queries, and verifiable platforms. Zero hallucination.', undefined, 'gpt-4o', 2000);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/lead-gen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: lead-gen failed on python agent server: ${e.message}`);
+      const prompt = `Act as a B2B/B2C Growth Hacker. Formulate a highly accurate, real-world lead generation strategy for the industry '${body.industry}' in the region '${body.region}'. Mandate real-world tactics (e.g., Boolean search strings, specific local databases, scraping methodologies) instead of generic advice. DO NOT hallucinate fake names.`;
+      const result = await this.aiService.generateContent(prompt, 'You are a strict, data-driven Growth Hacker. Provide only real, actionable methodologies, precise Boolean search queries, and verifiable platforms. Zero hallucination.', undefined, 'gpt-4o', 2000);
+      return { aiOutput: result };
+    }
   }
 
   // ── CONTACT SEGMENTATION ──────────────────────────────────
   @Post('segmentation')
   async segmentation(@Body() body: { customer_data: string }) {
     this.logger.log('[segmentation] Request received');
-    const prompt = `Act as a Senior Data Scientist. Analyze this customer interaction footprint: ${body.customer_data}. Perform an RFM (Recency, Frequency, Monetary) analysis categorization. Predict potential churn behavior and recommend exactly 2 LTV (Life-Time Value) optimization strategies specifically tailored to this segment's psychology.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a Senior Data Scientist specializing in RFM analysis and predictive customer behavior. Be highly analytical and concise.', undefined, 'gpt-3.5-turbo', 1500);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/segmentation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: segmentation failed on python agent server: ${e.message}`);
+      const prompt = `Act as a Senior Data Scientist. Analyze this customer interaction footprint: ${body.customer_data}. Perform an RFM (Recency, Frequency, Monetary) analysis categorization. Predict potential churn behavior and recommend exactly 2 LTV (Life-Time Value) optimization strategies specifically tailored to this segment's psychology.`;
+      const result = await this.aiService.generateContent(prompt, 'You are a Senior Data Scientist specializing in RFM analysis and predictive customer behavior. Be highly analytical and concise.', undefined, 'gpt-3.5-turbo', 1500);
+      return { aiOutput: result };
+    }
   }
 
   // ── TEMPLATE DESIGN (gpt-4o, 4096 tokens) ────────────────
   @Post('template-design')
   async templateDesign(@Body() body: { topic: string }) {
-    this.logger.log('[template-design] Request received → using gpt-4o');
-    const prompt = `You are an elite Senior UI/UX Designer and Web Developer.
+    this.logger.log('[template-design] Request received');
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/template-design', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: template-design failed on python agent server: ${e.message}`);
+      const prompt = `You are an elite Senior UI/UX Designer and Web Developer.
 Create a COMPLETE, FULLY-DESIGNED, and production-ready single-page website/template for the topic/title: "${body.topic}".
 
 CRITICAL REQUIREMENTS:
@@ -116,18 +224,30 @@ CRITICAL REQUIREMENTS:
 4. STRUCTURE: Include Header/Navbar, Hero Section with CTA, Main Content/Features, and Footer.
 5. The design MUST be stunning, premium, and fully responsive across mobile and desktop.`;
 
-    const result = await this.aiService.generateContent(prompt, 'You are an elite UI/UX Designer. Output ONLY raw HTML. Zero markdown, zero backticks.', undefined, 'gpt-4o', 4096);
-    const cleanHtml = result.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-    return { aiOutput: cleanHtml };
+      const result = await this.aiService.generateContent(prompt, 'You are an elite UI/UX Designer. Output ONLY raw HTML. Zero markdown, zero backticks.', undefined, 'gpt-4o', 4096);
+      const cleanHtml = result.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+      return { aiOutput: cleanHtml };
+    }
   }
 
   // ── CUSTOM AGENT ─────────────────────────────────────────
   @Post('custom')
   async custom(@Body() body: { instruction: string; input: string }) {
     this.logger.log('[custom] Request received');
-    const prompt = `Follow this custom instruction with 100% strict adherence and zero deviation: '${body.instruction}'\n\nInput Data to process: ${body.input}`;
-    const result = await this.aiService.generateContent(prompt, 'You are an ultra-precise AI execution engine. Strictly follow the user custom instruction without hallucination, preamble, or deviation.', undefined, 'gpt-3.5-turbo', 1500);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/custom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: custom failed on python agent server: ${e.message}`);
+      const prompt = `Follow this custom instruction with 100% strict adherence and zero deviation: '${body.instruction}'\n\nInput Data to process: ${body.input}`;
+      const result = await this.aiService.generateContent(prompt, 'You are an ultra-precise AI execution engine. Strictly follow the user custom instruction without hallucination, preamble, or deviation.', undefined, 'gpt-3.5-turbo', 1500);
+      return { aiOutput: result };
+    }
   }
 
   // ── WEBSITE BUILDER (gpt-4o, 16384 tokens) ────────────────
@@ -140,39 +260,37 @@ CRITICAL REQUIREMENTS:
     theme?: string;
     logoBase64?: string;
   }) {
-    this.logger.log(`[website-builder] Request received for topic: ${body.topic} → using gpt-4o (16384 tokens)`);
-
-    // Determine pages
-    let pageList: string[] = [];
-    if (body.pages) {
-      // If it looks like a number
-      if (!isNaN(Number(body.pages.trim()))) {
-        const count = Math.min(Math.max(parseInt(body.pages), 1), 10);
-        pageList = ['Home', 'About Us', 'Services', 'Portfolio', 'Contact Us'];
-        for (let i = 6; i <= count; i++) pageList.push(`Page ${i}`);
-      } else {
-        pageList = body.pages.split(',').map((p) => p.trim()).filter(Boolean);
+    this.logger.log(`[website-builder] Request received`);
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/website-builder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: website-builder failed on python agent server: ${e.message}`);
+      let pageList: string[] = [];
+      if (body.pages) {
+        if (!isNaN(Number(body.pages.trim()))) {
+          const count = Math.min(Math.max(parseInt(body.pages), 1), 10);
+          pageList = ['Home', 'About Us', 'Services', 'Portfolio', 'Contact Us'];
+          for (let i = 6; i <= count; i++) pageList.push(`Page ${i}`);
+        } else {
+          pageList = body.pages.split(',').map((p) => p.trim()).filter(Boolean);
+        }
       }
-    }
-    
-    if (pageList.length === 0) {
-      pageList = ['Home', 'About Us', 'Services', 'Portfolio', 'Contact Us'];
-    }
+      if (pageList.length === 0) pageList = ['Home', 'About Us', 'Services', 'Portfolio', 'Contact Us'];
+      const pagesStr = pageList.join(', ');
+      const primaryColor = body.primaryColor || '#036cd8';
+      const secondaryColor = body.secondaryColor || '#6366f1';
+      const theme = body.theme || 'Corporate';
+      const hasLogo = !!body.logoBase64;
+      const brandName = body.topic.split(/[-:|,\n]/)[0]?.trim() || body.topic || 'Brand';
+      const realLogoTag = hasLogo ? `<img src="${body.logoBase64}" alt="Logo" style="height:48px; object-fit:contain;" />` : `<span class="brand-name" style="font-size:1.5rem;font-weight:800;color:var(--primary);font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px;">${brandName}</span>`;
 
-    const pagesStr = pageList.join(', ');
-    const primaryColor = body.primaryColor || '#036cd8';
-    const secondaryColor = body.secondaryColor || '#6366f1';
-    const theme = body.theme || 'Corporate';
-    const hasLogo = !!body.logoBase64;
-
-    // Extract a clean, short brand name (taking the part before any separator like -, :, |, or comma)
-    const brandName = body.topic.split(/[-:|,\n]/)[0]?.trim() || body.topic || 'Brand';
-
-    const realLogoTag = hasLogo
-      ? `<img src="${body.logoBase64}" alt="Logo" style="height:48px; object-fit:contain;" />`
-      : `<span class="brand-name" style="font-size:1.5rem;font-weight:800;color:var(--primary);font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px;">${brandName}</span>`;
-
-    const systemPrompt = `You are a World-Class Lead Designer at a top-tier digital agency.
+      const systemPrompt = `You are a World-Class Lead Designer at a top-tier digital agency.
 Your mission: Generate an "Elite" Multi-Page SPA for the brand "${brandName}" (Full Topic/Niche: "${body.topic}").
 
 THEME-SPECIFIC RULES (STRICT):
@@ -225,7 +343,7 @@ TECHNICAL RULES:
 - NO TRUNCATION. NO MARKDOWN. ONLY RAW HTML.
 - Start with <!DOCTYPE html> and end with </html>.`;
 
-    const userPrompt = `Build an Elite Multi-Page ${theme} Website for the brand "${brandName}" based on topic "${body.topic}".
+      const userPrompt = `Build an Elite Multi-Page ${theme} Website for the brand "${brandName}" based on topic "${body.topic}".
 
 REQUIRED PAGES: ${pagesStr}
 PRIMARY COLOR: ${primaryColor}
@@ -275,132 +393,180 @@ SPA NAVIGATION SETUP:
 
 IMPORTANT: Every page must look professional, fully-designed, and filled with extensive, custom content. No placeholders or stubs.`;
 
-    // Validate image format compatibility for OpenAI Vision API (OpenAI only supports png, jpeg, webp, and gif)
-    let visionImage: string | undefined = undefined;
-    if (body.logoBase64) {
-      const lower = body.logoBase64.toLowerCase();
-      const isSupported = lower.startsWith('data:image/png') ||
-                          lower.startsWith('data:image/jpeg') ||
-                          lower.startsWith('data:image/jpg') ||
-                          lower.startsWith('data:image/webp') ||
-                          lower.startsWith('data:image/gif');
-      if (isSupported) {
-        visionImage = body.logoBase64;
-      } else {
-        this.logger.warn(`Logo image format is not supported by OpenAI Vision API (e.g. SVG). Skipping image input for LLM prompt.`);
+      let visionImage: string | undefined = undefined;
+      if (body.logoBase64) {
+        const lower = body.logoBase64.toLowerCase();
+        const isSupported = lower.startsWith('data:image/png') ||
+                            lower.startsWith('data:image/jpeg') ||
+                            lower.startsWith('data:image/jpg') ||
+                            lower.startsWith('data:image/webp') ||
+                            lower.startsWith('data:image/gif');
+        if (isSupported) visionImage = body.logoBase64;
       }
+
+      const raw = await this.aiService.generateContent(userPrompt, systemPrompt, undefined, 'gpt-4o', 16384 as any, visionImage as any);
+      let html = raw.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+      html = html.replace(/<img[^>]*?\[COMPANY_LOGO_IMAGE_TAG\][^>]*?>/gi, realLogoTag);
+      html = html.replace(/<img[^>]*?src=["'](?:logo|Logo)["'][^>]*?>/gi, realLogoTag);
+      const escapedTopic = body.topic.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedBrand = brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const brandImgRegex = new RegExp(`<img[^>]*?src=["'](?:${escapedTopic}|${escapedBrand})["'][^>]*?>`, 'gi');
+      html = html.replace(brandImgRegex, realLogoTag);
+      html = html.replace(/\[COMPANY_LOGO_IMAGE_TAG\]/g, realLogoTag);
+
+      return { aiOutput: html };
     }
-
-    const raw = await this.aiService.generateContent(
-      userPrompt,
-      systemPrompt,
-      undefined,
-      'gpt-4o',
-      16384 as any,
-      visionImage as any,
-    );
-
-    let html = raw
-      .replace(/^```html\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/```\s*$/i, '')
-      .trim();
-    
-    // Safety check for malformed logo tags or AI using placeholder directly inside img tags
-    html = html.replace(/<img[^>]*?\[COMPANY_LOGO_IMAGE_TAG\][^>]*?>/gi, realLogoTag);
-    html = html.replace(/<img[^>]*?src=["'](?:logo|Logo)["'][^>]*?>/gi, realLogoTag);
-
-    const escapedTopic = body.topic.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const escapedBrand = brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const brandImgRegex = new RegExp(`<img[^>]*?src=["'](?:${escapedTopic}|${escapedBrand})["'][^>]*?>`, 'gi');
-    html = html.replace(brandImgRegex, realLogoTag);
-    
-    html = html.replace(/\[COMPANY_LOGO_IMAGE_TAG\]/g, realLogoTag);
-
-    return { aiOutput: html };
   }
 
   // ── AD COPYWRITER ────────────────────────────────────────
   @Post('ad-copy')
   async adCopy(@Body() body: { product: string; platform: string; product_url?: string }) {
     this.logger.log('[ad-copy] Request received');
-    let realContext = '';
+    let scrapedText = '';
     if (body.product_url) {
-      const scrapedText = await this.scrapeUrl(body.product_url);
-      if (scrapedText) realContext = `\n\nREAL WEBSITE CONTEXT (Scraped from ${body.product_url}):\n${scrapedText}`;
+      scrapedText = await this.scrapeUrl(body.product_url);
     }
-    const prompt = `Act as an elite Direct-Response Copywriter. Write 3 high-converting ad copy variations for ${body.platform} promoting: "${body.product}".${realContext}\n\nStrictly use the PAS (Problem-Agitate-Solve) or AIDA (Attention-Interest-Desire-Action) marketing frameworks. Base all claims on the scraped context. Output must include Headline, Primary Text, and CTA for each variation.`;
-    const result = await this.aiService.generateContent(prompt, 'You are an elite direct-response copywriter. Strictly mandate PAS or AIDA frameworks. Base claims ONLY on real context.', undefined, 'gpt-4o', 2000);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/ad-copy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, scraped_context: scrapedText }),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: ad-copy failed on python agent server: ${e.message}`);
+      let realContext = '';
+      if (scrapedText) realContext = `\n\nREAL WEBSITE CONTEXT (Scraped from ${body.product_url}):\n${scrapedText}`;
+      const prompt = `Act as an elite Direct-Response Copywriter. Write 3 high-converting ad copy variations for ${body.platform} promoting: "${body.product}".${realContext}\n\nStrictly use the PAS (Problem-Agitate-Solve) or AIDA (Attention-Interest-Desire-Action) marketing frameworks. Base all claims on the scraped context. Output must include Headline, Primary Text, and CTA for each variation.`;
+      const result = await this.aiService.generateContent(prompt, 'You are an elite direct-response copywriter. Strictly mandate PAS or AIDA frameworks. Base claims ONLY on real context.', undefined, 'gpt-4o', 2000);
+      return { aiOutput: result };
+    }
   }
 
   // ── EMAIL SEQUENCE ───────────────────────────────────────
   @Post('email-sequence')
   async emailSequence(@Body() body: { product_name: string; audience: string }) {
     this.logger.log('[email-sequence] Request received');
-    const prompt = `Act as a Lifecycle Marketing Master. Write a 3-part email drip sequence for "${body.product_name}" targeting "${body.audience}".\nEmail 1: The 'Soap Opera Sequence' Hook (High drama/curiosity).\nEmail 2: Value/Nurture (Overcoming objections).\nEmail 3: The Hard Sale (Scarcity and direct CTA).\nInclude high-open-rate subject lines and strictly avoid spam-trigger words.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a master Lifecycle Email Marketer. Mandate Soap Opera sequence structures. Optimize for deliverability and open-rates.', undefined, 'gpt-4o', 3000);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/email-sequence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: email-sequence failed on python agent server: ${e.message}`);
+      const prompt = `Act as a Lifecycle Marketing Master. Write a 3-part email drip sequence for "${body.product_name}" targeting "${body.audience}".\nEmail 1: The 'Soap Opera Sequence' Hook (High drama/curiosity).\nEmail 2: Value/Nurture (Overcoming objections).\nEmail 3: The Hard Sale (Scarcity and direct CTA).\nInclude high-open-rate subject lines and strictly avoid spam-trigger words.`;
+      const result = await this.aiService.generateContent(prompt, 'You are a master Lifecycle Email Marketer. Mandate Soap Opera sequence structures. Optimize for deliverability and open-rates.', undefined, 'gpt-4o', 3000);
+      return { aiOutput: result };
+    }
   }
 
   // ── BLOG WRITER ──────────────────────────────────────────
   @Post('blog-writer')
   async blogWriter(@Body() body: { title: string; keywords: string }) {
     this.logger.log('[blog-writer] Request received');
-    
-    // Fetch REAL keyword data from Semrush for the first keyword
     let realSeoData = '';
     try {
       const firstKeyword = body.keywords.split(',')[0]?.trim();
       if (firstKeyword) {
          const kwData = await this.semrushService.getOrganicKeywords(firstKeyword.replace(/\s+/g, ''));
          if (kwData && kwData.length > 0) {
-            realSeoData = `\n\nREAL SEMRUSH DATA FOR KEYWORDS:\n${JSON.stringify(kwData.slice(0, 3))}\nUse this real volume and competition data to inform your content strategy.`;
+            realSeoData = JSON.stringify(kwData.slice(0, 3));
          }
       }
     } catch (e) {
       this.logger.error('Failed to fetch Semrush data for blog writer', e);
     }
-
-    const prompt = `Act as an EEAT (Experience, Expertise, Authoritativeness, Trustworthiness) SEO Content Strategist. Write a highly engaging blog post titled "${body.title}". Incorporate these keywords: ${body.keywords}.${realSeoData}\n\nStrictly follow Google's EEAT guidelines. Use optimal H2/H3 hierarchy, bullet points for scannability, and LSI keyword integration. Ensure absolute factual accuracy.`;
-    const result = await this.aiService.generateContent(prompt, 'You are an elite SEO Content Strategist. Strictly enforce Google EEAT guidelines, LSI keyword usage, and perfect semantic structure.', undefined, 'gpt-4o', 4000);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/blog-writer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, seo_data: realSeoData }),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: blog-writer failed on python agent server: ${e.message}`);
+      let realSeoContext = '';
+      if (realSeoData) realSeoContext = `\n\nREAL SEMRUSH DATA FOR KEYWORDS:\n${realSeoData}\nUse this real volume and competition data to inform your content strategy.`;
+      const prompt = `Act as an EEAT (Experience, Expertise, Authoritativeness, Trustworthiness) SEO Content Strategist. Write a highly engaging blog post titled "${body.title}". Incorporate these keywords: ${body.keywords}.${realSeoContext}\n\nStrictly follow Google's EEAT guidelines. Use optimal H2/H3 hierarchy, bullet points for scannability, and LSI keyword integration. Ensure absolute factual accuracy.`;
+      const result = await this.aiService.generateContent(prompt, 'You are an elite SEO Content Strategist. Strictly enforce Google EEAT guidelines, LSI keyword usage, and perfect semantic structure.', undefined, 'gpt-4o', 4000);
+      return { aiOutput: result };
+    }
   }
 
   // ── VIDEO SCRIPT ─────────────────────────────────────────
   @Post('video-script')
   async videoScript(@Body() body: { platform: string; topic: string }) {
     this.logger.log('[video-script] Request received');
-    const prompt = `Act as a TikTok/Reels Viral Producer. Write a highly engaging short-form video script about "${body.topic}" optimized for ${body.platform}. Include: 1. A pattern-interrupting 3-second visual hook. 2. AVD (Average View Duration) optimization pacing notes. 3. A dual-column format (Visual Actions vs. Audio/Spoken text). 4. A seamless loop or strong CTA.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a viral short-form video producer. Optimize strictly for algorithmic retention graphs, AVD, and pattern interruption.', undefined, 'gpt-3.5-turbo', 2000);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/video-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: video-script failed on python agent server: ${e.message}`);
+      const prompt = `Act as a TikTok/Reels Viral Producer. Write a highly engaging short-form video script about "${body.topic}" optimized for ${body.platform}. Include: 1. A pattern-interrupting 3-second visual hook. 2. AVD (Average View Duration) optimization pacing notes. 3. A dual-column format (Visual Actions vs. Audio/Spoken text). 4. A seamless loop or strong CTA.`;
+      const result = await this.aiService.generateContent(prompt, 'You are a viral short-form video producer. Optimize strictly for algorithmic retention graphs, AVD, and pattern interruption.', undefined, 'gpt-3.5-turbo', 2000);
+      return { aiOutput: result };
+    }
   }
 
   // ── PRESS RELEASE ────────────────────────────────────────
   @Post('press-release')
   async pressRelease(@Body() body: { company: string; announcement: string; company_url?: string }) {
     this.logger.log('[press-release] Request received');
-    let realContext = '';
+    let scrapedText = '';
     if (body.company_url) {
-      const scrapedText = await this.scrapeUrl(body.company_url);
-      if (scrapedText) realContext = `\n\nREAL COMPANY BACKGROUND (Scraped from ${body.company_url}):\n${scrapedText}`;
+      scrapedText = await this.scrapeUrl(body.company_url);
     }
-    const prompt = `Act as a Tier-1 Public Relations Director. Write a formal, media-ready press release for ${body.company} announcing: "${body.announcement}".${realContext}\n\nStrictly adhere to AP Style guidelines. Include a journalistic inverted pyramid structure, a compelling dateline, an executive quote placeholder, and a professional corporate boilerplate based strictly on the scraped context.`;
-    const result = await this.aiService.generateContent(prompt, 'You are a Tier-1 PR Director. Strictly enforce AP Style, inverted pyramid structure, and media-ready formatting. Base the boilerplate ONLY on scraped context.', undefined, 'gpt-4o', 2000);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/press-release', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, scraped_context: scrapedText }),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: press-release failed on python agent server: ${e.message}`);
+      let realContext = '';
+      if (scrapedText) realContext = `\n\nREAL COMPANY BACKGROUND (Scraped from ${body.company_url}):\n${scrapedText}`;
+      const prompt = `Act as a Tier-1 Public Relations Director. Write a formal, media-ready press release for ${body.company} announcing: "${body.announcement}".${realContext}\n\nStrictly adhere to AP Style guidelines. Include a journalistic inverted pyramid structure, a compelling dateline, an executive quote placeholder, and a professional corporate boilerplate based strictly on the scraped context.`;
+      const result = await this.aiService.generateContent(prompt, 'You are a Tier-1 PR Director. Strictly enforce AP Style, inverted pyramid structure, and media-ready formatting. Base the boilerplate ONLY on scraped context.', undefined, 'gpt-4o', 2000);
+      return { aiOutput: result };
+    }
   }
 
   // ── BRAND IDENTITY ───────────────────────────────────────
   @Post('brand-identity')
   async brandIdentity(@Body() body: { business_description: string; website_url?: string }) {
     this.logger.log('[brand-identity] Request received');
-    let realContext = '';
+    let scrapedText = '';
     if (body.website_url) {
-      const scrapedText = await this.scrapeUrl(body.website_url);
-      if (scrapedText) realContext = `\n\nREAL WEBSITE CONTENT (Scraped from ${body.website_url}):\n${scrapedText}`;
+      scrapedText = await this.scrapeUrl(body.website_url);
     }
-    const prompt = `Act as a Chief Brand Officer. Based on this business description: "${body.business_description}".${realContext}\n\nGenerate an elite brand identity framework. Include: 1. Primary Jungian Brand Archetype. 2. Tone-of-Voice Matrix (Do's and Don'ts). 3. A 10-word Mission Statement. 4. A 10-word Vision Statement. 5. Deep Psychographic profiling of the ideal customer. Base all factual essence on the scraped data.`;
-    const result = await this.aiService.generateContent(prompt, 'You are an elite Chief Brand Officer. Use advanced branding psychology (Jungian archetypes, psychographics). Rely on real scraped data.', undefined, 'gpt-4o', 3000);
-    return { aiOutput: result };
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/brand-identity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, scraped_context: scrapedText }),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: brand-identity failed on python agent server: ${e.message}`);
+      let realContext = '';
+      if (scrapedText) realContext = `\n\nREAL WEBSITE CONTENT (Scraped from ${body.website_url}):\n${scrapedText}`;
+      const prompt = `Act as a Chief Brand Officer. Based on this business description: "${body.business_description}".${realContext}\n\nGenerate an elite brand identity framework. Include: 1. Primary Jungian Brand Archetype. 2. Tone-of-Voice Matrix (Do's and Don'ts). 3. A 10-word Mission Statement. 4. A 10-word Vision Statement. 5. Deep Psychographic profiling of the ideal customer. Base all factual essence on the scraped data.`;
+      const result = await this.aiService.generateContent(prompt, 'You are an elite Chief Brand Officer. Use advanced branding psychology (Jungian archetypes, psychographics). Rely on real scraped data.', undefined, 'gpt-4o', 3000);
+      return { aiOutput: result };
+    }
   }
 }

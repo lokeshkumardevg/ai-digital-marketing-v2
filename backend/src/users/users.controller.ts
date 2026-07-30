@@ -8,7 +8,13 @@ import * as bcrypt from 'bcrypt';
 const hasPermission = (user: any, permission: string) => {
   if (!user) return false;
   const perms = user.permissions || [];
-  return perms.includes('*') || perms.includes(permission) || user.role === 'superadmin';
+  if (user.role === 'superadmin' || perms.includes('superadmin')) return true;
+  if (perms.includes('*')) {
+    if (user.role === 'superadmin' || user.role === 'admin') return true;
+    const adminModules = ['superadmin', 'view_users', 'manage_users', 'manage_roles'];
+    if (!adminModules.includes(permission)) return true;
+  }
+  return perms.includes(permission);
 };
 
 const sanitizeUser = (user: any) => {
@@ -21,6 +27,14 @@ const sanitizeUser = (user: any) => {
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('admin/dashboard-stats')
+  async getAdminDashboardStats(@Request() req: any) {
+    if (req.user.role !== 'superadmin' && !req.user.permissions?.includes('*') && !req.user.permissions?.includes('superadmin')) {
+      throw new ForbiddenException('Only super admins can access admin dashboard stats.');
+    }
+    return this.usersService.getAdminStats();
+  }
 
   @Get()
   async getAllUsers(@Request() req: any) {

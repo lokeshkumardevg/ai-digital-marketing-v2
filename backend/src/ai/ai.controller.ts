@@ -456,6 +456,24 @@ ${bodyText.replace(/\s+/g, ' ').slice(0, 3500)}
     );
   }
 
+  // ── KEYWORD RESEARCH ──────────────────────────────────────
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('keyword-research')
+  @HttpCode(HttpStatus.OK)
+  async runKeywordResearch(
+    @Body() body: { url: string; brandName: string; industry?: string },
+    @Request() req: any
+  ) {
+    this.logger.log(`Keyword research for ${body.brandName}`);
+    return this.aiService.runKeywordResearch(
+      body.url,
+      body.brandName,
+      body.industry,
+      req.user?.id
+    );
+  }
+
   // ── HISTORY ───────────────────────────────────────────────
 
   @UseGuards(AuthGuard('jwt'))
