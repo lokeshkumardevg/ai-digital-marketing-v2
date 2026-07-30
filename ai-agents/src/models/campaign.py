@@ -24,3 +24,7 @@ class CampaignPlan(BaseModel):
     creatives: List[CreativeAsset] = []
     keywords: List[str] = []
     status: str = "draft"
+
+
+
+    

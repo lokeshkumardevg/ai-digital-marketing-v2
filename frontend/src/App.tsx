@@ -31,12 +31,14 @@ import { Social } from './dashboard/pages/Social';
 import { Agents } from './dashboard/pages/Agents';
 import { Roles } from './dashboard/pages/Roles';
 import { Users } from './dashboard/pages/Users';
+import { AdminDashboard } from './dashboard/pages/AdminDashboard';
 import { Workflows } from './dashboard/pages/Workflows';
 import { Messaging } from './dashboard/pages/Messaging';
 import { AdsManager } from './dashboard/pages/AdsManager';
 import { DraftAiRecs } from './dashboard/pages/DraftAiRecs';
 import { AdInsights } from './dashboard/pages/AdInsights';
 import { AiAnalysis } from './dashboard/pages/AiAnalysis';
+import { AiReports } from './dashboard/pages/AiReports';
 import { OptimizeGoal } from './dashboard/pages/OptimizeGoal';
 import { BrandProfile } from './dashboard/pages/BrandProfile';
 import { Products } from './dashboard/pages/Products';
@@ -82,7 +84,21 @@ const ProtectedRoute = ({ children, requiredPermission }: { children: React.Reac
   if (requiredPermission && user) {
     const perms = user.permissions || [];
     const canViewUsers = requiredPermission === 'view_users' && perms.includes('manage_users');
-    if (user.role !== 'superadmin' && !perms.includes('*') && !perms.includes(requiredPermission) && !canViewUsers) {
+    let hasPerm = perms.includes(requiredPermission);
+    if (perms.includes('*')) {
+      if (user.role === 'superadmin' || user.role === 'admin') {
+        hasPerm = true;
+      } else {
+        const adminModules = ['superadmin', 'view_users', 'manage_users', 'manage_roles'];
+        if (!adminModules.includes(requiredPermission)) {
+          hasPerm = true;
+        }
+      }
+    }
+    if (user.role === 'superadmin' || perms.includes('superadmin')) {
+      hasPerm = true;
+    }
+    if (!hasPerm && !canViewUsers) {
       return <Navigate to="/crm" replace />;
     }
   }
@@ -241,8 +257,10 @@ const App: React.FC = () => {
         <Route path="/seo/:view" element={<ProtectedRoute><DashboardLayout><Seo /></DashboardLayout></ProtectedRoute>} />
         <Route path="/social" element={<ProtectedRoute><DashboardLayout><Social /></DashboardLayout></ProtectedRoute>} />
         <Route path="/ai-agents" element={<ProtectedRoute><DashboardLayout><Agents /></DashboardLayout></ProtectedRoute>} />
+        <Route path="/admin-dashboard" element={<ProtectedRoute requiredPermission="superadmin"><DashboardLayoutFull><AdminDashboard /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />
         <Route path="/roles" element={<ProtectedRoute requiredPermission="superadmin"><DashboardLayout><Roles /></DashboardLayout></ProtectedRoute>} />
-        <Route path="/users" element={<ProtectedRoute><DashboardLayout><Users /></DashboardLayout></ProtectedRoute>} />
+        <Route path="/users" element={<ProtectedRoute requiredPermission="view_users"><DashboardLayout><Users /></DashboardLayout></ProtectedRoute>} />
         <Route path="/workflows" element={<ProtectedRoute><DashboardLayout><Workflows /></DashboardLayout></ProtectedRoute>} />
         <Route path="/messaging" element={<ProtectedRoute><DashboardLayout><Messaging /></DashboardLayout></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><Notifications /></DashboardLayout></ProtectedRoute>} />
@@ -255,6 +273,7 @@ const App: React.FC = () => {
         {/* Analytics Sub-routes */}
         <Route path="/analytics/insights" element={<ProtectedRoute requiredPermission="analytics"><DashboardLayoutFull><AdInsights /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/analytics/ai-analysis" element={<ProtectedRoute requiredPermission="analytics"><DashboardLayoutFull><AiAnalysis /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/analytics/ai-reports" element={<ProtectedRoute requiredPermission="analytics"><DashboardLayoutFull><AiReports /></DashboardLayoutFull></ProtectedRoute>} />
 
         {/* Brand Center Sub-routes */}
         <Route path="/brand/goal" element={<ProtectedRoute requiredPermission="settings"><DashboardLayoutFull><OptimizeGoal /></DashboardLayoutFull></ProtectedRoute>} />

@@ -19,7 +19,14 @@ const campaignsSlice = createSlice({
     error: null as string | null,
     generating: false
   },
-  reducers: {},
+  reducers: {
+    resetCampaigns: (state) => {
+      state.campaigns = [];
+      state.status = 'idle';
+      state.error = null;
+      state.generating = false;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchCampaigns.pending, (state) => {
@@ -47,4 +54,5 @@ const campaignsSlice = createSlice({
   },
 });
 
+export const { resetCampaigns } = campaignsSlice.actions;
 export const campaignsReducer = campaignsSlice.reducer;

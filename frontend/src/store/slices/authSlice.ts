@@ -21,6 +21,11 @@ export const hydrateSession = createAsyncThunk('auth/hydrateSession', async () =
   return response.data;
 });
 
+export const refreshUserProfile = createAsyncThunk('auth/refreshUserProfile', async () => {
+  const response = await api.get('/auth/profile');
+  return response.data;
+});
+
 export const updateUser = createAsyncThunk('auth/updateUser', async (dto: any) => {
   const response = await api.post('/auth/update', dto);
   return response.data;
@@ -43,6 +48,7 @@ const authSlice = createSlice({
   name: 'auth',
   initialState: {
     user:            null as any | null,
+    adminUser:       null as any | null,
     isAuthenticated: false,
     status:          'idle' as 'idle' | 'loading' | 'succeeded' | 'failed',
     error:           null as string | null,
@@ -50,11 +56,37 @@ const authSlice = createSlice({
   reducers: {
     logout: (state) => {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('admin_impersonated_user');
+      localStorage.removeItem('admin_original_user');
       clearAuthUser();          // ← wipe user from localStorage too
       state.user            = null;
+      state.adminUser       = null;
       state.isAuthenticated = false;
       state.status          = 'idle';
       state.error           = null;
+    },
+    impersonateUser: (state, action) => {
+      state.adminUser = state.user;
+      state.user = { 
+        ...action.payload, 
+        id: action.payload._id || action.payload.id,
+        isImpersonated: true 
+      };
+      localStorage.setItem('admin_impersonated_user', JSON.stringify(state.user));
+      localStorage.setItem('admin_original_user', JSON.stringify(state.adminUser));
+    },
+    stopImpersonating: (state) => {
+      const storedAdmin = localStorage.getItem('admin_original_user');
+      if (storedAdmin) {
+        try {
+          state.user = JSON.parse(storedAdmin);
+        } catch (e) {}
+      } else if (state.adminUser) {
+        state.user = state.adminUser;
+      }
+      state.adminUser = null;
+      localStorage.removeItem('admin_impersonated_user');
+      localStorage.removeItem('admin_original_user');
     },
   },
   extraReducers: (builder) => {
@@ -98,8 +130,19 @@ const authSlice = createSlice({
       .addCase(hydrateSession.fulfilled, (state, action) => {
         state.status          = 'succeeded';
         state.isAuthenticated = true;
-        state.user            = { ...action.payload, permissions: action.payload.permissions || [] };
-        syncUserToStorage(action.payload);   // ← save to localStorage
+        const storedImpersonated = localStorage.getItem('admin_impersonated_user');
+        const storedAdmin = localStorage.getItem('admin_original_user');
+        
+        if (storedImpersonated && storedAdmin) {
+          try {
+            state.adminUser = JSON.parse(storedAdmin);
+          } catch(e) {}
+          state.user = { ...action.payload, permissions: action.payload.permissions || [], isImpersonated: true };
+        } else {
+          state.user            = { ...action.payload, permissions: action.payload.permissions || [] };
+          state.adminUser       = null;
+        }
+        syncUserToStorage(state.user);   // ← save to localStorage
       })
       .addCase(hydrateSession.rejected, (state) => {
         state.status          = 'failed';
@@ -113,9 +156,13 @@ const authSlice = createSlice({
       .addCase(updateUser.fulfilled, (state, action) => {
         state.user = { ...state.user, ...action.payload };
         syncUserToStorage(state.user);       // ← keep localStorage in sync
+      })
+      .addCase(refreshUserProfile.fulfilled, (state, action) => {
+        state.user = { ...action.payload, permissions: action.payload.permissions || [] };
+        syncUserToStorage(action.payload);
       });
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, impersonateUser, stopImpersonating } = authSlice.actions;
 export const authReducer = authSlice.reducer;

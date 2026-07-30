@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FaFacebookF } from "react-icons/fa";
-import { auth, facebookProvider } from "../lib/firebase";
-import { signInWithPopup } from "firebase/auth";
+
 import { api } from "../../api/axios";
 import { saveAuthUser } from "../lib/auth";
 import logo from "../../assets/fevicon.png";
@@ -438,20 +437,6 @@ function Register() {
 
   const resetMessages = () => { setError(""); setSuccess(""); };
 
-  const getFirebaseError = (code: string) => {
-    const map: Record<string, string> = {
-      "auth/email-already-in-use": "This email is already registered.",
-      "auth/invalid-email": "Please enter a valid email address.",
-      "auth/weak-password": "Password should be at least 6 characters.",
-      "auth/user-not-found": "No account found with this email.",
-      "auth/wrong-password": "Invalid email or password.",
-      "auth/invalid-credential": "Invalid email or password.",
-      "auth/popup-closed-by-user": "Login popup was closed before completing sign in.",
-      "auth/account-exists-with-different-credential": "An account already exists with the same email using another login method.",
-    };
-    return map[code] ?? "Something went wrong. Please try again.";
-  };
-
   const handleAuthSuccess = (data: { access_token: string; user: any }) => {
     console.log('[Register] handleAuthSuccess data:', data);
     if (!data) return;
@@ -464,6 +449,23 @@ function Register() {
       email: data.user?.email || "",
     });
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fbToken = params.get('fb_token');
+    const fbUserRaw = params.get('fb_user');
+    if (fbToken && fbUserRaw) {
+      try {
+        const fbUser = JSON.parse(decodeURIComponent(fbUserRaw));
+        handleAuthSuccess({ access_token: fbToken, user: fbUser });
+        setSuccess("Signed in with Facebook! Redirecting…");
+        setTimeout(() => { window.location.href = "/campaigns"; }, 1000);
+      } catch (e) {
+        console.error("Failed to parse Facebook user data from URL:", e);
+        setError("Facebook login failed to load user profile.");
+      }
+    }
+  }, []);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault(); resetMessages();
@@ -514,18 +516,24 @@ function Register() {
     },
   });
 
-  const socialAuth = async (provider: any, label: string) => {
+  const handleFacebookAuth = async () => {
     try {
-      setLoading(true); resetMessages();
-      const result = await signInWithPopup(auth, provider);
-      const idToken = await result.user.getIdToken();
-      const { data } = await api.post("/auth/firebase", { idToken });
-      handleAuthSuccess(data);
-      setSuccess(`Signed in with ${label}! Redirecting…`);
-      setTimeout(() => { window.location.href = "/campaigns"; }, 1000);
-    } catch (err: any) { setError(getFirebaseError(err.code)); }
-    finally { setLoading(false); }
+      setLoading(true);
+      resetMessages();
+      const { data } = await api.get("/auth/facebook");
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No OAuth URL returned from backend.");
+      }
+    } catch (err: any) {
+      console.error("Facebook Login Initialization Failed:", err);
+      setError("Failed to initialize Facebook Login. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   if (authLoading) return (
     <div style={{
@@ -686,7 +694,7 @@ function Register() {
                     Continue with Google
                   </button>
 
-                  <button className="btn-social" onClick={() => socialAuth(facebookProvider, "Facebook")} disabled={loading}>
+                  <button className="btn-social" onClick={() => handleFacebookAuth()} disabled={loading}>
                     <FaFacebookF style={{ fontSize: 20, color: "#004fb7", flexShrink: 0 }} />
                     Continue with Facebook
                   </button>

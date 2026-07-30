@@ -1,10 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
 import reputationReducer from './slices/Reputationslice';
 import { authReducer } from './slices/authSlice';
-import { workspaceReducer } from './slices/workspaceSlice';
+import { workspaceReducer, fetchBrands, resetWorkspace } from './slices/workspaceSlice';
 import { notificationReducer } from './slices/notificationSlice';
 import { crmReducer } from './slices/crmSlice';
-import { campaignsReducer } from './slices/campaignsSlice';
+import { campaignsReducer, resetCampaigns } from './slices/campaignsSlice';
 import { chatbotReducer } from './slices/chatbotSlice';
 import { analyticsReducer } from './slices/analyticsSlice';
 import { contentReducer } from './slices/contentSlice';
@@ -14,7 +14,6 @@ import { workflowsReducer } from './slices/workflowsSlice';
 import { linkedinCrmReducer } from './slices/linkedinCrmSlice';
 import reviewsReducer from './slices/reviewsSlice';
 import themeReducer from './slices/themeSlice';
-import { fetchBrands } from './slices/workspaceSlice';
 
 export const store = configureStore({
   reducer: {
@@ -36,15 +35,25 @@ export const store = configureStore({
   },
 });
 
-// ✅ Auto-dispatch fetchBrands when auth state changes (on login)
+// ✅ Auto-dispatch fetchBrands when auth user changes (login or workspace impersonation)
+// Clears all cached data for previous user before loading new user's workspace.
+// This prevents data leakage when admin "View Workspace" switches between clients.
+let lastFetchedUserId: string | null = null;
+
 store.subscribe(() => {
   const state = store.getState();
   const userId = state.auth?.user?._id || state.auth?.user?.id;
-  const fetchStatus = state.workspace?.fetchStatus;
 
-  // Only fetch once when user logs in and brands haven't been fetched yet
-  if (userId && fetchStatus === 'idle') {
+  if (userId && userId !== lastFetchedUserId) {
+    lastFetchedUserId = userId;
+    // 1. Clear stale workspace brands from previous user
+    store.dispatch(resetWorkspace());
+    // 2. Clear stale cached campaigns from previous user
+    store.dispatch(resetCampaigns());
+    // 3. Fetch fresh brands for this new user
     store.dispatch(fetchBrands(userId));
+  } else if (!userId) {
+    lastFetchedUserId = null;
   }
 });
 

@@ -1,0 +1,109 @@
+const fs = require('fs');
+const filePath = '/Users/mac/Desktop/latest_clone_digital_marketing/ai-digital-marketing-v2/frontend/src/dashboard/pages/AiAnalysis.tsx';
+let content = fs.readFileSync(filePath, 'utf8');
+
+const replacement = `// ─── Result Renderer ──────────────────────────────────────────────────────────
+// Renders any JSON result returned by the AI API in a clean card format
+
+const ResultRenderer: React.FC<{ result: any }> = ({ result }) => {
+  if (!result) return null;
+
+  const renderValue = (key: string, value: any, depth = 0): React.ReactNode => {
+    if (value === null || value === undefined) return null;
+
+    if (Array.isArray(value)) {
+      // Simple array of strings
+      if (value.length > 0 && typeof value[0] === 'string') {
+        return (
+          <div style={{ marginBottom: '14px' }} key={key}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0665ff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>{formatKey(key)}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {value.map((item, i) => (
+                <span key={i} style={{ background: '#f1f5f9', color: '#334155', padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', border: '1px solid #e2e8f0' }}>
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      // Array of objects
+      return (
+        <div style={{ marginBottom: '16px' }} key={key}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0665ff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>{formatKey(key)}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {value.map((item, i) => (
+              <div key={i} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '12px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                {typeof item === 'object' ? Object.entries(item).map(([k, v]) => {
+                  if (v === null || v === undefined) return null;
+                  
+                  // Handle arrays inside arrays of objects
+                  if (Array.isArray(v)) {
+                    return (
+                      <div key={k} style={{ marginTop: '8px', marginBottom: '4px' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: '4px', fontSize: '0.75rem', textTransform: 'uppercase' }}>{formatKey(k)}: </span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {v.map((arrItem, arrI) => (
+                            <span key={arrI} style={{ background: '#e2e8f0', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', color: '#475569' }}>{String(arrItem)}</span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Handle simple string/number properties
+                  return (
+                    <div key={k} style={{ marginBottom: '4px', display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)', minWidth: '100px', flexShrink: 0 }}>{formatKey(k)}: </span>
+                      <span style={{ color: 'var(--text-secondary)' }}>{String(v)}</span>
+                    </div>
+                  );
+                }) : String(item)}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (typeof value === 'object') {
+      return (
+        <div style={{ marginBottom: '16px', background: 'var(--bg-elevated)', borderRadius: '10px', padding: '14px', border: '1px solid #f1f5f9' }} key={key}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0665ff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>{formatKey(key)}</div>
+          {Object.entries(value).map(([k, v]) => renderValue(k, v, depth + 1))}
+        </div>
+      );
+    }
+
+    return (
+      <div style={{ marginBottom: '10px', display: 'flex', gap: '10px', alignItems: 'flex-start', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }} key={key}>
+        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', minWidth: '130px', paddingTop: '2px', flexShrink: 0 }}>{formatKey(key)}</span>
+        <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.6, flex: 1 }}>{String(value)}</span>
+      </div>
+    );
+  };
+
+  const formatKey = (key: string) => {
+    const formatted = key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  };
+
+  return (
+    <div style={{ padding: '0 4px' }}>
+      {Object.entries(result).map(([key, value]) => renderValue(key, value))}
+    </div>
+  );
+};
+
+export default AiAnalysis;
+`;
+
+const splitContent = content.split('// ─── Result Renderer ──────────────────────────────────────────────────────────');
+if (splitContent.length > 1) {
+  content = splitContent[0] + replacement;
+  fs.writeFileSync(filePath, content, 'utf8');
+  console.log('Successfully replaced ResultRenderer!');
+} else {
+  console.log('Could not find ResultRenderer section in file');
+}

@@ -28,7 +28,9 @@ import {
   ChevronsDown,
   Terminal,
 } from 'lucide-react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { refreshUserProfile, stopImpersonating } from '../../store/slices/authSlice';
+import type { AppDispatch } from '../../store';
 
 interface SubItem {
   path: string;
@@ -50,6 +52,7 @@ interface MenuItem {
 
 const BASE_MENU_ITEMS: MenuItem[] = [
   { path: '/crm', label: 'Home', icon: LayoutDashboard, permission: 'dashboard' },
+  { path: '/admin-dashboard', label: 'Admin Dashboard', icon: ShieldAlert, permission: 'superadmin' },
   { path: '/campaigns', label: 'New Campaign', icon: Megaphone, permission: 'ads', highlight: true },
   { path: '/presentation', label: 'Client Presentation', icon: PresentationIcon, permission: 'dashboard' },
   {
@@ -69,6 +72,7 @@ const BASE_MENU_ITEMS: MenuItem[] = [
     subItems: [
       { path: '/analytics/insights', label: 'Ad Insights' },
       { path: '/analytics/ai-analysis', label: 'AI Analysis', badge: 'new' },
+      { path: '/analytics/ai-reports', label: 'AI Reports', badge: 'new' },
     ],
   },
   {
@@ -127,9 +131,16 @@ const BASE_MENU_ITEMS: MenuItem[] = [
 ];
 
 export const Sidebar: React.FC = () => {
-  const { user } = useSelector((state: any) => state.auth);
+  const user = useSelector((state: any) => state.auth.user);
+  const adminUser = useSelector((state: any) => state.auth.adminUser);
+  const isImpersonating = Boolean(adminUser || user?.isImpersonated);
   const { unreadCount } = useSelector((state: any) => state.notifications);
   const location = useLocation();
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    dispatch(refreshUserProfile());
+  }, [location.pathname, dispatch]);
 
   const settingsIndex = BASE_MENU_ITEMS.findIndex((i) => i.path === '/settings');
 
@@ -177,7 +188,12 @@ export const Sidebar: React.FC = () => {
 
   const hasAccess = (module: string) => {
     if (!user) return false;
-    if (user.permissions?.includes('*') || user.role === 'superadmin') return true;
+    if (user.role === 'superadmin' || user.permissions?.includes('superadmin')) return true;
+    if (user.permissions?.includes('*')) {
+      if (user.role === 'superadmin' || user.role === 'admin') return true;
+      const adminModules = ['superadmin', 'view_users', 'manage_users', 'manage_roles'];
+      if (!adminModules.includes(module)) return true;
+    }
     if (module === 'dashboard') return true;
     if (module === 'view_users' && user.permissions?.includes('manage_users')) return true;
     return user.permissions?.includes(module);
@@ -368,6 +384,34 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
 
+        {isImpersonating && (
+          <div style={{ padding: '8px 12px', background: 'rgba(220,38,38,0.1)', borderBottom: '1px solid rgba(220,38,38,0.2)', position: 'sticky', top: '74px', zIndex: 10 }}>
+            <button
+              onClick={() => {
+                dispatch(stopImpersonating());
+                window.location.href = '/admin-dashboard';
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                background: '#dc2626',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px'
+              }}
+            >
+              ↩ Return to Admin Panel
+            </button>
+          </div>
+        )}
+
         {/* Scroll indicator — gradient fade + bouncing chevron shown when content is below */}
         <div
           style={{
@@ -427,6 +471,8 @@ export const Sidebar: React.FC = () => {
           {MENU_ITEMS.map((item) => {
             const Icon = item.icon;
             const isAllowed = hasAccess(item.permission);
+
+            if (!isAllowed) return null;
 
             // Leaf nav item (no subItems)
             if (!item.subItems) {

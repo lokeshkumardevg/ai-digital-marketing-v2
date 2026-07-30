@@ -101,7 +101,7 @@ export const SmartTable: React.FC<SmartTableProps> = ({
 
       <div style={{ background: D.surface, borderRadius: 16, border: `1px solid ${D.border}`, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
         <div style={{ overflowX: 'auto', width: '100%', WebkitOverflowScrolling: 'touch' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1200px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: columns.length > 5 ? '1000px' : '100%' }}>
           <thead>
             <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: `1px solid ${D.border}` }}>
               {columns.map(col => (

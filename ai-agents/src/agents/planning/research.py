@@ -38,9 +38,10 @@ def research_agent(state: OrchestratorState) -> dict:
         
         if not os.environ.get("OPENAI_API_KEY"):
             return {
-                "brand_context": f"MOCK SCRAPED DATA: {text[:200]}...",
+                "errors": ["Research Agent Error: OPENAI_API_KEY is not configured in the environment. Cannot perform AI analysis on scraped content."],
+                "brand_context": f"Raw Extracted Text (AI Analysis Unavailable):\n{text[:1000]}",
                 "current_step": "strategy",
-                "messages": ["Research: Scraped website, but OPENAI_API_KEY missing for summarization."]
+                "messages": ["Research: Scraped website, but OPENAI_API_KEY missing for summarization. Using raw text."]
             }
             
         # 3. Summarize using LLM

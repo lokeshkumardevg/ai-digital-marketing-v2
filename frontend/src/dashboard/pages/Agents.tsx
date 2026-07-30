@@ -103,8 +103,8 @@ export const Agents: React.FC = () => {
   const agentStatuses: Record<string, 'active' | 'sleeping'> = {
     "review_generation": "active",
     "review_response": "active",
-    "social_publishing": "sleeping",
-    "social_engagement": "sleeping",
+    "social_publishing": "active",
+    "social_engagement": "active",
     "reporting": "active",
     "listings_optimization": "active",
     "lead_generation": "active",

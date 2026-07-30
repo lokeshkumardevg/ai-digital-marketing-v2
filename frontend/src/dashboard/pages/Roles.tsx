@@ -6,16 +6,16 @@ import { fetchRoles, createRole, updateRole, deleteRole } from '../../store/slic
 import { addNotification } from '../../store/slices/notificationSlice';
 import { SmartTable } from '../components/SmartTable';
 import type { AppDispatch } from '../../store';
+import { api } from '../../api/axios';
 import toast from 'react-hot-toast';
 
 const MODULES = [
-  { id: 'dashboard', label: 'Dashboard Overview' },
-  { id: 'crm', label: 'CRM & Audiences' },
-  { id: 'campaigns', label: 'Ad Campaigns' },
-  { id: 'content', label: 'Content Studio' },
-  { id: 'chatbot', label: 'Chatbot Builder' },
-  { id: 'analytics', label: 'Analytics & ROI' },
-  { id: 'settings', label: 'Admin Settings' }
+  { id: 'dashboard', label: 'Home Dashboard' },
+  { id: 'ads', label: 'Campaigns & Ads' },
+  { id: 'content', label: 'Creative Hub' },
+  { id: 'analytics', label: 'Analytics Reports' },
+  { id: 'automation', label: 'SEO & Reputation Automation' },
+  { id: 'billing', label: 'Billing Manager' },
 ];
 
 // Helper Modal Component
@@ -41,24 +41,43 @@ const ModalOverlay = ({ isOpen, onClose, title, children }: any) => {
 export const Roles: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { roles } = useSelector((state: any) => state.roles);
+  const currentUser = useSelector((state: any) => state.auth.user);
   const { activeWebsiteId } = useSelector((state: any) => state.workspace);
   const [activeTab, setActiveTab] = useState<'roles' | 'users'>('roles');
   const [selectedRole, setSelectedRole] = useState<any>(null);
+
+  // Dynamic Users State
+  const [users, setUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  const fetchUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const { data } = await api.get('/users');
+      setUsers(data);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to load team members.');
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
   useEffect(() => {
     dispatch(fetchRoles(activeWebsiteId));
   }, [dispatch, activeWebsiteId]);
 
   useEffect(() => {
+    if (activeTab === 'users') {
+      fetchUsers();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     if (roles.length > 0 && !selectedRole) {
       setSelectedRole(roles[0]);
     }
   }, [roles, selectedRole]);
-
-  const [users, setUsers] = useState([
-    { id: 'u1', name: 'Test Administrator', email: 'test@example.com', roleId: 'r1' },
-    { id: 'u2', name: 'Sarah Connor', email: 'sarah@example.com', roleId: 'r2' },
-  ]);
 
   // Modal States
   const [showAddRoleModal, setShowAddRoleModal] = useState(false);
@@ -89,7 +108,7 @@ export const Roles: React.FC = () => {
 
   const handleDeleteRole = async (id: string, isSystem: boolean) => {
     if (isSystem) return toast.error("System roles cannot be deleted.");
-    if (users.find(u => u.roleId === id)) return toast.error("Cannot delete role assigned to active users.");
+    if (users.find(u => u.role === id || u.permissions?.includes(id))) return toast.error("Cannot delete role assigned to active users.");
     try {
        await dispatch(deleteRole(id)).unwrap();
        if (selectedRole?.id === id || selectedRole?._id === id) setSelectedRole(roles[0]);
@@ -99,10 +118,16 @@ export const Roles: React.FC = () => {
     }
   };
 
-  const handleDeleteUser = (id: string) => {
-    if (id === 'u1') return toast.error("Cannot delete your own account.");
-    setUsers(users.filter(u => u.id !== id));
-    toast.success("User removed from workspace.");
+  const handleDeleteUser = async (id: string) => {
+    if (id === currentUser?._id || id === currentUser?.id) return toast.error("Cannot delete your own account.");
+    try {
+      await api.delete(`/users/${id}`);
+      toast.success("User deleted successfully.");
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete user.");
+    }
   };
 
   const submitAddRole = async () => {
@@ -127,19 +152,62 @@ export const Roles: React.FC = () => {
     }
   };
 
-  const submitInviteUser = () => {
+  const submitInviteUser = async () => {
     if (!inviteEmail.trim() || !inviteEmail.includes('@')) return toast.error('Valid email is required.');
-    setUsers([...users, { id: `u${Date.now()}`, name: inviteEmail.split('@')[0], email: inviteEmail, roleId: roles[1] ? roles[1].id : roles[0].id }]);
-    setShowInviteModal(false);
-    setInviteEmail('');
-    toast.success("Member invited successfully!");
+    try {
+      const payload = {
+        name: inviteEmail.split('@')[0],
+        email: inviteEmail,
+        password: Math.random().toString(36).slice(-8), // temporary password
+        role: 'client',
+        permissions: ['dashboard', 'ads', 'content']
+      };
+      await api.post('/users', payload);
+      toast.success("Member invited successfully!");
+      setShowInviteModal(false);
+      setInviteEmail('');
+      fetchUsers();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || "Failed to invite member.");
+    }
   };
 
-  const submitChangeRole = () => {
+  const submitChangeRole = async () => {
     if (!selectedRoleId || !showChangeRoleModal) return;
-    setUsers(users.map(u => u.id === showChangeRoleModal ? { ...u, roleId: selectedRoleId } : u));
-    setShowChangeRoleModal(null);
-    toast.success("User role updated globally.");
+    try {
+      // Find permissions mapped to this custom role or default permissions
+      const matchedRole = roles.find((r: any) => r.name === selectedRoleId);
+      let permissions = ['dashboard', 'ads', 'content'];
+      let targetRole = 'client';
+
+      if (selectedRoleId === 'superadmin') {
+        targetRole = 'superadmin';
+        permissions = ['*'];
+      } else if (selectedRoleId === 'admin') {
+        targetRole = 'admin';
+        permissions = ['*'];
+      } else if (selectedRoleId === 'agency') {
+        targetRole = 'agency';
+        permissions = ['dashboard', 'ads', 'content', 'analytics', 'automation'];
+      } else if (matchedRole) {
+        targetRole = matchedRole.name;
+        permissions = matchedRole.permissions;
+      }
+
+      const payload = {
+        role: targetRole,
+        permissions: permissions
+      };
+
+      await api.patch(`/users/${showChangeRoleModal}`, payload);
+      toast.success("User role and permissions updated successfully!");
+      setShowChangeRoleModal(null);
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update user role.");
+    }
   };
 
   return (
@@ -188,28 +256,28 @@ export const Roles: React.FC = () => {
                    Select a role to manage permissions.
                 </div>
              ) : (
-               <>
-                 <div>
-                    <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Module Permissions for "{selectedRole.name}"</h3>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{selectedRole.isSystem ? 'This is a system role. Permissions cannot be altered.' : 'Assign module-wise access for this specific role.'}</p>
-                 </div>
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {MODULES.map(module => {
-                      const hasAccess = selectedRole.permissions.includes('*') || selectedRole.permissions.includes(module.id);
-                      return (
-                        <div key={module.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-                          <div>
-                            <div style={{ fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>{module.label}</div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Allows viewing and modifying `{module.id}` module data.</div>
-                          </div>
-                          <div onClick={() => handleTogglePermission(module.id)} style={{ cursor: selectedRole.isSystem ? 'not-allowed' : 'pointer', opacity: selectedRole.isSystem ? 0.5 : 1 }}>
-                             {hasAccess ? <CheckSquare size={24} color="#0665ff" /> : <Square size={24} color="var(--text-secondary)" />}
-                          </div>
-                        </div>
-                      );
-                    })}
-                 </div>
-               </>
+                <>
+                  <div>
+                     <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>Module Permissions for "{selectedRole.name}"</h3>
+                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{selectedRole.isSystem ? 'This is a system role. Permissions cannot be altered.' : 'Assign module-wise access for this specific role.'}</p>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                     {MODULES.map(module => {
+                       const hasAccess = selectedRole.permissions.includes('*') || selectedRole.permissions.includes(module.id);
+                       return (
+                         <div key={module.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-card)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                           <div>
+                             <div style={{ fontWeight: 600, marginBottom: '4px', color: 'var(--text-primary)' }}>{module.label}</div>
+                             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Allows viewing and modifying `{module.id}` module data.</div>
+                           </div>
+                           <div onClick={() => handleTogglePermission(module.id)} style={{ cursor: selectedRole.isSystem ? 'not-allowed' : 'pointer', opacity: selectedRole.isSystem ? 0.5 : 1 }}>
+                              {hasAccess ? <CheckSquare size={24} color="#0665ff" /> : <Square size={24} color="var(--text-secondary)" />}
+                           </div>
+                         </div>
+                       );
+                     })}
+                  </div>
+                </>
              )}
           </GlassCard>
         </div>
@@ -217,60 +285,76 @@ export const Roles: React.FC = () => {
 
       {activeTab === 'users' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <SmartTable 
-            title="Workspace Members"
-            searchPlaceholder="Search teammates..."
-            columns={[
-              { 
-                key: 'name', 
-                label: 'Name', 
-                sortable: true,
-                render: (row) => <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{row.name}</div>
-              },
-              { 
-                key: 'email', 
-                label: 'Email', 
-                sortable: true,
-                render: (row) => <div style={{ color: 'var(--text-secondary)' }}>{row.email}</div>
-              },
-              {
-                key: 'roleId',
-                label: 'Assigned Role',
-                render: (row) => {
-                  const role = roles.find((r: any) => (r._id || r.id) === row.roleId);
-                  return (
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+             <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#0665ff', color: '#fff', border: 'none', cursor: 'pointer' }} onClick={() => setShowInviteModal(true)}>
+               <Plus size={16} /> Invite Member
+             </button>
+          </div>
+          {loadingUsers ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>Loading team members...</div>
+          ) : (
+            <SmartTable 
+              title="Workspace Members"
+              searchPlaceholder="Search teammates..."
+              columns={[
+                { 
+                  key: 'name', 
+                  label: 'Name', 
+                  sortable: true,
+                  render: (row) => <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{row.name}</div>
+                },
+                { 
+                  key: 'email', 
+                  label: 'Email', 
+                  sortable: true,
+                  render: (row) => <div style={{ color: 'var(--text-secondary)' }}>{row.email}</div>
+                },
+                {
+                  key: 'role',
+                  label: 'System Role',
+                  render: (row) => (
                     <span style={{ 
                       background: 'rgba(38, 49, 214, 0.15)', 
                       color: '#0665ff', 
                       padding: '4px 10px', 
                       borderRadius: '12px', 
                       fontSize: '0.8rem',
-                      fontWeight: 500
+                      fontWeight: 500,
+                      textTransform: 'capitalize'
                     }}>
-                      {role?.name || 'Unknown'}
+                      {row.role || 'client'}
                     </span>
-                  );
+                  )
+                },
+                {
+                  key: 'permissions',
+                  label: 'Permissions Count',
+                  render: (row) => (
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                      {row.permissions?.includes('*') ? 'All Modules' : `${row.permissions?.length || 0} modules allowed`}
+                    </span>
+                  )
                 }
-              }
-            ]}
-            data={users}
-            actions={(row) => (
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button 
-                  style={{ color: '#0665ff', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                  onClick={() => { setSelectedRoleId(row.roleId); setShowChangeRoleModal(row.id); }}
-                >
-                  <Edit2 size={16} />
-                </button>
-                <button 
-                  style={{ color: 'var(--error)', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                  onClick={() => handleDeleteUser(row.id)}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            )}
-          />
+              ]}
+              data={users}
+              actions={(row) => (
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                  <button 
+                    style={{ color: '#0665ff', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                    onClick={() => { setSelectedRoleId(row.role || 'client'); setShowChangeRoleModal(row._id || row.id); }}
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button 
+                    style={{ color: 'var(--error)', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                    onClick={() => handleDeleteUser(row._id || row.id)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              )}
+            />
+          )}
         </div>
       )}
 
@@ -288,9 +372,13 @@ export const Roles: React.FC = () => {
       </ModalOverlay>
 
       <ModalOverlay isOpen={!!showChangeRoleModal} onClose={() => setShowChangeRoleModal(null)} title="Change User Role">
-        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Assign New Role</label>
+        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Assign Role or Custom Policy</label>
         <select className="input-field" value={selectedRoleId} onChange={e => setSelectedRoleId(e.target.value)} style={{ marginTop: '8px', marginBottom: '20px' }}>
-            {roles.map((r: any) => <option key={r._id || r.id} value={r._id || r.id}>{r.name} {r.isSystem ? '(System Admin)' : ''}</option>)}
+            <option value="client">Client (Default)</option>
+            <option value="agency">Agency (Pre-configured)</option>
+            <option value="admin">System Admin</option>
+            <option value="superadmin">Super Admin</option>
+            {roles.map((r: any) => <option key={r._id || r.id} value={r.name}>{r.name} (Custom Workspace Policy)</option>)}
         </select>
         <button className="btn btn-primary" style={{ width: '100%', background: '#0665ff', color: '#fff', border: 'none' }} onClick={submitChangeRole}>Update Role</button>
       </ModalOverlay>

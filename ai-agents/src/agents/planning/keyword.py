@@ -21,16 +21,8 @@ def keyword_agent(state: OrchestratorState) -> dict:
     target_audience = goal.get("target_audience") if isinstance(goal, dict) else goal.target_audience
     
     if not os.environ.get("OPENAI_API_KEY"):
-        keywords = ["mock-keyword-1", "mock-keyword-2", "mock-keyword-3"]
-        if isinstance(plan, dict):
-            plan["keywords"] = keywords
-        else:
-            plan.keywords = keywords
-            
         return {
-            "plan": plan,
-            "current_step": "creative",
-            "messages": ["Keyword Planner: OPENAI_API_KEY missing. Falling back to Mock keywords."]
+            "errors": ["Keyword Agent Error: OPENAI_API_KEY is not configured in the environment. Cannot perform keyword research."]
         }
 
     # [SPEED OPTIMIZATION] Using GPT-4o-mini which is incredibly fast for generation
@@ -38,7 +30,7 @@ def keyword_agent(state: OrchestratorState) -> dict:
     structured_llm = llm.with_structured_output(KeywordOutput)
     
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an expert digital marketing keyword planner. Generate a list of exactly 10 high-converting keywords (a mix of broad and exact match) suitable for Google Ads and Microsoft Ads based on the client's industry, brand context, and goal."),
+        ("system", "You are an elite digital marketing keyword planner and data analyst. Based on the client's industry, brand context, and precise objective, generate an extremely accurate list of exactly 10 high-intent, high-converting semantic keywords. Do NOT generate generic or placeholder keywords like 'mock-keyword'. The output must contain realistic, search-volume-driven, bottom-of-the-funnel keywords appropriate for Google Ads and Microsoft Ads."),
         ("human", "Brand Context (Scraped from website):\n{brand_context}\n\nObjective: {objective}\nIndustry: {industry}\nTarget Audience: {target_audience}")
     ])
     

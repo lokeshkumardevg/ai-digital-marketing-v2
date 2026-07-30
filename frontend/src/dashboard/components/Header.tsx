@@ -8,7 +8,7 @@ import {
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from '../../store/hooks';
 import { useNavigate } from 'react-router-dom';
-import { logout, updateUser } from '../../store/slices/authSlice';
+import { logout, updateUser, stopImpersonating } from '../../store/slices/authSlice';
 import { api } from '../../api/axios';
 
 import {
@@ -44,7 +44,8 @@ const getCurrencySymbol = (currency: string) => {
 export const Header: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { user } = useSelector((state: any) => state.auth);
+  const { user, adminUser } = useSelector((state: any) => state.auth);
+  const isImpersonating = Boolean(adminUser || user?.isImpersonated);
   const cur = getCurrencySymbol(user?.currency || 'INR');
   const { websites, activeWebsiteId } = useSelector((state: any) => state.workspace);
   const { items, unreadCount, total } = useSelector((state: any) => state.notifications);
@@ -465,6 +466,47 @@ export const Header: React.FC = () => {
 
   return (
     <>
+      {isImpersonating && (
+        <div style={{
+          background: 'linear-gradient(90deg, #dc2626 0%, #b91c1c 100%)',
+          color: '#ffffff',
+          padding: '10px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontWeight: 600,
+          fontSize: '0.9rem',
+          boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)',
+          zIndex: 10000,
+          borderRadius: '10px',
+          margin: '8px 16px 12px 16px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+            <span>Viewing Client Workspace: <strong>{user?.name || user?.email}</strong></span>
+          </div>
+          <button
+            onClick={() => {
+              dispatch(stopImpersonating());
+              navigate('/admin-dashboard');
+            }}
+            style={{
+              background: '#ffffff',
+              color: '#dc2626',
+              border: 'none',
+              padding: '6px 14px',
+              borderRadius: '6px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
+            }}
+          >
+            Return to Admin Panel ↩
+          </button>
+        </div>
+      )}
       <header className="app-header">
 
         {/* Search */}
@@ -1387,9 +1429,8 @@ interface ProfileModalProps {
   dispatch: any;
 }
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen: _isOpen, onClose, user, dispatch }) => {
+const ProfileModal: React.FC<ProfileModalProps> = ({ onClose, user, dispatch }) => {
   const [name, setName] = useState(user?.name || '');
-  const email = user?.email || '';
   const [country, setCountry] = useState(user?.country || 'India');
   const [currency, setCurrency] = useState(user?.currency || 'INR');
   const [isSaving, setIsSaving] = useState(false);
@@ -1438,7 +1479,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen: _isOpen, onClose, u
             <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Email Address</label>
             <input
               type="email"
-              value={email}
+              value={user?.email || ''}
               disabled
               style={{ width: '100%', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '12px 16px', color: 'var(--text-dim)', fontSize: '0.88rem', cursor: 'not-allowed' }}
             />

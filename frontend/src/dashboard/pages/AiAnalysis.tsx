@@ -56,6 +56,12 @@ const phases: Phase[] = [
         tags: ['Brand Comparison', 'Strategy', 'Differentiation'],
         apiType: 'competitor-analysis', estimatedTime: '2-4 min',
       },
+      {
+        icon: '🔑', iconBg: '#d9f99d', title: 'Keyword Research',
+        desc: 'Identify high-intent keywords, search volume, CPC estimates, and topic clusters',
+        tags: ['SEO', 'PPC', 'Search Volume', 'Intent'],
+        apiType: 'keyword-research', estimatedTime: '1-3 min',
+      },
     ],
   },
   {
@@ -132,11 +138,17 @@ export const AiAnalysis: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedHistory, setSelectedHistory] = useState<HistoryItem | null>(null);
 
-  // Load history from localStorage on mount
+  // Load history from localStorage on mount & inject html2pdf
   useEffect(() => {
     const stored = localStorage.getItem('ai_analysis_history');
     if (stored) {
       try { setHistory(JSON.parse(stored)); } catch {}
+    }
+    if (!document.getElementById('html2pdf-script')) {
+      const script = document.createElement('script');
+      script.id = 'html2pdf-script';
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      document.body.appendChild(script);
     }
   }, []);
 
@@ -217,6 +229,26 @@ export const AiAnalysis: React.FC = () => {
       setError(err.message || 'Unknown error');
       setGenerating(false);
     }
+  };
+
+  const downloadResultPdf = () => {
+    if (!result) return;
+    // @ts-ignore
+    const html2pdf = window.html2pdf;
+    if (!html2pdf) {
+      alert("PDF library is loading. Please try again.");
+      return;
+    }
+    const element = document.getElementById('ai-analysis-result-renderer');
+    if (!element) return;
+    const opt = {
+      margin: 15,
+      filename: `${selectedCard?.title || 'AI_Analysis'}_Report_${Date.now()}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().from(element).set(opt).save();
   };
 
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -705,11 +737,21 @@ export const AiAnalysis: React.FC = () => {
                   <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>{selectedCard?.title} — Complete</div>
                   <div style={{ fontSize: '0.75rem', color: '#16a34a' }}>✅ Analysis done · {activeBrand?.name}</div>
                 </div>
-                <button onClick={closeAll} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: 'var(--text-dim)' }}>✕</button>
+                <button 
+                  onClick={downloadResultPdf}
+                  style={{ marginLeft: 'auto', marginRight: '14px', background: 'linear-gradient(135deg, #0665ff, #8b5cf6)', border: 'none', cursor: 'pointer', padding: '6px 12px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  📥 PDF
+                </button>
+                <button onClick={closeAll} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: 'var(--text-dim)' }}>✕</button>
               </div>
 
               {/* Result content */}
-              <div style={{ padding: '20px 24px' }}>
+              <div style={{ padding: '20px 24px' }} id="ai-analysis-result-renderer">
+                <div style={{ display: 'none', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '14px' }}>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>{selectedCard?.title} REPORT</h2>
+                  <div style={{ fontSize: '0.75rem', color: '#777' }}>Brand: {activeBrand?.name}</div>
+                </div>
                 <ResultRenderer result={result} />
               </div>
             </div>
@@ -751,6 +793,7 @@ const TYPE_ICON: Record<string, { icon: string; bg: string; color: string }> = {
   'Campaign Strategy':  { icon: '📋', bg: '#f3e8ff', color: '#0665ff' },
   'Copy Generation':    { icon: '✏️', bg: '#ffedd5', color: '#c2410c' },
   'Creative Testing':   { icon: '🖼️', bg: '#e0f2fe', color: '#0369a1' },
+  'Keyword Research':   { icon: '🔑', bg: '#ecfccb', color: '#4d7c0f' },
 };
 
 const getTypeMeta = (type: string) =>
@@ -963,18 +1006,47 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
           {/* ── Detail View ── */}
           {selectedHistory ? (
             <div style={{ padding: '16px 20px', animation: 'fadeIn 0.18s ease-out' }}>
-              {/* Back button */}
-              <button
-                onClick={onBack}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '5px',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: '#0665ff', fontWeight: 600, fontSize: '0.82rem',
-                  marginBottom: '16px', padding: 0,
-                }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '0.7')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-              >← Back to list</button>
+              {/* Back button and PDF button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <button
+                  onClick={onBack}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '5px',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: '#0665ff', fontWeight: 600, fontSize: '0.82rem',
+                    padding: 0,
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.7')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                >← Back to list</button>
+                <button
+                  onClick={() => {
+                    const element = document.getElementById('ai-analysis-history-renderer');
+                    if (!element || !selectedHistory) return;
+                    // @ts-ignore
+                    const html2pdf = window.html2pdf;
+                    if (!html2pdf) {
+                      alert("PDF library is loading. Please try again.");
+                      return;
+                    }
+                    const opt = {
+                      margin: 15,
+                      filename: `${selectedHistory.type}_History_Report_${Date.now()}.pdf`,
+                      image: { type: 'jpeg', quality: 0.98 },
+                      html2canvas: { scale: 2, useCORS: true },
+                      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+                    html2pdf().from(element).set(opt).save();
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                    background: 'linear-gradient(135deg, #0665ff, #8b5cf6)', border: 'none', cursor: 'pointer',
+                    padding: '6px 12px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 700, color: '#fff',
+                  }}
+                >
+                  📥 PDF
+                </button>
+              </div>
 
               {/* Meta card */}
               <div style={{
@@ -1007,7 +1079,13 @@ const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
               </div>
 
               {/* Result */}
-              <ResultRenderer result={selectedHistory.result} />
+              <div id="ai-analysis-history-renderer">
+                <div style={{ display: 'none', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '14px' }}>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>{selectedHistory.type} REPORT</h2>
+                  <div style={{ fontSize: '0.75rem', color: '#777' }}>Brand: {selectedHistory.brand}</div>
+                </div>
+                <ResultRenderer result={selectedHistory.result} />
+              </div>
             </div>
 
           ) : filtered.length === 0 ? (
@@ -1160,45 +1238,88 @@ const ResultRenderer: React.FC<{ result: any }> = ({ result }) => {
     if (value === null || value === undefined) return null;
 
     if (Array.isArray(value)) {
-      return (
-        <div style={{ marginBottom: '12px' }} key={key}>
-          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0665ff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>{formatKey(key)}</div>
-          {value.map((item, i) => (
-            <div key={i} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '10px 12px', marginBottom: '6px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-              {typeof item === 'object' ? Object.entries(item).map(([k, v]) => (
-                <div key={k} style={{ marginBottom: '4px' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{formatKey(k)}: </span>
-                  <span>{String(v)}</span>
-                </div>
-              )) : String(item)}
+      // Simple array of strings
+      if (value.length > 0 && typeof value[0] === 'string') {
+        return (
+          <div style={{ marginBottom: '14px' }} key={key}>
+            <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0665ff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>{formatKey(key)}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {value.map((item, i) => (
+                <span key={i} style={{ background: '#f1f5f9', color: '#334155', padding: '4px 10px', borderRadius: '6px', fontSize: '0.78rem', border: '1px solid #e2e8f0' }}>
+                  {item}
+                </span>
+              ))}
             </div>
-          ))}
+          </div>
+        );
+      }
+
+      // Array of objects
+      return (
+        <div style={{ marginBottom: '16px' }} key={key}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0665ff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>{formatKey(key)}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {value.map((item, i) => (
+              <div key={i} style={{ background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: '8px', padding: '12px', fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                {typeof item === 'object' ? Object.entries(item).map(([k, v]) => {
+                  if (v === null || v === undefined) return null;
+                  
+                  // Handle arrays inside arrays of objects
+                  if (Array.isArray(v)) {
+                    return (
+                      <div key={k} style={{ marginTop: '8px', marginBottom: '4px' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'block', marginBottom: '4px', fontSize: '0.75rem', textTransform: 'uppercase' }}>{formatKey(k)}: </span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {v.map((arrItem, arrI) => (
+                            <span key={arrI} style={{ background: '#e2e8f0', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', color: '#475569' }}>{String(arrItem)}</span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Handle simple string/number properties
+                  return (
+                    <div key={k} style={{ marginBottom: '4px', display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text-primary)', minWidth: '100px', flexShrink: 0 }}>{formatKey(k)}: </span>
+                      <span style={{ color: 'var(--text-secondary)' }}>{String(v)}</span>
+                    </div>
+                  );
+                }) : String(item)}
+              </div>
+            ))}
+          </div>
         </div>
       );
     }
 
     if (typeof value === 'object') {
       return (
-        <div style={{ marginBottom: '14px', background: 'var(--bg-elevated)', borderRadius: '10px', padding: '12px', border: '1px solid #f1f5f9' }} key={key}>
-          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0665ff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>{formatKey(key)}</div>
+        <div style={{ marginBottom: '16px', background: 'var(--bg-elevated)', borderRadius: '10px', padding: '14px', border: '1px solid #f1f5f9' }} key={key}>
+          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#0665ff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>{formatKey(key)}</div>
           {Object.entries(value).map(([k, v]) => renderValue(k, v, depth + 1))}
         </div>
       );
     }
 
     return (
-      <div style={{ marginBottom: '10px', display: 'flex', gap: '10px', alignItems: 'flex-start' }} key={key}>
-        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', minWidth: '130px', paddingTop: '1px', flexShrink: 0 }}>{formatKey(key)}</span>
-        <span style={{ fontSize: '0.82rem', color: 'var(--text-primary)', lineHeight: 1.5 }}>{String(value)}</span>
+      <div style={{ marginBottom: '10px', display: 'flex', gap: '10px', alignItems: 'flex-start', paddingBottom: '10px', borderBottom: '1px solid #f1f5f9' }} key={key}>
+        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em', minWidth: '130px', paddingTop: '2px', flexShrink: 0 }}>{formatKey(key)}</span>
+        <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', lineHeight: 1.6, flex: 1 }}>{String(value)}</span>
       </div>
     );
   };
 
-  const formatKey = (key: string) => key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+  const formatKey = (key: string) => {
+    const formatted = key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  };
 
   return (
-    <div>
+    <div style={{ padding: '0 4px' }}>
       {Object.entries(result).map(([key, value]) => renderValue(key, value))}
     </div>
   );
 };
+
+export default AiAnalysis;

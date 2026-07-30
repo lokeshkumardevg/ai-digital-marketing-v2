@@ -1,39 +1,49 @@
 from src.core.state import OrchestratorState
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
 
 def reporting_agent(state: OrchestratorState) -> dict:
     """
-    Generates a human-readable performance report for the client.
+    Generates a human-readable, data-driven performance report for the client using OpenAI GPT.
     """
     insights = state.get("insights", [])
     actions = state.get("actions_taken", [])
-    
-    if not os.environ.get("OPENAI_API_KEY"):
+    budget_shifts = state.get("budget_shifts", [])
+    anomalies = state.get("anomalies", [])
+    goal = state.get("client_goal", {})
+    industry = goal.get("industry") if isinstance(goal, dict) else getattr(goal, "industry", "Digital Marketing")
+
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
         return {
-            "client_report": "Mock Report: Campaigns are running smoothly. Some budget was shifted to improve ROI.",
-            "messages": ["Reporting Agent: Mock report generated."]
+            "client_report": "OPENAI_API_KEY not configured. Please add the key to .env to enable AI-powered report generation.",
+            "messages": ["Reporting Agent: API key missing."]
         }
-        
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
-    
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an Account Manager for a Digital Marketing Agency. Write a short, encouraging, and easy-to-understand 2-paragraph update for the client. Summarize the insights and explain the actions the AI took (like pausing bad ads or shifting budgets) to save them money and improve results. Keep it professional but accessible. No technical jargon."),
-        ("human", "Live Insights: {insights}\nActions Taken by AI: {actions}")
-    ])
-    
-    chain = prompt | llm
-    
+
     try:
+        llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2, openai_api_key=api_key)
+
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", "You are an elite Senior Account Manager at a top-tier Digital Marketing Agency writing a highly accurate, professional weekly performance update for a client in the {industry} industry. Your report MUST be based entirely on the provided insights, actions, and anomalies. DO NOT fabricate, guess, or hallucinate ANY numerical metrics, statistics, percentages, or figures under any circumstances. If numerical data is missing, focus entirely on qualitative strategy, campaign structure, and forward-looking recommendations. Keep it under 3 paragraphs. Use plain English, no jargon."),
+            ("human", "Campaign Insights:\n{insights}\n\nAI Actions Taken:\n{actions}\n\nBudget Shifts:\n{budget_shifts}\n\nAnomalies Detected:\n{anomalies}")
+        ])
+
+        chain = prompt | llm
         response = chain.invoke({
-            "insights": "\n".join(insights) if insights else "No new insights.",
-            "actions": "\n".join(actions) if actions else "No actions taken."
+            "industry": industry,
+            "insights": "\n".join(insights) if insights else "No new insights collected this cycle.",
+            "actions": "\n".join(actions) if actions else "No automated actions taken.",
+            "budget_shifts": "\n".join(budget_shifts) if budget_shifts else "No budget reallocation needed.",
+            "anomalies": "\n".join(anomalies) if anomalies else "No critical anomalies detected."
         })
-        
+
         return {
             "client_report": response.content,
-            "messages": ["Reporting Agent: Generated human-readable client report."]
+            "messages": ["Reporting Agent: Generated detailed AI-powered performance report."]
         }
     except Exception as e:
         return {

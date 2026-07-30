@@ -6,16 +6,17 @@ import { Plus, Trash2, Edit2, CheckSquare, Square, X, ShieldAlert } from 'lucide
 import toast from 'react-hot-toast';
 
 const PERMISSIONS = [
-  { id: 'view_users', label: 'View Users' },
-  { id: 'manage_users', label: 'Manage Users' },
+  { id: 'dashboard', label: 'Home Dashboard' },
+  { id: 'ads', label: 'Campaigns & Ads' },
+  { id: 'content', label: 'Creative Hub' },
+  { id: 'analytics', label: 'Analytics Reports' },
+  { id: 'automation', label: 'SEO & Reputation Automation' },
+  { id: 'billing', label: 'Billing Manager' },
+  { id: 'view_users', label: 'View System Users' },
+  { id: 'manage_users', label: 'Manage System Users' },
 ];
 
-const AVAILABLE_ROLES = [
-  { id: 'superadmin', label: 'Super Admin' },
-  { id: 'admin', label: 'Admin' },
-  { id: 'client', label: 'Client' },
-  { id: 'agency', label: 'Agency' },
-];
+
 
 const formatDate = (value: string) => {
   if (!value) return '-';
@@ -43,6 +44,33 @@ export const Users: React.FC = () => {
     isActive: true,
     permissions: ['view_users'],
   });
+  const [roles, setRoles] = useState<any[]>([]);
+
+  const loadRoles = async () => {
+    try {
+      const response = await api.get('/roles');
+      setRoles(response.data.data || []);
+    } catch (err) {
+      console.error('Failed to load workspace roles in users page:', err);
+    }
+  };
+
+  const handleRoleChangeInForm = (newRole: string) => {
+    let newPerms = form.permissions;
+    if (newRole === 'superadmin' || newRole === 'admin') {
+      newPerms = ['*'];
+    } else if (newRole === 'agency') {
+      newPerms = ['dashboard', 'ads', 'content', 'analytics', 'automation'];
+    } else if (newRole === 'client') {
+      newPerms = ['dashboard', 'ads', 'content', 'analytics', 'automation', 'billing'];
+    } else {
+      const matched = roles.find((r: any) => r.name === newRole);
+      if (matched) {
+        newPerms = matched.permissions;
+      }
+    }
+    setForm(prev => ({ ...prev, role: newRole, permissions: newPerms }));
+  };
 
   const loadUsers = async () => {
     setLoading(true);
@@ -59,6 +87,7 @@ export const Users: React.FC = () => {
   useEffect(() => {
     if (canView) {
       loadUsers();
+      loadRoles();
     }
   }, [canView]);
 
@@ -319,9 +348,13 @@ export const Users: React.FC = () => {
                 </label>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: 8, color: '#cbd5e1' }}>
                   Role
-                  <select value={form.role} onChange={(e) => handleFormChange('role', e.target.value)} className="input-field">
-                    {AVAILABLE_ROLES.map((role) => (
-                      <option key={role.id} value={role.id}>{role.label}</option>
+                  <select value={form.role} onChange={(e) => handleRoleChangeInForm(e.target.value)} className="input-field">
+                    <option value="client">Client (Default)</option>
+                    <option value="agency">Agency (Pre-configured)</option>
+                    <option value="admin">System Admin</option>
+                    <option value="superadmin">Super Admin</option>
+                    {roles.map((r: any) => (
+                      <option key={r._id || r.id} value={r.name}>{r.name} (Custom Workspace Policy)</option>
                     ))}
                   </select>
                 </label>

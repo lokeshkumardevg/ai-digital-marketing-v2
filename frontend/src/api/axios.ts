@@ -9,12 +9,27 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
-  // DEBUG LOG
-  console.log(`[DEBUG AXIOS] Sending request to ${config.url} with token: ${token ? token.substring(0, 30) + '...' : 'NONE'}`);
-  
+
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // ─── Impersonation Header ──────────────────────────────────────────────
+  // When admin has switched to a client workspace, attach the target userId
+  // so the backend JWT strategy resolves all req.user lookups as the client.
+  const impersonatedUser = localStorage.getItem('admin_impersonated_user');
+  if (impersonatedUser) {
+    try {
+      const parsed = JSON.parse(impersonatedUser);
+      const impersonatedId = parsed?._id || parsed?.id;
+      if (impersonatedId && config.headers) {
+        config.headers['X-Impersonate-User-Id'] = impersonatedId;
+      }
+    } catch {
+      // JSON parse failed, ignore
+    }
+  }
+
   return config;
 }, (error) => {
   return Promise.reject(error);
@@ -27,7 +42,6 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('access_token');
       // Avoid hard page navigation (causes full refresh). Let app/router handle logout.
-      // (No window.location.href)
     }
     return Promise.reject(error);
   }
