@@ -240,7 +240,7 @@ export const Settings: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                   <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Personal Information</h3>
                   {!isEditingProfile && (
-                    <button onClick={() => setIsEditingProfile(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--glass-border)', color: 'white', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}>
+                    <button onClick={() => setIsEditingProfile(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.8rem' }}>
                       <Edit2 size={12} /> Edit Profile
                     </button>
                   )}
@@ -299,7 +299,7 @@ export const Settings: React.FC = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Active Ad Account</label>
-                          <select value={selectedMetaAdAccount} onChange={(e) => setSelectedMetaAdAccount(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'white', fontSize: '0.85rem' }}>
+                          <select value={selectedMetaAdAccount} onChange={(e) => setSelectedMetaAdAccount(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
                             <option value="">Select Ad Account...</option>
                             {metaAdAccounts.map(acc => {
                               const actId = acc.account_id.startsWith('act_') ? acc.account_id : `act_${acc.account_id}`;
@@ -309,7 +309,7 @@ export const Settings: React.FC = () => {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Active Business Asset</label>
-                          <select value={selectedMetaBusiness} onChange={(e) => setSelectedMetaBusiness(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'white', fontSize: '0.85rem' }}>
+                          <select value={selectedMetaBusiness} onChange={(e) => setSelectedMetaBusiness(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
                             <option value="">Select Business...</option>
                             {metaBusinesses.map(biz => <option key={biz.id} value={biz.id}>{biz.name}</option>)}
                           </select>
@@ -338,12 +338,12 @@ export const Settings: React.FC = () => {
                         <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#000', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '1.2rem' }}>𝕏</div>
                         <div>
                           <h4 style={{ fontSize: '1.05rem', margin: 0 }}>X (Twitter) Ads</h4>
-                          <span style={{ fontSize: '0.8rem', color: user?.twitterAccessToken ? 'white' : 'var(--text-secondary)' }}>
+                          <span style={{ fontSize: '0.8rem', color: user?.twitterAccessToken ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                             {user?.twitterAccessToken ? 'Connected' : 'Not Connected'}
                           </span>
                         </div>
                       </div>
-                      {user?.twitterAccessToken && <CheckCircle2 size={18} color="white" />}
+                      {user?.twitterAccessToken && <CheckCircle2 size={18} color="var(--text-primary)" />}
                     </div>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '24px', flex: 1 }}>Link your X account for autonomous tweet generation and promoted campaigns.</p>
 
@@ -353,7 +353,7 @@ export const Settings: React.FC = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                           <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Active Ad Account</label>
-                          <select value={selectedXAdAccount} onChange={(e) => setSelectedXAdAccount(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'white', fontSize: '0.85rem' }}>
+                          <select value={selectedXAdAccount} onChange={(e) => setSelectedXAdAccount(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '6px', background: 'var(--bg-primary)', border: '1px solid var(--glass-border)', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
                             <option value="">Select Ad Account...</option>
                             {xAdAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
                           </select>
@@ -365,7 +365,7 @@ export const Settings: React.FC = () => {
                             await api.post('/auth/x/adaccount', { adAccountId: selectedXAdAccount, adAccountName: acc?.name || 'Account' });
                             dispatch(hydrateSession()); toast.success('Saved X Preferences');
                           }
-                        }} style={{ width: '100%', marginTop: '4px', padding: '8px', background: 'rgba(255, 255, 255, 0.1)', color: 'white', border: '1px solid rgba(255, 255, 255, 0.2)', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer' }}>Save Selection</button>
+                        }} style={{ width: '100%', marginTop: '4px', padding: '8px', background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--glass-border)', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer' }}>Save Selection</button>
                       </div>
                     )}
                   </div>
@@ -526,9 +526,9 @@ export const Settings: React.FC = () => {
                 {/* X */}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--glass-border)', paddingBottom: '12px', marginBottom: '12px' }}>
-                    <h4 style={{ fontSize: '1rem', margin: 0, color: 'white' }}>X (Twitter) Developer Setup</h4>
+                    <h4 style={{ fontSize: '1rem', margin: 0 }}>X (Twitter) Developer Setup</h4>
                     {!isEditingX && (
-                      <button onClick={() => setIsEditingX(true)} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '0.8rem' }}><Edit2 size={12} /> Edit</button>
+                      <button onClick={() => setIsEditingX(true)} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'transparent', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.8rem' }}><Edit2 size={12} /> Edit</button>
                     )}
                   </div>
                   {!isEditingX ? (
@@ -540,7 +540,7 @@ export const Settings: React.FC = () => {
                     <div style={{ background: 'rgba(255,255,255,0.05)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }}>
                       <div className="input-group" style={{ marginBottom: '12px' }}><label style={{ fontSize: '0.8rem' }}>Access Token</label><input type="text" className="input-field" value={xAccessToken} onChange={e => setXAccessToken(e.target.value)} style={{ padding: '8px', fontSize: '0.85rem' }} /></div>
                       <div className="input-group" style={{ marginBottom: '16px' }}><label style={{ fontSize: '0.8rem' }}>Token Secret</label><input type="password" className="input-field" value={xTokenSecret} onChange={e => setXTokenSecret(e.target.value)} style={{ padding: '8px', fontSize: '0.85rem' }} /></div>
-                      <div style={{ display: 'flex', gap: '8px' }}><button onClick={() => handleSaveApiCredentials('x')} style={{ padding: '6px 16px', fontSize: '0.85rem', background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Save X Keys</button><button onClick={() => setIsEditingX(false)} style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button></div>
+                      <div style={{ display: 'flex', gap: '8px' }}><button onClick={() => handleSaveApiCredentials('x')} style={{ padding: '6px 16px', fontSize: '0.85rem', background: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>Save X Keys</button><button onClick={() => setIsEditingX(false)} style={{ background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}>Cancel</button></div>
                     </div>
                   )}
                 </div>
