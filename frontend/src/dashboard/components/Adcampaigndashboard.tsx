@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { api } from "../../api/axios";
 
 type PlatformId = "meta" | "google" | "x" | "linkedin";
-type LoadingState = "publish" | "draft" | null;
+type LoadingState = "publish" | "draft" | "optimize" | null;
 type ToastType = "success" | "error" | "info";
 type BillingCycle = "monthly" | "yearly";
 type PlanId = "free" | "silver" | "gold";
@@ -1790,9 +1790,9 @@ function PublishPlanModal({ isOpen, onClose, onSelectPlan }: PublishPlanModalPro
 }
 
 /* ─── BOTTOM BAR ─────────────────────────────────────────── */
-interface BottomBarProps { onBack: () => void; onPublish: () => void; onSaveDraft: () => void; loading: LoadingState; activePlatformName: string; }
+interface BottomBarProps { onBack: () => void; onPublish: () => void; onSaveDraft: () => void; onAiOptimize: () => void; loading: LoadingState; activePlatformName: string; }
 
-function BottomBar({ onBack, onPublish, onSaveDraft, loading, activePlatformName }: BottomBarProps) {
+function BottomBar({ onBack, onPublish, onSaveDraft, onAiOptimize, loading, activePlatformName }: BottomBarProps) {
   return (
     <div style={{ background: "#fff", borderTop: "1px solid var(--bdr)", padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
       <button className="btn-back" onClick={onBack} style={{ background: "var(--surface)", border: "1px solid var(--bdr)", color: "var(--t2)", padding: "8px 16px", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", gap: 6 }}>
@@ -1800,11 +1800,14 @@ function BottomBar({ onBack, onPublish, onSaveDraft, loading, activePlatformName
       </button>
       <div style={{ fontSize: 11, color: "var(--t3)" }}>Publishing to <span style={{ color: "var(--blue)", fontWeight: 600 }}>{activePlatformName}</span></div>
       <div style={{ display: "flex", gap: 8 }}>
-        <button className="btn-pub" onClick={onPublish} disabled={!!loading} style={{ background: "var(--blue)", color: "#fff", border: "none", padding: "8px 26px", borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: loading ? .7 : 1, display: "flex", alignItems: "center", gap: 6 }}>
-          {loading === "publish" ? <><span className="spinner-white" />Publishing…</> : "Publish"}
+        <button className="btn-opt" onClick={onAiOptimize} disabled={!!loading} style={{ background: "linear-gradient(135deg, #a855f7, #7c3aed)", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: loading ? .7 : 1, display: "flex", alignItems: "center", gap: 6 }}>
+          {loading === "optimize" ? <><span className="spinner-white" />Optimizing…</> : "✨ AI Optimize"}
         </button>
         <button className="btn-draft" onClick={onSaveDraft} disabled={!!loading} style={{ background: "var(--surface)", border: "1px solid var(--bdr)", color: "var(--t2)", padding: "8px 16px", borderRadius: 9, fontSize: 12, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: loading ? .7 : 1, display: "flex", alignItems: "center", gap: 6 }}>
           {loading === "draft" ? <><span className="spinner" />Saving…</> : "Save Draft"}
+        </button>
+        <button className="btn-pub" onClick={onPublish} disabled={!!loading} style={{ background: "var(--blue)", color: "#fff", border: "none", padding: "8px 26px", borderRadius: 9, fontSize: 12, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", opacity: loading ? .7 : 1, display: "flex", alignItems: "center", gap: 6 }}>
+          {loading === "publish" ? <><span className="spinner-white" />Publishing…</> : "Publish"}
         </button>
       </div>
     </div>
@@ -2269,6 +2272,53 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
 
   const campaignTitle = `${brandName}_${promoData?.businessGoal || promoData?.objective || "OUTCOME_SALES"}_${activePlat.name}_${new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}`;
 
+  const handleAiOptimize = useCallback(async () => {
+    setLoading("optimize");
+    try {
+      const activeCreative = platformCreatives[activePid] ?? buildDefaultCreative();
+      const payload = {
+        userId,
+        campaignId,
+        platform: activePid,
+        creative: activeCreative,
+        brandDetails,
+      };
+
+      const response = await fetch(`${API_BASE}/campaign/optimize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Failed to optimize creative");
+
+      if (result.success && result.optimized) {
+        const opt = result.optimized;
+        const patch: Partial<PlatformCreative> = {
+          headline: opt.headline || activeCreative.headline,
+          primaryText: opt.primaryText || activeCreative.primaryText,
+        };
+
+        if (activePid === "google" && opt.googleKeywords) {
+          patch.googleKeywords = opt.googleKeywords;
+        }
+        if (activePid === "linkedin") {
+          if (opt.liJobTitles) patch.liJobTitles = opt.liJobTitles;
+          if (opt.liSeniority) patch.liSeniority = opt.liSeniority;
+          if (opt.liCompanySize) patch.liCompanySize = opt.liCompanySize;
+        }
+
+        updateCreative(activePid, patch);
+        showToast("✅ Creative optimized and implemented with AI!", "success");
+      }
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Failed to optimize creative", "error");
+    } finally {
+      setLoading(null);
+    }
+  }, [activePid, platformCreatives, userId, campaignId, brandDetails, updateCreative, showToast]);
+
   /* ──────────────────────────────────────────────────────────
    * SAVE DRAFT — nested per-platform structure
    * ────────────────────────────────────────────────────────── */
@@ -2492,7 +2542,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
               </div>
             </div>
 
-            <BottomBar onBack={onBack} onPublish={handlePublish} onSaveDraft={handleDraft} loading={loading} activePlatformName={activePlat.name} />
+            <BottomBar onBack={onBack} onPublish={handlePublish} onSaveDraft={handleDraft} onAiOptimize={handleAiOptimize} loading={loading} activePlatformName={activePlat.name} />
           </div>
         </div>
         {toast && <Toast message={toast.message} type={toast.type} />}

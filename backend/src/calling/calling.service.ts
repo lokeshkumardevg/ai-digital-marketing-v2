@@ -72,15 +72,29 @@ export class CallingService {
           });
         }, 5000);
       } else {
-        // Example implementation for Bland.ai
-        // const response = await axios.post('https://api.bland.ai/v1/calls', {
-        //   phone_number: phone,
-        //   task: prompt,
-        //   webhook: `${process.env.VITE_API_URL || 'http://localhost:3000'}/calling/webhook`,
-        //   metadata: { recordId }
-        // }, { headers: { authorization: this.voiceApiKey } });
+        this.logger.log(`[REAL CALL] Initiating call to ${name} (${phone}) using Bland.ai`);
+        const response = await axios.post('https://api.bland.ai/v1/calls', {
+          phone_number: phone,
+          task: prompt,
+          voice: 'default',
+          record: true,
+          webhook: `${process.env.BACKEND_URL || 'http://localhost:3000'}/calling/webhook`,
+          metadata: { recordId }
+        }, {
+          headers: { 
+            'Authorization': this.voiceApiKey,
+            'Content-Type': 'application/json'
+          }
+        });
         
-        // await this.recordModel.findByIdAndUpdate(recordId, { callId: response.data.call_id });
+        if (response.data && (response.data.call_id || response.data.id)) {
+          const callId = response.data.call_id || response.data.id;
+          await this.recordModel.findByIdAndUpdate(recordId, { 
+            callId: callId,
+            status: 'Ringing' 
+          });
+          this.logger.log(`Call successfully queued with Bland.ai call ID: ${callId}`);
+        }
       }
     } catch (error) {
       this.logger.error(`Failed to call ${phone}`, error);

@@ -53,30 +53,75 @@ export class CampaignService {
     const campaignId = uuidv4();
     const MOCK_AUDIT_DATA = this.mockAudit(body.brandName, body.website);
     try {
-      const prompt = await this.buildPrompt(body); // ✅ FIXED (await)
+      const scraped = await this.scrapeWebsite(body.website);
+      let industry = this.detectIndustryFromUrl(body.website);
+      if (industry === 'General Business' && scraped.content) {
+        industry = this.detectIndustryFromContent(scraped.content);
+      }
 
-      const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        temperature: 0.3,
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are a senior digital marketing strategist and SEO auditor. Always return strict JSON.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-      });
+      let parsed: any = null;
 
-      const raw = response.choices?.[0]?.message?.content;
+      // 1. Try calling the Python Agent Server
+      try {
+        const pyRes = await fetch('http://localhost:8001/api/v1/discover-brand', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            brandName: body.brandName,
+            website: body.website,
+            industryHint: industry,
+            scrapedTitle: scraped.title || '',
+            scrapedMetaDesc: scraped.metaDesc || '',
+            scrapedContent: scraped.content || '',
+          }),
+        });
 
-      if (!raw) throw new Error('Empty AI response');
+        if (pyRes.ok) {
+          parsed = await pyRes.json();
+          this.logger.log(`Audited brand "${body.brandName}" using Python Agent Server`);
+        } else {
+          const errText = await pyRes.text();
+          this.logger.warn(`Python Agent discover-brand failed: ${pyRes.status} - ${errText}`);
+        }
+      } catch (e: any) {
+        this.logger.warn(`Fallback to local AI: Python Agent discover-brand failed: ${e.message}`);
+      }
 
-      const parsed = JSON.parse(raw);
+      // 2. Fallback to local OpenAI in NestJS if Python Agent call failed
+      if (!parsed) {
+        const prompt = `
+You are a senior digital marketing strategist, SEO auditor, competitive intelligence analyst, and web research expert.
+Your task is to perform a COMPLETE brand intelligence analysis using REAL VERIFIED DATA.
+URL: ${body.website}
+Title: ${scraped.title}
+Meta Description: ${scraped.metaDesc}
+Scraped Text Content: ${scraped.content || "(No webpage text content could be scraped)"}
+Brand Name: ${body.brandName}
+Industry Hint: ${industry}
+
+Refer to buildPrompt schema and return strict JSON format only.`;
+
+        const response = await this.openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          temperature: 0.3,
+          response_format: { type: 'json_object' },
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a senior digital marketing strategist and SEO auditor. Always return strict JSON.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        });
+
+        const raw = response.choices?.[0]?.message?.content;
+        if (!raw) throw new Error('Empty AI response');
+        parsed = JSON.parse(raw);
+        this.logger.log(`Audited brand "${body.brandName}" using local OpenAI fallback`);
+      }
 
       this.validateResponse(parsed);
 
@@ -1633,6 +1678,112 @@ Return ONLY JSON.
         session.brandDetails || null,
     };
   }
+  // OPTIMIZE CAMPAIGN
+  async optimizeCampaign(body: any) {
+    const { userId, campaignId, platform, creative, brandDetails } = body;
+    if (!campaignId) {
+      throw new BadRequestException('Campaign ID is required');
+    }
+    if (!platform) {
+      throw new BadRequestException('Platform is required');
+    }
+
+    const payload = {
+      platform,
+      headline: creative?.headline || '',
+      primaryText: creative?.primaryText || creative?.caption || '',
+      googleKeywords: creative?.googleKeywords || [],
+      liJobTitles: creative?.liJobTitles || [],
+      liSeniority: creative?.liSeniority || [],
+      liCompanySize: creative?.liCompanySize || [],
+      brandName: brandDetails?.name || '',
+      brandDescription: brandDetails?.description || '',
+    };
+
+    let optimizedResult: any = null;
+
+    try {
+      // 1. Try Python Agent API
+      const response = await fetch('http://localhost:8001/api/v1/optimize-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const json = await response.json();
+        if (json && json.success && json.optimized) {
+          optimizedResult = json.optimized;
+          this.logger.log(`Optimized campaign ${campaignId} using Python Agent Server`);
+        }
+      } else {
+        const errText = await response.text();
+        this.logger.warn(`Python Agent optimize-draft failed: ${response.status} - ${errText}`);
+      }
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: Python Agent server failed: ${e.message}`);
+    }
+
+    // 2. Fallback to local OpenAI in NestJS
+    if (!optimizedResult) {
+      try {
+        const systemPrompt = `You are a conversion rate optimization (CRO) and ad copywriting specialist. Return ONLY a valid JSON object matching the requested schema.`;
+        const context = `Platform: ${platform}\nBrand: ${brandDetails?.name || ''}\nDescription: ${brandDetails?.description || ''}\nCurrent Headline: ${creative?.headline || ''}\nCurrent Text: ${creative?.primaryText || ''}`;
+        const userPrompt = `Optimize the following creative for max conversion and click rate:\n\n${context}\n\nReturn JSON only:\n{\n  "headline": "punchy headline under 30 chars for google or 50 chars for others",\n  "primaryText": "compelling primary copy incorporating PAS/AIDA",\n  "googleKeywords": ["keyword1", "keyword2", ...] (only if google),\n  "liJobTitles": ["title1", "title2", ...] (only if linkedin),\n  "liSeniority": ["Senior", ...] (only if linkedin),\n  "liCompanySize": ["11-50", ...] (only if linkedin),\n  "explanation": "Brief description of optimizations."\n}`;
+        
+        const completion = await this.openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.6,
+        });
+
+        const raw = completion.choices[0].message.content || '{}';
+        optimizedResult = JSON.parse(raw.replace(/```json|```/g, '').trim());
+        this.logger.log(`Optimized campaign ${campaignId} using local OpenAI fallback`);
+      } catch (err: any) {
+        this.logger.error('Fallback optimization failed', err);
+        throw new BadRequestException(`Optimization failed: ${err.message}`);
+      }
+    }
+
+    // 3. Update the Mongoose campaign draft document with optimized parameters
+    const existing = await this.campaignModel.findOne({ campaignId });
+    if (existing) {
+      const dbPlatform = existing.platform || platform;
+      const currentPlatformData = existing.data || {};
+      
+      const updatedPlatformData = {
+        ...currentPlatformData,
+        headline: optimizedResult.headline || currentPlatformData.headline,
+        primaryText: optimizedResult.primaryText || currentPlatformData.primaryText,
+      };
+
+      if (dbPlatform.toLowerCase() === 'google' && optimizedResult.googleKeywords) {
+        updatedPlatformData.googleKeywords = optimizedResult.googleKeywords;
+      }
+      if (dbPlatform.toLowerCase() === 'linkedin') {
+        if (optimizedResult.liJobTitles) updatedPlatformData.liJobTitles = optimizedResult.liJobTitles;
+        if (optimizedResult.liSeniority) updatedPlatformData.liSeniority = optimizedResult.liSeniority;
+        if (optimizedResult.liCompanySize) updatedPlatformData.liCompanySize = optimizedResult.liCompanySize;
+      }
+
+      await this.campaignModel.findOneAndUpdate(
+        { campaignId },
+        { $set: { data: updatedPlatformData } },
+        { new: true }
+      );
+      this.logger.log(`Implemented and saved AI optimizations for campaign ID: ${campaignId}`);
+    }
+
+    return {
+      success: true,
+      optimized: optimizedResult,
+    };
+  }
+
   // SAVE DRAFT
   async saveDraft(body: any) {
     try {

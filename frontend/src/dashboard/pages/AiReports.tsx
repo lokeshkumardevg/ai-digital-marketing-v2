@@ -5,22 +5,12 @@ import { api } from '../../api/axios';
 import toast from 'react-hot-toast';
 import { getSeoData } from '../../utils/seoStorage';
 import { 
-  BarChart2, 
-  DollarSign, 
-  MousePointerClick, 
-  Target, 
-  TrendingUp, 
-  Activity, 
-  FileText, 
   Copy, 
   Download, 
   Check, 
-  AlertCircle,
-  FileCheck,
-  RefreshCw,
-  Sparkles,
-  ChevronRight,
-  TrendingDown
+  RefreshCw, 
+  Sparkles, 
+  ChevronRight
 } from 'lucide-react';
 
 interface ReportHistoryItem {
@@ -166,7 +156,8 @@ export const AiReports: React.FC = () => {
         // Add organic SEO & search console details if available
         try {
           const seoData = getSeoData();
-          if (seoData && seoData.result && (seoData.url.includes(activeBrand?.url) || activeBrand?.url?.includes(seoData.url))) {
+          const brandUrl = activeBrand?.url;
+          if (seoData && seoData.result && brandUrl && (seoData.url.includes(brandUrl) || brandUrl.includes(seoData.url))) {
             const res = seoData.result;
             autoText += `\n\nORGANIC SEARCH SEO AUDIT METRICS (Last Scan: ${new Date(seoData.updatedAt).toLocaleDateString()}):`;
             autoText += `\n- Site Load Time: ${res.loadTime || 'N/A'}`;
@@ -252,16 +243,28 @@ export const AiReports: React.FC = () => {
     try {
       const fullInputMetrics = `${rawMetricsText}\n\nUser Custom Notes:\n${customNotes || 'No custom notes provided.'}\n\nReport Focus Area: ${reportFocus}\nRequested Style/Tone: ${reportTone}`;
       
-      const response = await api.post('/webhook/reporting', {
-        metrics: fullInputMetrics
-      });
+      let reportContent = '';
+      if (import.meta.env.VITE_AI_API) {
+        const res = await fetch(`${import.meta.env.VITE_AI_API}/reporting`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metrics: fullInputMetrics })
+        });
+        if (!res.ok) throw new Error(`FastAPI responded with status ${res.status}`);
+        const data = await res.json();
+        reportContent = data.aiOutput;
+      } else {
+        const response = await api.post('/webhook/reporting', {
+          metrics: fullInputMetrics
+        });
+        reportContent = response.data.aiOutput;
+      }
 
       clearInterval(progressInterval);
       setProgress(100);
       setProgressStage('Analysis complete!');
 
-      if (response.data && response.data.aiOutput) {
-        const reportContent = response.data.aiOutput;
+      if (reportContent) {
         setGeneratedReport(reportContent);
         
         // Add to history
@@ -465,6 +468,11 @@ CPC is currently hovering around target margins. Recommend shifting 15% budget f
                 placeholder="Enter raw performance numbers..."
                 style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--glass-border)', borderRadius: '8px', fontSize: '0.8rem', outline: 'none', resize: 'vertical', fontFamily: 'monospace' }}
               />
+              {metricsError && (
+                <div style={{ fontSize: '0.74rem', color: '#ef4444', marginTop: '2px' }}>
+                  {metricsError}
+                </div>
+              )}
             </div>
 
             {/* Custom Notes */}

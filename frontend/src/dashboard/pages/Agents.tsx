@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import logo from '../../assets/fevicon.png';
 
+const getAgentUrl = (path: string) => import.meta.env.VITE_AI_API ? `${import.meta.env.VITE_AI_API}/${path}` : `${import.meta.env.VITE_API_URL}/webhook/${path}`;
+
 const agentConfigs: Record<string, any> = {
   "review_generation": {
     title: "Review Generation Agent",
-    url: `${import.meta.env.VITE_API_URL}/webhook/review-gen`,
+    url: getAgentUrl("review-gen"),
     fields: [
       { id: "customer_name", label: "Customer Name", type: "text", placeholder: "e.g., John Doe" },
       { id: "product", label: "Product/Service", type: "text", placeholder: "e.g., Premium Web Plan" }
@@ -13,7 +15,7 @@ const agentConfigs: Record<string, any> = {
   },
   "review_response": {
     title: "Review Response Agent",
-    url: `${import.meta.env.VITE_API_URL}/webhook/review-response`,
+    url: getAgentUrl("review-response"),
     fields: [
       { id: "star_rating", label: "Star Rating (1-5)", type: "text", placeholder: "e.g., 4" },
       { id: "review_text", label: "Customer Review Text", type: "textarea", placeholder: "Paste customer review..." }
@@ -21,14 +23,14 @@ const agentConfigs: Record<string, any> = {
   },
   "social_publishing": {
     title: "Social Publishing Agent",
-    url: `${import.meta.env.VITE_API_URL}/webhook/social-pub`,
+    url: getAgentUrl("social-pub"),
     fields: [
       { id: "topic", label: "Post Topic", type: "textarea", placeholder: "e.g., New feature announcement" }
     ]
   },
   "social_engagement": {
     title: "Social Engagement Agent",
-    url: `${import.meta.env.VITE_API_URL}/webhook/social-engage`,
+    url: getAgentUrl("social-engage"),
     fields: [
       { id: "brand_tone", label: "Brand Tone", type: "text", placeholder: "e.g., Friendly & Professional" },
       { id: "user_comment", label: "User Comment to Reply To", type: "textarea", placeholder: "Paste the user comment here..." }
@@ -36,14 +38,14 @@ const agentConfigs: Record<string, any> = {
   },
   "reporting": {
     title: "Reporting Agent",
-    url: `${import.meta.env.VITE_API_URL}/webhook/reporting`,
+    url: getAgentUrl("reporting"),
     fields: [
       { id: "metrics", label: "Raw Metrics Data", type: "textarea", placeholder: "e.g., 500 visitors, 10 sales, 2% conversion rate" }
     ]
   },
   "listings_optimization": {
     title: "Listings Optimization Agent",
-    url: `${import.meta.env.VITE_API_URL}/webhook/listings-opt`,
+    url: getAgentUrl("listings-opt"),
     fields: [
       { id: "business_name", label: "Business Name", type: "text", placeholder: "e.g., Joe's Coffee" },
       { id: "keywords", label: "Target Keywords (SEO)", type: "textarea", placeholder: "e.g., best coffee, organic espresso, downtown cafe" }
@@ -51,7 +53,7 @@ const agentConfigs: Record<string, any> = {
   },
   "lead_generation": {
     title: "Lead Generation Agent",
-    url: `${import.meta.env.VITE_API_URL}/webhook/lead-gen`,
+    url: getAgentUrl("lead-gen"),
     fields: [
       { id: "industry", label: "Target Industry", type: "text", placeholder: "e.g., Real Estate" },
       { id: "region", label: "Region", type: "text", placeholder: "e.g., New York" }
@@ -59,21 +61,21 @@ const agentConfigs: Record<string, any> = {
   },
   "contact_segmentation": {
     title: "Contact Segmentation Agent",
-    url: `${import.meta.env.VITE_API_URL}/webhook/segmentation`,
+    url: getAgentUrl("segmentation"),
     fields: [
       { id: "customer_data", label: "Customer Data Example", type: "textarea", placeholder: "e.g., Age 25, clicked email 3 times, bought shoes." }
     ]
   },
   "template_design": {
     title: "Template Design Agent",
-    url: `${import.meta.env.VITE_API_URL}/webhook/template-design`,
+    url: getAgentUrl("template-design"),
     fields: [
       { id: "topic", label: "Website/Template Title or Topic", type: "text", placeholder: "e.g., Luxury Watch Landing Page" }
     ]
   },
   "custom": {
     title: "Custom Agent",
-    url: `${import.meta.env.VITE_API_URL}/webhook/custom`,
+    url: getAgentUrl("custom"),
     fields: [
       { id: "instruction", label: "Custom Instruction (System Prompt)", type: "text", placeholder: "e.g., Act as a marketing director..." },
       { id: "input", label: "Input Data", type: "textarea", placeholder: "Enter raw data to process..." }
@@ -81,7 +83,7 @@ const agentConfigs: Record<string, any> = {
   },
   "website_builder": {
     title: "Full Website Architect",
-    url: `${import.meta.env.VITE_API_URL}/webhook/website-builder`,
+    url: getAgentUrl("website-builder"),
     fields: [
       { id: "topic", label: "Business Name / Website Topic", type: "text", placeholder: "e.g., LuxeCuts - A Premium Barber Shop in New York" },
       { id: "pages", label: "Pages (Count or Names)", type: "text", placeholder: "e.g., 5 OR Home, About, Services, Contact" },
@@ -161,7 +163,7 @@ export const Agents: React.FC = () => {
 
   const runAgentWorkflow = async () => {
     if (!selectedAgentKey) return;
-    const config = agentConfigs[selectedAgentKey] || { url: `${import.meta.env.VITE_API_URL}/webhook/generic` };
+    const config = agentConfigs[selectedAgentKey] || { url: getAgentUrl("generic") };
 
     setIsLoading(true);
     setResponseText('');

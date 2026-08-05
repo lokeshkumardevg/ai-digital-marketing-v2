@@ -45,6 +45,7 @@ import { Products } from './dashboard/pages/Products';
 import { ChatEmbed } from './dashboard/pages/ChatEmbed';
 import { Presentation } from './dashboard/pages/Presentation';
 import { LinkedInCrm } from './dashboard/pages/LinkedInCrm';
+import { CallingAgent } from './dashboard/pages/CallingAgent';
 
 import { Templates } from './dashboard/pages/Templates';
 import { hydrateSession } from './store/slices/authSlice';
@@ -264,6 +265,7 @@ const App: React.FC = () => {
         <Route path="/workflows" element={<ProtectedRoute><DashboardLayout><Workflows /></DashboardLayout></ProtectedRoute>} />
         <Route path="/messaging" element={<ProtectedRoute><DashboardLayout><Messaging /></DashboardLayout></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><DashboardLayout><Notifications /></DashboardLayout></ProtectedRoute>} />
+        <Route path="/calling-agent" element={<ProtectedRoute><DashboardLayoutFull><CallingAgent /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/log" element={<ProtectedRoute requiredPermission="superadmin"><DashboardLayout><Logs /></DashboardLayout></ProtectedRoute>} />
 
         {/* AI Optimize Sub-routes */}

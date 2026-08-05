@@ -142,7 +142,7 @@ Rules of Interaction:
       }
 
       try {
-        const response = await this.aiService.generateContent(contextualizedMessage, systemPrompt);
+        const response = await this.getChatbotResponse(contextualizedMessage, systemPrompt);
         return { reply: response };
       } catch (error) {
         this.logger.error('Error handling Global Chatbot response', error);
@@ -166,7 +166,7 @@ Rules of Interaction:
 
     try {
       // Execute the AI generation with the dedicated chatbot persona
-      const response = await this.aiService.generateContent(contextualizedMessage, chatbot.systemPrompt);
+      const response = await this.getChatbotResponse(contextualizedMessage, chatbot.systemPrompt);
       
       // Update analytics async
       this.chatbotModel.findByIdAndUpdate(chatbotId, { $inc: { totalConversations: 1 } }).exec().catch();
@@ -176,5 +176,31 @@ Rules of Interaction:
       this.logger.error('Error handling Chatbot response', error);
       return { reply: "I'm experiencing high traffic right now. Please try again later!" };
     }
+  }
+
+  private async getChatbotResponse(userPrompt: string, systemPrompt: string): Promise<string> {
+    try {
+      const response = await fetch('http://localhost:8001/api/v1/chatbot-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userPrompt, systemPrompt }),
+      });
+
+      if (response.ok) {
+        const json = await response.json();
+        if (json && json.reply) {
+          this.logger.log('Generated chatbot response using Python Agent Server');
+          return json.reply;
+        }
+      } else {
+        const errText = await response.text();
+        this.logger.warn(`Python Agent chatbot-response failed: ${response.status} - ${errText}`);
+      }
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: Python Agent chatbot-response failed: ${e.message}`);
+    }
+
+    // Local NestJS AI fallback
+    return this.aiService.generateContent(userPrompt, systemPrompt);
   }
 }

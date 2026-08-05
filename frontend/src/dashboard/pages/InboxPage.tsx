@@ -24,7 +24,7 @@ import {
 import { StarRating, PlatformBadge, SentimentBadge } from '../components/Reviewhelpers';
 
 const REVIEW_AGENT_API_URL =
-  (import.meta as any).env?.VITE_REVIEW_AGENT_API_URL || 'http://localhost:3000';
+  (import.meta as any).env?.VITE_REVIEW_AGENT_API_URL || import.meta.env.VITE_API_URL;
 
 interface LocalFilters {
   search: string;

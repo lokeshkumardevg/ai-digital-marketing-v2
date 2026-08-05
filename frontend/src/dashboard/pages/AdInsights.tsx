@@ -114,12 +114,13 @@ export const AdInsights: React.FC = () => {
 
   // Export Campaigns list to CSV
   const handleExportCsv = () => {
-    if (!campaigns || campaigns.length === 0) {
+    const campaignsList = data?.campaigns || [];
+    if (campaignsList.length === 0) {
       toast.error("No campaign data available to export.");
       return;
     }
     const headers = ['Campaign Name', 'Status', 'Amount Spent', 'Impressions', 'Clicks', 'Conversions', 'CTR', 'CPC', 'CPA'];
-    const rows = campaigns.map((c: any) => [
+    const rows = campaignsList.map((c: any) => [
       `"${c.name.replace(/"/g, '""')}"`,
       c.status || 'Active',
       (c.spend || 0).toFixed(2),
@@ -130,16 +131,17 @@ export const AdInsights: React.FC = () => {
       (c.cpc || 0).toFixed(2),
       (c.cpa || 0).toFixed(2)
     ]);
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\n');
+    const csvContent = [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\n');
     
-    const encodedUri = encodeURI(csvContent);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `${activePlatform}_Campaigns_Report_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     toast.success("CSV exported successfully!");
   };
 
@@ -159,12 +161,27 @@ CTR: ${(campaign.ctr || 0).toFixed(2)}%
 CPC: ${cur}${(campaign.cpc || 0).toFixed(2)}
 CPA (Cost per Result): ${cur}${(campaign.cpa || 0).toFixed(2)}`;
 
-      const response = await api.post('/webhook/reporting', {
-        metrics: `This is a particular campaign performance report audit. Analyze this single campaign's statistics:\n${metricsText}`
-      });
+      let reportContent = '';
+      if (import.meta.env.VITE_AI_API) {
+        const res = await fetch(`${import.meta.env.VITE_AI_API}/reporting`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            metrics: `This is a particular campaign performance report audit. Analyze this single campaign's statistics:\n${metricsText}`
+          })
+        });
+        if (!res.ok) throw new Error(`FastAPI responded with status ${res.status}`);
+        const data = await res.json();
+        reportContent = data.aiOutput;
+      } else {
+        const response = await api.post('/webhook/reporting', {
+          metrics: `This is a particular campaign performance report audit. Analyze this single campaign's statistics:\n${metricsText}`
+        });
+        reportContent = response.data?.aiOutput;
+      }
 
-      if (response.data && response.data.aiOutput) {
-        setAuditReport(response.data.aiOutput);
+      if (reportContent) {
+        setAuditReport(reportContent);
       } else {
         throw new Error("Invalid response format");
       }

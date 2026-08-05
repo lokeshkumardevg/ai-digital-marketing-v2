@@ -561,3 +561,206 @@ async def brand_identity(body: BrandIdentityRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class OptimizeDraftRequest(BaseModel):
+    platform: str
+    headline: str
+    primaryText: str
+    googleKeywords: Optional[List[str]] = None
+    liJobTitles: Optional[List[str]] = None
+    liSeniority: Optional[List[str]] = None
+    liCompanySize: Optional[List[str]] = None
+    brandName: Optional[str] = None
+    brandDescription: Optional[str] = None
+
+
+@router.post("/optimize-draft")
+async def optimize_draft(body: OptimizeDraftRequest):
+    try:
+        context = (
+            f"Platform: {body.platform}\n"
+            f"Brand Name: {body.brandName or 'General'}\n"
+            f"Brand Description: {body.brandDescription or 'No description'}\n"
+            f"Current Headline: {body.headline}\n"
+            f"Current Primary Text: {body.primaryText}\n"
+        )
+        if body.googleKeywords:
+            context += f"Current Keywords: {', '.join(body.googleKeywords)}\n"
+        if body.liJobTitles:
+            context += f"Current Target Job Titles: {', '.join(body.liJobTitles)}\n"
+
+        prompt = (
+            f"You are a conversion rate optimization (CRO) and ad copywriting specialist.\n"
+            f"Optimize the ad headline, primary text, and target keywords/demographics for a campaign to achieve maximum click-through rate (CTR) and conversions.\n\n"
+            f"Rules:\n"
+            f"1. For Google Search: The headline must be punchy and under 30 characters. The primary text must act as a clear description under 90 characters. Provide 5-8 highly relevant keywords.\n"
+            f"2. For Meta/LinkedIn/Other: The headline should be catchy, and primaryText should use the PAS (Problem-Agitate-Solve) or AIDA copy framework. Offer targeted categories.\n\n"
+            f"Context:\n{context}\n\n"
+            f"Return ONLY a raw valid JSON object (no markdown, no ```json formatting, no other text) structured like this:\n"
+            f"{{\n"
+            f'  "headline": "highly optimized headline text",\n'
+            f'  "primaryText": "highly optimized primary text/description copy",\n'
+            f'  "googleKeywords": ["keyword1", "keyword2", ...] (only if platform is google),\n'
+            f'  "liJobTitles": ["job title 1", "job title 2", ...] (only if platform is linkedin),\n'
+            f'  "liSeniority": ["Senior", "Director", ...] (only if platform is linkedin),\n'
+            f'  "liCompanySize": ["11-50", "51-200", ...] (only if platform is linkedin),\n'
+            f'  "explanation": "Brief 1-sentence description of the optimization applied."\n'
+            f"}}"
+        )
+
+        llm = get_llm(model="gpt-4o", max_tokens=1500, temperature=0.6)
+        res = await llm.ainvoke(prompt)
+        
+        import json
+        raw_content = res.content.replace("```json", "").replace("```", "").strip()
+        parsed = json.loads(raw_content)
+        return {"success": True, "optimized": parsed}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class DiscoverBrandRequest(BaseModel):
+    brandName: str
+    website: str
+    industryHint: Optional[str] = "General Business"
+    scrapedTitle: Optional[str] = ""
+    scrapedMetaDesc: Optional[str] = ""
+    scrapedContent: Optional[str] = ""
+
+
+@router.post("/discover-brand")
+async def discover_brand(body: DiscoverBrandRequest):
+    try:
+        prompt = f"""
+You are a senior digital marketing strategist, SEO auditor, competitive intelligence analyst, and web research expert.
+
+Your task is to perform a COMPLETE brand intelligence analysis using REAL VERIFIED DATA from the scraped webpage content below.
+
+IMPORTANT RULES:
+1. ALWAYS base your analysis on the actual scraped text content of the website.
+2. DO NOT generate generic, placeholder, or static keywords.
+3. Keywords MUST be STRONG, highly converting, commercial intent keywords with high search volume. They must be unique, highly specific to the business's actual offerings, and contain NO duplicates.
+4. Ensure primary, secondary, and long-tail keywords are distinct, highly optimized for Google/Meta Ads, and represent real search queries matching the services/products described.
+5. If the website text is poor or thin, deduce logical, powerful keywords matching their stated business model and location.
+6. Extract data from the provided scraped title, description, and page text.
+7. Return ONLY VALID JSON.
+8. DO NOT include markdown.
+9. DO NOT explain anything.
+
+SCRAPED WEBSITE DATA:
+URL: {body.website}
+Title: {body.scrapedTitle}
+Meta Description: {body.scrapedMetaDesc}
+Scraped Text Content:
+{body.scrapedContent or "(No webpage text content could be scraped)"}
+
+INPUT:
+Brand Name: {body.brandName}
+Industry Hint: {body.industryHint}
+
+ANALYSIS REQUIREMENTS & OUTPUT FORMAT:
+Return ONLY a valid raw JSON object matching this structure exactly (no markdown formatting, no extra text):
+{{
+  "campaignName": "A catchy campaign name",
+  "coreObjective": "Lead Generation or Sales or Brand Awareness",
+  "brand": {{
+    "name": "{body.brandName}",
+    "tagline": "Brand tagline",
+    "industry": "{body.industryHint}",
+    "founded": "Estimated founding year",
+    "businessModel": "B2B or B2C or SaaS etc.",
+    "toneOfVoice": "Brand tone description",
+    "registeredAddress": "N/A",
+    "CIN": "N/A",
+    "overallScore": 85
+  }},
+  "websiteAudit": {{
+    "overallScore": 80,
+    "seoScore": 82,
+    "performanceScore": 78,
+    "uxScore": 80,
+    "contentScore": 85,
+    "technicalScore": 80,
+    "mobileScore": 85,
+    "accessibilityScore": 80,
+    "securityScore": 90,
+    "criticalIssue": "Any critical issue found or None",
+    "findings": ["finding 1", "finding 2"],
+    "technicalIssues": ["issue 1"],
+    "quickWins": ["win 1", "win 2"]
+  }},
+  "keywords": {{
+    "primary": ["keyword 1", "keyword 2"],
+    "secondary": ["keyword 3", "keyword 4"],
+    "longTail": ["keyword 5", "keyword 6"],
+    "gaps": ["gap 1"],
+    "recommendations": ["rec 1"]
+  }},
+  "competition": {{
+    "intensity": "High or Medium or Low",
+    "competitors": [
+      {{
+        "name": "Competitor Name",
+        "strengths": ["strength 1"],
+        "weaknesses": ["weakness 1"],
+        "comparison": "Comparison summary"
+      }}
+    ],
+    "differentiators": ["differentiator 1"],
+    "marketPosition": "Market positioning summary"
+  }},
+  "adCopy": {{
+    "headlines": ["Headline 1 under 30 chars", "Headline 2 under 30 chars", "Headline 3 under 30 chars", "Headline 4 under 30 chars"],
+    "primaryTexts": ["Primary text 1 under 90 chars", "Primary text 2 under 90 chars", "Primary text 3 under 90 chars"],
+    "callToAction": "LEARN_MORE"
+  }},
+  "analyticsDashboard": {{
+    "estimatedMonthlyVisits": "10k-50k",
+    "estimatedDomainAuthority": 25,
+    "estimatedBacklinks": "500+",
+    "topTrafficSources": ["Organic Search", "Direct"],
+    "avgSessionDuration": "2m 15s",
+    "bounceRate": "45%",
+    "conversionFocusAreas": ["Landing page CTA", "Form fields"]
+  }},
+  "budget": {{
+    "estimatedAdSpend": "$1000 - $3000",
+    "recommendedChannels": ["Google Search", "Meta Ads"],
+    "estimatedCPCRange": "$1.50 - $3.00",
+    "roiPotential": "3x - 5x"
+  }}
+}}
+"""
+        llm = get_llm(model="gpt-4o-mini", max_tokens=3000, temperature=0.3)
+        res = await llm.ainvoke(prompt)
+        
+        import json
+        raw_content = res.content.replace("```json", "").replace("```", "").strip()
+        parsed = json.loads(raw_content)
+        return parsed
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class ChatbotResponseRequest(BaseModel):
+    userPrompt: str
+    systemPrompt: str
+
+
+@router.post("/chatbot-response")
+async def chatbot_response(body: ChatbotResponseRequest):
+    try:
+        llm = get_llm(model="gpt-4o", max_tokens=1500, temperature=0.7)
+        from langchain_core.messages import SystemMessage, HumanMessage
+        messages = [
+            SystemMessage(content=body.systemPrompt),
+            HumanMessage(content=body.userPrompt)
+        ]
+        res = await llm.ainvoke(messages)
+        return {"reply": res.content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
+

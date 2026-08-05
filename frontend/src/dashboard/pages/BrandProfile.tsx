@@ -126,7 +126,7 @@ export const BrandProfile = () => {
       if (!activeBrand) return;
 
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:3000'}/ai/brand-profile?projectId=${activeBrand.id}&url=${encodeURIComponent(activeBrand.url)}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/ai/brand-profile?projectId=${activeBrand.id}&url=${encodeURIComponent(activeBrand.url)}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token') || ''}`,
           },

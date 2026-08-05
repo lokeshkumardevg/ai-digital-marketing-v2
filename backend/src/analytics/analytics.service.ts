@@ -91,7 +91,11 @@ export class AnalyticsService {
     if (safeData.creatives.length === 0) {
       // Fallback: Query campaignModel to build campaign-based dynamic insights
       const campaigns = await this.campaignModel
-        .find({ userId, platform: new RegExp(platform, 'i'), status: { $in: ['active', 'completed', 'paused', 'ACTIVE', 'COMPLETED', 'PAUSED'] } })
+        .find({ 
+          userId, 
+          platform: { $in: [new RegExp(platform, 'i'), 'All', 'all', 'ALL'] }, 
+          status: { $in: ['active', 'completed', 'paused', 'ACTIVE', 'COMPLETED', 'PAUSED'] } 
+        })
         .lean()
         .exec();
 
@@ -239,9 +243,9 @@ export class AnalyticsService {
             }
           }
 
-          // Skip if the campaign is paused or inactive (show only ENABLED/active ones)
+          // Skip only if the campaign is explicitly disabled/removed (but process paused ones to show historical stats)
           const cleanStatus = (liveStatus || '').toUpperCase();
-          if (cleanStatus === 'PAUSED' || cleanStatus === 'DISABLED' || cleanStatus === '3') {
+          if (cleanStatus === 'DISABLED' || cleanStatus === '3') {
             continue;
           }
 
@@ -347,9 +351,9 @@ export class AnalyticsService {
       }
 
       const query = `
-        SELECT campaign.id, campaign.name, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.ctr, metrics.conversions
+        SELECT campaign.id, campaign.name, campaign.status, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.ctr, metrics.conversions
         FROM campaign
-        WHERE campaign.status = 'ENABLED'
+        WHERE campaign.status IN ('ENABLED', 'PAUSED')
         ORDER BY metrics.impressions DESC
         LIMIT 10
       `;
@@ -357,49 +361,52 @@ export class AnalyticsService {
       const systemMccId = this.configService.get<string>('SYSTEM_GOOGLE_MCC_ID');
       let managerId = (user as any).googleManagerId || this.configService.get<string>('GOOGLE_ADS_MANAGER_ID') || systemMccId;
 
-      try {
-        const listRes = await fetch('https://googleads.googleapis.com/v19/customers:listAccessibleCustomers', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'developer-token': developerToken,
-          }
-        });
-        if (!listRes.ok) {
-          const text = await listRes.text();
-          throw new Error(`listAccessibleCustomers failed with status ${listRes.status}: ${text.substring(0, 150)}`);
-        }
-        const listData = await listRes.json();
-        const accessibleCids = (listData.resourceNames || []).map((rn: string) => rn.split('/')[1]);
-
-        let foundClient = false;
-        for (const mccId of accessibleCids) {
-          try {
-            const cleanMccId = mccId.replace(/-/g, '');
-            const childRes = await fetch(`https://googleads.googleapis.com/v19/customers/${cleanMccId}/googleAds:search`, {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'developer-token': developerToken,
-                'login-customer-id': cleanMccId,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                query: 'SELECT customer_client.id FROM customer_client WHERE customer_client.level <= 1 AND customer_client.manager = FALSE LIMIT 1'
-              })
-            });
-            if (!childRes.ok) continue;
-            const childJson = await childRes.json();
-            if (childJson.results && childJson.results.length > 0) {
-              resolvedCustomerId = childJson.results[0].customerClient.id.toString().replace(/-/g, '');
-              managerId = cleanMccId;
-              foundClient = true;
-              break;
+      const hasPreconfiguredId = !!(customerId || (user as any).googleCustomerId);
+      if (!hasPreconfiguredId) {
+        try {
+          const listRes = await fetch('https://googleads.googleapis.com/v25/customers:listAccessibleCustomers', {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'developer-token': developerToken,
             }
-          } catch (e) { continue; }
+          });
+          if (!listRes.ok) {
+            const text = await listRes.text();
+            throw new Error(`listAccessibleCustomers failed with status ${listRes.status}: ${text.substring(0, 150)}`);
+          }
+          const listData = await listRes.json();
+          const accessibleCids = (listData.resourceNames || []).map((rn: string) => rn.split('/')[1]);
+
+          let foundClient = false;
+          for (const mccId of accessibleCids) {
+            try {
+              const cleanMccId = mccId.replace(/-/g, '');
+              const childRes = await fetch(`https://googleads.googleapis.com/v25/customers/${cleanMccId}/googleAds:search`, {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  'developer-token': developerToken,
+                  'login-customer-id': cleanMccId,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  query: 'SELECT customer_client.id FROM customer_client WHERE customer_client.level <= 1 AND customer_client.manager = FALSE LIMIT 1'
+                })
+              });
+              if (!childRes.ok) continue;
+              const childJson = await childRes.json();
+              if (childJson.results && childJson.results.length > 0) {
+                resolvedCustomerId = childJson.results[0].customerClient.id.toString().replace(/-/g, '');
+                managerId = cleanMccId;
+                foundClient = true;
+                break;
+              }
+            } catch (e) { continue; }
+          }
+        } catch (e: any) {
+          this.logger.warn(`Failed to dynamically resolve manager ID: ${e.message}`);
         }
-      } catch (e: any) {
-        this.logger.warn(`Failed to dynamically resolve manager ID: ${e.message}`);
       }
 
       const headers: Record<string, string> = {
@@ -416,7 +423,7 @@ export class AnalyticsService {
       }
 
       const response = await fetch(
-        `https://googleads.googleapis.com/v19/customers/${cleanCustomerId}/googleAds:search`,
+        `https://googleads.googleapis.com/v25/customers/${cleanCustomerId}/googleAds:search`,
         {
           method: 'POST',
           headers,
@@ -1330,7 +1337,8 @@ export class AnalyticsService {
     let managerId = (user as any).googleManagerId || this.configService.get<string>('GOOGLE_ADS_MANAGER_ID') || systemMccId;
 
     try {
-      const listRes = await fetch('https://googleads.googleapis.com/v19/customers:listAccessibleCustomers', {
+      const listRes = await fetch('https://googleads.googleapis.com/v25/customers:listAccessibleCustomers', {
+        method: 'GET',
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'developer-token': developerToken,
@@ -1366,7 +1374,7 @@ export class AnalyticsService {
     }
 
     const res = await fetch(
-      `https://googleads.googleapis.com/v19/customers/${customerId}/googleAds:search`,
+      `https://googleads.googleapis.com/v25/customers/${customerId}/googleAds:search`,
       {
         method: 'POST',
         headers,

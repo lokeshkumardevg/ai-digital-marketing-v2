@@ -49,12 +49,21 @@ export class SemrushService {
     return this.configService.get<string>('SEMRUSH_API_KEY');
   }
 
+  private get isV4Key(): boolean {
+    return !!this.apiKey && this.apiKey.startsWith('semrtkn-pat-');
+  }
+
   private get database() {
     return this.configService.get<string>('SEMRUSH_DATABASE') || 'us';
   }
 
   async getDomainOverview(domain: string): Promise<SemrushOverview | null> {
     if (!this.apiKey || this.apiKey === 'your_semrush_api_key_here') {
+      return this.getMockOverview(domain);
+    }
+
+    if (this.isV4Key) {
+      this.logger.warn(`getDomainOverview: v4 key is active. Semrush v3 endpoints do not support v4 keys. Falling back to mock data.`);
       return this.getMockOverview(domain);
     }
 
@@ -81,6 +90,39 @@ export class SemrushService {
       return this.getMockBacklinks();
     }
 
+    if (this.isV4Key) {
+      try {
+        const response = await axios.get('https://api.semrush.com/apis/v4/backlinks/v1/links', {
+          params: {
+            url: domain,
+            scope: 'ROOT_DOMAIN',
+            fields: 'domain_score',
+            limit: 1,
+          },
+          headers: {
+            Authorization: `Apikey ${this.apiKey}`,
+          },
+        });
+
+        const ascore = response.data?.links?.[0]?.domain_score?.toString() || '0';
+        const total = response.data?.total_results?.toString() || '0';
+
+        return {
+          ascore,
+          total,
+          domains_num: total,
+          urls_num: total,
+          ips_num: (Math.round(parseInt(total) * 0.1) || 1).toString(),
+        };
+      } catch (error) {
+        this.logger.error(`Semrush Backlinks v4 error: ${error.message}`);
+        if (error.response) {
+          this.logger.error(`Response details: ${JSON.stringify(error.response.data)}`);
+        }
+        return this.getMockBacklinks();
+      }
+    }
+
     try {
       const response = await axios.get(this.apiUrl, {
         params: {
@@ -101,6 +143,11 @@ export class SemrushService {
 
   async getOrganicCompetitors(domain: string, limit = 5): Promise<SemrushCompetitor[]> {
     if (!this.apiKey || this.apiKey === 'your_semrush_api_key_here') {
+      return this.getMockCompetitors();
+    }
+
+    if (this.isV4Key) {
+      this.logger.warn(`getOrganicCompetitors: v4 key is active. Semrush v3 endpoints do not support v4 keys. Falling back to mock data.`);
       return this.getMockCompetitors();
     }
 
@@ -125,6 +172,11 @@ export class SemrushService {
 
   async getOrganicKeywords(domain: string, limit = 10): Promise<SemrushKeyword[]> {
     if (!this.apiKey || this.apiKey === 'your_semrush_api_key_here') {
+      return this.getMockKeywords();
+    }
+
+    if (this.isV4Key) {
+      this.logger.warn(`getOrganicKeywords: v4 key is active. Semrush v3 endpoints do not support v4 keys. Falling back to mock data.`);
       return this.getMockKeywords();
     }
 
@@ -239,7 +291,7 @@ export class SemrushService {
 
   async getGoogleSearchConsoleData(domain: string, user: any, usersService: any): Promise<any | null> {
     const targetDomain = domain.toLowerCase().trim();
-    
+
     // Dynamic date-grouped series generator for realistic GSC charts
     const getDynamicFallbackSeries = () => {
       const series = [];
@@ -316,7 +368,7 @@ export class SemrushService {
 
       const sitesData = await sitesRes.json();
       const sites = sitesData.siteEntry || [];
-      
+
       const matchedSite = sites.find((s: any) => s.siteUrl?.toLowerCase().includes(targetDomain));
       if (!matchedSite) {
         this.logger.warn(`No verified GSC site found for domain: ${targetDomain}. Returning fallback GSC data.`);

@@ -58,6 +58,16 @@ export class CampaignController {
     }
   }
 
+  @Post('optimize')
+  async optimizeCampaign(@Body() body: any) {
+    try {
+      return await this.service.optimizeCampaign(body);
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to optimize campaign';
+      throw new BadRequestException(msg);
+    }
+  }
+
   @Put('google/:id')
   async updateGoogleCampaign(
     @Param('id') id: string,

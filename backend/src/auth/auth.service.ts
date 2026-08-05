@@ -565,7 +565,7 @@ export class AuthService {
     const loginCustomerId = (managerId && managerId !== cleanCustomerId) ? managerId : cleanCustomerId;
 
     const res = await fetch(
-      `https://googleads.googleapis.com/v19/customers/${cleanCustomerId}/googleAds:search`,
+      `https://googleads.googleapis.com/v25/customers/${cleanCustomerId}/googleAds:search`,
       {
         method: 'POST',
         headers: {
