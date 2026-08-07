@@ -9,7 +9,11 @@ import {
   Query,
   Res,
   BadRequestException,
+  UseGuards,
+  Req,
+  ForbiddenException,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 import type { Response } from 'express';
 import puppeteer from 'puppeteer';
@@ -101,22 +105,38 @@ export class CampaignController {
 
   // GET /session/:userId
   @Get('session/:userId')
-  async getSession(@Param('userId') userId: string) {
+  @UseGuards(AuthGuard('jwt'))
+  async getSession(@Param('userId') userId: string, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    if (authUserId !== userId) {
+      throw new ForbiddenException('Access Denied: You can only access your own session.');
+    }
     return this.service.getSession(userId);
   }
 
   // POST /session/:userId
   @Post('session/:userId')
+  @UseGuards(AuthGuard('jwt'))
   async saveSession(
     @Param('userId') userId: string,
     @Body() body: any,
+    @Req() req: any,
   ) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    if (authUserId !== userId) {
+      throw new ForbiddenException('Access Denied: You can only save your own session.');
+    }
     return this.service.saveSession(userId, body);
   }
 
   // DELETE /session/:userId
   @Delete('session/:userId')
-  async deleteSession(@Param('userId') userId: string) {
+  @UseGuards(AuthGuard('jwt'))
+  async deleteSession(@Param('userId') userId: string, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    if (authUserId !== userId) {
+      throw new ForbiddenException('Access Denied: You can only delete your own session.');
+    }
     return this.service.deleteSession(userId);
   }
 
@@ -266,9 +286,15 @@ saveDraft(@Body() body: any) {
 }
 
 @Get('draft/:userId')
+@UseGuards(AuthGuard('jwt'))
 getDrafts(
   @Param('userId') userId: string,
+  @Req() req: any,
 ) {
+  const authUserId = req.user?.id ?? req.user?.sub;
+  if (authUserId !== userId) {
+    throw new ForbiddenException('Access Denied: You can only access your own drafts.');
+  }
   return this.service.getDraftsByUser(userId);
 }
 
@@ -293,12 +319,22 @@ getDrafts(
   }
 
   @Get('linkedin/status/:userId')
-  async linkedinStatus(@Param('userId') userId: string) {
+  @UseGuards(AuthGuard('jwt'))
+  async linkedinStatus(@Param('userId') userId: string, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    if (authUserId !== userId) {
+      throw new ForbiddenException('Access Denied: You can only access your own LinkedIn status.');
+    }
     return this.service.getLinkedinStatus(userId);
   }
 
   @Get('user/:userId')
-  async getCampaigns(@Param('userId') userId: string) {
+  @UseGuards(AuthGuard('jwt'))
+  async getCampaigns(@Param('userId') userId: string, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    if (authUserId !== userId) {
+      throw new ForbiddenException('Access Denied: You can only access your own campaigns.');
+    }
     return this.service.getCampaignsByUser(userId);
   }
 
@@ -311,7 +347,12 @@ getDrafts(
   }
 
   @Get('meta/billing-status/:userId')
-  async getMetaBillingStatus(@Param('userId') userId: string) {
+  @UseGuards(AuthGuard('jwt'))
+  async getMetaBillingStatus(@Param('userId') userId: string, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    if (authUserId !== userId) {
+      throw new ForbiddenException('Access Denied: You can only access your own Meta billing status.');
+    }
     return this.service.getMetaBillingStatus(userId);
   }
 

@@ -6,6 +6,9 @@ export type CallCampaignDocument = CallCampaign & Document;
 @Schema({ timestamps: true })
 export class CallCampaign {
   @Prop({ required: true })
+  userId: string;
+
+  @Prop({ required: true })
   name: string;
 
   @Prop({ required: true })

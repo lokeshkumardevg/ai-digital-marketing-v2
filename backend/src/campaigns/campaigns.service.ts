@@ -3932,6 +3932,8 @@ Return ONLY JSON.
 
   async getCampaignsByUser(userId: string) {
     try {
+      // Clean up any previously seeded mock campaigns
+      await this.campaignModel.deleteMany({ campaignId: /^CMP_SEED_/ });
       const campaigns = await this.campaignModel
         .find({ userId })
         .sort({ createdAt: -1 });

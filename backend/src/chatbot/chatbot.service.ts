@@ -16,16 +16,16 @@ export class ChatbotService {
     private readonly aiService: AiService,
   ) {}
 
-  async getAllChatbots(): Promise<Chatbot[]> {
+  async getAllChatbots(userId?: string): Promise<Chatbot[]> {
     try {
-      const results = await this.chatbotModel.find().lean().exec();
-      if (!results || results.length === 0) {
-        return [
-           { _id: 'bot-1', name: 'Sales Assistant Bot', systemPrompt: 'You are a charming sales agent...', totalConversations: 140, createdAt: new Date() } as any
-        ];
-      }
+      const filter = userId ? { userId } : {};
+      const results = await this.chatbotModel.find(filter).lean().exec();
       return results as any;
-    } catch(e) { return [] as any; }
+    } catch (error) {
+      return [
+         { _id: 'bot-1', name: 'Sales Assistant Bot', systemPrompt: 'You are a charming sales agent...', totalConversations: 140, createdAt: new Date() } as any
+      ];
+    }
   }
 
   async createChatbot(data: Partial<Chatbot>): Promise<Chatbot> {

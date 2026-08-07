@@ -4,6 +4,7 @@ import { AnalyticsService } from '../analytics/analytics.service';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('crm')
+@UseGuards(AuthGuard('jwt'))
 export class CrmController {
   constructor(
     private readonly crmService: CrmService,
@@ -11,34 +12,38 @@ export class CrmController {
   ) {}
 
   @Get('dashboard')
-  @UseGuards(AuthGuard('jwt'))
   async getCrmDashboard(@Req() req: any, @Query('dateRange') dateRange?: string) {
     const userId = req.user?.id ?? req.user?.sub;
     return this.analyticsService.getDashboardMetrics(userId, dateRange);
   }
 
   @Post('contact')
-  async createContact(@Body() body: any) {
-    return this.crmService.createContact(body);
+  async createContact(@Body() body: any, @Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.crmService.createContact({ ...body, userId });
   }
 
   @Get('contacts')
-  async getContacts() {
-    return this.crmService.getAllContacts();
+  async getContacts(@Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.crmService.getAllContacts(userId);
   }
 
   @Post('audience/generate')
-  async generateAiAudience(@Body('goal') goal: string) {
-    return this.crmService.generateAiAudience(goal);
+  async generateAiAudience(@Body('goal') goal: string, @Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.crmService.generateAiAudience(goal, userId);
   }
 
   @Get('audiences')
-  async getAudiences() {
-    return this.crmService.getAudiences();
+  async getAudiences(@Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.crmService.getAudiences(userId);
   }
 
   @Patch('contact/:id/score')
-  async scoreLead(@Param('id') contactId: string) {
-    return this.crmService.scoreLead(contactId);
+  async scoreLead(@Param('id') contactId: string, @Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.crmService.scoreLead(contactId, userId);
   }
 }

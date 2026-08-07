@@ -6,6 +6,9 @@ export type AudienceDocument = Audience & Document;
 @Schema({ timestamps: true })
 export class Audience {
   @Prop({ required: true })
+  userId: string;
+
+  @Prop({ required: true })
   name: string;
 
   @Prop()

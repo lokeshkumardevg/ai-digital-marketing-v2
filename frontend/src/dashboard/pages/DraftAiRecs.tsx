@@ -989,7 +989,10 @@ export function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showTo
     try {
       const res = await fetch(`${API_BASE}/campaign/draft`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token') || ''}`
+        },
         body: JSON.stringify({
           campaignId: campaign._id, name: campaignTitle, platform: activePid,
           data: { caption: pvCaption, cta: pvCta, image: pvImage, budget: adBudget, event: adEvent, schedule: adSchedule, finalUrl: adFinalUrl, location: adLocation, advantagePlus: adAdvantage },
@@ -1010,7 +1013,10 @@ export function CampaignEditor({ campaign, brandDetails, onBack, onSaved, showTo
     try {
       const res = await fetch(`${API_BASE}/campaign/publish`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token') || ''}`
+        },
         body: JSON.stringify({
           campaignId: campaign._id, platform: activePid, planId,
           data: { caption: pvCaption, cta: pvCta, image: pvImage, budget: adBudget, event: adEvent, schedule: adSchedule, finalUrl: adFinalUrl, location: adLocation, advantagePlus: adAdvantage },
@@ -1193,7 +1199,11 @@ export const DraftAiRecs: React.FC<{ brandDetails?: BrandDetails }> = ({ brandDe
     setListLoading(true);
     setFetchError(null);
 
-    fetch(`${API_BASE}/campaign/draft/${userId}`)
+    fetch(`${API_BASE}/campaign/draft/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token') || ''}`
+      }
+    })
       .then(async r => {
         if (!r.ok) {
           const err = await r.json().catch(() => ({}));

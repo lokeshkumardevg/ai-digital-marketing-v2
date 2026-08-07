@@ -20,18 +20,18 @@ export class CrmService {
     return await contact.save();
   }
 
-  async getAllContacts(): Promise<Contact[]> {
-    return this.contactModel.find().populate('audiences').exec();
+  async getAllContacts(userId: string): Promise<Contact[]> {
+    return this.contactModel.find({ userId }).populate('audiences').exec();
   }
 
-  async createAudience(data: Partial<Audience>): Promise<Audience> {
+  async createAudience(data: Partial<Audience> & { userId: string }): Promise<Audience> {
     const audience = new this.audienceModel(data);
     return await audience.save();
   }
 
-  async getAudiences(): Promise<Audience[]> {
+  async getAudiences(userId: string): Promise<Audience[]> {
     try {
-      const results = await this.audienceModel.find().lean().exec();
+      const results = await this.audienceModel.find({ userId }).lean().exec();
       return results || [];
     } catch (e) {
       this.logger.error('Failed to load audiences', e);
@@ -42,7 +42,7 @@ export class CrmService {
   /**
    * Generates a targeted Audience Segment using the AI Orchestrator based on business goals.
    */
-  async generateAiAudience(goal: string): Promise<any> {
+  async generateAiAudience(goal: string, userId: string): Promise<any> {
     this.logger.log(`Generating optimal audience for goal: ${goal}`);
     const prompt = `Based on the following business goal, generate optimal audience targeting criteria including minimum age, maximum age, top 5 locations, and top 5 interests. Return ONLY raw JSON in this format: {"name": "...", "description": "...", "targetingCriteria": { "minAge": 18, "maxAge": 45, "locations": [], "interests": [] }}. Goal: ${goal}`;
     
@@ -50,7 +50,7 @@ export class CrmService {
       const resultStr = await this.aiService.generateContent(prompt, 'You are a master digital marketer who understands customer demographics perfectly.');
       const parsed = JSON.parse(resultStr.replace(/```json|```/g, '').trim());
       parsed.estimatedSize = Math.floor(Math.random() * 50000) + 10000; // Mock estimate
-      return await this.createAudience(parsed);
+      return await this.createAudience({ ...parsed, userId });
     } catch (error) {
       this.logger.error('Failed to generate AI audience segment, returning native Mock payload', error);
       // Fallback Native Mock Object
@@ -63,7 +63,8 @@ export class CrmService {
           locations: ['New York', 'London', 'Remote'],
           interests: ['Marketing', 'Productivity', 'SaaS']
         },
-        estimatedSize: 25000
+        estimatedSize: 25000,
+        userId,
       };
       
       try {
@@ -78,9 +79,9 @@ export class CrmService {
   /**
    * Evaluates leads and scores them based on engagement logic and AI heuristics.
    */
-  async scoreLead(contactId: string): Promise<Contact> {
-    const contact = await this.contactModel.findById(contactId);
-    if (!contact) throw new Error('Contact not found');
+  async scoreLead(contactId: string, userId: string): Promise<Contact> {
+    const contact = await this.contactModel.findOne({ _id: contactId, userId });
+    if (!contact) throw new Error('Contact not found or access denied');
 
     // MOCK AI LOGIC: Assign a random score based on historical conversions
     contact.aiLeadScore = Math.floor(Math.random() * 60) + 40; // 40-100 score

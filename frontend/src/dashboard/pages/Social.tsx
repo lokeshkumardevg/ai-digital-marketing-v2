@@ -93,7 +93,11 @@ export const Social: React.FC = () => {
     setCheckingLinkedin(true);
     try {
       const API_BASE = import.meta.env.VITE_API_URL;
-      const res = await fetch(`${API_BASE}/campaign/linkedin/status/${uid}`);
+      const res = await fetch(`${API_BASE}/campaign/linkedin/status/${uid}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token') || ''}`
+        }
+      });
       const data = await res.json();
       setLinkedinStatus(data);
       if (data.readyToPublish) {

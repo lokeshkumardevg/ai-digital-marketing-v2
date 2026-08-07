@@ -18,8 +18,9 @@ export class CallingService {
     @InjectModel(CallRecord.name) private recordModel: Model<CallRecordDocument>,
   ) {}
 
-  async createCampaign(dto: CreateCampaignDto): Promise<CallCampaign> {
+  async createCampaign(dto: CreateCampaignDto & { userId?: string }): Promise<CallCampaign> {
     const campaign = new this.campaignModel({
+      userId: dto.userId,
       name: dto.name,
       prompt: dto.prompt,
       totalContacts: dto.contacts.length,
@@ -131,11 +132,18 @@ export class CallingService {
     }
   }
 
-  async getCampaigns() {
-    return this.campaignModel.find().sort({ createdAt: -1 }).exec();
+  async getCampaigns(userId?: string) {
+    const filter = userId ? { userId } : {};
+    return this.campaignModel.find(filter).sort({ createdAt: -1 }).exec();
   }
 
-  async getCampaignRecords(campaignId: string) {
+  async getCampaignRecords(campaignId: string, userId?: string) {
+    if (userId) {
+      const campaign = await this.campaignModel.findOne({ _id: campaignId, userId });
+      if (!campaign) {
+        throw new Error('Access Denied: You do not own this campaign');
+      }
+    }
     return this.recordModel.find({ campaignId: campaignId as any }).sort({ createdAt: -1 }).exec();
   }
 }

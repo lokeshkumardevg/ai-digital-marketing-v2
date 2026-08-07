@@ -35,6 +35,26 @@ export const CampaigndSchema = new Schema(
       type: String,
       default: 'DRAFT',
     },
+
+    isRealMeta: {
+      type: Boolean,
+      default: false,
+    },
+
+    isRealGoogle: {
+      type: Boolean,
+      default: false,
+    },
+
+    isRealLinkedIn: {
+      type: Boolean,
+      default: false,
+    },
+
+    isRealX: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

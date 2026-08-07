@@ -966,12 +966,14 @@ export function TopBar({
 
 /* ─── AD SETTING CARD ─────────────────────────────────────── */
 interface AdSettingCardProps {
+  campaignName: string;
   event: string;
   budget: string;
   startDate: string;
   endDate: string;
   finalUrl: string;
   enabled: boolean;
+  onCampaignNameChange: (v: string) => void;
   onEventChange: (v: string) => void;
   onBudgetChange: (v: string) => void;
   onStartDateChange: (v: string) => void;
@@ -980,12 +982,14 @@ interface AdSettingCardProps {
 }
 
 function AdSettingCard({
+  campaignName,
   event,
   budget,
   startDate,
   endDate,
   finalUrl,
   enabled,
+  onCampaignNameChange,
   onEventChange,
   onBudgetChange,
   onStartDateChange,
@@ -995,6 +999,10 @@ function AdSettingCard({
   return (
     <div style={{ ...card(), borderTop: "3px solid var(--blue)" }}>
       <div style={sLabel("var(--blue)")}><I.Settings /> Ad Setting</div>
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}><I.Edit /> Campaign Name</div>
+        <input className="editable-input" value={campaignName} onChange={e => onCampaignNameChange(e.target.value)} placeholder="e.g. Sunny Kitchen Launch" style={{ fontWeight: 600 }} />
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
         <div>
           <div style={{ fontSize: 10, color: "var(--t3)", marginBottom: 4, fontWeight: 500 }}><I.Edit /> Event</div>
@@ -2122,6 +2130,26 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
   const [campaigns, setCampaigns] = useState<Campaign[]>([{ id: sid, name: `${brandName}_Campaign_01`, platformId: activePid }]);
   const [activeCid, setActiveCid] = useState<string>(sid);
 
+  const [adCampaignName, setAdCampaignName] = useState<string>(() => {
+    const defaultPlatName = PLATFORMS.find(p => p.id === activePid)?.name || "Campaign";
+    return (
+      globalDraftData?.campaignName ||
+      globalDraftData?.name ||
+      (promoData as any)?.campaignName ||
+      `${brandName || "Brand"}_${promoData?.businessGoal || promoData?.objective || "OUTCOME_SALES"}_${defaultPlatName}_${new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}`
+    );
+  });
+
+  useEffect(() => {
+    if (globalDraftData?.campaignName || globalDraftData?.name || (promoData as any)?.campaignName) {
+      setAdCampaignName(globalDraftData?.campaignName || globalDraftData?.name || (promoData as any)?.campaignName);
+    } else if (brandName) {
+      const defaultPlatName = PLATFORMS.find(p => p.id === activePid)?.name || "Campaign";
+      const generatedName = `${brandName}_${promoData?.businessGoal || promoData?.objective || "OUTCOME_SALES"}_${defaultPlatName}_${new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}`;
+      setAdCampaignName(generatedName);
+    }
+  }, [globalDraftData, promoData, brandName, activePid]);
+
   // const [generatedImages,  setGeneratedImages]  = useState<string[]>([]);
   const [generatedImages, setGeneratedImages] = useState<string[]>(
     (brandDetails as any)?.generatedImages ?? []
@@ -2187,7 +2215,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
       const payload = {
         userId,
         campaignId: targetCid,
-        campaignName: `${brandName}_${activePid}_Campaign`,
+        campaignName: adCampaignName || `${brandName}_${activePid}_Campaign`,
         dailyBudget: parseFloat(adBudget.replace(/[^0-9.]/g, '')) || 10,
         objective: adEvent,
         startDate: adStartDate,
@@ -2268,7 +2296,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     } finally {
       setLoading(null);
     }
-  }, [onPublish, showToast, activePid, platformCreatives, userId, campaignId, activeCid, brandName, adBudget, adEvent, adStartDate, adEndDate, adFinalUrl, selectedMetaPage, selectedMetaPixel, selectedGoogleAccount, adIncludeLocations, adExcludeLocations]);
+  }, [onPublish, showToast, activePid, platformCreatives, userId, campaignId, activeCid, brandName, adBudget, adEvent, adStartDate, adEndDate, adFinalUrl, selectedMetaPage, selectedMetaPixel, selectedGoogleAccount, adIncludeLocations, adExcludeLocations, adCampaignName]);
 
   const campaignTitle = `${brandName}_${promoData?.businessGoal || promoData?.objective || "OUTCOME_SALES"}_${activePlat.name}_${new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}`;
 
@@ -2368,7 +2396,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
         campaignId: campaignId || activeCid,   // outer campaignId prop + internal activeCid
 
         // ── Campaign meta ──────────────────────────────────────────────
-        name: campaignTitle,
+        name: adCampaignName || campaignTitle,
         platforms: enabledPlatforms,
 
         // ── Brand snapshot (so edit view needs no extra fetch) ─────────
@@ -2424,7 +2452,7 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
     campaignTitle, userId, campaignId, activeCid,
     brandName, logoUrl, brandDetails,
     promoData,
-    onSaveDraft, showToast,
+    onSaveDraft, showToast, adCampaignName,
   ]);
 
   const aiAdCopy = promoData?.adCopy || initialDraftData?.adCopy || {};
@@ -2493,12 +2521,14 @@ export default function AdCampaignDashboard({ brandDetails, promoData, campaignI
               <div style={{ display: "grid", gridTemplateColumns: "minmax(200px,1fr) minmax(260px,1.1fr) minmax(200px,1fr)", gap: 14, alignItems: "start" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <AdSettingCard
+                    campaignName={adCampaignName}
                     event={adEvent}
                     budget={adBudget}
                     startDate={adStartDate}
                     endDate={adEndDate}
                     finalUrl={adFinalUrl}
                     enabled={isCurrentPlatformEnabled}
+                    onCampaignNameChange={setAdCampaignName}
                     onEventChange={setAdEvent}
                     onBudgetChange={setAdBudget}
                     onStartDateChange={setAdStartDate}

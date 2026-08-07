@@ -1,6 +1,7 @@
-import { Controller, Post, Body, Get, Param, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Logger, UseGuards, Req } from '@nestjs/common';
 import { CallingService } from './calling.service';
 import { CreateCampaignDto } from './dto/create-campaign.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('calling')
 export class CallingController {
@@ -9,26 +10,32 @@ export class CallingController {
   constructor(private readonly callingService: CallingService) {}
 
   @Post('campaign')
-  async createCampaign(@Body() dto: CreateCampaignDto) {
-    this.logger.log(`Received request to create bulk calling campaign: ${dto.name}`);
-    const campaign = await this.callingService.createCampaign(dto);
+  @UseGuards(AuthGuard('jwt'))
+  async createCampaign(@Body() dto: CreateCampaignDto, @Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    this.logger.log(`Received request to create bulk calling campaign: ${dto.name} by user: ${userId}`);
+    const campaign = await this.callingService.createCampaign({ ...dto, userId });
     return { success: true, campaign };
   }
 
   @Get('campaigns')
-  async getCampaigns() {
-    return this.callingService.getCampaigns();
+  @UseGuards(AuthGuard('jwt'))
+  async getCampaigns(@Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.callingService.getCampaigns(userId);
   }
 
   @Get('campaigns/:id/records')
-  async getCampaignRecords(@Param('id') campaignId: string) {
-    return this.callingService.getCampaignRecords(campaignId);
+  @UseGuards(AuthGuard('jwt'))
+  async getCampaignRecords(@Param('id') campaignId: string, @Req() req: any) {
+    const userId = req.user?.id ?? req.user?.sub;
+    return this.callingService.getCampaignRecords(campaignId, userId);
   }
 
   @Post('webhook')
   async handleWebhook(@Body() body: any) {
     // This endpoint receives POST requests from the Voice AI API (e.g. Bland.ai or Vapi)
-    // when a call status changes or completes.
+    // when a call status changes or completes. Webhook remains public.
     await this.callingService.handleWebhook(body);
     return { success: true };
   }

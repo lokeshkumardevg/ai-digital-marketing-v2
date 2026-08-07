@@ -589,21 +589,26 @@ async def optimize_draft(body: OptimizeDraftRequest):
             context += f"Current Target Job Titles: {', '.join(body.liJobTitles)}\n"
 
         prompt = (
-            f"You are a conversion rate optimization (CRO) and ad copywriting specialist.\n"
-            f"Optimize the ad headline, primary text, and target keywords/demographics for a campaign to achieve maximum click-through rate (CTR) and conversions.\n\n"
-            f"Rules:\n"
-            f"1. For Google Search: The headline must be punchy and under 30 characters. The primary text must act as a clear description under 90 characters. Provide 5-8 highly relevant keywords.\n"
-            f"2. For Meta/LinkedIn/Other: The headline should be catchy, and primaryText should use the PAS (Problem-Agitate-Solve) or AIDA copy framework. Offer targeted categories.\n\n"
+            f"You are a conversion rate optimization (CRO) and direct-response ad copywriting specialist.\n"
+            f"Your task is to analyze the brand benefits, features, and target audience, and generate an extremely high-converting optimization draft.\n\n"
+            f"Optimization Guidelines:\n"
+            f"1. Benefit-Driven Hooks: Identify the core value propositions and specific user benefits from the brand description. Structure the ad copy (headline & primaryText) to lead with a benefit-driven hook (e.g., save money, reduce time, increase revenue).\n"
+            f"2. Copywriting Frameworks:\n"
+            f"   - For Google Search: The headline must be extremely punchy, benefits-focused, and strictly under 30 characters. The description/primaryText must act as a clear value proposition call-to-action under 90 characters.\n"
+            f"   - For Meta/LinkedIn/Other: Use AIDA (Attention, Interest, Desire, Action) or PAS (Problem, Agitate, Solve) frameworks. The headline should capture immediate attention, and the primaryText should agitate the pain point and resolve it with the brand's key benefits.\n"
+            f"3. High-Intent Targeting:\n"
+            f"   - For Google Search: Generate 5-8 high-intent commercial keywords matching these benefits.\n"
+            f"   - For LinkedIn: Select job titles, seniorities, and company sizes of the exact decision-makers who care about these specific benefits.\n\n"
             f"Context:\n{context}\n\n"
             f"Return ONLY a raw valid JSON object (no markdown, no ```json formatting, no other text) structured like this:\n"
             f"{{\n"
-            f'  "headline": "highly optimized headline text",\n'
-            f'  "primaryText": "highly optimized primary text/description copy",\n'
+            f'  "headline": "punchy benefit-driven headline",\n'
+            f'  "primaryText": "compelling, conversion-focused primary text copy",\n'
             f'  "googleKeywords": ["keyword1", "keyword2", ...] (only if platform is google),\n'
             f'  "liJobTitles": ["job title 1", "job title 2", ...] (only if platform is linkedin),\n'
             f'  "liSeniority": ["Senior", "Director", ...] (only if platform is linkedin),\n'
             f'  "liCompanySize": ["11-50", "51-200", ...] (only if platform is linkedin),\n'
-            f'  "explanation": "Brief 1-sentence description of the optimization applied."\n'
+            f'  "explanation": "Detailed explanation of which brand benefit was targeted for this optimization and why."\n'
             f"}}"
         )
 

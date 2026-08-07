@@ -8,13 +8,15 @@ export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}
 
   @Get()
-  async getChatbots() {
-    return this.chatbotService.getAllChatbots();
+  async getChatbots(@Req() req: any) {
+    const userId = req.user?.id;
+    return this.chatbotService.getAllChatbots(userId);
   }
 
   @Post()
-  async createChatbot(@Body() body: any) {
-    return this.chatbotService.createChatbot(body);
+  async createChatbot(@Body() body: any, @Req() req: any) {
+    const userId = req.user?.id;
+    return this.chatbotService.createChatbot({ ...body, userId });
   }
 
   @Get(':id')

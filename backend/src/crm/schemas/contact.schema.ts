@@ -7,6 +7,9 @@ export type ContactDocument = Contact & Document;
 @Schema({ timestamps: true })
 export class Contact {
   @Prop({ required: true })
+  userId: string;
+
+  @Prop({ required: true })
   firstName: string;
 
   @Prop({ required: true })
