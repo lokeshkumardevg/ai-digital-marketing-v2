@@ -419,11 +419,12 @@ export class AuthService {
   }
 
 
+  // Retrieve the auth URL for LinkedIn Ads connection
   getLinkedInAuthUrl(userId: string) {
     const clientId = this.configService.get('LINKEDIN_CLIENT_ID');
     const backendUrl = this.configService.get<string>('BACKEND_URL');
     const redirectUri = `${backendUrl}/auth/linkedin/callback`;
-    const scope = 'openid%20profile%20email%20w_member_social%20r_organization_admin%20w_organization_social';
+    const scope = 'openid%20profile%20email%20w_member_social%20r_organization_admin%20w_organization_social%20r_ads%20rw_ads%20r_ads_reporting';
 
     return `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${userId}`;
   }
@@ -996,7 +997,7 @@ export class AuthService {
     if (tokens.error) throw new UnauthorizedException(tokens.error_description);
 
     // Get user info
-    const userRes = await fetch('https://api.linkedin.com/v2/people/~', {
+    const userRes = await fetch('https://api.linkedin.com/v2/userinfo', {
       headers: {
         Authorization: `Bearer ${tokens.access_token}`,
       },
@@ -1007,7 +1008,7 @@ export class AuthService {
     await this.usersService.update(userId, {
       linkedinAccessToken: tokens.access_token,
       linkedinRefreshToken: tokens.refresh_token,
-      linkedinPersonUrn: userData.id,
+      linkedinPersonUrn: userData.sub || userData.id,
     });
 
     return { message: 'LinkedIn Ads connected successfully' };

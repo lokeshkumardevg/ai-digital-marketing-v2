@@ -26,7 +26,7 @@ export class SocialAuthService {
     if (normalized === 'linkedin') {
       const clientId = this.getEnv('LINKEDIN_CLIENT_ID');
       const scope =
-        this.configService.get<string>('LINKEDIN_SCOPES') || 'openid profile w_member_social email rw_ads r_ads r_organization_admin w_organization_social';
+        this.configService.get<string>('LINKEDIN_SCOPES') || 'openid profile w_member_social email rw_ads r_ads r_organization_admin w_organization_social r_ads_reporting';
       return `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(state)}&scope=${encodeURIComponent(scope)}`;
     }
 

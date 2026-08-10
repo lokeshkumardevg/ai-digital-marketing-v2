@@ -180,7 +180,7 @@ Rules of Interaction:
 
   private async getChatbotResponse(userPrompt: string, systemPrompt: string): Promise<string> {
     try {
-      const response = await fetch('http://localhost:8001/api/v1/chatbot-response', {
+      const response = await fetch('http://localhost:8003/api/v1/chatbot-response', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userPrompt, systemPrompt }),

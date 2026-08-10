@@ -87,7 +87,7 @@ export class CampaignCronService {
           };
 
           // Call python optimize endpoint
-          const response = await fetch('http://localhost:8001/api/v1/optimize-campaign', {
+          const response = await fetch('http://localhost:8003/api/v1/optimize-campaign', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(currentPlan),

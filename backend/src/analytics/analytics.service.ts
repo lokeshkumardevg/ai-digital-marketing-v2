@@ -251,7 +251,7 @@ export class AnalyticsService {
           spend,
           color: '#0665ff',
         };
-      });
+      }).filter((c: any) => c.impressions > 0 || c.clicks > 0 || c.spend > 0);
 
       if (creatives.length === 0) {
         return this.getEmptyResponse();
@@ -390,23 +390,25 @@ export class AnalyticsService {
             const ctr = Number(insight.ctr || 0);
             const cpa = conversions > 0 ? parseFloat((spend / conversions).toFixed(2)) : (clicks > 0 ? parseFloat((spend / clicks).toFixed(2)) : 0);
             const cpc = clicks > 0 ? parseFloat((spend / clicks).toFixed(2)) : 0;
-            totalSpend += spend;
 
-            creatives.push({
-              id: campaign.id || Math.random().toString(),
-              name: campaign.name || 'Unnamed campaign',
-              accountName: account.name || accountId,
-              status: campaign.status || 'unknown',
-              objective: campaign.objective || 'unknown',
-              impressions,
-              clicks,
-              conversions,
-              spend,
-              ctr: parseFloat(ctr.toFixed(2)),
-              cpc,
-              cpa,
-              color: '#1877f2',
-            });
+            if (impressions > 0 || clicks > 0 || spend > 0) {
+              totalSpend += spend;
+              creatives.push({
+                id: campaign.id || Math.random().toString(),
+                name: campaign.name || 'Unnamed campaign',
+                accountName: account.name || accountId,
+                status: campaign.status || 'unknown',
+                objective: campaign.objective || 'unknown',
+                impressions,
+                clicks,
+                conversions,
+                spend,
+                ctr: parseFloat(ctr.toFixed(2)),
+                cpc,
+                cpa,
+                color: '#1877f2',
+              });
+            }
           });
 
           return {
@@ -518,10 +520,11 @@ export class AnalyticsService {
         return this.getEmptyResponse();
       }
 
-      const accountsRes = await fetch('https://api.linkedin.com/v2/adAccounts?q=search', {
+      const accountsRes = await fetch('https://api.linkedin.com/v2/adAccountsV2?q=search', {
         headers: {
           Authorization: `Bearer ${user.linkedinAccessToken}`,
           'Content-Type': 'application/json',
+          'X-Restli-Protocol-Version': '2.0.0',
         },
       });
       const accountsData: any = await accountsRes.json();
@@ -534,12 +537,39 @@ export class AnalyticsService {
       const since = new Date();
       since.setDate(since.getDate() - 30); // 30 days
 
-      const analyticsUrl = `https://api.linkedin.com/v2/adAnalyticsV2?q=analytics&dateRange.start.year=${since.getFullYear()}&dateRange.start.month=${since.getMonth() + 1}&dateRange.start.day=${since.getDate()}&dateRange.end.year=${today.getFullYear()}&dateRange.end.month=${today.getMonth() + 1}&dateRange.end.day=${today.getDate()}&pivot=CAMPAIGN&accounts=urn%3Ali%3AsponsoredAccount%3A${encodeURIComponent(accountUrn)}&fields=costInLocalCurrency,impressions,clicks,conversions`;
+      // Fetch Campaigns under this account using versioned REST API
+      const targetUrl = `https://api.linkedin.com/rest/adAccounts/${accountUrn}/adCampaigns?q=search`;
+      const campRes = await fetch(targetUrl, {
+        headers: {
+          'Authorization': `Bearer ${user.linkedinAccessToken}`,
+          'LinkedIn-Version': '202606',
+          'X-Restli-Protocol-Version': '2.0.0'
+        }
+      });
+
+      let campaignNames: Record<string, string> = {};
+      let campaignUrns: string[] = [];
+      if (campRes.ok) {
+        const campData = await campRes.json();
+        for (const c of (campData.elements || [])) {
+          const urn = `urn:li:sponsoredCampaign:${c.id}`;
+          campaignUrns.push(urn);
+          campaignNames[urn] = c.name;
+        }
+      }
+
+      if (campaignUrns.length === 0) {
+        return this.getEmptyResponse();
+      }
+
+      const campaignsParam = campaignUrns.map((urn: string) => encodeURIComponent(urn)).join(',');
+      const analyticsUrl = `https://api.linkedin.com/rest/adAnalytics?q=analytics&pivot=CAMPAIGN&dateRange=(start:(year:${since.getFullYear()},month:${since.getMonth() + 1},day:${since.getDate()}))&timeGranularity=ALL&campaigns=List(${campaignsParam})&fields=costInLocalCurrency,impressions,clicks,pivotValues`;
 
       const statsRes = await fetch(analyticsUrl, {
         headers: {
           Authorization: `Bearer ${user.linkedinAccessToken}`,
-          'Content-Type': 'application/json',
+          'LinkedIn-Version': '202606',
+          'X-Restli-Protocol-Version': '2.0.0',
         },
       });
       const statsJson: any = await statsRes.json();
@@ -548,16 +578,18 @@ export class AnalyticsService {
       }
 
       const creatives = statsJson.elements.map((element: any, i: number) => {
+        const campaignUrn = element.pivotValues?.[0] || '';
+        const name = campaignNames[campaignUrn] || `Campaign ${i + 1}`;
         const impressions = Number(element.impressions || 0);
         const spend = Number(element.costInLocalCurrency || 0);
         const clicks = Number(element.clicks || 0);
-        const conversions = Number(element.conversions || 0);
+        const conversions = 0;
         const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
         const cpa = conversions > 0 ? spend / conversions : 0;
         const cpc = clicks > 0 ? spend / clicks : 0;
         return {
-          id: `li-${i}`,
-          name: `Campaign ${i + 1}`,
+          id: campaignUrn || `li-${i}`,
+          name,
           status: 'ACTIVE',
           cpa: parseFloat(cpa.toFixed(2)),
           cpc: parseFloat(cpc.toFixed(2)),
@@ -568,7 +600,7 @@ export class AnalyticsService {
           conversions,
           color: '#0A66C2',
         };
-      });
+      }).filter((c: any) => c.impressions > 0 || c.clicks > 0 || c.spend > 0);
 
       if (creatives.length === 0) {
         return this.getEmptyResponse();
@@ -1073,10 +1105,11 @@ export class AnalyticsService {
       throw new HttpException('LinkedIn access token not found. Connect LinkedIn first.', HttpStatus.PRECONDITION_FAILED);
     }
 
-    const accountsRes = await fetch('https://api.linkedin.com/v2/adAccounts?q=search', {
+    const accountsRes = await fetch('https://api.linkedin.com/v2/adAccountsV2?q=search', {
       headers: {
         Authorization: `Bearer ${user.linkedinAccessToken}`,
         'Content-Type': 'application/json',
+        'X-Restli-Protocol-Version': '2.0.0',
       },
     });
     const accountsData: any = await accountsRes.json();
@@ -1087,15 +1120,16 @@ export class AnalyticsService {
     const accountUrn = accountsData.elements[0].id || accountsData.elements[0].account || accountsData.elements[0].organisations?.[0];
     const today = new Date();
     const since = new Date();
-    since.setDate(since.getDate() - 7);
-    const dateFrom = since.toISOString().split('T')[0];
-    const dateTo = today.toISOString().split('T')[0];
-    const analyticsUrl = `https://api.linkedin.com/v2/adAnalyticsV2?q=analytics&dateRange.start.year=${since.getFullYear()}&dateRange.start.month=${since.getMonth() + 1}&dateRange.start.day=${since.getDate()}&dateRange.end.year=${today.getFullYear()}&dateRange.end.month=${today.getMonth() + 1}&dateRange.end.day=${today.getDate()}&pivot=ACCOUNT&accounts=urn%3Ali%3AsponsoredAccount%3A${encodeURIComponent(accountUrn)}&fields=costInLocalCurrency,impressions,clicks,conversions`;
+    since.setDate(since.getDate() - 30);
+
+    const accountsParam = encodeURIComponent(`urn:li:sponsoredAccount:${accountUrn}`);
+    const analyticsUrl = `https://api.linkedin.com/rest/adAnalytics?q=analytics&pivot=ACCOUNT&dateRange=(start:(year:${since.getFullYear()},month:${since.getMonth() + 1},day:${since.getDate()}))&timeGranularity=ALL&accounts=List(${accountsParam})&fields=costInLocalCurrency,impressions,clicks`;
 
     const statsRes = await fetch(analyticsUrl, {
       headers: {
         Authorization: `Bearer ${user.linkedinAccessToken}`,
-        'Content-Type': 'application/json',
+        'LinkedIn-Version': '202606',
+        'X-Restli-Protocol-Version': '2.0.0',
       },
     });
     const statsJson: any = await statsRes.json();

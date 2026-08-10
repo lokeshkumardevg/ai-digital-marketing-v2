@@ -240,6 +240,51 @@ Return ONLY raw valid JSON with these keys:
 
   // ── CORE ENGINE ───────────────────────────────────────────
 
+  private async scrapeWebpage(url: string): Promise<string> {
+    if (!url) return '';
+    try {
+      let targetUrl = url;
+      if (!/^https?:\/\//i.test(targetUrl)) {
+        targetUrl = 'https://' + targetUrl;
+      }
+      this.logger.log(`Scraping webpage: ${targetUrl}`);
+      const response = await axios.get(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+        timeout: 8000,
+      });
+
+      if (!response.data || typeof response.data !== 'string') {
+        return '';
+      }
+
+      const html = response.data;
+      
+      const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i) ||
+                        html.match(/<meta[^>]*content=["']([^"']*)["'][^>]*name=["']description["']/i);
+      const description = descMatch ? descMatch[1] : '';
+
+      const titleMatch = html.match(/<title>([^<]*)<\/title>/i);
+      const title = titleMatch ? titleMatch[1] : '';
+
+      let cleanText = html.replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '');
+      cleanText = cleanText.replace(/<[^>]*>/g, ' ');
+      cleanText = cleanText.replace(/\s+/g, ' ').trim();
+      const contentSnippet = cleanText.substring(0, 8000);
+
+      return `Webpage Metadata:
+Title: ${title}
+Description: ${description}
+
+Webpage Content Snippet:
+${contentSnippet}`;
+    } catch (err: any) {
+      this.logger.warn(`Failed to scrape URL ${url}: ${err.message}`);
+      return '';
+    }
+  }
+
   private async analyzeWithAI(
     prompt: string,
     type: string,
@@ -250,7 +295,13 @@ Return ONLY raw valid JSON with these keys:
     try {
       const systemPrompt = `You are an expert AI marketing analyst at AdsGo.ai. Always return ONLY raw valid JSON, no markdown, no explanation.`;
 
-      const response = await this.generateContent(prompt, systemPrompt);
+      const scrapedContext = await this.scrapeWebpage(url);
+      let fullPrompt = prompt;
+      if (scrapedContext) {
+        fullPrompt = `Scraped Website Context:\n${scrapedContext}\n\n${prompt}`;
+      }
+
+      const response = await this.generateContent(fullPrompt, systemPrompt);
 
       const parsed =
         typeof response === 'string'

@@ -460,6 +460,70 @@ export const Crm: React.FC = () => {
                     Disconnect
                   </button>
                 )}
+
+                {!item.connected && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const uid = user?._id || user?.id;
+                      if (item.label === 'LinkedIn') {
+                        try {
+                          const { api } = await import('../../api/axios');
+                          const res = await api.get('/linkedin-crm/oauth/url');
+                          if (res.data?.url) {
+                            window.location.href = res.data.url;
+                          }
+                        } catch {
+                          toast.error('Unable to connect LinkedIn.');
+                        }
+                      } else if (item.label === 'Google') {
+                        try {
+                          const { api } = await import('../../api/axios');
+                          const res = await api.get('/social/auth/google');
+                          if (res.data?.data?.url) {
+                            window.location.href = res.data.data.url;
+                          }
+                        } catch {
+                          toast.error('Unable to connect Google Ads.');
+                        }
+                      } else if (item.label === 'Meta') {
+                        try {
+                          const { api } = await import('../../api/axios');
+                          const res = await api.get('/social/auth/facebook');
+                          if (res.data?.data?.url) {
+                            window.location.href = res.data.data.url;
+                          }
+                        } catch {
+                          toast.error('Unable to connect Meta.');
+                        }
+                      } else if (item.label === 'X') {
+                        try {
+                          const { api } = await import('../../api/axios');
+                          const res = await api.get('/social/auth/twitter');
+                          if (res.data?.data?.url) {
+                            window.location.href = res.data.data.url;
+                          }
+                        } catch {
+                          toast.error('Unable to connect X.');
+                        }
+                      }
+                    }}
+                    style={{
+                      marginLeft: 6,
+                      padding: '4px 10px',
+                      borderRadius: 999,
+                      border: `1px solid rgba(16,185,129,0.3)`,
+                      background: 'rgba(16,185,129,0.10)',
+                      color: '#10b981',
+                      cursor: 'pointer',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                    }}
+                    title="Connect"
+                  >
+                    Connect
+                  </button>
+                )}
               </div>
             ))}
 

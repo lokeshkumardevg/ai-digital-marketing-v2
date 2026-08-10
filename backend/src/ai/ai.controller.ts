@@ -100,24 +100,70 @@ export class AiController {
       const targetUrl = body.url.startsWith('http') ? body.url : `https://${body.url}`;
       const domain = new URL(targetUrl).hostname.replace('www.', '');
 
-      // 1. Existing Scrape
-      const fetchResponse = await fetch(targetUrl, {
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36'
-        }
-      });
+      // 1. Playwright Scraping with Cheerio fallback
+      let meta = { title: '', description: '', h1: '', images: 0, content: '' };
+      let browser;
+      try {
+        this.logger.log(`Starting Playwright browser for scraping: ${targetUrl}`);
+        browser = await chromium.launch({ headless: true });
+        const context = await browser.newContext({
+          userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        });
+        const page = await context.newPage();
+        await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 12000 });
+        await page.waitForTimeout(2000); // Allow lazy-loaded content to render
 
-      let meta = { title: '', description: '', h1: '', images: 0 };
-      if (fetchResponse.ok) {
-        const htmlText = await fetchResponse.text();
-        const $ = cheerio.load(htmlText);
+        const title = await page.title();
+        const description = await page.evaluate(() => {
+          const el = document.querySelector('meta[name="description"]') || document.querySelector('meta[property="og:description"]');
+          return el ? el.getAttribute('content') || '' : '';
+        });
+        const h1 = await page.evaluate(() => {
+          const el = document.querySelector('h1');
+          return el ? el.innerText || el.textContent || '' : '';
+        });
+        const imagesCount = await page.evaluate(() => {
+          return document.querySelectorAll('img').length;
+        });
+        const bodyText = await page.evaluate(() => {
+          const scriptTags = document.querySelectorAll('script, style, iframe, noscript');
+          scriptTags.forEach(t => t.remove());
+          return document.body.innerText || document.body.textContent || '';
+        });
+
         meta = {
-          title: $('title').text(),
-          description: $('meta[name="description"]').attr('content') || '',
-          h1: $('h1').first().text(),
-          images: $('img').length
+          title: title.trim(),
+          description: description.trim(),
+          h1: h1.trim(),
+          images: imagesCount,
+          content: bodyText.replace(/\s+/g, ' ').trim().substring(0, 5000)
         };
+      } catch (err: any) {
+        this.logger.warn(`Playwright scrape failed, falling back to cheerio/fetch: ${err.message}`);
+        try {
+          const fetchResponse = await fetch(targetUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36'
+            }
+          });
+          if (fetchResponse.ok) {
+            const htmlText = await fetchResponse.text();
+            const $ = cheerio.load(htmlText);
+            $('script, style, iframe, noscript').remove();
+            const bodyText = $('body').text() || '';
+            meta = {
+              title: $('title').text().trim(),
+              description: ($('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '').trim(),
+              h1: ($('h1').first().text() || '').trim(),
+              images: $('img').length,
+              content: bodyText.replace(/\s+/g, ' ').trim().substring(0, 5000)
+            };
+          }
+        } catch (_) {}
+      } finally {
+        if (browser) {
+          await browser.close().catch(() => {});
+        }
       }
 
       const loadTime = ((Date.now() - startTime) / 1000).toFixed(1) + 's';
@@ -171,6 +217,7 @@ export class AiController {
         Title: ${meta.title}
         Description: ${meta.description}
         H1: ${meta.h1}
+        Scraped Homepage Content: ${meta.content || '(No webpage text could be scraped)'}
         
         ${isGsc ? 'GOOGLE SEARCH CONSOLE LIVE DATA:' : 'SEMRUSH MARKET DATA:'}
         Authority Score: ${semrushBacklinks?.ascore || 'N/A'}
@@ -186,9 +233,9 @@ export class AiController {
         ${JSON.stringify(semrushCompetitors)}
         
         Provide a concise, high-impact SEO audit report. Include:
-        1. A brief situational analysis of their market position vs competitors.
-        2. A 3-point technical fix list for on-page meta.
-        3. A high-level growth strategy (Keyword expansion + Backlink opportunity).
+        1. A brief situational analysis of their market position vs competitors based on their actual industry/copy.
+        2. A 3-point technical fix list for on-page meta (Title tags, Descriptions, H1 alignment).
+        3. A high-level growth strategy (Keyword expansion + Backlink opportunity) based on their real content.
       `;
 
       const aiResponse = await this.aiService.generateContent(prompt, 'Executive SEO Strategist');

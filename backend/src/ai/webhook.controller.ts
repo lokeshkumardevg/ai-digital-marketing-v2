@@ -35,7 +35,7 @@ export class WebhookController {
   async reviewGen(@Body() body: { customer_name: string; product: string }) {
     this.logger.log('[review-gen] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/review-gen', {
+      const response = await fetch('http://localhost:8003/api/v1/review-gen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -55,7 +55,7 @@ export class WebhookController {
   async reviewResponse(@Body() body: { star_rating: string; review_text: string }) {
     this.logger.log('[review-response] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/review-response', {
+      const response = await fetch('http://localhost:8003/api/v1/review-response', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -75,7 +75,7 @@ export class WebhookController {
   async socialPub(@Body() body: { topic: string }) {
     this.logger.log('[social-pub] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/social-pub', {
+      const response = await fetch('http://localhost:8003/api/v1/social-pub', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -95,7 +95,7 @@ export class WebhookController {
   async socialEngage(@Body() body: { brand_tone: string; user_comment: string }) {
     this.logger.log('[social-engage] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/social-engage', {
+      const response = await fetch('http://localhost:8003/api/v1/social-engage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -115,7 +115,7 @@ export class WebhookController {
   async reporting(@Body() body: { metrics: string }) {
     this.logger.log('[reporting] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/reporting', {
+      const response = await fetch('http://localhost:8003/api/v1/reporting', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -145,7 +145,7 @@ Deliver a detailed, structured marketing report.`;
   async listingsOpt(@Body() body: { business_name: string; keywords: string }) {
     this.logger.log('[listings-opt] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/listings-opt', {
+      const response = await fetch('http://localhost:8003/api/v1/listings-opt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -165,7 +165,7 @@ Deliver a detailed, structured marketing report.`;
   async leadGen(@Body() body: { industry: string; region: string }) {
     this.logger.log('[lead-gen] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/lead-gen', {
+      const response = await fetch('http://localhost:8003/api/v1/lead-gen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -185,7 +185,7 @@ Deliver a detailed, structured marketing report.`;
   async segmentation(@Body() body: { customer_data: string }) {
     this.logger.log('[segmentation] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/segmentation', {
+      const response = await fetch('http://localhost:8003/api/v1/segmentation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -205,7 +205,7 @@ Deliver a detailed, structured marketing report.`;
   async templateDesign(@Body() body: { topic: string }) {
     this.logger.log('[template-design] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/template-design', {
+      const response = await fetch('http://localhost:8003/api/v1/template-design', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -235,7 +235,7 @@ CRITICAL REQUIREMENTS:
   async custom(@Body() body: { instruction: string; input: string }) {
     this.logger.log('[custom] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/custom', {
+      const response = await fetch('http://localhost:8003/api/v1/custom', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -262,7 +262,7 @@ CRITICAL REQUIREMENTS:
   }) {
     this.logger.log(`[website-builder] Request received`);
     try {
-      const response = await fetch('http://localhost:8001/api/v1/website-builder', {
+      const response = await fetch('http://localhost:8003/api/v1/website-builder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -427,7 +427,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       scrapedText = await this.scrapeUrl(body.product_url);
     }
     try {
-      const response = await fetch('http://localhost:8001/api/v1/ad-copy', {
+      const response = await fetch('http://localhost:8003/api/v1/ad-copy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body, scraped_context: scrapedText }),
@@ -449,7 +449,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
   async emailSequence(@Body() body: { product_name: string; audience: string }) {
     this.logger.log('[email-sequence] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/email-sequence', {
+      const response = await fetch('http://localhost:8003/api/v1/email-sequence', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -481,7 +481,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       this.logger.error('Failed to fetch Semrush data for blog writer', e);
     }
     try {
-      const response = await fetch('http://localhost:8001/api/v1/blog-writer', {
+      const response = await fetch('http://localhost:8003/api/v1/blog-writer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body, seo_data: realSeoData }),
@@ -503,7 +503,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
   async videoScript(@Body() body: { platform: string; topic: string }) {
     this.logger.log('[video-script] Request received');
     try {
-      const response = await fetch('http://localhost:8001/api/v1/video-script', {
+      const response = await fetch('http://localhost:8003/api/v1/video-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -527,7 +527,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       scrapedText = await this.scrapeUrl(body.company_url);
     }
     try {
-      const response = await fetch('http://localhost:8001/api/v1/press-release', {
+      const response = await fetch('http://localhost:8003/api/v1/press-release', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body, scraped_context: scrapedText }),
@@ -553,7 +553,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       scrapedText = await this.scrapeUrl(body.website_url);
     }
     try {
-      const response = await fetch('http://localhost:8001/api/v1/brand-identity', {
+      const response = await fetch('http://localhost:8003/api/v1/brand-identity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body, scraped_context: scrapedText }),

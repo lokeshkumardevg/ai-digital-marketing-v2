@@ -63,7 +63,7 @@ export class CampaignService {
 
       // 1. Try calling the Python Agent Server
       try {
-        const pyRes = await fetch('http://localhost:8001/api/v1/discover-brand', {
+        const pyRes = await fetch('http://localhost:8003/api/v1/discover-brand', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -127,7 +127,7 @@ Refer to buildPrompt schema and return strict JSON format only.`;
 
       // Invoke LangGraph Campaign Creation Agent Workflow (Python Server)
       try {
-        const pythonResponse = await fetch('http://localhost:8001/api/v1/create-campaign', {
+        const pythonResponse = await fetch('http://localhost:8003/api/v1/create-campaign', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1704,7 +1704,7 @@ Return ONLY JSON.
 
     try {
       // 1. Try Python Agent API
-      const response = await fetch('http://localhost:8001/api/v1/optimize-draft', {
+      const response = await fetch('http://localhost:8003/api/v1/optimize-draft', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1750,7 +1750,17 @@ Return ONLY JSON.
     }
 
     // 3. Update the Mongoose campaign draft document with optimized parameters
-    const existing = await this.campaignModel.findOne({ campaignId });
+    let existing = await this.campaignModel.findOne({ campaignId });
+    if (!existing) {
+      existing = await this.campaignModel.findOne({
+        $or: [
+          { campaignId: `${campaignId}_${platform}` },
+          { campaignId: `${campaignId}_${platform.toLowerCase()}` },
+          { campaignId: new RegExp(`^${campaignId}_${platform}$`, 'i') },
+        ],
+      });
+    }
+
     if (existing) {
       const dbPlatform = existing.platform || platform;
       const currentPlatformData = existing.data || {};
@@ -1771,11 +1781,11 @@ Return ONLY JSON.
       }
 
       await this.campaignModel.findOneAndUpdate(
-        { campaignId },
+        { _id: existing._id },
         { $set: { data: updatedPlatformData } },
         { new: true }
       );
-      this.logger.log(`Implemented and saved AI optimizations for campaign ID: ${campaignId}`);
+      this.logger.log(`Implemented and saved AI optimizations for campaign ID: ${existing.campaignId}`);
     }
 
     return {
@@ -4444,7 +4454,112 @@ Return ONLY JSON.
         }
       }
 
-      return [...enrichedCampaigns, ...externalGoogleCampaigns, ...externalMetaCampaigns];
+      let externalLinkedInCampaigns: any[] = [];
+      const linkedinToken = user?.linkedinAccessToken;
+      if (linkedinToken) {
+        try {
+          // 1. Get Ad Accounts
+          const accountsRes = await fetch('https://api.linkedin.com/v2/adAccountsV2?q=search&count=10', {
+            headers: {
+              Authorization: `Bearer ${linkedinToken}`,
+              'X-Restli-Protocol-Version': '2.0.0',
+            },
+          });
+          if (accountsRes.ok) {
+            const accountsData = await accountsRes.json();
+            const accountId = accountsData.elements?.[0]?.id; // Use the first active ad account
+            if (accountId) {
+              // 2. Get Campaigns under this Account
+              const targetUrl = `https://api.linkedin.com/rest/adAccounts/${accountId}/adCampaigns?q=search`;
+              const campRes = await fetch(targetUrl, {
+                headers: {
+                  'Authorization': `Bearer ${linkedinToken}`,
+                  'LinkedIn-Version': '202606',
+                  'X-Restli-Protocol-Version': '2.0.0'
+                }
+              });
+              if (campRes.ok) {
+                const campData = await campRes.json();
+                const campaignsList = campData.elements || [];
+                
+                const campaignUrns = campaignsList.map((c: any) => `urn:li:sponsoredCampaign:${c.id}`);
+                let statsMap: Record<string, any> = {};
+                if (campaignUrns.length > 0) {
+                  const campaignsParam = campaignUrns.map((urn: string) => encodeURIComponent(urn)).join(',');
+                  const analyticsUrl = `https://api.linkedin.com/rest/adAnalytics?q=analytics&pivot=CAMPAIGN&dateRange=(start:(year:2026,month:1,day:1))&timeGranularity=ALL&campaigns=List(${campaignsParam})&fields=costInLocalCurrency,impressions,clicks,pivotValues`;
+                  const analyticsRes = await fetch(analyticsUrl, {
+                    headers: {
+                      'Authorization': `Bearer ${linkedinToken}`,
+                      'LinkedIn-Version': '202606',
+                      'X-Restli-Protocol-Version': '2.0.0'
+                    }
+                  });
+                  if (analyticsRes.ok) {
+                    const analyticsData = await analyticsRes.json();
+                    for (const elem of (analyticsData.elements || [])) {
+                      const cUrn = elem.pivotValues?.[0];
+                      if (cUrn) {
+                        statsMap[cUrn] = elem;
+                      }
+                    }
+                  }
+                }
+
+                externalLinkedInCampaigns = campaignsList.map((camp: any) => {
+                  const campaignUrn = `urn:li:sponsoredCampaign:${camp.id}`;
+                  const existsInMongo = enrichedCampaigns.some((ec) => {
+                    if (ec.platform !== 'linkedin') return false;
+                    const localLiId = ec.data?.linkedinPostId || ec.campaignId;
+                    return localLiId === campaignUrn;
+                  });
+
+                  if (existsInMongo) return null;
+
+                  let delivery = camp.status || 'UNKNOWN';
+                  let dailyBudget = camp.dailyBudget?.amount ? parseFloat(camp.dailyBudget.amount) : 0;
+                  
+                  const statsObj = statsMap[campaignUrn] || {};
+                  const spend = parseFloat(statsObj.costInLocalCurrency || '0');
+                  const impressions = statsObj.impressions || 0;
+                  const clicks = statsObj.clicks || 0;
+                  const conversions = statsObj.conversions || 0;
+                  const results = clicks;
+                  const costPerResult = results > 0 ? spend / results : 0;
+
+                  return {
+                    _id: `ext_linkedin_${camp.id}`,
+                    id: `ext_linkedin_${camp.id}`,
+                    campaignId: campaignUrn,
+                    name: camp.name || 'LinkedIn Campaign',
+                    platform: 'linkedin',
+                    status: delivery.toLowerCase(),
+                    delivery: delivery,
+                    dailyBudget,
+                    spend,
+                    impressions,
+                    reach: 0,
+                    clicks,
+                    results,
+                    resultType: 'Clicks',
+                    costPerResult,
+                    bidStrategy: 'LinkedIn Ads System',
+                    isRealMeta: false,
+                    isRealGoogle: false,
+                    isRealX: false,
+                    isRealLinkedIn: true,
+                    isReal: true,
+                    isExternal: true
+                  };
+                }).filter(Boolean);
+              }
+            }
+          }
+        } catch (err: any) {
+          this.logger.error(`Failed to fetch external LinkedIn campaigns: ${err.message}`);
+        }
+      }
+
+      return [...enrichedCampaigns, ...externalGoogleCampaigns, ...externalMetaCampaigns, ...externalLinkedInCampaigns];
     } catch (error) {
       this.logger.error(`Error fetching campaigns for user ${userId}`, error);
       throw new InternalServerErrorException('Failed to fetch campaigns');

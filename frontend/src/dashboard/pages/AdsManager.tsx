@@ -227,7 +227,7 @@ export const AdsManager: React.FC = () => {
             };
           }
         });
-        setAds(mapped);
+        setAds(mapped.filter((c: any) => c.isReal));
         setLoading(false);
       })
       .catch(err => {

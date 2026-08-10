@@ -93,7 +93,7 @@ export class AnalyticsController {
   @Get('insights')
   @UseGuards(AuthGuard('jwt'))
   async getInsights(
-    @Query('platform') platform: 'google' | 'meta',
+    @Query('platform') platform: 'google' | 'meta' | 'twitter' | 'linkedin',
     @Query('customerId') customerId: string,
     @Req() req: any,
   ) {
