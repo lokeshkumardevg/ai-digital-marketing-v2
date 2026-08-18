@@ -1,11 +1,24 @@
-const fs = require('fs');
-const path = require('path');
+const { MongoClient, ObjectId } = require('mongodb');
 
-const targetFile = '/Users/mac/Desktop/latest_clone_digital_marketing/ai-digital-marketing-v2/backend/src/ai/webhook.controller.ts';
-let content = fs.readFileSync(targetFile, 'utf8');
+async function main() {
+  const client = await MongoClient.connect('mongodb+srv://devclientg:SCpLNaejWusV7mcR@cluster0.vyinynw.mongodb.net/ai_digital');
+  const db = client.db('ai_digital');
+  
+  // Find all users
+  const users = await db.collection('users').find({}).toArray();
+  console.log('Found users:');
+  for (const u of users) {
+    console.log(`- ID: ${u._id}, Email: ${u.email}, LinkedIn Token Present: ${!!u.linkedinAccessToken}`);
+  }
 
-const updated = content.replace(/localhost:8001/g, 'localhost:8003');
-fs.writeFileSync(targetFile, updated, 'utf8');
+  // Find all analytics records
+  const records = await db.collection('analytics').find({}).toArray();
+  console.log(`\nFound ${records.length} analytics records:`);
+  for (const r of records.slice(-15)) {
+    console.log(`- Platform: ${r.platform}, Date: ${r.date}, Spend: ${r.spend}, Impressions: ${r.impressions}, Clicks: ${r.clicks}`);
+  }
 
-console.log('Successfully replaced all occurrences of localhost:8001 with localhost:8003 in webhook.controller.ts');
-process.exit(0);
+  await client.close();
+}
+
+main().catch(console.error);

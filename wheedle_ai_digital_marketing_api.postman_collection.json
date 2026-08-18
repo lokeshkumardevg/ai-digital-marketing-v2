@@ -1,0 +1,608 @@
+{
+  "info": {
+    "_postman_id": "8c4a45a3-7649-411a-8c9a-8e2b8344e2cf",
+    "name": "wheedle ai digital marketing api",
+    "description": "Exhaustive A to Z Postman collection for all NestJS backend controllers and Python LangChain/LangGraph AI Agent endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "NestJS Backend (Port 3000)",
+      "description": "Endpoints managed by the NestJS server. Requires Bearer Token Auth for protected routes.",
+      "item": [
+        {
+          "name": "Auth & Users",
+          "item": [
+            {
+              "name": "Register User",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test Client\",\n  \"email\": \"client@wheedle.ai\",\n  \"password\": \"securepassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/auth/register",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["auth", "register"]
+                }
+              }
+            },
+            {
+              "name": "Login User",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"client@wheedle.ai\",\n  \"password\": \"securepassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/auth/login",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["auth", "login"]
+                }
+              }
+            },
+            {
+              "name": "Update Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currency\": \"INR\",\n  \"country\": \"India\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/auth/update",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["auth", "update"]
+                }
+              }
+            },
+            {
+              "name": "Get User Profile",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "GET",
+                "url": {
+                  "raw": "{{nestjs_url}}/users/profile",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["users", "profile"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Brand & Campaigns",
+          "item": [
+            {
+              "name": "Get Active Brand",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "GET",
+                "url": {
+                  "raw": "{{nestjs_url}}/campaign/brand",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["campaign", "brand"]
+                }
+              }
+            },
+            {
+              "name": "Create/Update Brand",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"AdsGo AI\",\n  \"url\": \"https://adsgo.ai\",\n  \"brandDetails\": {\n    \"description\": \"AI-driven digital marketing orchestration system.\",\n    \"business_model\": \"SaaS\",\n    \"target_market\": \"Startups and Agencies\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/campaign/brand",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["campaign", "brand"]
+                }
+              }
+            },
+            {
+              "name": "Get Campaigns List",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "GET",
+                "url": {
+                  "raw": "{{nestjs_url}}/campaign",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["campaign"]
+                }
+              }
+            },
+            {
+              "name": "Create Ad Campaign",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Lead Generation Campaign\",\n  \"platform\": \"google\",\n  \"dailyBudget\": 150,\n  \"objective\": \"Lead Generation\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/campaign",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["campaign"]
+                }
+              }
+            },
+            {
+              "name": "Create Brand Discovery Report",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"brandName\": \"AdsGo AI\",\n  \"website\": \"https://adsgo.ai\",\n  \"industry\": \"Technology\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/campaign/discover",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["campaign", "discover"]
+                }
+              }
+            },
+            {
+              "name": "Budget Breakdown Matrix",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"brandId\": \"65dfac189283ab719472d829\",\n  \"platforms\": [\"google\", \"meta\", \"linkedin\"]\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/campaign/budget-breakdown",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["campaign", "budget-breakdown"]
+                }
+              }
+            },
+            {
+              "name": "Optimize Campaign Goal",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"campaignId\": \"CMP_8293712\",\n  \"goalType\": \"CPA\",\n  \"currentMetrics\": {\n    \"clicks\": 120,\n    \"spend\": 340,\n    \"conversions\": 8\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/campaign/optimize-goal",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["campaign", "optimize-goal"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analytics & Telemetry",
+          "item": [
+            {
+              "name": "Get Dashboard Main Analytics",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "GET",
+                "url": {
+                  "raw": "{{nestjs_url}}/analytics/dashboard?dateRange=Last 30 days",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["analytics", "dashboard"],
+                  "query": [
+                    { "key": "dateRange", "value": "Last 30 days" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Sync All Ad Platforms",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "url": {
+                  "raw": "{{nestjs_url}}/analytics/sync/all",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["analytics", "sync", "all"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "AI Audit Suite & Strategy",
+          "item": [
+            {
+              "name": "SEO Audit",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"website\": \"https://adsgo.ai\",\n  \"brandName\": \"AdsGo AI\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/ai/seo-audit",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["ai", "seo-audit"]
+                }
+              }
+            },
+            {
+              "name": "Market Research Insights",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"url\": \"https://adsgo.ai\",\n  \"brandName\": \"AdsGo AI\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/ai/market-research",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["ai", "market-research"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Chatbot & Assistants",
+          "item": [
+            {
+              "name": "Chat With Header Assistant (W-AI)",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"message\": \"What is my current wallet balance?\",\n  \"history\": []\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/chatbot/global/chat",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["chatbot", "global", "chat"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Webhooks (Python Forwarders)",
+          "description": "API Gateway forwarders translating requests into python LangGraph agent flows.",
+          "item": [
+            {
+              "name": "AI SEO Optimizer Agent",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"website_url\": \"https://myclientwebsite.com\",\n  \"keywords\": \"real estate, buy house\",\n  \"framework\": \"Next.js\",\n  \"focus_area\": \"All-in-One Optimization\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/webhook/seo-opt",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["webhook", "seo-opt"]
+                }
+              }
+            },
+            {
+              "name": "Auto-Suggest SEO Keywords",
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"website_url\": \"https://adsgo.ai\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/webhook/suggest-keywords",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["webhook", "suggest-keywords"]
+                }
+              }
+            },
+            {
+              "name": "Review Email Request Generator",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"customer_name\": \"John Doe\",\n  \"product\": \"Digital Marketing Premium Audit Package\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/webhook/review-gen",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["webhook", "review-gen"]
+                }
+              }
+            },
+            {
+              "name": "AI Review Response De-escalator",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"star_rating\": \"2\",\n  \"review_text\": \"The dashboard load speed was very slow and campaign results were not accurate.\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/webhook/review-response",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["webhook", "review-response"]
+                }
+              }
+            },
+            {
+              "name": "Social Post Publisher",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"topic\": \"The future of automated digital marketing software in 2026\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/webhook/social-pub",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["webhook", "social-pub"]
+                }
+              }
+            },
+            {
+              "name": "Dynamic Landing Page Website Builder",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    { "key": "token", "value": "{{jwt_token}}", "type": "string" }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"brand_name\": \"AdsGo AI Consulting\",\n  \"description\": \"Automated landing page and lead optimizer service\"\n}"
+                },
+                "url": {
+                  "raw": "{{nestjs_url}}/webhook/website-builder",
+                  "host": ["{{nestjs_url}}"],
+                  "path": ["webhook", "website-builder"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Python AI Agent Server (Port 8003)",
+      "description": "LangChain, LangGraph, and OpenAI Core Agent workflows in python.",
+      "item": [
+        {
+          "name": "AI SEO Optimizer Agent",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"website_url\": \"https://myclientwebsite.com\",\n  \"keywords\": \"real estate, buy house\",\n  \"framework\": \"Next.js\",\n  \"focus_area\": \"All-in-One Optimization\"\n}"
+            },
+            "url": {
+              "raw": "{{python_url}}/api/v1/seo-opt",
+              "host": ["{{python_url}}"],
+              "path": ["api", "v1", "seo-opt"]
+            }
+          }
+        },
+        {
+          "name": "Discover Brand Auditor",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"brandName\": \"AdsGo AI\",\n  \"website\": \"https://adsgo.ai\",\n  \"scrapedTitle\": \"AdsGo AI | Dynamic Marketing\",\n  \"scrapedMetaDesc\": \"Automated campaigns and SEO telemetry analytics.\",\n  \"scrapedContent\": \"Leading digital strategy and automated keyword research solutions...\",\n  \"industryHint\": \"Technology\"\n}"
+            },
+            "url": {
+              "raw": "{{python_url}}/api/v1/discover-brand",
+              "host": ["{{python_url}}"],
+              "path": ["api", "v1", "discover-brand"]
+            }
+          }
+        },
+        {
+          "name": "Strategic Dashboard RAG Chatbot",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userPrompt\": \"Give me a summary of my workflows and active campaigns.\",\n  \"history\": [],\n  \"userContext\": \"User Name: John, Subscription: premium, conectado [Google: True, Meta: True]\",\n  \"walletContext\": \"Balance: $450\",\n  \"txnsContext\": \"- Type: credit, Amount: 100, Status: SUCCESS\",\n  \"brandContext\": \"Brand Name: AdsGo, SaaS platform\",\n  \"campaignsContext\": \"- Campaign Name: Google Search Leads, Status: active, Budget: $150\",\n  \"reviewsContext\": \"No customer reviews found.\",\n  \"contactsContext\": \"- Contact Name: Emily, Stage: Lead\",\n  \"workflowsContext\": \"- Workflow Name: LinkedIn Sync, Trigger: webhook, Active: True\",\n  \"linkedinContext\": \"No LinkedIn CRM data.\",\n  \"socialPostsContext\": \"No scheduler posts found.\"\n}"
+            },
+            "url": {
+              "raw": "{{python_url}}/api/v1/dashboard-agent",
+              "host": ["{{python_url}}"],
+              "path": ["api", "v1", "dashboard-agent"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "key": "nestjs_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "python_url",
+      "value": "http://localhost:8003",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "PASTE_YOUR_JWT_HERE",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "PASTE_YOUR_USER_ID_HERE",
+      "type": "string"
+    }
+  ]
+}

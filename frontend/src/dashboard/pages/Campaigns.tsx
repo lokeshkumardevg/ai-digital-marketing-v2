@@ -773,7 +773,7 @@ const BrandAuditCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
           return (
             <div>
               <div className="audit-analytics-grid">
-                {a.estimatedMonthlyVisits && <div className="aa-metric"><div className="aa-value">{Number(a.estimatedMonthlyVisits).toLocaleString()}</div><div className="aa-label">Monthly Visits</div></div>}
+                {a.estimatedMonthlyVisits && <div className="aa-metric"><div className="aa-value">{isNaN(Number(a.estimatedMonthlyVisits)) ? a.estimatedMonthlyVisits : Number(a.estimatedMonthlyVisits).toLocaleString()}</div><div className="aa-label">Monthly Visits</div></div>}
                 {a.estimatedDomainAuthority && <div className="aa-metric"><div className="aa-value">{a.estimatedDomainAuthority}</div><div className="aa-label">Domain Authority</div></div>}
                 {a.bounceRate && <div className="aa-metric"><div className="aa-value">{a.bounceRate}</div><div className="aa-label">Bounce Rate</div></div>}
               </div>

@@ -561,6 +561,38 @@ async def brand_identity(body: BrandIdentityRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+class SeoOptRequest(BaseModel):
+    website_url: str
+    keywords: Optional[str] = ""
+    framework: str
+    focus_area: str
+
+
+@router.post("/seo-opt")
+async def seo_opt(body: SeoOptRequest):
+    try:
+        prompt = f"""Act as an Elite Technical SEO Specialist.
+We need to optimize a website built using the "{body.framework}" framework.
+Website URL: {body.website_url}
+Optimization Focus: {body.focus_area}
+Target Keywords: {body.keywords or 'None specified'}
+
+Please generate a detailed, structured SEO optimization report and concrete code snippets or layout plans that the client can apply. 
+Provide step-by-step action items tailored to the "{body.framework}" technology stack.
+For example:
+- If Next.js, show metadata exports or layout adjustments.
+- If React, show Helmet & dynamic head component configurations.
+- If Node.js, show routing variables mapping or templating templates.
+- If Technical/Speed focus, give asset compression, caching, and server-side optimizations.
+Keep the output extremely professional, using clean markdown with clear action points.
+"""
+        llm = get_llm(model="gpt-4o", max_tokens=2500, temperature=0.7)
+        res = await llm.ainvoke(prompt)
+        return {"aiOutput": res.content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 class OptimizeDraftRequest(BaseModel):
     platform: str
     headline: str
@@ -604,6 +636,10 @@ async def optimize_draft(body: OptimizeDraftRequest):
             f"{{\n"
             f'  "headline": "punchy benefit-driven headline",\n'
             f'  "primaryText": "compelling, conversion-focused primary text copy",\n'
+            f'  "adCopy": {{\n'
+            f'    "headlines": ["Headline Option 1 (Benefit-focused)", "Headline Option 2 (Social Proof/Urgency)", "Headline Option 3 (Question/Agitate)", "Headline Option 4", "Headline Option 5"],\n'
+            f'    "primaryTexts": ["Primary Text Variant 1 (AIDA)", "Primary Text Variant 2 (PAS)", "Primary Text Variant 3 (Bulleted Value Prop)"]\n'
+            f'  }},\n'
             f'  "googleKeywords": ["keyword1", "keyword2", ...] (only if platform is google),\n'
             f'  "liJobTitles": ["job title 1", "job title 2", ...] (only if platform is linkedin),\n'
             f'  "liSeniority": ["Senior", "Director", ...] (only if platform is linkedin),\n'
@@ -650,6 +686,9 @@ IMPORTANT RULES:
 7. Return ONLY VALID JSON.
 8. DO NOT include markdown.
 9. DO NOT explain anything.
+10. You MUST generate at least 20 highly relevant keywords, distributed across 'primary' (minimum 8), 'secondary' (minimum 8), and 'longTail' (minimum 8) lists.
+11. You MUST find and list at least 10 real direct or indirect business competitors in the 'competitors' list. For each, list at least 3 detailed strengths, at least 3 weaknesses, and a comparative positioning summary against our brand.
+12. For 'estimatedMonthlyVisits', do not return a range (e.g. '10k-50k'). Return a raw numeric string value (e.g., '25000') so the system can parse and format it accurately.
 
 SCRAPED WEBSITE DATA:
 URL: {body.website}
@@ -694,23 +733,77 @@ Return ONLY a valid raw JSON object matching this structure exactly (no markdown
     "quickWins": ["win 1", "win 2"]
   }},
   "keywords": {{
-    "primary": ["keyword 1", "keyword 2"],
-    "secondary": ["keyword 3", "keyword 4"],
-    "longTail": ["keyword 5", "keyword 6"],
-    "gaps": ["gap 1"],
-    "recommendations": ["rec 1"]
+    "primary": ["primary keyword 1", "primary keyword 2", "primary keyword 3", "primary keyword 4", "primary keyword 5", "primary keyword 6", "primary keyword 7", "primary keyword 8"],
+    "secondary": ["secondary keyword 1", "secondary keyword 2", "secondary keyword 3", "secondary keyword 4", "secondary keyword 5", "secondary keyword 6", "secondary keyword 7", "secondary keyword 8"],
+    "longTail": ["long-tail keyword 1", "long-tail keyword 2", "long-tail keyword 3", "long-tail keyword 4", "long-tail keyword 5", "long-tail keyword 6", "long-tail keyword 7", "long-tail keyword 8"],
+    "gaps": ["gap 1", "gap 2", "gap 3", "gap 4", "gap 5"],
+    "recommendations": ["rec 1", "rec 2", "rec 3", "rec 4", "rec 5"]
   }},
   "competition": {{
     "intensity": "High or Medium or Low",
     "competitors": [
       {{
-        "name": "Competitor Name",
-        "strengths": ["strength 1"],
-        "weaknesses": ["weakness 1"],
-        "comparison": "Comparison summary"
+        "name": "Competitor 1",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      }},
+      {{
+        "name": "Competitor 2",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      }},
+      {{
+        "name": "Competitor 3",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      }},
+      {{
+        "name": "Competitor 4",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      }},
+      {{
+        "name": "Competitor 5",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      }},
+      {{
+        "name": "Competitor 6",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      }},
+      {{
+        "name": "Competitor 7",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      }},
+      {{
+        "name": "Competitor 8",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      }},
+      {{
+        "name": "Competitor 9",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      }},
+      {{
+        "name": "Competitor 10",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
       }}
     ],
-    "differentiators": ["differentiator 1"],
+    "differentiators": ["differentiator 1", "differentiator 2", "differentiator 3"],
     "marketPosition": "Market positioning summary"
   }},
   "adCopy": {{
@@ -719,7 +812,7 @@ Return ONLY a valid raw JSON object matching this structure exactly (no markdown
     "callToAction": "LEARN_MORE"
   }},
   "analyticsDashboard": {{
-    "estimatedMonthlyVisits": "10k-50k",
+    "estimatedMonthlyVisits": "25000",
     "estimatedDomainAuthority": 25,
     "estimatedBacklinks": "500+",
     "topTrafficSources": ["Organic Search", "Direct"],
@@ -764,6 +857,169 @@ async def chatbot_response(body: ChatbotResponseRequest):
         return {"reply": res.content}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+class DashboardAgentRequest(BaseModel):
+    userPrompt: str
+    history: Optional[list] = []
+    userContext: Optional[str] = ""
+    walletContext: Optional[str] = ""
+    txnsContext: Optional[str] = ""
+    brandContext: Optional[str] = ""
+    campaignsContext: Optional[str] = ""
+    reviewsContext: Optional[str] = ""
+    contactsContext: Optional[str] = ""
+    workflowsContext: Optional[str] = ""
+    linkedinContext: Optional[str] = ""
+    socialPostsContext: Optional[str] = ""
+
+
+@router.post("/dashboard-agent")
+async def dashboard_agent(body: DashboardAgentRequest):
+    try:
+        system_prompt = f"""You are W-AI, the elite, omniscient AI strategic platform assistant for AdsGo.ai.
+Your mission is to act as the core knowledge brain of the entire platform. Since the header Search/Ask AI is accessed from any page, the user can ask questions about ANY part of their workspace (including their profile, billing plan, wallet balance, recent transactions, CRM contacts, social schedulers, campaigns, active automation workflows, and customer reviews).
+
+Use the real-time project workspace context provided below to answer the user's questions with absolute accuracy:
+
+[USER PROFILE & SUBSCRIPTION]
+{body.userContext or 'Not set'}
+
+[WALLET BALANCE]
+{body.walletContext or 'Not set'}
+
+[RECENT TRANSACTIONS]
+{body.txnsContext or 'Not set'}
+
+[ACTIVE BRAND PROFILE]
+{body.brandContext or 'Not set'}
+
+[CAMPAIGNS (ADS MANAGER)]
+{body.campaignsContext or 'Not set'}
+
+[RECENT CUSTOMER REVIEWS (REPUTATION)]
+{body.reviewsContext or 'Not set'}
+
+[CRM CONTACTS (LEADS / CUSTOMERS)]
+{body.contactsContext or 'Not set'}
+
+[AUTOMATION WORKFLOWS]
+{body.workflowsContext or 'Not set'}
+
+[LINKEDIN SCRAPER & CRM LEADS]
+{body.linkedinContext or 'Not set'}
+
+[SOCIAL MEDIA SCHEDULER POSTS]
+{body.socialPostsContext or 'Not set'}
+
+Capabilities and Directives:
+1. Speak as an elite strategist. Always reply in a professional, concise, and helpful tone.
+2. You have FULL ACCESS to the user's workspace database. If the user asks about contacts, wallet, subscription, posts, or campaigns, reference the actual data lists in the context above.
+3. If they don't have records in a specific category (e.g. no workflows or low wallet balance), kindly state that they have none active and offer to guide them on how to create one or top up.
+4. Be precise with numbers, transaction types, status strings, and names.
+5. Answer in the same language style as the user (e.g., if the query is in Hinglish or Hindi, reply in fluent Hinglish or Hindi with high contextual quality).
+"""
+        from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
+        messages = [SystemMessage(content=system_prompt)]
+        
+        for h in (body.history or []):
+            role = h.get("role")
+            content = h.get("content") or h.get("text")
+            if role == "user":
+                messages.append(HumanMessage(content=content))
+            else:
+                messages.append(AIMessage(content=content))
+                
+        messages.append(HumanMessage(content=body.userPrompt))
+        
+        llm = get_llm(model="gpt-4o", max_tokens=1500, temperature=0.7)
+        res = await llm.ainvoke(messages)
+        return {"reply": res.content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class SeoAuditRequest(BaseModel):
+    domain: str
+    scrapedTitle: Optional[str] = ""
+    scrapedMetaDesc: Optional[str] = ""
+    scrapedH1: Optional[str] = ""
+    scrapedContent: Optional[str] = ""
+    authorityScore: Optional[str] = "N/A"
+    organicTraffic: Optional[str] = "N/A"
+    organicKeywords: Optional[str] = "N/A"
+    backlinks: Optional[str] = "N/A"
+    refDomains: Optional[str] = "N/A"
+    topKeywords: Optional[list] = []
+    competitors: Optional[list] = []
+
+
+@router.post("/seo-audit")
+async def seo_audit(body: SeoAuditRequest):
+    try:
+        # Construct analysis prompt for ChatOpenAI agent
+        prompt = f"""
+You are a senior digital marketing strategist, SEO auditor, and competitive intelligence analyst.
+Analyze the following SEO telemetry data for the domain "{body.domain}" and generate a structured audit report.
+
+ON-PAGE TELEMETRY:
+Title: {body.scrapedTitle or 'None Detected'}
+Description: {body.scrapedMetaDesc or 'None Detected'}
+H1: {body.scrapedH1 or 'None Detected'}
+Scraped Homepage Content: {body.scrapedContent or 'No content found'}
+
+SEO MARKET DATA:
+Authority Score: {body.authorityScore}
+Organic Traffic: {body.organicTraffic}
+Organic Keywords: {body.organicKeywords}
+Backlinks: {body.backlinks}
+Ref. Domains: {body.refDomains}
+
+TOP KEYWORDS RANKING CURRENTLY:
+{body.topKeywords}
+
+COMPETITOR LANDSCAPE:
+{body.competitors}
+
+Perform a deep intelligence analysis and return ONLY a valid raw JSON object matching this structure exactly (no markdown formatting, no extra text):
+{{
+  "executiveStrategy": "High-level situational analysis of their market position vs competitors and general organic growth strategy.",
+  "metaGenerator": {{
+    "suggestedTitle": "SEO-optimized Title under 60 chars",
+    "suggestedDescription": "SEO-optimized Meta Description under 160 chars",
+    "seoReasoning": "Explanation of why these meta tags are optimized and which target keywords they focus on."
+  }},
+  "contentGap": [
+    {{
+      "topic": "Topic or keyword theme currently covered by competitors but missing or thin on our website",
+      "competitorSource": "Competitor name",
+      "importance": "High or Medium or Low",
+      "description": "Brief description of the gap and content angle to write."
+    }}
+  ],
+  "articleRecommendations": [
+    {{
+      "title": "SEO-optimized blog article title",
+      "keywords": ["keyword1", "keyword2"],
+      "targetAudience": "Target buyer persona",
+      "outline": "Main headings or brief structure of the article"
+    }}
+  ]
+}}
+
+Ensure contentGap contains 3-5 key gaps, and articleRecommendations contains 3-4 recommended blog titles.
+Return ONLY the JSON string. Do NOT include markdown styling or any surrounding text.
+"""
+        llm = get_llm(model="gpt-4o-mini", max_tokens=3000, temperature=0.3)
+        res = await llm.ainvoke(prompt)
+        
+        import json
+        raw_content = res.content.replace("```json", "").replace("```", "").strip()
+        parsed = json.loads(raw_content)
+        return parsed
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 
 

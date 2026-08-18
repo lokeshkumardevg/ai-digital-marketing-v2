@@ -37,9 +37,17 @@ export const CallingAgent: React.FC = () => {
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
+  const getAuthHeaders = (extra = {}) => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('access_token') || localStorage.getItem('token') || ''}`,
+    ...extra
+  });
+
   const fetchCampaigns = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/calling/campaigns`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/calling/campaigns`, {
+        headers: getAuthHeaders()
+      });
       if (res.ok) {
         const data = await res.json();
         setCampaigns(data);
@@ -53,7 +61,9 @@ export const CallingAgent: React.FC = () => {
     setIsLoadingRecords(true);
     setSelectedCampaign(campaignId);
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/calling/campaigns/${campaignId}/records`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/calling/campaigns/${campaignId}/records`, {
+        headers: getAuthHeaders()
+      });
       if (res.ok) {
         const data = await res.json();
         setRecords(data);
@@ -90,7 +100,7 @@ export const CallingAgent: React.FC = () => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/calling/campaign`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ name: campaignName, prompt, contacts })
       });
       

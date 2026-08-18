@@ -84,6 +84,7 @@ const agentConfigs: Record<string, any> = {
   "website_builder": {
     title: "Full Website Architect",
     url: getAgentUrl("website-builder"),
+    premium: true,
     fields: [
       { id: "topic", label: "Business Name / Website Topic", type: "text", placeholder: "e.g., LuxeCuts - A Premium Barber Shop in New York" },
       { id: "pages", label: "Pages (Count or Names)", type: "text", placeholder: "e.g., 5 OR Home, About, Services, Contact" },
@@ -91,6 +92,17 @@ const agentConfigs: Record<string, any> = {
       { id: "primaryColor", label: "Primary Color", type: "color", placeholder: "#036cd8" },
       { id: "secondaryColor", label: "Secondary Color", type: "color", placeholder: "#6366f1" },
       { id: "logo", label: "Upload Logo (optional)", type: "file", placeholder: "" }
+    ]
+  },
+  "seo_optimizer": {
+    title: "AI SEO Optimizer Agent",
+    url: getAgentUrl("seo-opt"),
+    premium: true,
+    fields: [
+      { id: "website_url", label: "Website URL", type: "text", placeholder: "e.g., https://myclientwebsite.com" },
+      { id: "keywords", label: "Target Keywords (Comma Separated)", type: "textarea", placeholder: "e.g., real estate, apartments for rent, buy houses" },
+      { id: "framework", label: "Website Tech Stack / Framework", type: "select", options: ["WordPress", "Next.js", "React (Client-Side)", "Node.js (SSR)", "Static HTML"] },
+      { id: "focus_area", label: "Optimization Focus", type: "select", options: ["All-in-One Optimization", "Meta Tags & Content Audit", "Image Alt Text Generation", "Technical / Speed Enhancements"] }
     ]
   }
 };
@@ -113,7 +125,8 @@ export const Agents: React.FC = () => {
     "contact_segmentation": "active",
     "template_design": "active",
     "custom": "active",
-    "website_builder": "active"
+    "website_builder": "active",
+    "seo_optimizer": "active"
   };
 
   useEffect(() => {
@@ -452,10 +465,10 @@ export const Agents: React.FC = () => {
       <div className="dashboard-container">
         <div className="agent-column left-column">
           {Object.entries(agentConfigs).slice(0, 5).map(([key, config]) => (
-            <button key={key} className="agent-btn" onClick={() => openAgentModal(key)}>
+            <button key={key} className={`agent-btn ${config.premium ? 'premium-btn' : ''}`} onClick={() => openAgentModal(key)}>
               <div className={`status-dot ${agentStatuses[key] === 'active' ? 'status-active' : 'status-sleeping'}`}></div>
-              <i className={key.includes('social') ? 'fa-solid fa-share-nodes' : 'fa-regular fa-star'}></i>
-              <span>{config.title}</span>
+              <i className={key.includes('social') ? 'fa-solid fa-share-nodes' : config.premium ? 'fa-solid fa-wand-magic-sparkles' : 'fa-regular fa-star'}></i>
+              <span>{config.title} {config.premium && <span className="premium-badge" style={{ fontSize: '9px', background: '#f59e0b', color: '#000', padding: '1px 5px', borderRadius: '4px', fontWeight: 'bold', marginLeft: '5px' }}>PRO</span>}</span>
             </button>
           ))}
         </div>
@@ -464,9 +477,7 @@ export const Agents: React.FC = () => {
       <div style={{ padding: '0 8px', marginBottom: '-20px', display: 'flex', alignItems: 'center', gap: '3px' }}>
         <div style={{
           width: '36px', height: '36px', borderRadius: '10px',
-          // background: 'var(--accent-gradient)', display: 'flex',
           alignItems: 'center', justifyContent: 'center', color: 'var(--text-primary)',
-          // boxShadow: '0 8px 16px rgba(112,51,245,0.25)', flexShrink: 0,
         }}>
           <div style={{
   width: '36px',
@@ -498,10 +509,10 @@ export const Agents: React.FC = () => {
 
         <div className="agent-column right-column">
           {Object.entries(agentConfigs).slice(5).map(([key, config]) => (
-            <button key={key} className={`agent-btn ${key === 'website_builder' ? 'premium-btn' : ''}`} onClick={() => openAgentModal(key)}>
+            <button key={key} className={`agent-btn ${config.premium ? 'premium-btn' : ''}`} onClick={() => openAgentModal(key)}>
               <div className={`status-dot ${agentStatuses[key] === 'active' ? 'status-active' : 'status-sleeping'}`}></div>
-              <i className={key === 'website_builder' ? 'fa-solid fa-wand-magic-sparkles' : 'fa-regular fa-user'}></i>
-              <span>{config.title}</span>
+              <i className={config.premium ? 'fa-solid fa-wand-magic-sparkles' : 'fa-regular fa-user'}></i>
+              <span>{config.title} {config.premium && <span className="premium-badge" style={{ fontSize: '9px', background: '#f59e0b', color: '#000', padding: '1px 5px', borderRadius: '4px', fontWeight: 'bold', marginLeft: '5px' }}>PRO</span>}</span>
             </button>
           ))}
         </div>
@@ -509,7 +520,7 @@ export const Agents: React.FC = () => {
 
       {selectedConfig && (
         <div className="modal" onClick={(e) => e.target === e.currentTarget && setSelectedAgentKey(null)}>
-          <div className={`modal-content ${isWebsiteBuilder ? 'wide' : ''}`}>
+          <div className={`modal-content ${selectedConfig.premium ? 'wide' : ''}`}>
             <button className="close-btn" onClick={() => { setSelectedAgentKey(null); setResponseText(''); }}>&times;</button>
             <h2 style={{ marginBottom: '10px', color: 'var(--text-primary)', fontSize: '1.5rem', fontWeight: 'bold' }}>{selectedConfig.title}</h2>
             <p style={{ color: 'var(--text-secondary)', marginBottom: '24px', fontSize: '14px' }}>Fill in the parameters to trigger the AI workflow.</p>
@@ -517,7 +528,60 @@ export const Agents: React.FC = () => {
             <div id="formContainer" style={{ marginBottom: '20px' }}>
               {selectedConfig.fields.map((field: any) => (
                 <div key={field.id} className="form-group">
-                  <label>{field.label}</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <label style={{ margin: 0, fontWeight: 500, fontSize: '14px', color: 'var(--text-secondary)' }}>{field.label}</label>
+                    {field.id === 'keywords' && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const websiteUrl = formData['website_url'] || formData['website'] || formData['url'];
+                          if (!websiteUrl) {
+                            toast.error("Please enter a Website URL first to suggest keywords!");
+                            return;
+                          }
+                          const toastId = toast.loading("Analyzing site & generating keywords...");
+                          try {
+                            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+                            const response = await fetch(`${baseUrl}/webhook/suggest-keywords`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ website_url: websiteUrl })
+                            });
+                            if (response.ok) {
+                              const json = await response.json();
+                              if (json && json.keywords) {
+                                setFormData((prev: any) => ({ ...prev, keywords: json.keywords }));
+                                toast.success("Keywords generated successfully!", { id: toastId });
+                              } else {
+                                throw new Error("Invalid response format");
+                              }
+                            } else {
+                              throw new Error("HTTP error " + response.status);
+                            }
+                          } catch (e: any) {
+                            toast.error("Failed to suggest keywords: " + e.message, { id: toastId });
+                          }
+                        }}
+                        style={{
+                          background: 'rgba(139, 92, 246, 0.15)',
+                          color: '#8b5cf6',
+                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <i className="fa-solid fa-wand-magic-sparkles"></i>
+                        Suggest Keywords via AI
+                      </button>
+                    )}
+                  </div>
                   {field.type === 'textarea' ? (
                     <textarea
                       placeholder={field.placeholder}
@@ -531,7 +595,7 @@ export const Agents: React.FC = () => {
                       value={formData[field.id] || ''}
                       style={{ width: '100%', padding: '14px', border: '1px solid var(--glass-border)', borderRadius: '12px', outline: 'none', color: 'var(--text-primary)', background: 'var(--bg-elevated)', fontSize: '15px' }}
                     >
-                      <option value="">-- Choose Theme --</option>
+                      <option value="">-- Choose Option --</option>
                       {field.options.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   ) : field.type === 'file' ? (

@@ -18,7 +18,7 @@ async function run() {
       headers: {
         'Authorization': `Bearer ${user.linkedinAccessToken}`,
         'X-Restli-Protocol-Version': '2.0.0',
-        'LinkedIn-Version': '202605',
+        'LinkedIn-Version': '202606',
       }
     });
     if (!adAccRes.ok) {
@@ -28,8 +28,26 @@ async function run() {
     const adAccData = await adAccRes.json();
     const adAccount = adAccData.elements?.[0];
     if (adAccount) {
-      console.log(`Querying campaigns for Ad Account ${adAccount.id}...`);
       const cleanId = String(adAccount.id).includes(':') ? String(adAccount.id).split(':').pop() : adAccount.id;
+      console.log(`Account ID: ${cleanId}`);
+      
+      const analyticsUrl = `https://api.linkedin.com/rest/adAnalytics?q=analytics&pivot=CAMPAIGN&dateRange=(start:(year:2020,month:1,day:1))&timeGranularity=ALL&accounts=List(urn%3Ali%3AsponsoredAccount%3A${cleanId})&fields=costInLocalCurrency,impressions,clicks,pivotValues`;
+      console.log(`Querying Campaign Analytics via Account: ${analyticsUrl}`);
+      
+      const statsRes = await fetch(analyticsUrl, {
+        headers: {
+          'Authorization': `Bearer ${user.linkedinAccessToken}`,
+          'LinkedIn-Version': '202606',
+          'X-Restli-Protocol-Version': '2.0.0',
+        }
+      });
+      if (statsRes.ok) {
+        console.log('Campaign Analytics via Account Stats:', await statsRes.json());
+      } else {
+        console.log('Failed Campaign Analytics via Account Stats:', await statsRes.text());
+      }
+
+      // Let's query campaigns list details again
       const targetUrl = `https://api.linkedin.com/rest/adAccounts/${cleanId}/adCampaigns?q=search`;
       const campRes = await fetch(targetUrl, {
         headers: {
@@ -40,10 +58,10 @@ async function run() {
       });
       if (campRes.ok) {
         const campData = await campRes.json();
-        console.log('LinkedIn Campaigns:');
-        console.log(JSON.stringify(campData, null, 2));
-      } else {
-        console.log('Failed to fetch LinkedIn Campaigns:', await campRes.text());
+        console.log(`Found campaigns: ${campData.elements ? campData.elements.length : 0}`);
+        for (const c of (campData.elements || []).slice(0, 5)) {
+          console.log(`- Campaign: ${c.id}, Name: ${c.name}, Status: ${c.status}, Objective: ${c.objectiveType}`);
+        }
       }
     }
   } catch (err) {

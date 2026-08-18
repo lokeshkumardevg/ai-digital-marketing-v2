@@ -465,7 +465,6 @@ export const Crm: React.FC = () => {
                   <button
                     type="button"
                     onClick={async () => {
-                      const uid = user?._id || user?.id;
                       if (item.label === 'LinkedIn') {
                         try {
                           const { api } = await import('../../api/axios');

@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { InjectModel, InjectConnection } from '@nestjs/mongoose';
+import { Model, Connection } from 'mongoose';
 import { Chatbot, ChatbotDocument } from './schemas/chatbot.schema';
 import { AiService } from '../ai/ai.service'; // Ensure Orchestrator is wired
 
@@ -14,6 +14,7 @@ export class ChatbotService {
     @InjectModel('Campaign') private campaignModel: Model<any>,
     @InjectModel('Review') private reviewModel: Model<any>,
     private readonly aiService: AiService,
+    @InjectConnection() private readonly connection: Connection,
   ) {}
 
   async getAllChatbots(userId?: string): Promise<Chatbot[]> {
@@ -57,6 +58,13 @@ export class ChatbotService {
       let brandContext = 'No active brand configuration found.';
       let campaignsContext = 'No campaigns found.';
       let reviewsContext = 'No customer reviews found.';
+      let userContext = 'User profile details not found.';
+      let walletContext = 'No wallet configuration found.';
+      let txnsContext = 'No recent wallet transactions found.';
+      let contactsContext = 'No CRM contacts found.';
+      let workflowsContext = 'No active automation workflows found.';
+      let linkedinContext = 'No LinkedIn CRM integration data found.';
+      let socialPostsContext = 'No social media scheduler posts found.';
 
       if (userId) {
         try {
@@ -97,57 +105,134 @@ Market Keywords: ${Array.isArray(brand.brandDetails?.market_keywords) ? brand.br
   Details: Budget $${details.budget || details.dailyBudget || 0}, Objective: ${details.objective || 'N/A'}, Headline: "${details.headline || 'N/A'}", Caption: "${details.caption || 'N/A'}"`;
             }).join('\n\n');
           }
+
+          // ── DYNAMIC EXTENDED CONTEXT ──
+          // A. User Details
+          const userM = this.getModelSafely('User');
+          if (userM) {
+            const user = await userM.findById(userId).lean().exec();
+            if (user) {
+              userContext = `User ID: ${user._id || user.id}
+User Name: ${user.name || 'N/A'}
+Email: ${user.email}
+Country: ${user.country || 'India'}
+Currency: ${user.currency || 'INR'}
+Role: ${user.role || 'client'}
+Subscription Plan: ${user.subscriptionTier || 'free'}
+OAuth Connections: [Google Ads: ${!!user.googleRefreshToken}, Meta Ads: ${!!user.metaAccessToken}, LinkedIn Ads: ${!!user.linkedinAccessToken}, Twitter Ads: ${!!user.twitterAccessToken}]`;
+            }
+          }
+
+          // B. Wallet Details
+          const walletM = this.getModelSafely('Wallet');
+          if (walletM) {
+            const wallet = await walletM.findOne({ userId }).lean().exec();
+            if (wallet) {
+              walletContext = `Wallet Status: Connected
+Current Balance: ${wallet.balance || 0}`;
+            }
+          }
+
+          // C. Recent Transactions
+          const txnM = this.getModelSafely('Transaction');
+          if (txnM) {
+            const txns = await txnM.find({ userId }).sort({ createdAt: -1 }).limit(5).lean().exec();
+            if (txns && txns.length > 0) {
+              txnsContext = txns.map(t => 
+                `- Type: ${t.type}, Amount: ${t.amount}, Currency: ${t.currency || 'INR'}, Status: ${t.status || 'SUCCESS'}, Date: ${t.createdAt || t.date || 'N/A'}`
+              ).join('\n');
+            }
+          }
+
+          // D. CRM Contacts
+          const contactM = this.getModelSafely('Contact');
+          if (contactM) {
+            const contacts = await contactM.find({ userId }).limit(10).lean().exec();
+            if (contacts && contacts.length > 0) {
+              contactsContext = contacts.map(c => 
+                `- Contact Name: "${c.name || 'N/A'}", Email: ${c.email}, Phone: "${c.phone || 'N/A'}", Source: ${c.source || 'Manual'}, Stage: ${c.lifecycleStage || 'Lead'}, Created At: ${c.createdAt || 'N/A'}`
+              ).join('\n');
+            }
+          }
+
+          // E. Automation Workflows
+          const workflowM = this.getModelSafely('Workflow');
+          if (workflowM) {
+            const workflows = await workflowM.find({ userId }).limit(5).lean().exec();
+            if (workflows && workflows.length > 0) {
+              workflowsContext = workflows.map(w => 
+                `- Workflow Name: "${w.name}", Trigger: "${w.triggerType}", Active: ${w.isActive}, Action Steps: ${w.steps?.length || 0}`
+              ).join('\n');
+            }
+          }
+
+          // F. LinkedIn Leads
+          const liLeadM = this.getModelSafely('LinkedInLead');
+          if (liLeadM) {
+            const leads = await liLeadM.find({ userId }).limit(10).lean().exec();
+            if (leads && leads.length > 0) {
+              linkedinContext = leads.map(l => 
+                `- Lead Name: "${l.name || 'N/A'}", Title: "${l.title || 'N/A'}", Company: "${l.company || 'N/A'}", Status: ${l.connectedStatus || 'N/A'}, Stage: ${l.stage || 'N/A'}`
+              ).join('\n');
+            }
+          }
+
+          // G. Social Posts Scheduler
+          const socialPostM = this.getModelSafely('SocialPost');
+          if (socialPostM) {
+            const posts = await socialPostM.find({ userId }).limit(5).lean().exec();
+            if (posts && posts.length > 0) {
+              socialPostsContext = posts.map(p => 
+                `- Platform: ${p.platform}, Status: ${p.status}, Caption snippet: "${p.content?.slice(0, 50)}...", Scheduled Date: ${p.scheduledAt || 'N/A'}`
+              ).join('\n');
+            }
+          }
+
         } catch (e) {
           this.logger.error('Error fetching user context for global chatbot', e);
         }
       }
 
-      // 2. Build system prompt
-      const systemPrompt = `You are W-AI, the advanced AI Platform Assistant for AdsGo.ai. 
-Your goal is to help the user manage, optimize, and analyze their digital marketing campaigns, brand profiles, and customer reputation.
-
-Here is the current context of the user's project/brand:
----
-[BRAND INFORMATION]
-${brandContext}
-
-[CAMPAIGNS]
-${campaignsContext}
-
-[RECENT REVIEWS]
-${reviewsContext}
----
-
-Your Capabilities:
-- Provide advanced digital marketing insights.
-- Review campaign headlines, budgets, objective alignments and suggest improvements.
-- Analyze customer review sentiments, recommend response strategies, or diagnose reputation issues.
-- Call out clear discrepancies or possible improvements (e.g., if a campaign has a high budget but a weak/vague headline, or if reviews mention specific recurring complaints like delivery issues).
-- Act as a senior marketing strategist, friendly, insightful, concise, and highly professional.
-
-Rules of Interaction:
-1. Speak in a helpful, analytical, and professional tone.
-2. If asked about campaigns or improvements, refer to the actual campaign list provided in the context. If none exist, suggest how to create one.
-3. Be concise and actionable. Use bullet points for recommendations.
-4. Answer in the same language as the user (e.g., if the user writes in Hindi/Hinglish, reply in Hindi/Hinglish or friendly English that matches their style).
-`;
-
-      // 3. contextualize messages with history
-      let contextualizedMessage = message;
-      if (history && history.length > 0) {
-        const historyStr = history
-          .map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.content}`)
-          .join('\n');
-        contextualizedMessage = `Previous Conversation:\n${historyStr}\n\nUser: ${message}`;
-      }
-
+      // 2. Invoke the Python AI Agent at port 8003
       try {
-        const response = await this.getChatbotResponse(contextualizedMessage, systemPrompt);
-        return { reply: response };
+        const agentServerUrl = process.env.AGENT_SERVER_URL || 'http://localhost:8003';
+        const response = await fetch(`${agentServerUrl}/api/v1/dashboard-agent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userPrompt: message,
+            history,
+            userContext,
+            walletContext,
+            txnsContext,
+            brandContext,
+            campaignsContext,
+            reviewsContext,
+            contactsContext,
+            workflowsContext,
+            linkedinContext,
+            socialPostsContext,
+          }),
+        });
+
+        if (response.ok) {
+          const json = await response.json();
+          if (json && json.reply) {
+            this.logger.log('Generated dashboard chatbot response using Python Agent Server');
+            return { reply: json.reply };
+          }
+        } else {
+          const errText = await response.text();
+          this.logger.warn(`Python Agent dashboard-agent failed: ${response.status} - ${errText}`);
+        }
       } catch (error) {
-        this.logger.error('Error handling Global Chatbot response', error);
-        return { reply: "I'm having trouble retrieving my strategy guidelines right now. Please try again soon!" };
+        this.logger.error('Error calling Python dashboard-agent, falling back to local OpenAI', error);
       }
+
+      // 3. Fallback to local NestJS AI generation if Python Agent is down
+      const fallbackSystemPrompt = `You are W-AI, the advanced AdsGo.ai platform assistant. Help the user with their digital marketing campaigns. Current user wallet balance context: ${walletContext}`;
+      const localResponse = await this.aiService.generateContent(message, fallbackSystemPrompt);
+      return { reply: localResponse };
     }
 
     const chatbot = await this.chatbotModel.findById(chatbotId);
@@ -180,7 +265,8 @@ Rules of Interaction:
 
   private async getChatbotResponse(userPrompt: string, systemPrompt: string): Promise<string> {
     try {
-      const response = await fetch('http://localhost:8003/api/v1/chatbot-response', {
+      const agentServerUrl = process.env.AGENT_SERVER_URL || 'http://localhost:8003';
+      const response = await fetch(`${agentServerUrl}/api/v1/chatbot-response`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userPrompt, systemPrompt }),
@@ -202,5 +288,14 @@ Rules of Interaction:
 
     // Local NestJS AI fallback
     return this.aiService.generateContent(userPrompt, systemPrompt);
+  }
+
+  private getModelSafely(name: string): Model<any> | null {
+    try {
+      if (this.connection.modelNames().includes(name)) {
+        return this.connection.model(name);
+      }
+    } catch (_) {}
+    return null;
   }
 }

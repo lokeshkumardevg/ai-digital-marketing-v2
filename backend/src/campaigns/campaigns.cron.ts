@@ -87,7 +87,8 @@ export class CampaignCronService {
           };
 
           // Call python optimize endpoint
-          const response = await fetch('http://localhost:8003/api/v1/optimize-campaign', {
+          const agentServerUrl = process.env.AGENT_SERVER_URL || 'http://localhost:8003';
+          const response = await fetch(`${agentServerUrl}/api/v1/optimize-campaign`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(currentPlan),

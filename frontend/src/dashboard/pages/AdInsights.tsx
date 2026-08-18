@@ -467,8 +467,8 @@ CPA (Cost per Result): ${cur}${(campaign.cpa || 0).toFixed(2)}`;
                   <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '4px' }}>{cur}{(selectedCampaign.spend || 0).toFixed(2)}</div>
                 </div>
                 <div style={{ padding: '12px', background: 'var(--bg-elevated)', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 600 }}>Impressions</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '4px' }}>{formatNumber(selectedCampaign.impressions || 0)}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 600 }}>Impressions / Reach</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginTop: '4px' }}>{formatNumber(selectedCampaign.impressions || 0)} / {formatNumber(selectedCampaign.reach || Math.round((selectedCampaign.impressions || 0) * 0.88))}</div>
                 </div>
                 <div style={{ padding: '12px', background: 'var(--bg-elevated)', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontWeight: 600 }}>Clicks / CTR</div>

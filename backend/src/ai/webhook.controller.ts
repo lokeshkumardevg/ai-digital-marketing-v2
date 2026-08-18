@@ -7,6 +7,10 @@ import * as cheerio from 'cheerio';
 export class WebhookController {
   private readonly logger = new Logger(WebhookController.name);
 
+  private get agentServerUrl(): string {
+    return process.env.AGENT_SERVER_URL || 'http://localhost:8003';
+  }
+
   constructor(
     private readonly aiService: AiService,
     private readonly semrushService: SemrushService,
@@ -35,7 +39,7 @@ export class WebhookController {
   async reviewGen(@Body() body: { customer_name: string; product: string }) {
     this.logger.log('[review-gen] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/review-gen', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/review-gen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -55,7 +59,7 @@ export class WebhookController {
   async reviewResponse(@Body() body: { star_rating: string; review_text: string }) {
     this.logger.log('[review-response] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/review-response', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/review-response', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -75,7 +79,7 @@ export class WebhookController {
   async socialPub(@Body() body: { topic: string }) {
     this.logger.log('[social-pub] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/social-pub', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/social-pub', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -95,7 +99,7 @@ export class WebhookController {
   async socialEngage(@Body() body: { brand_tone: string; user_comment: string }) {
     this.logger.log('[social-engage] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/social-engage', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/social-engage', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -115,7 +119,7 @@ export class WebhookController {
   async reporting(@Body() body: { metrics: string }) {
     this.logger.log('[reporting] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/reporting', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/reporting', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -145,7 +149,7 @@ Deliver a detailed, structured marketing report.`;
   async listingsOpt(@Body() body: { business_name: string; keywords: string }) {
     this.logger.log('[listings-opt] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/listings-opt', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/listings-opt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -165,7 +169,7 @@ Deliver a detailed, structured marketing report.`;
   async leadGen(@Body() body: { industry: string; region: string }) {
     this.logger.log('[lead-gen] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/lead-gen', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/lead-gen', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -185,7 +189,7 @@ Deliver a detailed, structured marketing report.`;
   async segmentation(@Body() body: { customer_data: string }) {
     this.logger.log('[segmentation] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/segmentation', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/segmentation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -205,7 +209,7 @@ Deliver a detailed, structured marketing report.`;
   async templateDesign(@Body() body: { topic: string }) {
     this.logger.log('[template-design] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/template-design', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/template-design', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -235,7 +239,7 @@ CRITICAL REQUIREMENTS:
   async custom(@Body() body: { instruction: string; input: string }) {
     this.logger.log('[custom] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/custom', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/custom', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -262,7 +266,7 @@ CRITICAL REQUIREMENTS:
   }) {
     this.logger.log(`[website-builder] Request received`);
     try {
-      const response = await fetch('http://localhost:8003/api/v1/website-builder', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/website-builder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -427,7 +431,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       scrapedText = await this.scrapeUrl(body.product_url);
     }
     try {
-      const response = await fetch('http://localhost:8003/api/v1/ad-copy', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/ad-copy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body, scraped_context: scrapedText }),
@@ -449,7 +453,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
   async emailSequence(@Body() body: { product_name: string; audience: string }) {
     this.logger.log('[email-sequence] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/email-sequence', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/email-sequence', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -481,7 +485,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       this.logger.error('Failed to fetch Semrush data for blog writer', e);
     }
     try {
-      const response = await fetch('http://localhost:8003/api/v1/blog-writer', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/blog-writer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body, seo_data: realSeoData }),
@@ -503,7 +507,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
   async videoScript(@Body() body: { platform: string; topic: string }) {
     this.logger.log('[video-script] Request received');
     try {
-      const response = await fetch('http://localhost:8003/api/v1/video-script', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/video-script', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -527,7 +531,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       scrapedText = await this.scrapeUrl(body.company_url);
     }
     try {
-      const response = await fetch('http://localhost:8003/api/v1/press-release', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/press-release', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body, scraped_context: scrapedText }),
@@ -553,7 +557,7 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       scrapedText = await this.scrapeUrl(body.website_url);
     }
     try {
-      const response = await fetch('http://localhost:8003/api/v1/brand-identity', {
+      const response = await fetch(this.agentServerUrl + '/api/v1/brand-identity', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body, scraped_context: scrapedText }),
@@ -567,6 +571,81 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
       const prompt = `Act as a Chief Brand Officer. Based on this business description: "${body.business_description}".${realContext}\n\nGenerate an elite brand identity framework. Include: 1. Primary Jungian Brand Archetype. 2. Tone-of-Voice Matrix (Do's and Don'ts). 3. A 10-word Mission Statement. 4. A 10-word Vision Statement. 5. Deep Psychographic profiling of the ideal customer. Base all factual essence on the scraped data.`;
       const result = await this.aiService.generateContent(prompt, 'You are an elite Chief Brand Officer. Use advanced branding psychology (Jungian archetypes, psychographics). Rely on real scraped data.', undefined, 'gpt-4o', 3000);
       return { aiOutput: result };
+    }
+  }
+
+  // ── SEO OPTIMIZATION AGENT ────────────────────────────────
+  @Post('seo-opt')
+  async seoOpt(@Body() body: { website_url: string; keywords?: string; framework: string; focus_area: string }) {
+    this.logger.log('[seo-opt] Request received');
+    try {
+      const response = await fetch(this.agentServerUrl + '/api/v1/seo-opt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!response.ok) throw new Error(`FastAPI responded with status ${response.status}`);
+      return await response.json();
+    } catch (e: any) {
+      this.logger.warn(`Fallback to local AI: seo-opt failed on python agent server: ${e.message}`);
+      let contentContext = '';
+      if (body.website_url) {
+        contentContext = await this.scrapeUrl(body.website_url);
+      }
+      
+      const prompt = `Act as an Elite Technical SEO Specialist.
+We need to optimize a website built using the "${body.framework}" framework.
+Website URL: ${body.website_url}
+Optimization Focus: ${body.focus_area}
+Target Keywords: ${body.keywords || 'None specified'}
+
+Scraped Website Content Context:
+"""
+${contentContext}
+"""
+
+Please generate a detailed, structured SEO optimization report and concrete code snippets or layout plans that the client can apply. 
+Provide step-by-step action items tailored to the "${body.framework}" technology stack.
+For example:
+- If Next.js, show metadata exports or layout adjustments.
+- If React, show Helmet tags and dynamic head updates.
+- If Node.js, show dynamic route variable settings and caching/SSR recommendations.
+- If Technical/Speed focus, give asset optimization code and caching guidelines.
+Keep the output extremely professional, using clean markdown with clear action points.`;
+
+      const result = await this.aiService.generateContent(prompt, 'You are an Elite Technical SEO Specialist. Deliver actionable, technically accurate code blocks and instructions. Avoid high-level generic advice.', undefined, 'gpt-4o-mini', 2500);
+      return { aiOutput: result };
+    }
+  }
+
+  // ── AUTO-SUGGEST KEYWORDS AGENT ───────────────────────────
+  @Post('suggest-keywords')
+  async suggestKeywords(@Body() body: { website_url: string }) {
+    this.logger.log('[suggest-keywords] Request received');
+    try {
+      let contentContext = '';
+      if (body.website_url) {
+        contentContext = await this.scrapeUrl(body.website_url);
+      }
+      
+      const prompt = `Act as an Elite SEO Keyword Researcher.
+We have a website at: ${body.website_url}
+
+Scraped Website Content Context:
+"""
+${contentContext}
+"""
+
+Please identify and suggest exactly 10 highly relevant, commercial, and high-intent SEO keywords that perfectly represent this website's core business or product.
+Return ONLY a comma-separated list of the 10 keywords. Do NOT include numbering, bullet points, introductory text, markdown styling, or trailing text. 
+Example output structure:
+digital marketing software, automated advertising platform, seo crawler tool, ad optimizer, PPC automation`;
+
+      const result = await this.aiService.generateContent(prompt, 'You are an Elite SEO Keyword Researcher. Output ONLY a comma-separated list of the 10 best keywords.', undefined, 'gpt-4o-mini', 200);
+      return { keywords: result.trim().replace(/^`+|`+$/g, '').trim() };
+    } catch (e: any) {
+      this.logger.error('Failed to suggest keywords', e);
+      return { keywords: 'marketing, advertising, seo optimization' };
     }
   }
 }

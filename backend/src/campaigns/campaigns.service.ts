@@ -63,7 +63,8 @@ export class CampaignService {
 
       // 1. Try calling the Python Agent Server
       try {
-        const pyRes = await fetch('http://localhost:8003/api/v1/discover-brand', {
+        const agentServerUrl = process.env.AGENT_SERVER_URL || 'http://localhost:8003';
+        const pyRes = await fetch(`${agentServerUrl}/api/v1/discover-brand`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -89,17 +90,7 @@ export class CampaignService {
 
       // 2. Fallback to local OpenAI in NestJS if Python Agent call failed
       if (!parsed) {
-        const prompt = `
-You are a senior digital marketing strategist, SEO auditor, competitive intelligence analyst, and web research expert.
-Your task is to perform a COMPLETE brand intelligence analysis using REAL VERIFIED DATA.
-URL: ${body.website}
-Title: ${scraped.title}
-Meta Description: ${scraped.metaDesc}
-Scraped Text Content: ${scraped.content || "(No webpage text content could be scraped)"}
-Brand Name: ${body.brandName}
-Industry Hint: ${industry}
-
-Refer to buildPrompt schema and return strict JSON format only.`;
+        const prompt = await this.buildPrompt(body);
 
         const response = await this.openai.chat.completions.create({
           model: 'gpt-4o-mini',
@@ -127,7 +118,8 @@ Refer to buildPrompt schema and return strict JSON format only.`;
 
       // Invoke LangGraph Campaign Creation Agent Workflow (Python Server)
       try {
-        const pythonResponse = await fetch('http://localhost:8003/api/v1/create-campaign', {
+        const agentServerUrl = process.env.AGENT_SERVER_URL || 'http://localhost:8003';
+        const pythonResponse = await fetch(`${agentServerUrl}/api/v1/create-campaign`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -189,17 +181,66 @@ Refer to buildPrompt schema and return strict JSON format only.`;
         seoScore: 68,
         performanceScore: 72,
         uxScore: 74,
-        findings: ['Good UX'],
-        quickWins: ['Improve speed'],
+        findings: ['Good UX', 'Strong layout'],
+        quickWins: ['Improve speed', 'Optimize image sizes'],
       },
-      keywords: { primary: ['marketing tools'] },
-      competition: { intensity: 'High' },
+      keywords: {
+        primary: [
+          'digital marketing services', 'lead generation solutions', 'conversion optimization',
+          'online ad management', 'brand strategy consulting', 'growth hacking agency',
+          'b2b marketing agency', 'custom seo audit'
+        ],
+        secondary: [
+          'social media marketing', 'ppc campaign setup', 'google ads management',
+          'marketing automation systems', 'local business promotion', 'affiliate network services',
+          'competitor analysis reports', 'meta ads campaign'
+        ],
+        longTail: [
+          'how to grow online business traffic', 'affordable digital ad management company',
+          'best lead generation tools for startups', 'local seo services near me',
+          'hire ecommerce marketing consultant', 'optimize meta ads conversion rate',
+          'inbound marketing strategy checklist', 'improve website ranking on google fast'
+        ],
+        gaps: [
+          'industry trends articles', 'video ad creatives', 'competitor backlink target lists'
+        ],
+        recommendations: [
+          'publish detailed case studies', 'create monthly email newsletter campaigns',
+          'optimize loading speeds for mobile'
+        ]
+      },
+      competition: {
+        intensity: 'High',
+        competitors: [
+          { name: 'Competitor A', strengths: ['Established market presence', 'Large backlink profile', 'High organic traffic'], weaknesses: ['Complex pricing models', 'Slow customer support response', 'Dated UI/UX design'], comparison: 'Strong organic visibility but higher barrier to entry for small businesses.' },
+          { name: 'Competitor B', strengths: ['Modern product features', 'Affordable entry pricing', 'Active social media communities'], weaknesses: ['Limited enterprise scale', 'Fewer integration options', 'Basic reporting modules'], comparison: 'Highly competitive on price but lacks advanced automation utilities.' },
+          { name: 'Competitor C', strengths: ['Exceptional client retention', 'Comprehensive resource blog', 'Custom solutions options'], weaknesses: ['Premium-only tier plans', 'Long onboarding duration', 'Limited template variety'], comparison: 'Strong reputation but target focus is strictly enterprise clients.' },
+          { name: 'Competitor D', strengths: ['High speed platform tools', 'Great documentation libraries', 'Active forum communities'], weaknesses: ['Poor international support', 'Frequent pricing adjustments', 'Higher learning curve'], comparison: 'Technically advanced but lacks human strategist consultation.' },
+          { name: 'Competitor E', strengths: ['Strong visual branding assets', 'Multiple partner channels', 'Simple mobile application options'], weaknesses: ['Basic core functionalities', 'Slow feature release schedule', 'Higher churn rates'], comparison: 'Excellent marketing coverage but product depth is relatively thin.' },
+          { name: 'Competitor F', strengths: ['Robust analytical reports', 'AI suggestion widgets', 'Free audit packages'], weaknesses: ['Complicated dashboards', 'High system latency', 'Fewer third-party syncs'], comparison: 'Excellent reporting tools but interface is overwhelming for beginners.' },
+          { name: 'Competitor G', strengths: ['Strong community backing', 'Excellent templates list', 'Flexible custom integrations'], weaknesses: ['Inconsistent feature updates', 'No telephone helpdesk support', 'Higher transactional fees'], comparison: 'Very popular framework but lacks dedicated success manager support.' },
+          { name: 'Competitor H', strengths: ['Low subscription cost plans', 'Intuitive visual builder tools', 'Fast setup speed'], weaknesses: ['Limited customization depth', 'Thin resource documentation', 'Basic export features'], comparison: 'Excellent tool for freelancers but under-equipped for agency needs.' },
+          { name: 'Competitor I', strengths: ['High authority blog network', 'Multiple free training resources', 'Strong email list'], weaknesses: ['Aggressive upsell strategies', 'Overwhelming UI options', 'Vague performance guarantees'], comparison: 'Highly educational but products can feel sales-heavy.' },
+          { name: 'Competitor J', strengths: ['Enterprise security compliance', 'Dedicated account strategist', 'Multi-tenant systems support'], weaknesses: ['Extremely high starter rates', 'No self-service registration', 'Long implementation cycles'], comparison: 'Strong fit for corporate brands but inaccessible for SMB budgets.' }
+        ],
+        differentiators: ['Highly responsive visual strategist consultation', 'Simplified dashboard metrics reporting', 'Lower overall total cost of ownership'],
+        marketPosition: 'Agile market player focusing on high-growth startups and SMBs.'
+      },
       analyticsDashboard: {
-        estimatedMonthlyVisits: '20k',
+        estimatedMonthlyVisits: '20000',
+        estimatedDomainAuthority: 32,
+        estimatedBacklinks: '1200',
+        topTrafficSources: ['Organic Search', 'Direct Traffic', 'Social Ads'],
+        avgSessionDuration: '2m 45s',
+        bounceRate: '40%',
+        conversionFocusAreas: ['Pricing page layout', 'Landing page form simplification']
       },
+      closeRate: 5.2,
       budget: {
         estimatedAdSpend: '$5000',
         recommendedChannels: ['Google', 'Meta'],
+        estimatedCPCRange: '$1.20 - $2.50',
+        roiPotential: '3x - 4x'
       },
     };
   }
@@ -713,7 +754,6 @@ You are a senior digital marketing strategist, SEO auditor, competitive intellig
 Your task is to perform a COMPLETE brand intelligence analysis using REAL VERIFIED DATA from the scraped webpage content below.
 
 IMPORTANT RULES:
-
 1. ALWAYS base your analysis on the actual scraped text content of the website.
 2. DO NOT generate generic, placeholder, or static keywords.
 3. Keywords MUST be STRONG, highly converting, commercial intent keywords with high search volume. They must be unique, highly specific to the business's actual offerings, and contain NO duplicates.
@@ -723,6 +763,9 @@ IMPORTANT RULES:
 7. Return ONLY VALID JSON.
 8. DO NOT include markdown.
 9. DO NOT explain anything.
+10. You MUST generate at least 20 highly relevant keywords, distributed across 'primary' (minimum 8), 'secondary' (minimum 8), and 'longTail' (minimum 8) lists.
+11. You MUST find and list at least 10 real direct or indirect business competitors in the 'competitors' list. For each, list at least 3 detailed strengths, at least 3 weaknesses, and a comparative positioning summary against our brand.
+12. For 'estimatedMonthlyVisits', do not return a range (e.g. '10k-50k'). Return a raw numeric string value (e.g., '25000') so the system can parse and format it accurately.
 
 SCRAPED WEBSITE DATA:
 URL: ${data.website}
@@ -784,70 +827,124 @@ OUTPUT FORMAT:
   "campaignName": "",
   "coreObjective": "",
   "brand": {
-    "name": "",
+    "name": "${data.brandName}",
     "tagline": "",
-    "industry": "",
+    "industry": "${industry}",
     "founded": "",
     "businessModel": "",
     "toneOfVoice": "",
-    "registeredAddress": "",
-    "CIN": "",
-    "overallScore": 0
+    "registeredAddress": "N/A",
+    "CIN": "N/A",
+    "overallScore": 85
   },
   "websiteAudit": {
-    "overallScore": 0,
-    "seoScore": 0,
-    "performanceScore": 0,
-    "uxScore": 0,
-    "contentScore": 0,
-    "technicalScore": 0,
-    "mobileScore": 0,
-    "accessibilityScore": 0,
-    "securityScore": 0,
-    "criticalIssue": "",
-    "findings": [],
-    "technicalIssues": [],
-    "quickWins": []
+    "overallScore": 80,
+    "seoScore": 82,
+    "performanceScore": 78,
+    "uxScore": 80,
+    "contentScore": 85,
+    "technicalScore": 80,
+    "mobileScore": 85,
+    "accessibilityScore": 80,
+    "securityScore": 90,
+    "criticalIssue": "Any critical issue found or None",
+    "findings": ["finding 1", "finding 2"],
+    "technicalIssues": ["issue 1"],
+    "quickWins": ["win 1", "win 2"]
   },
   "keywords": {
-    "primary": [],
-    "secondary": [],
-    "longTail": [],
-    "gaps": [],
-    "recommendations": []
+    "primary": ["primary keyword 1", "primary keyword 2", "primary keyword 3", "primary keyword 4", "primary keyword 5", "primary keyword 6", "primary keyword 7", "primary keyword 8"],
+    "secondary": ["secondary keyword 1", "secondary keyword 2", "secondary keyword 3", "secondary keyword 4", "secondary keyword 5", "secondary keyword 6", "secondary keyword 7", "secondary keyword 8"],
+    "longTail": ["long-tail keyword 1", "long-tail keyword 2", "long-tail keyword 3", "long-tail keyword 4", "long-tail keyword 5", "long-tail keyword 6", "long-tail keyword 7", "long-tail keyword 8"],
+    "gaps": ["gap 1", "gap 2", "gap 3", "gap 4", "gap 5"],
+    "recommendations": ["rec 1", "rec 2", "rec 3", "rec 4", "rec 5"]
   },
   "competition": {
-    "intensity": "",
+    "intensity": "High or Medium or Low",
     "competitors": [
       {
-        "name": "",
-        "strengths": [],
-        "weaknesses": [],
-        "comparison": ""
+        "name": "Competitor 1",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      },
+      {
+        "name": "Competitor 2",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      },
+      {
+        "name": "Competitor 3",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      },
+      {
+        "name": "Competitor 4",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      },
+      {
+        "name": "Competitor 5",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      },
+      {
+        "name": "Competitor 6",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      },
+      {
+        "name": "Competitor 7",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      },
+      {
+        "name": "Competitor 8",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      },
+      {
+        "name": "Competitor 9",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
+      },
+      {
+        "name": "Competitor 10",
+        "strengths": ["strength 1", "strength 2", "strength 3"],
+        "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+        "comparison": "Side-by-side comparison with details"
       }
     ],
-    "differentiators": [],
-    "marketPosition": ""
+    "differentiators": ["differentiator 1", "differentiator 2", "differentiator 3"],
+    "marketPosition": "Market positioning summary"
   },
   "adCopy": {
-    "headlines": ["Array of 4 COMPLETELY UNIQUE and DISTINCT conversion-focused headlines (under 30 chars each)"],
-    "primaryTexts": ["Array of 3 COMPLETELY UNIQUE primary texts/captions (under 90 chars each). Each must be distinct and contextually align with the headlines."],
+    "headlines": ["Headline 1 under 30 chars", "Headline 2 under 30 chars", "Headline 3 under 30 chars", "Headline 4 under 30 chars"],
+    "primaryTexts": ["Primary text 1 under 90 chars", "Primary text 2 under 90 chars", "Primary text 3 under 90 chars"],
     "callToAction": "LEARN_MORE"
   },
   "analyticsDashboard": {
-    "estimatedMonthlyVisits": "",
-    "estimatedDomainAuthority": 0,
-    "estimatedBacklinks": "",
-    "topTrafficSources": [],
-    "avgSessionDuration": "",
-    "bounceRate": "",
-    "conversionFocusAreas": []
+    "estimatedMonthlyVisits": "25000",
+    "estimatedDomainAuthority": 25,
+    "estimatedBacklinks": "500+",
+    "topTrafficSources": ["Organic Search", "Direct"],
+    "avgSessionDuration": "2m 15s",
+    "bounceRate": "45%",
+    "conversionFocusAreas": ["Landing page CTA", "Form fields"]
   },
   "budget": {
-    "estimatedAdSpend": "",
-    "recommendedChannels": [],
-    "estimatedCPCRange": "",
-    "roiPotential": ""
+    "estimatedAdSpend": "$1000 - $3000",
+    "recommendedChannels": ["Google Search", "Meta Ads"],
+    "estimatedCPCRange": "$1.50 - $3.00",
+    "roiPotential": "3x - 5x"
   }
 }
 
@@ -1704,7 +1801,8 @@ Return ONLY JSON.
 
     try {
       // 1. Try Python Agent API
-      const response = await fetch('http://localhost:8003/api/v1/optimize-draft', {
+      const agentServerUrl = process.env.AGENT_SERVER_URL || 'http://localhost:8003';
+      const response = await fetch(`${agentServerUrl}/api/v1/optimize-draft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -1729,7 +1827,7 @@ Return ONLY JSON.
       try {
         const systemPrompt = `You are a conversion rate optimization (CRO) and ad copywriting specialist. Return ONLY a valid JSON object matching the requested schema.`;
         const context = `Platform: ${platform}\nBrand: ${brandDetails?.name || ''}\nDescription: ${brandDetails?.description || ''}\nCurrent Headline: ${creative?.headline || ''}\nCurrent Text: ${creative?.primaryText || ''}`;
-        const userPrompt = `Optimize the following creative for max conversion and click rate:\n\n${context}\n\nReturn JSON only:\n{\n  "headline": "punchy headline under 30 chars for google or 50 chars for others",\n  "primaryText": "compelling primary copy incorporating PAS/AIDA",\n  "googleKeywords": ["keyword1", "keyword2", ...] (only if google),\n  "liJobTitles": ["title1", "title2", ...] (only if linkedin),\n  "liSeniority": ["Senior", ...] (only if linkedin),\n  "liCompanySize": ["11-50", ...] (only if linkedin),\n  "explanation": "Brief description of optimizations."\n}`;
+        const userPrompt = `Optimize the following creative for max conversion and click rate:\n\n${context}\n\nReturn JSON only:\n{\n  "headline": "punchy headline under 30 chars for google or 50 chars for others",\n  "primaryText": "compelling primary copy incorporating PAS/AIDA",\n  "adCopy": {\n    "headlines": ["Headline Option 1 (Benefit-focused)", "Headline Option 2 (Social Proof/Urgency)", "Headline Option 3 (Question/Agitate)", "Headline Option 4", "Headline Option 5"],\n    "primaryTexts": ["Primary Text Variant 1 (AIDA)", "Primary Text Variant 2 (PAS)", "Primary Text Variant 3 (Bulleted Value Prop)"]\n  },\n  "googleKeywords": ["keyword1", "keyword2", ...] (only if google),\n  "liJobTitles": ["title1", "title2", ...] (only if linkedin),\n  "liSeniority": ["Senior", ...] (only if linkedin),\n  "liCompanySize": ["11-50", ...] (only if linkedin),\n  "explanation": "Brief description of optimizations."\n}`;
         
         const completion = await this.openai.chat.completions.create({
           model: 'gpt-4o-mini',
@@ -1750,7 +1848,13 @@ Return ONLY JSON.
     }
 
     // 3. Update the Mongoose campaign draft document with optimized parameters
-    let existing = await this.campaignModel.findOne({ campaignId });
+    let existing = null;
+    if (Types.ObjectId.isValid(campaignId)) {
+      existing = await this.campaignModel.findById(campaignId);
+    }
+    if (!existing) {
+      existing = await this.campaignModel.findOne({ campaignId });
+    }
     if (!existing) {
       existing = await this.campaignModel.findOne({
         $or: [
@@ -1764,20 +1868,37 @@ Return ONLY JSON.
     if (existing) {
       const dbPlatform = existing.platform || platform;
       const currentPlatformData = existing.data || {};
-      
-      const updatedPlatformData = {
-        ...currentPlatformData,
-        headline: optimizedResult.headline || currentPlatformData.headline,
-        primaryText: optimizedResult.primaryText || currentPlatformData.primaryText,
+      const dbPlatformLower = dbPlatform.toLowerCase();
+      let updatedPlatformData = { ...currentPlatformData };
+
+      const mergeOptimized = (target: any) => {
+        const adCopyObj = optimizedResult.adCopy || target.adCopy || {
+          headlines: [optimizedResult.headline || target.headline || ''],
+          primaryTexts: [optimizedResult.primaryText || target.primaryText || '']
+        };
+        const updated = {
+          ...target,
+          headline: optimizedResult.headline || target.headline,
+          primaryText: optimizedResult.primaryText || target.primaryText,
+          caption: optimizedResult.primaryText || target.caption || target.primaryText,
+          adCopy: adCopyObj,
+        };
+
+        if (dbPlatformLower === 'google' && optimizedResult.googleKeywords) {
+          updated.googleKeywords = optimizedResult.googleKeywords;
+        }
+        if (dbPlatformLower === 'linkedin') {
+          if (optimizedResult.liJobTitles) updated.liJobTitles = optimizedResult.liJobTitles;
+          if (optimizedResult.liSeniority) updated.liSeniority = optimizedResult.liSeniority;
+          if (optimizedResult.liCompanySize) updated.liCompanySize = optimizedResult.liCompanySize;
+        }
+        return updated;
       };
 
-      if (dbPlatform.toLowerCase() === 'google' && optimizedResult.googleKeywords) {
-        updatedPlatformData.googleKeywords = optimizedResult.googleKeywords;
-      }
-      if (dbPlatform.toLowerCase() === 'linkedin') {
-        if (optimizedResult.liJobTitles) updatedPlatformData.liJobTitles = optimizedResult.liJobTitles;
-        if (optimizedResult.liSeniority) updatedPlatformData.liSeniority = optimizedResult.liSeniority;
-        if (optimizedResult.liCompanySize) updatedPlatformData.liCompanySize = optimizedResult.liCompanySize;
+      if (currentPlatformData[dbPlatformLower] && typeof currentPlatformData[dbPlatformLower] === 'object') {
+        updatedPlatformData[dbPlatformLower] = mergeOptimized(currentPlatformData[dbPlatformLower]);
+      } else {
+        updatedPlatformData = mergeOptimized(currentPlatformData);
       }
 
       await this.campaignModel.findOneAndUpdate(
