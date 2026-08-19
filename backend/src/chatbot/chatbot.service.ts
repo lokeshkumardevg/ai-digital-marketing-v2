@@ -69,7 +69,7 @@ export class ChatbotService {
       if (userId) {
         try {
           // Fetch active brand details
-          const brand = await this.brandModel.findOne({ userId }).lean().exec();
+          const brand = await this.brandModel.findOne({ userId, isActiveBrand: true }).lean().exec();
           if (brand) {
             brandContext = `
 Brand Name: ${brand.name}

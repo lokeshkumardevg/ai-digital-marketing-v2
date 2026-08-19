@@ -1,5 +1,4 @@
-// brand.service.ts
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, OnModuleInit, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Brand, BrandDocument } from './brand.schema';
@@ -8,12 +7,23 @@ import { chromium } from 'playwright';
 import axios from 'axios';
 
 @Injectable()
-export class BrandService {
+export class BrandService implements OnModuleInit {
+  private readonly logger = new Logger(BrandService.name);
+
   constructor(
     @InjectModel(Brand.name)
     private readonly brandModel: Model<BrandDocument>,
     private readonly aiService: AiService,
   ) {}
+
+  async onModuleInit() {
+    try {
+      await this.brandModel.collection.dropIndex('userId_1');
+      this.logger.log('Successfully dropped legacy unique index userId_1 to support multiple brands.');
+    } catch (e) {
+      // index not found, ignore
+    }
+  }
 
   // ============================================================
   // EXTRACT — handles every shape Campaigns.tsx sends
@@ -79,15 +89,10 @@ export class BrandService {
   // GET /campaign/brands/:userId
   // ============================================================
   async getBrandsByUser(userId: string) {
-    const brand = await this.brandModel.findOne({ userId });
-
-    if (!brand) {
-      return { ok: true, brands: [] };
-    }
-
+    const brands = await this.brandModel.find({ userId });
     return {
       ok: true,
-      brands: [this.normaliseBrandRecord(brand)],
+      brands: brands.map(doc => this.normaliseBrandRecord(doc)),
     };
   }
 
@@ -114,34 +119,24 @@ export class BrandService {
     // ── Step 3: Merge assets from both locations ──────────────
     const assets = this.mergeAssets(incoming, body);
 
-    // ── Step 4: Conflict check ────────────────────────────────
-    const existing = await this.brandModel.findOne({ userId });
+    // ── Step 4: Deactivate other brands so this becomes active ──
+    await this.brandModel.updateMany({ userId }, { $set: { isActiveBrand: false } });
 
-    if (existing && !forceReplace && (existing.name || '').trim().toLowerCase() !== brandName.trim().toLowerCase()) {
-      throw new ConflictException({
-        ok: false,
-        replaceRequired: true,
-        message: 'Brand already exists',
+    // ── Step 5: Check if a brand with the same Name or URL already exists ──
+    const incomingUrl = incoming?.website || incoming?.url || incoming?.brandUrl || '';
+    const existing = await this.brandModel.findOne({
+      userId,
+      $or: [
+        { name: brandName },
+        { url: incomingUrl }
+      ]
+    });
 
-        existingBrand: {
-          id: existing._id,
-          name:
-            existing.name ||
-            existing.brandDetails?.brand?.name ||
-            '',
-        },
-
-        newBrand: {
-          name: brandName,
-        },
-      });
-    }
-
-    // ── Step 5: Upsert into brands collection ─────────────────
+    // ── Step 6: Upsert into brands collection ─────────────────
     const payload = {
       userId,
       name: brandName,
-      url: incoming?.website || incoming?.url || incoming?.brandUrl || '',
+      url: incomingUrl,
       status: 'active' as const,
       industry: incoming?.brand?.industry || incoming?.industry,
       tagline: incoming?.brand?.tagline || incoming?.tagline,
@@ -153,11 +148,20 @@ export class BrandService {
       savedAt: new Date().toISOString(),
     };
 
-    const updated = await this.brandModel.findOneAndUpdate(
-      { userId },
-      payload,
-      { upsert: true, new: true },
-    );
+    let updated: BrandDocument;
+    if (existing) {
+      updated = (await this.brandModel.findOneAndUpdate(
+        { _id: existing._id },
+        { $set: payload },
+        { new: true }
+      )) as BrandDocument;
+    } else {
+      updated = (await this.brandModel.findOneAndUpdate(
+        { userId, name: brandName },
+        payload,
+        { upsert: true, new: true },
+      )) as BrandDocument;
+    }
 
     console.log(`[brand-save] ✅ Saved brand "${brandName}" for user ${userId}`);
 
@@ -167,7 +171,7 @@ export class BrandService {
     return {
       ok: true,
       replaced: !!existing,
-      message: existing ? 'Brand replaced successfully' : 'Brand saved successfully',
+      message: existing ? 'Brand updated successfully' : 'Brand saved successfully',
       brand: this.normaliseBrandRecord(updated),
     };
   }

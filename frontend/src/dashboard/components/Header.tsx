@@ -13,7 +13,8 @@ import { api } from '../../api/axios';
 
 import {
   setActiveWebsite,
-  upsertBrandLocally
+  upsertBrandLocally,
+  persistActiveBrand
 } from '../../store/slices/workspaceSlice';
 
 import { markAllReadAsync, markOneReadAsync, deleteOneAsync, fetchNotifications } from '../../store/slices/notificationSlice';
@@ -891,7 +892,13 @@ export const Header: React.FC = () => {
               <select
                 className="site-switcher__select"
                 value={activeWebsiteId || ''}
-                onChange={e => dispatch(setActiveWebsite(e.target.value))}
+                onChange={e => {
+                  const val = e.target.value;
+                  dispatch(setActiveWebsite(val));
+                  if (user?.id) {
+                    dispatch(persistActiveBrand({ userId: user.id, brandId: val }) as any);
+                  }
+                }}
               >
                 {websites.map((site: any) => (
                   <option key={site.id} value={site.id}>{site.name}</option>

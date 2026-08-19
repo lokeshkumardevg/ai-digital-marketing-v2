@@ -100,24 +100,44 @@ export class AiController {
       const targetUrl = body.url.startsWith('http') ? body.url : `https://${body.url}`;
       const domain = new URL(targetUrl).hostname.replace('www.', '');
 
-      // Start PageSpeed Insights API (Lighthouse) call in the background to run in parallel
+      // Start PageSpeed Insights API (Lighthouse) calls for both Mobile and Desktop in parallel
       const lighthousePromise = (async () => {
         try {
           this.logger.log(`Fetching Lighthouse scores from PageSpeed Insights for ${targetUrl}`);
-          const psiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(targetUrl)}&category=SEO&category=PERFORMANCE&category=ACCESSIBILITY&category=BEST_PRACTICES`;
-          const psiResponse = await fetch(psiUrl);
-          if (psiResponse.ok) {
-            const psiData: any = await psiResponse.json();
-            const categories = psiData?.lighthouseResult?.categories;
-            if (categories) {
-              this.logger.log(`Successfully fetched Lighthouse scores from PageSpeed Insights for ${domain}`);
-              return {
-                performance: Math.round((categories.performance?.score || 0) * 100),
-                accessibility: Math.round((categories.accessibility?.score || 0) * 100),
-                bestPractices: Math.round((categories['best-practices']?.score || 0) * 100),
-                seo: Math.round((categories.seo?.score || 0) * 100),
-              };
+          const apiKey = process.env.PAGESPEED_API_KEY || process.env.GOOGLE_API_KEY;
+          
+          const fetchStrategy = async (strategy: 'mobile' | 'desktop') => {
+            let psiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(targetUrl)}&category=SEO&category=PERFORMANCE&category=ACCESSIBILITY&category=BEST_PRACTICES&strategy=${strategy}`;
+            if (apiKey) {
+              psiUrl += `&key=${apiKey}`;
             }
+            const response = await fetch(psiUrl);
+            if (response.ok) {
+              const psiData: any = await response.json();
+              const categories = psiData?.lighthouseResult?.categories;
+              if (categories) {
+                return {
+                  performance: Math.round((categories.performance?.score || 0) * 100),
+                  accessibility: Math.round((categories.accessibility?.score || 0) * 100),
+                  bestPractices: Math.round((categories['best-practices']?.score || 0) * 100),
+                  seo: Math.round((categories.seo?.score || 0) * 100),
+                };
+              }
+            } else {
+              const errText = await response.text().catch(() => '');
+              this.logger.warn(`PageSpeed Insights API failed for strategy ${strategy} with status ${response.status}: ${errText}`);
+            }
+            return null;
+          };
+
+          const [mobile, desktop] = await Promise.all([
+            fetchStrategy('mobile'),
+            fetchStrategy('desktop')
+          ]);
+
+          if (mobile || desktop) {
+            this.logger.log(`Successfully fetched Lighthouse scores from PageSpeed Insights for ${domain}`);
+            return { mobile, desktop };
           }
         } catch (err: any) {
           this.logger.warn(`Failed to fetch PageSpeed Insights Lighthouse scores: ${err.message}`);
@@ -355,7 +375,7 @@ export class AiController {
       }
 
       let lighthouseScores = await lighthousePromise;
-      if (!lighthouseScores) {
+      if (!lighthouseScores || !lighthouseScores.mobile || !lighthouseScores.desktop) {
         this.logger.log(`Calculating dynamic Lighthouse fallback scores for ${domain}`);
         const responseTimeSeconds = parseFloat(loadTime || '0.5');
         const calculatedPerformance = Math.max(45, Math.round(100 - (responseTimeSeconds * 12) - (meta.images > 10 ? 8 : 0)));
@@ -378,11 +398,22 @@ export class AiController {
         const calculatedBestPractices = Math.max(60, 100 - (isHttps ? 0 : 20) - (meta.images > 15 ? 10 : 0));
         const calculatedAccessibility = Math.max(55, 100 - (meta.images * 2.5 > 30 ? 30 : Math.round(meta.images * 2.5)));
 
-        lighthouseScores = {
+        const fallbackData = {
           performance: calculatedPerformance,
           accessibility: calculatedAccessibility,
           bestPractices: calculatedBestPractices,
           seo: calculatedSeo
+        };
+
+        lighthouseScores = {
+          mobile: {
+            ...fallbackData,
+            performance: Math.max(35, calculatedPerformance - 12)
+          },
+          desktop: {
+            ...fallbackData,
+            performance: Math.min(100, calculatedPerformance + 3)
+          }
         };
       }
 
@@ -541,7 +572,7 @@ ${bodyText.replace(/\s+/g, ' ').slice(0, 3500)}
     if (req.user?.id) {
       const brandData = profile.data?.brand || profile;
       await this.brandModel.findOneAndUpdate(
-        { userId: req.user.id },
+        { userId: req.user.id, url: url },
         { $set: { brandProfile: brandData } }
       );
     }

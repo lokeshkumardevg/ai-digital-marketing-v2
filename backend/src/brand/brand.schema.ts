@@ -66,4 +66,4 @@ export class Brand {
 export const BrandSchema = SchemaFactory.createForClass(Brand);
 
 // One brand per user — enforce at DB level
-BrandSchema.index({ userId: 1 }, { unique: true });
+BrandSchema.index({ userId: 1 });
