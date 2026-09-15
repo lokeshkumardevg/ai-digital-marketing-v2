@@ -24,6 +24,8 @@ Resources from './landing/pages/Resources';
 import Register from './landing/pages/Register';
 // @ts-ignore
 import Contact from './landing/pages/Contact';
+// @ts-ignore
+import PrivacyPolicy from './landing/pages/PrivacyPolicy';
 import AgentEcosystem from './landing/pages/AgentEcosystem';
 import { Settings } from './dashboard/pages/Settings';
 import { Seo } from './dashboard/pages/Seo';
@@ -240,6 +242,7 @@ const App: React.FC = () => {
         <Route path="/login" element={<Register />} />
         <Route path="/signup" element={<Register />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/agent-ecosystem" element={<AgentEcosystem />} />
         <Route path="/chatbot-embed/:id" element={<ChatEmbed />} />
         <Route path="/presentation" element={<Presentation />} />

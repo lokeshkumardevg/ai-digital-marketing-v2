@@ -23,6 +23,8 @@ const footerGroups = [
       { label: "Tutorial", href: "/tutorial" },
       { label: "Resources", href: "/resources" },
       { label: "Help", href: "/help" },
+      { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Contact", href: "/contact" },
     ],
   },
   {
@@ -247,8 +249,8 @@ function Footer() {
             <Link to="/terms" className="transition-colors duration-300 hover:text-white/80">
               Terms
             </Link>
-            <Link to="/privacy" className="transition-colors duration-300 hover:text-white/80">
-              Privacy
+            <Link to="/privacy-policy" className="transition-colors duration-300 hover:text-white/80">
+              Privacy Policy
             </Link>
             <Link to="/cookies" className="transition-colors duration-300 hover:text-white/80">
               Cookies

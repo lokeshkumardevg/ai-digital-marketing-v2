@@ -87,8 +87,8 @@ const agentConfigs: Record<string, any> = {
     premium: true,
     fields: [
       { id: "topic", label: "Business Name / Website Topic", type: "text", placeholder: "e.g., LuxeCuts - A Premium Barber Shop in New York" },
-      { id: "pages", label: "Pages (Count or Names)", type: "text", placeholder: "e.g., 5 OR Home, About, Services, Contact" },
-      { id: "theme", label: "Select Theme", type: "select", options: ["Corporate", "Startup", "SaaS", "Agency", "Portfolio", "Education", "Healthcare", "Restaurant", "E-commerce", "Real Estate"] },
+      { id: "pages", label: "Select or Write Pages", type: "custom_pages" },
+      { id: "technology", label: "Select Technology / Framework", type: "select", options: ["HTML/Tailwind", "Next.js (React)", "React (Tailwind)", "WordPress", "Vue.js"] },
       { id: "primaryColor", label: "Primary Color", type: "color", placeholder: "#036cd8" },
       { id: "secondaryColor", label: "Secondary Color", type: "color", placeholder: "#6366f1" },
       { id: "logo", label: "Upload Logo (optional)", type: "file", placeholder: "" }
@@ -114,6 +114,8 @@ export const Agents: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [loadingStage, setLoadingStage] = useState('');
+  const [customPageText, setCustomPageText] = useState('');
+  const [editPromptText, setEditPromptText] = useState('');
   const agentStatuses: Record<string, 'active' | 'sleeping'> = {
     "review_generation": "active",
     "review_response": "active",
@@ -149,7 +151,10 @@ export const Agents: React.FC = () => {
           defaults[f.id] = f.id === 'secondaryColor' ? '#6366f1' : '#036cd8';
         }
         if (f.type === 'select') {
-          defaults[f.id] = f.options[0]; // Default to first option (Corporate)
+          defaults[f.id] = f.options[0]; // Default to first option
+        }
+        if (f.type === 'custom_pages') {
+          defaults[f.id] = 'Home, About Us, Services, Portfolio, Contact Us';
         }
       });
       setFormData(defaults);
@@ -229,6 +234,71 @@ export const Agents: React.FC = () => {
       clearInterval(progressInterval);
       setResponseText(`Error: Cannot reach local backend. Is 'npm run start:dev' running in backend?\nDetails: ${error.message}`);
       toast.error("Workflow failed. Check backend connection.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditSubmit = async () => {
+    const editInstruction = editPromptText.trim();
+    if (!editInstruction || !responseText) return;
+
+    setIsLoading(true);
+    setProgress(0);
+    setLoadingStage('Analyzing Existing Design...');
+    setEditPromptText(''); // Clear input
+
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev < 40) {
+          setLoadingStage('Locating Targets...');
+          return prev + Math.random() * 6;
+        }
+        if (prev < 75) {
+          setLoadingStage('Applying Code Refinements...');
+          return prev + Math.random() * 4;
+        }
+        if (prev < 90) {
+          setLoadingStage('Finalizing Site Preview...');
+          return prev + Math.random() * 2;
+        }
+        return prev;
+      });
+    }, 400);
+
+    try {
+      const config = agentConfigs['website_builder'];
+      const payload = {
+        ...formData,
+        previousHtml: responseText,
+        editInstruction: editInstruction
+      };
+
+      const response = await fetch(config.url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        clearInterval(progressInterval);
+        setProgress(100);
+        setLoadingStage('Edit Completed!');
+
+        const data = await response.json();
+        let output = typeof data === 'object' ? data.aiOutput || JSON.stringify(data, null, 2) : data;
+        const cleanHtml = output.replace(/```html/gi, '').replace(/```/g, '').trim();
+
+        setTimeout(() => {
+          setResponseText(cleanHtml);
+          toast.success("Design updated successfully!");
+        }, 500);
+      } else {
+        throw new Error(`HTTP Error: ${response.status}`);
+      }
+    } catch (error: any) {
+      clearInterval(progressInterval);
+      toast.error(`Edit failed: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -598,6 +668,138 @@ export const Agents: React.FC = () => {
                       <option value="">-- Choose Option --</option>
                       {field.options.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
+                  ) : field.type === 'custom_pages' ? (
+                    (() => {
+                      const activePages = (formData[field.id] || '')
+                        .split(',')
+                        .map((p: string) => p.trim())
+                        .filter(Boolean);
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          {/* Tag Pills */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                            {activePages.map((page: string) => (
+                              <span key={page} style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: 'rgba(139, 92, 246, 0.12)',
+                                color: '#a78bfa',
+                                border: '1px solid rgba(139, 92, 246, 0.25)',
+                                padding: '6px 12px',
+                                borderRadius: '8px',
+                                fontSize: '13px',
+                                fontWeight: 500
+                              }}>
+                                {page}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = activePages.filter((p: string) => p !== page);
+                                    setFormData({ ...formData, [field.id]: updated.join(', ') });
+                                  }}
+                                  style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#a78bfa',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    padding: 0,
+                                    marginLeft: '4px',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                  }}
+                                >
+                                  &times;
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                          {/* Dropdown + Input group */}
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            <select
+                              onChange={(e) => {
+                                const selected = e.target.value;
+                                if (selected && !activePages.includes(selected)) {
+                                  const updated = [...activePages, selected];
+                                  setFormData({ ...formData, [field.id]: updated.join(', ') });
+                                }
+                                e.target.value = ""; // reset
+                              }}
+                              style={{
+                                flex: '1 1 180px',
+                                padding: '12px',
+                                border: '1px solid var(--glass-border)',
+                                borderRadius: '10px',
+                                background: 'var(--bg-elevated)',
+                                color: 'var(--text-primary)',
+                                fontSize: '14px',
+                                outline: 'none'
+                              }}
+                            >
+                              <option value="">+ Add Common Page</option>
+                              {["Home", "About Us", "Services", "Portfolio", "Pricing", "Features", "Testimonials", "Contact Us", "FAQ", "Blog", "Careers"]
+                                .filter(p => !activePages.includes(p))
+                                .map(p => <option key={p} value={p}>{p}</option>)}
+                            </select>
+
+                            <div style={{ display: 'flex', flex: '2 1 240px', gap: '6px' }}>
+                              <input
+                                type="text"
+                                placeholder="Or type page name..."
+                                value={customPageText}
+                                onChange={(e) => setCustomPageText(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const val = customPageText.trim();
+                                    if (val && !activePages.includes(val)) {
+                                      const updated = [...activePages, val];
+                                      setFormData({ ...formData, [field.id]: updated.join(', ') });
+                                      setCustomPageText('');
+                                    }
+                                  }
+                                }}
+                                style={{
+                                  flex: 1,
+                                  padding: '12px',
+                                  border: '1px solid var(--glass-border)',
+                                  borderRadius: '10px',
+                                  background: 'var(--bg-elevated)',
+                                  color: 'var(--text-primary)',
+                                  fontSize: '14px',
+                                  outline: 'none'
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const val = customPageText.trim();
+                                  if (val && !activePages.includes(val)) {
+                                    const updated = [...activePages, val];
+                                    setFormData({ ...formData, [field.id]: updated.join(', ') });
+                                    setCustomPageText('');
+                                  }
+                                }}
+                                style={{
+                                  padding: '10px 16px',
+                                  background: 'rgba(139, 92, 246, 0.15)',
+                                  color: '#8b5cf6',
+                                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                                  borderRadius: '10px',
+                                  fontSize: '13px',
+                                  fontWeight: 'bold',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Add
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()
                   ) : field.type === 'file' ? (
                     <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, field.id)} />
                   ) : (
@@ -673,6 +875,58 @@ export const Agents: React.FC = () => {
                       }}>
                         <i className="fa-solid fa-download"></i> Download HTML
                       </button>
+                    </div>
+                    {/* AI Refinement Hub (Conversational Edit) */}
+                    <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(255, 255, 255, 0.02)', border: '1px dashed var(--glass-border)', borderRadius: '16px' }}>
+                      <h4 style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: 600, marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="fa-solid fa-wand-magic-sparkles" style={{ color: '#8b5cf6' }}></i>
+                        AI Refinement Hub (Conversational Edit)
+                      </h4>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginBottom: '16px' }}>
+                        Type any modification instruction (like Figma). The AI will update your live HTML site preview on the fly!
+                      </p>
+                      <div style={{ display: 'flex', gap: '10px' }}>
+                        <input
+                          type="text"
+                          placeholder="e.g. 'Make the background solid black', 'Add a price grid', 'Increase title size'..."
+                          value={editPromptText}
+                          onChange={(e) => setEditPromptText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !isLoading) {
+                              handleEditSubmit();
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '12px 16px',
+                            border: '1px solid var(--glass-border)',
+                            borderRadius: '10px',
+                            background: 'var(--bg-elevated)',
+                            color: 'var(--text-primary)',
+                            fontSize: '14px',
+                            outline: 'none'
+                          }}
+                        />
+                        <button
+                          onClick={handleEditSubmit}
+                          disabled={isLoading || !editPromptText.trim()}
+                          style={{
+                            padding: '12px 24px',
+                            background: 'linear-gradient(135deg, #8b5cf6, #3b82f6)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '10px',
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            opacity: (isLoading || !editPromptText.trim()) ? 0.6 : 1,
+                            transition: 'all 0.2s',
+                            boxShadow: '0 4px 12px rgba(139, 92, 246, 0.25)'
+                          }}
+                        >
+                          {isLoading ? 'Updating...' : '✦ Apply Edit'}
+                        </button>
+                      </div>
                     </div>
                   </>
                 ) : (

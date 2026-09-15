@@ -262,7 +262,10 @@ CRITICAL REQUIREMENTS:
     primaryColor?: string;
     secondaryColor?: string;
     theme?: string;
+    technology?: string;
     logoBase64?: string;
+    previousHtml?: string;
+    editInstruction?: string;
   }) {
     this.logger.log(`[website-builder] Request received`);
     try {
@@ -291,111 +294,172 @@ CRITICAL REQUIREMENTS:
       const secondaryColor = body.secondaryColor || '#6366f1';
       const theme = body.theme || 'Corporate';
       const hasLogo = !!body.logoBase64;
-      const brandName = body.topic.split(/[-:|,\n]/)[0]?.trim() || body.topic || 'Brand';
-      const realLogoTag = hasLogo ? `<img src="${body.logoBase64}" alt="Logo" style="height:48px; object-fit:contain;" />` : `<span class="brand-name" style="font-size:1.5rem;font-weight:800;color:var(--primary);font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px;">${brandName}</span>`;
+      let systemPrompt = '';
+      let userPrompt = '';
+      const technology = body.technology || 'HTML/Tailwind';
 
-      const systemPrompt = `You are a World-Class Lead Designer at a top-tier digital agency.
-Your mission: Generate an "Elite" Multi-Page SPA for the brand "${brandName}" (Full Topic/Niche: "${body.topic}").
+      if (body.previousHtml && body.editInstruction) {
+        systemPrompt = `You are a World-Class Principal UI/UX Architect at an elite design agency (comparable to Framer, Bolt.new, or V0).
+Your mission: Modify, enhance, and refine the provided HTML website based on the user's edit instruction: "${body.editInstruction}".
 
-THEME-SPECIFIC RULES (STRICT):
-- If THEME is 'Restaurant': Use elegant food menus, reservation forms, and gallery grids.
-- If THEME is 'SaaS' or 'Startup': Use modern dashboard previews, complex feature grids, and comparison tables.
-- If THEME is 'Healthcare' or 'Education': Use clean, trust-building layouts, appointment/enrollment forms, and resource grids.
-- If THEME is 'E-commerce' or 'Real Estate': Use product/property cards with large images, filter UI, and high-impact CTAs.
+CRITICAL EDITING & CODING RULES (100% MANDATORY):
+1. Preserve the general SPA navigation layout, the custom Event Delegation router JavaScript logic at the bottom, page section structures, colors, fonts, Tailwind configuration, CDN scripts, and the logo placeholder tag.
+2. Implement the requested modification (e.g., adding sections, modifying copy, updating layout structures, or redesigning components) to look extremely premium, gorgeous, and fully complete.
+3. Every single page in the navigation MUST continue to have at least 3-4 rich, well-designed content sections/divs. Never collapse pages or remove sections unless explicitly asked.
+4. Output the complete updated HTML page code from <!DOCTYPE html> to </html>. Do NOT return markdown, do NOT truncate, do NOT include explanations.`;
 
-DESIGN SYSTEM & BRAND STYLING:
-1. TYPOGRAPHY: Elite hierarchy using 'Plus Jakarta Sans' or 'Inter' from Google Fonts.
-2. BRAND NAME: Use exactly "${brandName}" as the brand/company name throughout the text, navbar logo, and footer.
-3. COLORS & PALETTE: You must define CSS custom properties at the :root level:
-   :root {
-     --primary: ${primaryColor};
-     --secondary: ${secondaryColor};
-   }
-   You MUST strictly style the entire website using var(--primary) and var(--secondary) for all branding, backgrounds, gradients, borders, highlights, active states, and hover effects. Do NOT use default tailwind or bootstrap/generic colors.
-4. ANIMATIONS: Include AOS library (data-aos="fade-up") or smooth CSS transitions.
-5. COMPONENTS: Use rounded-3xl, shadow-2xl, and beautiful glassmorphism.
-6. CLIENT-SIDE ROUTING (SPA) & LAYOUT: You must build a fully functional Single Page Application. All '.page-section' containers must be wrapped inside a single \`<main>\` element. The Header/Navbar and the Footer MUST sit outside the \`<main>\` wrapper (at the layout level) so they remain visible at all times across all pages. Wrap each page's content in its own container (\`<div id="page-name" class="page-section hidden">\`), except the Home page which must be visible by default.
-7. PAGE TRANSITIONS: Include a CSS animation to fade and slide up pages when they are displayed, making the experience buttery smooth. Add this rule to the stylesheet:
-   @keyframes fadeInUp {
-     from { opacity: 0; transform: translateY(15px); }
-     to { opacity: 1; transform: translateY(0); }
-   }
-   .page-section:not(.hidden) {
-     animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-   }
-8. ABSOLUTE COMPLETENESS & RICH COPY: Every single page in the navigation must be fully fleshed out with extensive, detailed marketing sections, detailed benefit statements, comprehensive user reviews, fully designed lists, and complete descriptive copy specific to the brand. No shorthand stubs, no placeholder comments, and no truncated text.
-9. PREMIUM FOOTER: The footer must be a fully-designed, modern multi-column component containing:
-   - Brand information with logo and a compelling mission statement.
-   - Quick Links (Home, About Us, Services, Portfolio, Contact Us) mapped to the SPA router.
-   - Contact Info (phone, email, hours, physical address).
-   - Fully-styled Newsletter Subscription Form (with email input and submit CTA).
-   - Social media links with premium micro-interactions.
-10. STICKY FLEXBOX LAYOUT (NO OVERLAPS): To prevent any overlaps or footer float issues, use a flex layout on the body:
-    body {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      margin: 0;
-    }
-    main {
-      flex: 1;
-    }
-    The Header/Navbar sits at the top, the \`<main>\` container wraps all '.page-section' bodies in the middle, and the Footer sits at the bottom in the normal document flow. Do NOT make the Footer position: fixed or position: absolute; it must sit naturally at the bottom.
+        userPrompt = `Here is the current HTML code of the website:
+${body.previousHtml}
 
-TECHNICAL RULES:
-- LOGO: Use exactly [COMPANY_LOGO_IMAGE_TAG] for the logo image or fallback text placement.
-- NO TRUNCATION. NO MARKDOWN. ONLY RAW HTML.
-- Start with <!DOCTYPE html> and end with </html>.`;
+Please modify and update it according to this instruction:
+"${body.editInstruction}"
 
-      const userPrompt = `Build an Elite Multi-Page ${theme} Website for the brand "${brandName}" based on topic "${body.topic}".
+Output the complete, updated HTML page.`;
+      } else {
+        // Fallback brand name if empty or generic
+        let resolvedBrandName = 'ApexLaunch';
+        if (body.topic && body.topic.trim().length >= 3 && !["none", "null", "website", "my website"].includes(body.topic.trim().toLowerCase())) {
+          resolvedBrandName = body.topic.split(/[-:|,\n]/)[0]?.trim() || 'ApexLaunch';
+        }
 
+        const resolvedLogoTag = hasLogo ? `<img src="${body.logoBase64}" alt="Logo" style="height:48px; object-fit:contain;" />` : `<span class="brand-name" style="font-size:1.5rem;font-weight:800;color:var(--primary);font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px;">${resolvedBrandName}</span>`;
+
+        systemPrompt = `You are a World-Class Principal UI/UX Architect at an elite design agency (comparable to Framer, Bolt.new, or V0).
+Your mission: Generate a spectacular, award-winning, responsive Multi-Page Single Page Application (SPA) for the brand "${resolvedBrandName}" (Full Topic/Niche: "${body.topic}") specifically built and themed around the technology stack "${technology}".
+
+CRITICAL DESIGN SYSTEM & CODING RULES (100% MANDATORY):
+1. CDN LIBRARIES (MUST BE INCLUDED IN HEAD):
+   - Tailwind CSS: <script src="https://cdn.tailwindcss.com"></script>
+   - Font Awesome: <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   - Google Fonts: <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+   - AOS Animations: <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet"> and <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+2. TAILWIND CUSTOM COLOR CONFIG:
+   You MUST configure Tailwind custom colors dynamically inside a script in the <head> using the user-provided colors:
+   <script>
+     tailwind.config = {
+       theme: {
+         extend: {
+           fontFamily: {
+             sans: ['Plus Jakarta Sans', 'sans-serif'],
+             display: ['Space Grotesk', 'sans-serif'],
+           },
+           colors: {
+             primary: {
+               DEFAULT: '${primaryColor}',
+               light: '${primaryColor}1a',
+               dark: '${primaryColor}cc',
+             },
+             secondary: {
+               DEFAULT: '${secondaryColor}',
+               light: '${secondaryColor}1a',
+               dark: '${secondaryColor}cc',
+             }
+           }
+         }
+       }
+     }
+   </script>
+
+3. ELITE DESIGN SYSTEM (DARK/NEON GLOW):
+   - BACKGROUND & BODY: Modern, futuristic dark mode backdrop (#030712) with neon glow spots:
+     body {
+       background: radial-gradient(circle at 50% -20%, ${primaryColor}1a 0%, transparent 60%), 
+                   radial-gradient(circle at 10% 80%, ${secondaryColor}1a 0%, transparent 50%), 
+                   #030712;
+       color: #f3f4f6;
+       font-family: 'Plus Jakarta Sans', sans-serif;
+       min-height: 100vh;
+       display: flex;
+       flex-direction: column;
+       margin: 0;
+     }
+   - GLASSMORPHISM: Define a custom utility class '.glass-card' for grids and lists:
+     .glass-card {
+       background: rgba(255, 255, 255, 0.02);
+       backdrop-filter: blur(16px);
+       -webkit-backdrop-filter: blur(16px);
+       border: 1px solid rgba(255, 255, 255, 0.05);
+     }
+   - HERO: Glowing badge at the top, a gigantic bold display heading (text-5xl md:text-8xl font-display font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-500 leading-none), supportive paragraphs, and dual glowing interactive CTA buttons (with glowing drop-shadows).
+   - FEATURES & GRIDS: Every feature card must be a glass-card with subtle hover translates, colorful circular badge icon containers, and smooth shadow hover glows.
+   - SPA CLIENT ROUTING & LAYOUT:
+     * Header/Navbar and Footer must remain permanently visible outside the <main> tag.
+     * Navigation links must use hash anchors (href="#home", href="#services", etc.).
+     * Define page transition animation in stylesheet:
+       @keyframes fadeInUp {
+         from { opacity: 0; transform: translateY(15px); }
+         to { opacity: 1; transform: translateY(0); }
+       }
+       .page-section:not(.hidden) {
+         animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+       }
+
+4. BULLETPROOF EVENT-DELEGATION ROUTER SCRIPT:
+   You MUST include this exact router script at the bottom of the body. It handles navigation and prevents crashes:
+   <script>
+     AOS.init({ duration: 800, once: true });
+     function navigateToSection(hash) {
+       if (!hash || hash === '#' || hash === '#/') hash = '#home';
+       const targetId = hash.replace('#', '');
+       const targetSection = document.getElementById(targetId);
+       if (targetSection) {
+         document.querySelectorAll('.page-section').forEach(sec => sec.classList.add('hidden'));
+         targetSection.classList.remove('hidden');
+         window.scrollTo({ top: 0, behavior: 'smooth' });
+         document.querySelectorAll('nav a, footer a').forEach(link => {
+           if (link.getAttribute('href') === hash) {
+             link.classList.add('text-primary');
+             link.classList.remove('text-gray-400');
+           } else if (link.getAttribute('href') && link.getAttribute('href').startsWith('#')) {
+             link.classList.remove('text-primary');
+             link.classList.add('text-gray-400');
+           }
+         });
+       }
+     }
+     document.addEventListener('click', function(e) {
+       const link = e.target.closest('a');
+       if (link) {
+         const href = link.getAttribute('href');
+         if (href && href.startsWith('#')) {
+           e.preventDefault();
+           navigateToSection(href);
+           window.location.hash = href;
+         }
+       }
+     });
+     window.addEventListener('hashchange', () => navigateToSection(window.location.hash));
+     navigateToSection(window.location.hash || '#home');
+   </script>
+
+5. EXTENSIVE PAGE-SPECIFIC SECTIONS (100% COMPLETED WITH 3-4 DISTINCT CONTENT DIVS EACH):
+   - Every single page (Home, About Us, Services, Portfolio, Contact, etc.) MUST have at least 3-4 distinct content divs/sections. Never collapse pages or leave them brief/empty.
+   - Home Page:
+     1. Sticky Glassmorphic Navbar (Logo, Pages, and Glowing "Get Started" Action Button).
+     2. Hero Section: Pill badge, Giant display heading, supportive text, glowing CTA buttons, and an HTML-mocked interactive dashboard panel (e.g. styled entirely with Tailwind CSS using glass stats, sidebar links, grid views, and glowing progress indicators).
+     3. Trusted Clients ticker logo grid.
+     4. Core Value Proposition Grid (4 columns, with custom circular colorful icon containers and hover shadow glow).
+     5. Step-by-Step roadmap process flow.
+     6. Testimonials Carousel / Card Grid with avatars, user review text, and star badges.
+     7. Interactive FAQ Accordion List.
+   - About Us Page: Brand origin story, 4 core values grid cards, interactive milestone timeline, team grid with custom card layout.
+   - Services Page: Detailed list of 4-6 offerings with price list columns, checklist items, and consultation scheduling forms.
+   - Portfolio Page: Project showcase grid with interactive category tabs filtering cards dynamically using JavaScript.
+   - Contact Page: Double-column layout with physical details, support hours, and fully operational contact form.
+   - Footer: Premium multi-column layout with descriptions, navigation quick links, newsletter sign-up, and social links.
+
+6. LOGO: Use exactly [COMPANY_LOGO_IMAGE_TAG] for the logo image or fallback brand text.
+7. CRITICAL STABILITY: You MUST write clean, highly optimized, non-repetitive HTML/Tailwind code to prevent token overflow. You MUST output a complete, fully valid HTML document from <!DOCTYPE html> to </html>. Do NOT truncate or leave anything unfinished.`;
+
+        userPrompt = `Build an Elite, World-Class Multi-Page ${theme} Website for the brand "${resolvedBrandName}" based on topic "${body.topic}".
+      
 REQUIRED PAGES: ${pagesStr}
 PRIMARY COLOR: ${primaryColor}
 SECONDARY COLOR: ${secondaryColor}
 
-INSTRUCTIONS FOR EACH PAGE (MUST BE FULLY DESIGNED & COMPLETED WITH RICH CONTENT):
-1. HOME:
-   - Stunning Hero section with a powerful value proposition, supporting subtext, and dual call-to-action buttons.
-   - Logos of Trusted Clients / Social Proof ticker.
-   - Core Features Grid showing 4 distinct value propositions with modern icons and hover scale/glassmorphism effects.
-   - Theme-Specific Interactive Showcase (e.g., interactive dashboard mock, tabbed comparison table, food menu slider, or properties search interface).
-   - How It Works / Process Roadmap showing step 1, 2, 3, 4 with line connectors.
-   - Testimonial Carousel or Grid with high-fidelity avatars, star ratings, and long-form reviews.
-   - Interactive FAQ accordion with CSS-only or JS toggle transitions.
-2. ABOUT US:
-   - Rich brand narrative & origin story explaining the company's mission and vision.
-   - Core Values Grid with 4 custom cards using icons, hover gradients, and custom shadows.
-   - Interactive Milestone Timeline showing the brand's achievements over the years.
-   - Founders & Team Grid with individual cards containing high-quality avatars, detailed bios, roles, and animated social links.
-3. SERVICES / PRODUCTS:
-   - Detailed listing of 4-6 distinct offerings, each with its own icon, detailed paragraph, target audience, and value highlight.
-   - High-impact pricing comparison matrix with "Most Popular" badges, listed features checklist, and CTA buttons.
-   - Detailed "Why Choose Us" text block comparing your brand's quality metrics vs. industry average.
-   - Direct scheduling or Consultation CTA section.
-4. PORTFOLIO / GALLERY:
-   - Modern project grid showcasing 6-8 distinct projects.
-   - Interactive Category Filter tabs (e.g., All, Category A, Category B, Category C) that dynamically show/hide project cards using JavaScript.
-   - Rich project card layouts displaying client name, project year, scope, and hover-triggered overlay details.
-5. CONTACT US:
-   - Double-column layout.
-   - Left column: Contact Info card containing beautiful details for address, phone, email, support desk, and operating hours. Integrated map placeholder or vector graphic.
-   - Right column: Fully operational Contact Form (Name, Email, Phone, Message) with custom styling, focus states, floating labels, validation states, and a submit CTA.
-
-SPA NAVIGATION SETUP:
-- Define CSS style:
-  .page-section { display: block; opacity: 1; transition: opacity 0.5s ease; }
-  .page-section.hidden { display: none !important; opacity: 0; }
-- Navbar links and Footer quick links for the SPA pages must use hash anchors matching the page IDs (e.g., href="#home", href="#about-us", href="#services", etc.).
-- Include a robust JavaScript router that intercepts clicks ONLY on links whose 'href' starts with '#' (e.g., using link.getAttribute('href')?.startsWith('#')). External links (like social media profiles, newsletter submit actions, or tel/mailto links) must NOT be intercepted or blocked by the router.
-- When an internal hash link is clicked, the router should:
-  1. Prevent the default link behavior.
-  2. Extract the target page ID from the hash (e.g. 'about-us' from '#about-us').
-  3. Find the matching '.page-section' element. If found, hide all other page-sections and show the matching one.
-  4. Update the active CSS class on both header and footer active links.
-  5. Scroll to the top of the window smoothly.
-- Ensure the header/navbar, logo, and footer are placed outside the '.page-section' elements (and outside the '<main>' tag) so they are layout-level and permanently functional.
-
-IMPORTANT: Every page must look professional, fully-designed, and filled with extensive, custom content. No placeholders or stubs.`;
+Write real, customized premium copy. Avoid placeholders. Ensure every page contains at least 3-4 well-designed sections/divs, and ensure the code completes fully.`;
+      }
 
       let visionImage: string | undefined = undefined;
       if (body.logoBase64) {
@@ -410,13 +474,15 @@ IMPORTANT: Every page must look professional, fully-designed, and filled with ex
 
       const raw = await this.aiService.generateContent(userPrompt, systemPrompt, undefined, 'gpt-4o', 16384 as any, visionImage as any);
       let html = raw.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-      html = html.replace(/<img[^>]*?\[COMPANY_LOGO_IMAGE_TAG\][^>]*?>/gi, realLogoTag);
-      html = html.replace(/<img[^>]*?src=["'](?:logo|Logo)["'][^>]*?>/gi, realLogoTag);
-      const escapedTopic = body.topic.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const escapedBrand = brandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const finalBrandName = body.topic ? (body.topic.split(/[-:|,\n]/)[0]?.trim() || 'Brand') : 'Brand';
+      const resolvedLogo = hasLogo ? `<img src="${body.logoBase64}" alt="Logo" style="height:48px; object-fit:contain;" />` : `<span class="brand-name" style="font-size:1.5rem;font-weight:800;color:var(--primary);font-family:'Space Grotesk',sans-serif;letter-spacing:-0.5px;">${finalBrandName}</span>`;
+      html = html.replace(/<img[^>]*?\[COMPANY_LOGO_IMAGE_TAG\][^>]*?>/gi, resolvedLogo);
+      html = html.replace(/<img[^>]*?src=["'](?:logo|Logo)["'][^>]*?>/gi, resolvedLogo);
+      const escapedTopic = body.topic ? body.topic.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : 'brand';
+      const escapedBrand = finalBrandName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const brandImgRegex = new RegExp(`<img[^>]*?src=["'](?:${escapedTopic}|${escapedBrand})["'][^>]*?>`, 'gi');
-      html = html.replace(brandImgRegex, realLogoTag);
-      html = html.replace(/\[COMPANY_LOGO_IMAGE_TAG\]/g, realLogoTag);
+      html = html.replace(brandImgRegex, resolvedLogo);
+      html = html.replace(/\[COMPANY_LOGO_IMAGE_TAG\]/g, resolvedLogo);
 
       return { aiOutput: html };
     }
