@@ -23,7 +23,7 @@ const footerGroups = [
       { label: "Tutorial", href: "/tutorial" },
       { label: "Resources", href: "/resources" },
       { label: "Help", href: "/help" },
-      { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Privacy Policy", href: "/privacy-policy.html" },
       { label: "Contact", href: "/contact" },
     ],
   },
@@ -85,6 +85,15 @@ function FooterLink({ href, external, children }) {
   if (external) {
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+        {children}
+        {underline}
+      </a>
+    );
+  }
+
+   if (href === "/privacy-policy.html") {
+    return (
+      <a href={href} className={className}>
         {children}
         {underline}
       </a>
@@ -249,9 +258,9 @@ function Footer() {
             <Link to="/terms" className="transition-colors duration-300 hover:text-white/80">
               Terms
             </Link>
-            <Link to="/privacy-policy" className="transition-colors duration-300 hover:text-white/80">
+            <a href="/privacy-policy.html" className="transition-colors duration-300 hover:text-white/80">
               Privacy Policy
-            </Link>
+            </a>
             <Link to="/cookies" className="transition-colors duration-300 hover:text-white/80">
               Cookies
             </Link>

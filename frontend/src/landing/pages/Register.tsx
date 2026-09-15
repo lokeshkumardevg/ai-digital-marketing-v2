@@ -767,7 +767,7 @@ function Register() {
                   By proceeding, you agree to our{" "}
                   <a href="#" style={{ color: "rgba(238,238,245,0.48)", textDecoration: "underline" }}>Terms</a>
                   {" "}and{" "}
-                  <a href="/privacy-policy" style={{ color: "rgba(238,238,245,0.48)", textDecoration: "underline" }}>Privacy Policy</a>.
+                  <a href="/privacy-policy.html" style={{ color: "rgba(238,238,245,0.48)", textDecoration: "underline" }}>Privacy Policy</a>.
 
                 </p>
               </div>
