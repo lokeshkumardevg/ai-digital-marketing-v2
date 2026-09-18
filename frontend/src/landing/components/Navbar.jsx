@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Button from "./Button";
-import logo from "../../assets/fevicon.png";
+
 import { Menu, X } from "lucide-react";
 
+
+const logo = "/fevicon.png";
 const navItems = ["Features", "Tutorial", "Pricing", "Resources", "Docs", "Help", "Contact"];
 
 function Navbar() {

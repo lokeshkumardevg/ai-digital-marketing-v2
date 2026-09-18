@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import logo from '../../assets/fevicon.png';
+const logo = "/fevicon.png";
 
 const getAgentUrl = (path: string) => import.meta.env.VITE_AI_API ? `${import.meta.env.VITE_AI_API}/${path}` : `${import.meta.env.VITE_API_URL}/webhook/${path}`;
 

@@ -1,5 +1,6 @@
-import logo from "../../assets/fevicon.png";
+
 import { Link } from "react-router-dom";
+const logo = "/fevicon.png";
 
 // Each entry now carries its real destination.
 // `external: true` → opens in a new tab as a normal <a> link.
