@@ -27,10 +27,10 @@ const steps = [
     label: "Strategic Targeting",
     desc: "Stop wasting budget on wrong clicks. Reach the exact humans who are ready to buy.",
     img: targetingImage,
-    color: "#818cf8",
-    colorDim: "rgba(129,140,248,0.12)",
-    colorBorder: "rgba(129,140,248,0.25)",
-    colorGlow: "rgba(129,140,248,0.07)",
+    color: "#60a5fa",
+    colorDim: "rgba(96,165,250,0.12)",
+    colorBorder: "rgba(96,165,250,0.25)",
+    colorGlow: "rgba(96,165,250,0.07)",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/>
@@ -110,7 +110,7 @@ export default function ResultsGrid() {
       <div style={{
         position: "absolute", bottom: "-80px", right: "5%",
         width: 420, height: 420,
-        background: "radial-gradient(circle, rgba(79,70,229,0.18) 0%, transparent 70%)",
+        background: "radial-gradient(circle, rgba(6,101,255,0.18) 0%, transparent 70%)",
         filter: "blur(70px)", pointerEvents: "none",
       }}/>
       <div style={{
@@ -168,7 +168,7 @@ export default function ResultsGrid() {
                 position: "absolute",
                 left: 0, bottom: -4, right: 0,
                 height: 2,
-                background: "linear-gradient(90deg, #3b82f6, #818cf8, #22d3ee)",
+                background: "linear-gradient(90deg, #3b82f6, #60a5fa, #22d3ee)",
                 borderRadius: 2,
                 opacity: 0.5,
               }}/>

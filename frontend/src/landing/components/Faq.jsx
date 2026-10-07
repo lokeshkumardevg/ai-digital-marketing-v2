@@ -113,7 +113,7 @@ export default function FAQ() {
             bg-gradient-to-r
             from-white
             via-[#e8eaff]
-            to-[#8b93ff]
+            to-[#60a5fa]
             bg-clip-text
             text-transparent
           "

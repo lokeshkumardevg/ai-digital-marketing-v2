@@ -296,11 +296,11 @@ function Hero() {
                   marginLeft: i === 0 ? 0 : -8,
                   background:
                     i === 0
-                      ? "linear-gradient(135deg,#3B5BFF,#8B5CF6)"
+                      ? "linear-gradient(135deg,#3B5BFF,#0665ff)"
                       : i === 1
                       ? "linear-gradient(135deg,#06b6d4,#3B82F6)"
                       : i === 2
-                      ? "linear-gradient(135deg,#8B5CF6,#EC4899)"
+                      ? "linear-gradient(135deg,#0665ff,#22d3ee)"
                       : "linear-gradient(135deg,#F59E0B,#EF4444)",
                 }}
               >

@@ -36,7 +36,7 @@ function Verticals() {
       <div style={{
         position: "absolute", bottom: 0, right: "10%",
         width: 340, height: 340,
-        background: "radial-gradient(circle, rgba(79,70,229,0.14) 0%, transparent 70%)",
+        background: "radial-gradient(circle, rgba(6,101,255,0.14) 0%, transparent 70%)",
         filter: "blur(80px)", pointerEvents: "none",
       }}/>
 
@@ -165,13 +165,13 @@ function Verticals() {
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                 <span style={{
                   fontSize: 10, fontWeight: 700, letterSpacing: "0.12em",
-                  textTransform: "uppercase", color: "#818cf8",
+                  textTransform: "uppercase", color: "#60a5fa",
                 }}>Local Service</span>
                 <span style={{
                   padding: "2px 8px", borderRadius: 999,
-                  background: "rgba(129,140,248,0.12)",
-                  border: "1px solid rgba(129,140,248,0.22)",
-                  fontSize: 9, color: "#a5b4fc", fontWeight: 600,
+                  background: "rgba(96,165,250,0.12)",
+                  border: "1px solid rgba(96,165,250,0.22)",
+                  fontSize: 9, color: "#93c5fd", fontWeight: 600,
                 }}>Search Ads</span>
               </div>
               <h3 style={{ fontSize: 19, fontWeight: 700, color: "#e2e8f0", margin: "0 0 8px", letterSpacing: "-0.025em" }}>
@@ -216,7 +216,7 @@ function Verticals() {
                   <svg style={{ width: "100%", height: "100%", overflow: "visible" }}>
                     <defs>
                       <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#818cf8"/>
+                        <stop offset="0%" stopColor="#60a5fa"/>
                         <stop offset="100%" stopColor="#22d3ee"/>
                       </linearGradient>
                     </defs>
@@ -230,7 +230,7 @@ function Verticals() {
                     />
                     {/* Dots */}
                     {[[0,140],[60,100],[120,120],[180,70],[240,95],[300,40],[360,80]].map(([x,y],i) => (
-                      <circle key={i} cx={x} cy={y} r="3" fill="#818cf8" opacity="0.9"/>
+                      <circle key={i} cx={x} cy={y} r="3" fill="#60a5fa" opacity="0.9"/>
                     ))}
                   </svg>
                 </div>
@@ -247,7 +247,7 @@ function Verticals() {
               }}>
                 {[
                   { val: "+240%", label: "Growth", color: "#3b82f6" },
-                  { val: "3.2x",  label: "ROI",    color: "#818cf8" },
+                  { val: "3.2x",  label: "ROI",    color: "#60a5fa" },
                   { val: "89%",   label: "Conversion", color: "#22d3ee" },
                 ].map(({ val, label, color }) => (
                   <div key={label} style={{ textAlign: "center" }}>

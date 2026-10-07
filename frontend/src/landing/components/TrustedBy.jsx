@@ -136,7 +136,7 @@ function TrustedBy() {
           ? `0 0 ${24 * proximity}px ${8 * proximity}px rgba(80,120,255,${0.25 * proximity}), 0 8px 32px rgba(59,91,255,${0.15 * proximity})`
           : "none";
         card.style.background = isCenter
-          ? `linear-gradient(135deg, rgba(59,91,255,${0.12 * proximity}), rgba(139,92,246,${0.12 * proximity}))`
+          ? `linear-gradient(135deg, rgba(59,91,255,${0.12 * proximity}), rgba(6,101,255,${0.12 * proximity}))`
           : "rgba(255,255,255,0.04)";
       }
       if (glow) glow.style.opacity = glowOpacity;
@@ -264,7 +264,7 @@ function TrustedBy() {
         style={{
           right: "25%", bottom: "50%",
           transform: `translate(calc(50% + ${mousePosition.x * -40}px), calc(50% + ${mousePosition.y * -40}px))`,
-          background: "radial-gradient(circle, rgba(139,92,246,.35) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(6,101,255,.35) 0%, transparent 70%)",
           transition: "transform .6s ease-out",
         }}
       />
@@ -343,7 +343,7 @@ function TrustedBy() {
                   className="spotlight-glow absolute inset-0 rounded-2xl blur-xl"
                   style={{
                     opacity: 0,
-                    background: "linear-gradient(135deg,rgba(59,91,255,.4),rgba(139,92,246,.4))",
+                    background: "linear-gradient(135deg,rgba(59,91,255,.4),rgba(6,101,255,.4))",
                   }}
                 />
 

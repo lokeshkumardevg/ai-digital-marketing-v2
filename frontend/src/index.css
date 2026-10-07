@@ -88,7 +88,7 @@
   --transition-medium: 0.3s  cubic-bezier(0.4, 0, 0.2, 1);
 
   --body-gradient-1: rgba(49, 88, 255, 0.18);
-  --body-gradient-2: rgba(124, 58, 237, 0.12);
+  --body-gradient-2: rgba(6, 101, 255, 0.12);
   --body-gradient-bg-start: #050a18;
   --body-gradient-bg-end: #080d1a;
 }
@@ -118,7 +118,7 @@
   --glass-blur:   blur(12px);
 
   --body-gradient-1: rgba(49, 88, 255, 0.08);
-  --body-gradient-2: rgba(124, 58, 237, 0.05);
+  --body-gradient-2: rgba(6, 101, 255, 0.05);
   --body-gradient-bg-start: #ffffff;
   --body-gradient-bg-end: #f8fafc;
 }
@@ -230,8 +230,8 @@ button {
 .input-field {
   width: 100%;
   padding: 14px 24px;
-  background: rgba(112, 51, 245, 0.03);
-  border: 1px solid rgba(112, 51, 245, 0.1);
+  background: rgba(6, 101, 255, 0.03);
+  border: 1px solid rgba(6, 101, 255, 0.1);
   border-radius: var(--radius-pill);
   color: var(--text-primary);
   font-size: 1rem;
@@ -242,9 +242,9 @@ button {
 
 .input-field:focus {
   outline: none;
-  background: rgba(124, 58, 237, 0.08);
+  background: rgba(6, 101, 255, 0.08);
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 4px rgba(112, 51, 245, 0.1);
+  box-shadow: 0 0 0 4px rgba(6, 101, 255, 0.1);
 }
 
 .input-field::placeholder {
@@ -269,12 +269,12 @@ button {
   background: var(--accent-gradient);
   color: white;
   border: none;
-  box-shadow: 0 8px 25px rgba(112, 51, 245, 0.25);
+  box-shadow: 0 8px 25px rgba(6, 101, 255, 0.25);
 }
 
 .btn-primary:hover {
   transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 12px 30px rgba(112, 51, 245, 0.4);
+  box-shadow: 0 12px 30px rgba(6, 101, 255, 0.4);
 }
 
 .btn-secondary {
@@ -285,7 +285,7 @@ button {
 }
 
 .btn-secondary:hover {
-  background: rgba(124, 58, 237, 0.12);
+  background: rgba(6, 101, 255, 0.12);
   border-color: var(--accent-primary);
   transform: translateY(-2px);
 }
@@ -316,13 +316,13 @@ button {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(112, 51, 245, 0.1);
+  background: rgba(6, 101, 255, 0.1);
   border-radius: 10px;
   border: 2px solid var(--bg-primary);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(112, 51, 245, 0.2);
+  background: rgba(6, 101, 255, 0.2);
 }
 
 /* Layout Utilities */

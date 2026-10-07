@@ -6,11 +6,11 @@ const steps = [
     title: "Analyze Your Brand",
     description:
       "Paste your product URL. Our AI performs deep competitive research, identifies your USP, and builds a winning marketing persona instantly.",
-    gradient: "linear-gradient(160deg, rgba(61,84,196,0.6), rgba(99,60,220,0.3) 50%, rgba(255,255,255,0.05))",
+    gradient: "linear-gradient(160deg, rgba(6,101,255,0.6), rgba(30,64,175,0.3) 50%, rgba(255,255,255,0.05))",
     inner: "#090f22",
-    badge: "linear-gradient(135deg, #1B43D1, #6b52e8)",
+    badge: "linear-gradient(135deg, #1B43D1, #0665ff)",
     badgeShadow: "rgba(27,67,209,0.45)",
-    divider: "rgba(61,84,196,0.6)",
+    divider: "rgba(6,101,255,0.6)",
     icon: (
       <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="rgba(130,160,255,0.85)" strokeWidth="1.8">
         <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4" strokeLinecap="round"/>
@@ -22,13 +22,13 @@ const steps = [
     title: "Generate & Launch Ads",
     description:
       "AI writes high-converting copy and designs stunning creatives for Meta and Google. Review, hit launch, and you're live in 60 sec.",
-    gradient: "linear-gradient(160deg, rgba(99,60,220,0.65), rgba(27,67,209,0.35) 50%, rgba(255,255,255,0.05))",
+    gradient: "linear-gradient(160deg, rgba(6,101,255,0.65), rgba(27,67,209,0.35) 50%, rgba(255,255,255,0.05))",
     inner: "#0a0c22",
-    badge: "linear-gradient(135deg, #6b52e8, #a855f7)",
-    badgeShadow: "rgba(107,82,232,0.45)",
-    divider: "rgba(99,60,220,0.7)",
+    badge: "linear-gradient(135deg, #0665ff, #22d3ee)",
+    badgeShadow: "rgba(6,101,255,0.45)",
+    divider: "rgba(6,101,255,0.7)",
     icon: (
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="rgba(180,130,255,0.85)" strokeWidth="1.8">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="rgba(100,170,255,0.85)" strokeWidth="1.8">
         <path d="M12 3l1.5 5h5l-4 3 1.5 5L12 13l-4 3 1.5-5-4-3h5z" strokeLinejoin="round"/>
       </svg>
     ),
@@ -59,7 +59,7 @@ function Steps() {
       <div className="pointer-events-none absolute left-1/2 top-[15%] h-[400px] w-[700px] -translate-x-1/2 rounded-full"
         style={{ background: "radial-gradient(ellipse, rgba(27,67,209,0.22) 0%, transparent 70%)" }} />
       <div className="pointer-events-none absolute bottom-[5%] right-[10%] h-[300px] w-[300px] rounded-full"
-        style={{ background: "radial-gradient(ellipse, rgba(99,60,220,0.12) 0%, transparent 70%)" }} />
+        style={{ background: "radial-gradient(ellipse, rgba(6,101,255,0.12) 0%, transparent 70%)" }} />
 
       <div className="relative mx-auto max-w-[1100px]">
         {/* Eyebrow pill */}
