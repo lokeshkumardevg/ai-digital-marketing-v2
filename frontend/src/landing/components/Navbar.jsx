@@ -6,7 +6,17 @@ import { Menu, X } from "lucide-react";
 
 
 const logo = "/fevicon.png";
-const navItems = ["Features", "Tutorial", "Pricing", "Resources", "Docs", "Help", "Contact"];
+const navItems = ["Coworkers", "Features", "Tutorial", "Pricing", "Resources", "Docs", "Help", "Contact"];
+
+// Mirrors the coworker list in landing/components/Coworkers.jsx and landing/pages/AgentEcosystem.tsx.
+// Birdeye's nav does exactly this: one column per coworker (Jay / Myna / Robin), each listing its
+// agents underneath. Keep the three in sync if you rename or add a coworker.
+const COWORKER_NAV = [
+  { id: "growth", name: "Max", role: "Growth Coworker", accent: "#a855f7", mascot: "/assets/mascots/aarav.png", agents: ["Ads Campaign", "Deep Research", "Lead Generation", "Contact Segmentation", "AI Visibility"] },
+  { id: "presence", name: "Stella", role: "Presence Coworker", accent: "#f59e0b", mascot: "/assets/mascots/meera.png", agents: ["Review Generation", "Review Response", "Listings Optimization", "Local Pages", "Social Publishing"] },
+  { id: "operations", name: "Atlas", role: "Operations Coworker", accent: "#2f8f5b", mascot: "/assets/mascots/rohan.png", agents: ["Front Desk", "Appointments", "Reminders", "Waitlist & Recall", "Lead Follow-up"] },
+  { id: "experience", name: "Echo", role: "Experience Coworker", accent: "#e23b3b", mascot: "/assets/mascots/kavi.png", agents: ["Survey", "Sentiment & Insights", "Ticketing", "Competitor Analysis", "Reporting"] },
+];
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -110,6 +120,50 @@ function Navbar() {
                 const href = hrefFor(item);
                 const cls = navLinkClass;
                 const underline = <span className="absolute left-0 -bottom-1 h-[2px] w-0 bg-blue-500 transition-all duration-300 group-hover:w-full" />;
+
+                if (item === "Coworkers") {
+                  return (
+                    <div key={item} className="relative group">
+                      <button className={`${cls} flex items-center gap-1 cursor-default pb-1`}>
+                        {item}
+                        <svg className="w-3.5 h-3.5 opacity-70 group-hover:rotate-180 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        {underline}
+                      </button>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300">
+                        <div className="bg-[#0a0f1e]/95 backdrop-blur-xl border border-white/10 rounded-xl p-3 w-[820px] shadow-2xl grid grid-cols-4 gap-2">
+                          {COWORKER_NAV.map((cw) => (
+                            <div key={cw.id} className="p-2">
+                              <Link to={`/coworkers/${cw.id}`} className="flex items-center gap-2 px-1 py-1.5 mb-1 rounded-lg hover:bg-white/5 transition-colors">
+                                <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full" style={{ background: cw.accent }}>
+                                  <img src={cw.mascot} alt="" className="h-full w-full object-cover object-top" />
+                                </span>
+                                <span className="flex flex-col leading-tight">
+                                  <span className="text-[13px] font-bold text-white">{cw.name}</span>
+                                  <span className="text-[10px] uppercase tracking-wide text-white/40">{cw.role}</span>
+                                </span>
+                              </Link>
+                              <div className="flex flex-col gap-0.5">
+                                {cw.agents.map((agent) => (
+                                  <Link
+                                    key={agent}
+                                    to={`/agent-ecosystem#${cw.id}`}
+                                    className="px-3 py-1.5 text-[13px] text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                  >
+                                    {agent}
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                          <div className="col-span-4 h-[1px] bg-white/10 my-1" />
+                          <Link to="/agent-ecosystem" className="col-span-4 px-3 py-2 text-[13px] font-semibold text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors text-center">
+                            See the full agent ecosystem →
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
 
                 if (item === "Docs") {
                   return (
@@ -224,6 +278,39 @@ function Navbar() {
             const inner = <>{item}<span style={{ color: "rgba(255,255,255,0.25)", fontSize: 18 }}>›</span></>;
             const hoverIn = (e) => { e.currentTarget.style.color = "#fff"; };
             const hoverOut = (e) => { e.currentTarget.style.color = "rgba(255,255,255,0.75)"; };
+
+            if (item === "Coworkers") {
+              return (
+                <div key={item} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "13px", paddingTop: "13px" }}>
+                  <div style={{ color: "rgba(255,255,255,0.75)", fontSize: 15, fontWeight: 500, marginBottom: "12px" }}>
+                    Coworkers
+                  </div>
+                  <div className="flex flex-col pl-4 gap-4 border-l border-white/10 ml-2">
+                    {COWORKER_NAV.map((cw) => (
+                      <div key={cw.id}>
+                        <Link
+                          to={`/coworkers/${cw.id}`}
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center gap-2 text-white/80 hover:text-white text-[14px] font-semibold transition-colors mb-1.5"
+                        >
+                          <span className="flex h-5 w-5 items-center justify-center overflow-hidden rounded-full" style={{ background: cw.accent }}>
+                            <img src={cw.mascot} alt="" className="h-full w-full object-cover object-top" />
+                          </span>
+                          {cw.name} <span className="text-white/35 font-normal">· {cw.role}</span>
+                        </Link>
+                        <div className="flex flex-col gap-1 pl-7">
+                          {cw.agents.map((agent) => (
+                            <Link key={agent} to={`/agent-ecosystem#${cw.id}`} onClick={() => setIsOpen(false)} className="text-white/50 hover:text-white text-[13px] transition-colors">
+                              {agent}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
 
             if (item === "Docs") {
               return (

@@ -24,7 +24,7 @@ const defaultFaqs = [
   },
 ];
 
-export default function FAQ() {
+export default function FAQ({ faqs = defaultFaqs, title } = {}) {
   const [open, setOpen] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef(null);
@@ -125,12 +125,12 @@ export default function FAQ() {
             transition: 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s',
           }}
         >
-          Frequently asked questions
+          {title || "Frequently asked questions"}
         </h2>
 
         {/* FAQ List */}
         <div className="flex flex-col gap-3">
-          {defaultFaqs.map((item, index) => {
+          {faqs.map((item, index) => {
             const isOpen = open === index;
             const delay = 0.3 + index * 0.15;
 

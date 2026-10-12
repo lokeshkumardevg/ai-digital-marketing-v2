@@ -3,37 +3,6 @@ import Navbar from '../components/Navbar';
 import Newsletter from '../components/Newsletter';
 import Footer from '../components/Footer';
 
-const categories = [
-  {
-    icon: "📖",
-    title: "Getting Started",
-    description:
-      "Set up essentials before launching your first ad.",
-    articles: 10,
-  },
-  {
-    icon: "⚡",
-    title: "AI Creatives",
-    description:
-      "Generate ad copy, images, and videos using AI.",
-    articles: 10,
-  },
-  {
-    icon: "🎚️",
-    title: "Support",
-    description:
-      "Troubleshooting common issues and questions.",
-    articles: 10,
-  },
-  {
-    icon: "📄",
-    title: "Help Articles",
-    description:
-      "Guides for using WheedleAI features and tools.",
-    articles: 10,
-  },
-];
-
 export default function Help() {
   return (
     <div
@@ -117,7 +86,7 @@ export default function Help() {
         {
           icon: "📄",
           title: "Help Articles",
-          desc: "Guides for using WheedleAI features and tools.",
+          desc: "Guides for using Wheedle.ai features and tools.",
         },
       ].map((card) => (
         <div
@@ -146,9 +115,8 @@ export default function Help() {
             {card.desc}
           </p>
 
-          <div className="mt-6 pt-4 border-t border-white/10 flex justify-between text-xs text-white/40">
-            <span>By WheedleAI</span>
-            <span>10 articles</span>
+          <div className="mt-6 pt-4 border-t border-white/10 flex justify-center text-xs text-white/40">
+            <span>By Wheedle.ai</span>
           </div>
         </div>
       ))}

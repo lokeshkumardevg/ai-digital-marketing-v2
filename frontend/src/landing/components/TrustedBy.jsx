@@ -4,42 +4,32 @@ const brands = [
   {
     name: "Meta",
     logo: "https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg",
-    description: "Official Advertising Partner",
+    description: "Meta & Instagram Ads",
   },
   {
-    name: "Google Cloud",
+    name: "Google Ads",
     logo: "https://www.vectorlogo.zone/logos/google_cloud/google_cloud-icon.svg",
-    description: "AI Infrastructure Partner",
+    description: "Google Ads API",
   },
   {
     name: "OpenAI",
     logo: "https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg",
-    description: "GPT-4 Integration",
+    description: "AI model provider",
   },
   {
     name: "Shopify",
     logo: "https://cdn.worldvectorlogo.com/logos/shopify.svg",
-    description: "E-commerce Partner",
+    description: "Store sync",
   },
   {
-    name: "AWS",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/9/93/Amazon_Web_Services_Logo.svg",
-    description: "Cloud Hosting Partner",
-  },
-  {
-    name: "Salesforce",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg",
-    description: "CRM Integration",
-  },
-  {
-    name: "Microsoft",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
-    description: "Azure & 365 Partner",
+    name: "Razorpay",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Razorpay_logo.svg",
+    description: "Billing & payments",
   },
   {
     name: "Stripe",
     logo: "https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg",
-    description: "Payments Partner",
+    description: "Billing & payments",
   },
 ];
 
@@ -273,12 +263,12 @@ function TrustedBy() {
         {/* Badge */}
         <div className="mb-6 inline-block">
           <p className="text-sm tracking-widest uppercase font-semibold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent pulse-slow">
-            ✨ Trusted by Industry Leaders ✨
+            ✨ Built on trusted technology ✨
           </p>
         </div>
 
         <h3 className="text-2xl md:text-3xl font-bold mb-12 bg-gradient-to-r from-white via-blue-200 to-cyan-200 bg-clip-text text-transparent fade-up">
-          Powering the World's Most Innovative Brands
+          Integrates with the Platforms You Already Use
         </h3>
 
         {/* ── Carousel ── */}

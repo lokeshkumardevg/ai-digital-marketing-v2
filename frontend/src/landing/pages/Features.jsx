@@ -3,7 +3,7 @@ import Navbar from '../components/Navbar';
 import ContactForm from '../components/ContactForm';
 import Newsletter from '../components/Newsletter';
 import Footer from '../components/Footer';
-import FAQ from '../components/FAQ';
+import FAQ from '../components/Faq';
 import '../styles/animations.css';
 import Button  from '../components/Button';
 import { Link } from "react-router-dom";
@@ -366,30 +366,22 @@ function FeatureGrid() {
 // ─── Testimonials (real results strip) ───────────────────────────────────────
 
 function RealResults() {
-  const reviews = [
+  // No fabricated reviewer identities here on purpose — a fake name, stock photo and
+  // invented quote under a "Real results from Real marketers" headline is misleading.
+  // Swap this array for genuine customer quotes (with their permission) when you have them;
+  // until then this section describes what the platform does, honestly.
+  const pillars = [
     {
-      name: "Reviewer name",
-      time: "1 month ago",
-      image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80",
-      review:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      title: "One coworker, not ten tools",
+      body: "Teams that used to juggle separate review, listing, social and reporting tools run all of it from one dashboard.",
     },
     {
-      name: "Reviewer name",
-      time: "1 month ago",
-      image:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80",
-      review:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      title: "Every post stays on-brand",
+      body: "Brand voice, do's and don'ts are set once in Brand Center and every agent — social, reviews, creative — follows them automatically.",
     },
     {
-      name: "Reviewer name",
-      time: "1 month ago",
-      image:
-        "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=100&q=80",
-      review:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      title: "Nothing publishes without a check",
+      body: "Drafts wait for approval before anything goes live, so your team stays in control of what goes out under your name.",
     },
   ];
 
@@ -403,8 +395,8 @@ function RealResults() {
 <h2
   className="
     text-center
-    text-[48px]
-    md:text-[64px]
+    text-[40px]
+    md:text-[56px]
     font-medium
     mb-16
     bg-gradient-to-r
@@ -415,61 +407,21 @@ function RealResults() {
     text-transparent
   "
 >
-  Real results from Real marketers
+  Built for marketing teams, not marketing theater
 </h2>
 
         {/* Cards */}
         <div className="flex flex-wrap justify-center gap-9">
-          {reviews.map((review, index) => (
+          {pillars.map((pillar, index) => (
             <div
               key={index}
-              className="w-[350px] bg-white rounded-xl p-5 shadow-lg"
+              className="w-[350px] bg-white rounded-xl p-6 shadow-lg"
             >
-              {/* Header */}
-              <div className="flex items-start gap-3 mb-3">
-                <img
-                  src={review.image}
-                  alt={review.name}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-700">
-                    {review.name}
-                  </h4>
-                  <p className="text-xs text-gray-400">{review.time}</p>
-                </div>
-              </div>
-
-              {/* Rating */}
-              <div className="flex items-center gap-1 mb-3">
-                <span className="text-xs text-gray-700 font-medium">5.0</span>
-
-                {[...Array(5)].map((_, i) => (
-                  <svg
-                    key={i}
-                    width="12"
-                    height="12"
-                    fill="#FBBF24"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.176 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81H7.03a1 1 0 00.951-.69l1.068-3.292z" />
-                  </svg>
-                ))}
-
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="#4285F4"
-                >
-                  <path d="M21.35 11.1H12v2.98h5.4c-.23 1.48-1.72 4.35-5.4 4.35-3.25 0-5.9-2.69-5.9-6s2.65-6 5.9-6c1.85 0 3.1.79 3.81 1.46l2.6-2.52C16.77 3.84 14.61 3 12 3 7.03 3 3 7.03 3 12s4.03 9 9 9c5.2 0 8.64-3.65 8.64-8.79 0-.59-.06-1.04-.14-1.11z" />
-                </svg>
-              </div>
-
-              {/* Review */}
-              <p className="text-[13px] leading-relaxed text-gray-700">
-                "{review.review}"
+              <h4 className="text-base font-bold text-gray-900 mb-2">
+                {pillar.title}
+              </h4>
+              <p className="text-[13px] leading-relaxed text-gray-600">
+                {pillar.body}
               </p>
             </div>
           ))}

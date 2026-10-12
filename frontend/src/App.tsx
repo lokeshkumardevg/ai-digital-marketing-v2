@@ -18,7 +18,7 @@ import Tutorial from "./landing/pages/tutorial";
 import // @ts-ignore
 Help from './landing/pages/Help';
 import // @ts-ignore
-PricingPage from './landing/pages/PricingPage';
+PricingPage from './landing/pages/Pricingpage';
 import // @ts-ignore
 Resources from './landing/pages/Resources';
 import Register from './landing/pages/Register';
@@ -27,6 +27,8 @@ import Contact from './landing/pages/Contact';
 // @ts-ignore
 // import PrivacyPolicy from './landing/pages/PrivacyPolicy';
 import AgentEcosystem from './landing/pages/AgentEcosystem';
+import CoworkerDetail from './landing/pages/CoworkerDetail';
+import Security from './landing/pages/Security';
 import { Settings } from './dashboard/pages/Settings';
 import { Seo } from './dashboard/pages/Seo';
 import { Social } from './dashboard/pages/Social';
@@ -244,6 +246,8 @@ const App: React.FC = () => {
         <Route path="/contact" element={<Contact />} />
         {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} /> */}
         <Route path="/agent-ecosystem" element={<AgentEcosystem />} />
+        <Route path="/coworkers/:id" element={<CoworkerDetail />} />
+        <Route path="/security" element={<Security />} />
         <Route path="/chatbot-embed/:id" element={<ChatEmbed />} />
         <Route path="/presentation" element={<Presentation />} />
 

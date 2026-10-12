@@ -12,9 +12,35 @@ import Navbar from '../components/Navbar';
 // @ts-ignore
 import Footer from '../components/Footer';
 
+// Coworkers = the orchestration layer, same pattern as Birdeye's Jay / Myna / Robin.
+// Names, domains and outcome metrics come straight from the Technical Spec, Section 4
+// (Product vision and coworkers) — keep this in sync if that table changes.
+const COWORKERS = [
+  {
+    id: 'growth', name: 'Max', role: 'Growth Coworker',
+    outcome: 'Ads, research, leads and audiences — measured by ROAS, cost per lead and AI visibility score.',
+    accent: '#a855f7', gradient: 'from-purple-400 to-fuchsia-500',
+  },
+  {
+    id: 'presence', name: 'Stella', role: 'Presence Coworker',
+    outcome: 'Reviews, listings, social and local pages — measured by review volume, rating and listing accuracy.',
+    accent: '#f59e0b', gradient: 'from-yellow-400 to-orange-500',
+  },
+  {
+    id: 'operations', name: 'Atlas', role: 'Operations Coworker',
+    outcome: 'Front desk, bookings and follow-up — measured by missed-call rate, bookings and no-show rate.',
+    accent: '#2f8f5b', gradient: 'from-emerald-500 to-green-700',
+  },
+  {
+    id: 'experience', name: 'Echo', role: 'Experience Coworker',
+    outcome: 'Feedback, insights and reporting — measured by response time, resolution rate and CSAT.',
+    accent: '#e23b3b', gradient: 'from-rose-500 to-red-700',
+  },
+];
+
 const AGENTS = [
   {
-    id: 'review-gen', name: 'Review Generation Agent', tag: 'Customer Feedback', icon: Star,
+    id: 'review-gen', coworker: 'presence', name: 'Review Generation Agent', tag: 'Customer Feedback', icon: Star,
     color: 'from-yellow-400 to-orange-500', accent: '#f59e0b',
     role: 'Automatically tracks recent customers and sends them polite, personalized follow-ups (via WhatsApp, Email, or SMS) at the optimal time to request a review. Satisfied customers are directed to Google/Facebook, while dissatisfied customers are routed to the internal team for feedback resolution.',
     benefits: [
@@ -25,7 +51,7 @@ const AGENTS = [
   },
   
   {
-    id: 'review-resp', name: 'Review Response Agent', tag: 'Reputation', icon: MessageSquareText,
+    id: 'review-resp', coworker: 'presence', name: 'Review Response Agent', tag: 'Reputation', icon: MessageSquareText,
     color: 'from-blue-400 to-indigo-500', accent: '#6366f1',
     role: 'Monitors platforms like Google and Facebook for new reviews, instantly analyzes the sentiment (positive, neutral, negative), and generates a human-like, professional, brand-aligned response.',
     benefits: [
@@ -34,7 +60,7 @@ const AGENTS = [
     ]
   },
   {
-    id: 'social-pub', name: 'Social Publishing Agent', tag: 'Content', icon: Send,
+    id: 'social-pub', coworker: 'presence', name: 'Social Publishing Agent', tag: 'Content', icon: Send,
     color: 'from-pink-400 to-rose-500', accent: '#f43f5e',
     role: 'Automatically creates and schedules social media posts (images, text, hashtags). Analyzes trends to determine the optimal platform (Instagram, LinkedIn, Facebook, X) and the best time to post for maximum viral reach.',
     benefits: [
@@ -43,7 +69,7 @@ const AGENTS = [
     ]
   },
   {
-    id: 'social-eng', name: 'Social Engagement Agent', tag: 'Community', icon: HeartHandshake,
+    id: 'social-eng', coworker: 'presence', name: 'Social Engagement Agent', tag: 'Community', icon: HeartHandshake,
     color: 'from-rose-400 to-red-500', accent: '#ef4444',
     role: 'Automatically replies to social media comments, DMs, and brand mentions. Answers prospect questions interactively to nurture and convert them into warm leads.',
     benefits: [
@@ -52,7 +78,7 @@ const AGENTS = [
     ]
   },
   {
-    id: 'reporting', name: 'Reporting Agent', tag: 'Analytics', icon: BarChart3,
+    id: 'reporting', coworker: 'experience', name: 'Reporting Agent', tag: 'Analytics', icon: BarChart3,
     color: 'from-emerald-400 to-green-500', accent: '#10b981',
     role: 'Aggregates data across all platforms (Social Media, Ads, SEO, Reviews) into a centralized, easy-to-understand dashboard or PDF report. Provides deep analysis of ROI, reach, and conversion metrics.',
     benefits: [
@@ -61,7 +87,7 @@ const AGENTS = [
     ]
   },
   {
-    id: 'listings', name: 'Listings Optimization Agent', tag: 'Local SEO', icon: MapPin,
+    id: 'listings', coworker: 'presence', name: 'Listings Optimization Agent', tag: 'Local SEO', icon: MapPin,
     color: 'from-cyan-400 to-blue-500', accent: '#06b6d4',
     role: 'Ensures business details (Name, Address, Phone number) are accurate and updated across Google Business Profile, Yelp, and 50+ local directories. Automatically updates keywords and images.',
     benefits: [
@@ -70,7 +96,7 @@ const AGENTS = [
     ]
   },
   {
-    id: 'lead-gen', name: 'Lead Generation Agent', tag: 'Sales Pipeline', icon: Users,
+    id: 'lead-gen', coworker: 'growth', name: 'Lead Generation Agent', tag: 'Sales Pipeline', icon: Users,
     color: 'from-purple-400 to-fuchsia-500', accent: '#a855f7',
     role: 'Handles inbound traffic (website visitors, social media interactions) and outbound outreach (cold emails, LinkedIn). Identifies intent, qualifies prospects, and books warm leads for the sales team.',
     benefits: [
@@ -79,7 +105,7 @@ const AGENTS = [
     ]
   },
   {
-    id: 'contact-seg', name: 'Contact Segmentation Agent', tag: 'CRM', icon: Filter,
+    id: 'contact-seg', coworker: 'growth', name: 'Contact Segmentation Agent', tag: 'CRM', icon: Filter,
     color: 'from-orange-400 to-amber-500', accent: '#f97316',
     role: 'Smartly divides thousands of CRM contacts based on behavior, purchase history, and demographics (e.g., "Hot Leads", "Past Customers", "Defected Customers").',
     benefits: [
@@ -88,7 +114,7 @@ const AGENTS = [
     ]
   },
   {
-    id: 'template', name: 'Template Design Agent', tag: 'Creative', icon: Paintbrush,
+    id: 'template', coworker: 'growth', name: 'Template Design Agent', tag: 'Creative', icon: Paintbrush,
     color: 'from-teal-400 to-emerald-500', accent: '#14b8a6',
     role: 'Uses Generative AI to instantly create aesthetically pleasing, conversion-optimized designs and copy for emails, ads, landing pages, and social posts.',
     benefits: [
@@ -97,7 +123,7 @@ const AGENTS = [
     ]
   },
   {
-    id: 'custom', name: 'Custom Agent', tag: 'Bespoke', icon: Settings,
+    id: 'custom', coworker: 'growth', name: 'Custom Agent', tag: 'Bespoke', icon: Settings,
     color: 'from-gray-400 to-slate-500', accent: '#94a3b8',
     role: 'A bespoke agent tailored to your business specific needs. Whether you require industry-specific data scraping or custom inventory integration, this agent is trained for your unique workflow.',
     benefits: [
@@ -108,6 +134,43 @@ const AGENTS = [
 ];
 
 type Agent = (typeof AGENTS)[number];
+type Coworker = (typeof COWORKERS)[number];
+
+function CoworkerTabs({ active, onSelect }: { active: Coworker; onSelect: (id: string) => void }) {
+  return (
+    <div className="relative mx-auto mb-10 flex w-full max-w-3xl flex-wrap items-center justify-center gap-2.5 sm:mb-14 sm:gap-3">
+      {COWORKERS.map(cw => {
+        const isActive = cw.id === active.id;
+        return (
+          <button
+            key={cw.id}
+            type="button"
+            onClick={() => onSelect(cw.id)}
+            aria-pressed={isActive}
+            className="group flex items-center gap-2.5 rounded-full border px-4 py-2.5 text-left transition-all duration-300 sm:gap-3 sm:px-5 sm:py-3"
+            style={
+              isActive
+                ? { borderColor: cw.accent, background: `linear-gradient(90deg, ${cw.accent}26, rgba(10,14,28,0.9) 85%)`, boxShadow: `0 0 28px -8px ${cw.accent}aa` }
+                : { borderColor: 'rgba(255,255,255,0.1)', background: 'rgba(15,20,36,0.55)' }
+            }
+          >
+            <span
+              className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold sm:h-9 sm:w-9 ${
+                isActive ? `bg-gradient-to-br ${cw.gradient} text-white shadow` : 'bg-slate-700/60 text-slate-300'
+              }`}
+            >
+              {cw.name.charAt(0)}
+            </span>
+            <span className="flex flex-col leading-tight">
+              <span className={`text-[13px] font-bold sm:text-sm ${isActive ? 'text-white' : 'text-slate-200'}`}>{cw.name}</span>
+              <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400 sm:text-[11px]">{cw.role}</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function AgentPill({ agent, active, onSelect }: { agent: Agent; active: boolean; onSelect: () => void }) {
   const Icon = agent.icon;
@@ -144,13 +207,18 @@ function AgentPill({ agent, active, onSelect }: { agent: Agent; active: boolean;
 }
 
 export default function AgentEcosystem() {
+  const [activeCoworkerId, setActiveCoworkerId] = useState<string>(COWORKERS[0].id);
   const [activeId, setActiveId] = useState<string | null>(null);
   const hubRef = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
+
+  const activeCoworker = COWORKERS.find(c => c.id === activeCoworkerId) || COWORKERS[0];
+  const coworkerAgents = AGENTS.filter(a => a.coworker === activeCoworkerId);
+
   const active = AGENTS.find(a => a.id === activeId) || null;
-    const accent = active ? active.accent : '#3b82f6';
-    const left = AGENTS.slice(0, 6);
-  const right = AGENTS.slice(6);
+  const accent = active ? active.accent : activeCoworker.accent;
+  const left = coworkerAgents.slice(0, Math.ceil(coworkerAgents.length / 2));
+  const right = coworkerAgents.slice(Math.ceil(coworkerAgents.length / 2));
 
   const select = (id: string) => {
     setActiveId(id);
@@ -158,6 +226,11 @@ export default function AgentEcosystem() {
     if (typeof window !== 'undefined' && window.innerWidth < 1280) {
       hubRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
     }
+  };
+
+  const selectCoworker = (id: string) => {
+    setActiveCoworkerId(id);
+    setActiveId(null); // clear the hub so it shows the new coworker's outcome line first
   };
 
   return (
@@ -195,6 +268,9 @@ export default function AgentEcosystem() {
           <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 sm:text-xs sm:tracking-[0.3em]">Meet Your AI Agents</h2>
           <span className="h-px w-8 bg-gradient-to-l from-transparent to-slate-500 sm:w-28" />
         </div>
+
+        {/* Coworkers own the outcome; agents are how they get it done — same split as Jay / Myna / Robin */}
+        <CoworkerTabs active={activeCoworker} onSelect={selectCoworker} />
 
         {/* xl: pills | hub | pills.  Below xl: hub on top, pills in a 1-2 column grid */}
         <div className="relative grid items-start gap-6 sm:gap-8 xl:grid-cols-[1fr_420px_1fr] xl:gap-6">
@@ -287,7 +363,18 @@ export default function AgentEcosystem() {
                     </div>
                   </>
                 ) : (
-                  <p className="mt-10 pb-4 text-sm font-medium text-slate-400 sm:mt-12">Select an agent to see its details</p>
+                  <>
+                    <h3 className="mt-10 text-2xl font-extrabold leading-tight tracking-tight sm:mt-12 sm:text-3xl xl:mt-9 xl:text-3xl">{activeCoworker.name}</h3>
+                    <span className="mt-4 rounded-full border border-white/10 bg-slate-800/70 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 sm:text-[11px]">
+                      {activeCoworker.role}
+                    </span>
+                    <p className="mt-5 text-sm leading-relaxed text-slate-300 sm:text-[15px] xl:mt-4 xl:text-sm">{activeCoworker.outcome}</p>
+                    <p className="mt-6 pb-4 text-xs font-medium text-slate-500">
+                      {coworkerAgents.length > 0
+                        ? `Pick an agent below to see how ${activeCoworker.name} gets it done`
+                        : `${activeCoworker.name}'s agents are on the roadmap — launching soon`}
+                    </p>
+                  </>
                 )}
               </motion.div>
             </AnimatePresence>

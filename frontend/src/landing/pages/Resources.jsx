@@ -130,7 +130,7 @@ function TrustedGlobal() {
             </h2>
  
             <p className="text-sm sm:text-base text-white/55 leading-relaxed">
-              WheedalAI is redefining digital advertising with autonomous AI agents that manage
+              Wheedle.ai is redefining digital advertising with autonomous AI agents that manage
               marketing campaigns from strategy to optimization. By combining advanced AI technology
               with performance-driven insights, we help businesses reach broader audience, maximize
               ROI, and scale growth worldwide.

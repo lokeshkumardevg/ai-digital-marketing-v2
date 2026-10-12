@@ -620,7 +620,7 @@ function Register() {
             </p>
           </div>
           <div className="fade-up delay-2 stats-row">
-            {[["10×", "Faster campaigns"], ["98%", "Automation rate"], ["$0", "Setup cost"]].map(([val, label]) => (
+            {[["10×", "Faster campaigns"], ["98%", "Automation rate"], ["₹0", "Setup cost"]].map(([val, label]) => (
               <div key={val}>
                 <div style={{ fontWeight: 700, fontSize: 22, color: "var(--text)" }}>{val}</div>
                 <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2 }}>{label}</div>

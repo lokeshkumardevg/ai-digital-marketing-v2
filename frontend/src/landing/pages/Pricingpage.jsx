@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Pricing from '../components/Pricing';
-import FAQ from '../components/FAQ';
+import FAQ from '../components/Faq';
 import Newsletter from '../components/Newsletter';
 import Footer from '../components/Footer';
 import Button from '../components/Button';
@@ -151,82 +151,26 @@ function PoweredByAI() {
   );
 }
 
-// ─── Testimonials ─────────────────────────────────────────────────────────────
-function WhatClientsSay() {
-  const testimonials = [
-    {
-      quote:
-        'Switched from a ₹60,000/month agency to Wheedle Growth plan. ROAS went from 1.8x to 4.2x in 45 days. I wish I had done this sooner.',
-      name: 'Reviewer name',
-      time: '1 month ago',
-      avatar: 'https://i.pravatar.cc/40?img=47',
-      stars: 5,
-    },
-    {
-      quote:
-        'The Starter plan alone replaced two tools we were paying for separately. The AI copy generation is frighteningly good for our niche.',
-      name: 'Reviewer name',
-      time: '1 month ago',
-      avatar: 'https://i.pravatar.cc/40?img=47',
-      stars: 5,
-    },
-    {
-      quote:
-        'We manage 8 brands on the Enterprise plan. The workspace isolation and approval flows are exactly what an agency needs. Brilliant product.',
-      name: 'Reviewer name',
-      time: '1 month ago',
-      avatar: 'https://i.pravatar.cc/40?img=47',
-      stars: 5,
-    },
+// ─── Billing trust strip ────────────────────────────────────────────────────
+// Honest, verifiable points instead of invented customer quotes with made-up
+// numbers — drawn from the plan terms already stated in PRICING_FAQS above.
+function BillingTrust() {
+  const points = [
+    { title: 'No credit card to start', body: 'Every plan includes a 3-day free trial. You only add payment details if you continue.' },
+    { title: 'Cancel or switch anytime', body: 'Upgrade instantly with prorated billing, or downgrade at your next cycle — no lock-in.' },
+    { title: 'GST invoices, automatically', body: 'Cards, UPI, net banking and corporate transfers are all accepted, with invoices issued automatically.' },
   ];
- 
+
   return (
     <section className="section-shell py-16">
-      {/* Heading */}
       <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-10">
-        What our clients say
+        Straightforward billing
       </h2>
- 
-      {/* Cards */}
       <div className="grid sm:grid-cols-3 gap-5">
-        {testimonials.map(({ quote, name, time, avatar, stars }, i) => (
-          <div
-            key={i}
-            className="rounded-2xl !bg-white p-5 flex flex-col gap-3"
-          >
-            {/* Reviewer row */}
-            <div className="flex items-center gap-3">
-              <img
-                src={avatar}
-                alt={name}
-                className="w-10 h-10 rounded-full object-cover shrink-0"
-              />
-              <div>
-                <p className="text-sm font-semibold text-gray-900 leading-tight">{name}</p>
-                <p className="text-xs text-gray-400">{time}</p>
-              </div>
-            </div>
- 
-            {/* Stars + verified */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-semibold text-gray-800">5.0</span>
-              <div className="flex gap-0.5">
-                {Array.from({ length: stars }).map((_, j) => (
-                  <svg key={j} width="14" height="14" viewBox="0 0 20 20" fill="#f59e0b">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              {/* Verified checkmark */}
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="#1a73e8" className="ml-0.5">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
- 
-            {/* Quote */}
-            <p className="text-sm text-gray-700 leading-relaxed">
-              "{quote}"
-            </p>
+        {points.map(({ title, body }, i) => (
+          <div key={i} className="rounded-2xl !bg-white p-5 flex flex-col gap-2">
+            <p className="text-sm font-semibold text-gray-900">{title}</p>
+            <p className="text-sm text-gray-600 leading-relaxed">{body}</p>
           </div>
         ))}
       </div>
@@ -273,9 +217,9 @@ function PricingPage() {
         <PoweredByAI />
       </div>
 
-      {/* Testimonials */}
+      {/* Billing trust strip */}
       <div className="scroll-reveal opacity-0" data-animation="animate-fade-up">
-        <WhatClientsSay />
+        <BillingTrust />
       </div>
 
       {/* FAQ — reused component with pricing-specific questions */}

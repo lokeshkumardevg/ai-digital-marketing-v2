@@ -1,12 +1,20 @@
 // src/pages/Home.jsx
 import { useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import AnnouncementBar from '../components/AnnouncementBar';
 import Hero from '../components/Hero';
 import TrustedBy from '../components/TrustedBy';
+import Coworkers from '../components/Coworkers';
+import HowItWorks from '../components/HowItWorks';
 import ResultsGrid from '../components/ResultsGrid';
+import OrchestrationDemo from '../components/OrchestrationDemo';
 import Verticals from '../components/Verticals';
+import Industries from '../components/Industries';
 import Steps from '../components/Steps';
+import VisibilityChecker from '../components/VisibilityChecker';
+import TrustSecurity from '../components/TrustSecurity';
 import Pricing from '../components/Pricing';
+import Faq from '../components/Faq';
 import ContactForm from '../components/ContactForm';
 import Newsletter from '../components/Newsletter';
 import Footer from '../components/Footer';
@@ -37,6 +45,7 @@ function Home() {
 
   return (
     <div className="overflow-hidden">
+        <AnnouncementBar />
         <Navbar />
       
       <div className="relative bg-hero-radial animate-zoom">
@@ -50,35 +59,84 @@ function Home() {
       >
         <TrustedBy />
       </div>
-      
+
+      <div
+        className="scroll-reveal opacity-0"
+        data-animation="animate-fade-scale"
+      >
+        <Coworkers />
+      </div>
+
+      <div
+        className="scroll-reveal opacity-0"
+        data-animation="animate-fade-up"
+      >
+        <HowItWorks />
+      </div>
+
       <div 
         className="scroll-reveal opacity-0"
         data-animation="animate-fade-up"
       >
         <ResultsGrid />
       </div>
-      
+
+      <div
+        className="scroll-reveal opacity-0"
+        data-animation="animate-fade-scale"
+      >
+        <OrchestrationDemo />
+      </div>
+
       <div 
         className="scroll-reveal opacity-0"
         data-animation="animate-fade-right"
       >
         <Verticals />
       </div>
-      
+
+      <div
+        className="scroll-reveal opacity-0"
+        data-animation="animate-fade-up"
+      >
+        <Industries />
+      </div>
+
       <div 
         className="scroll-reveal opacity-0"
         data-animation="animate-fade-scale"
       >
         <Steps />
       </div>
-      
+
+      <div
+        className="scroll-reveal opacity-0"
+        data-animation="animate-fade-up"
+      >
+        <VisibilityChecker />
+      </div>
+
+      <div
+        className="scroll-reveal opacity-0"
+        data-animation="animate-fade-left"
+      >
+        <TrustSecurity />
+      </div>
+
       <div 
         className="scroll-reveal opacity-0"
         data-animation="animate-zoom"
       >
         <Pricing />
       </div>
-      
+
+      <div
+        className="scroll-reveal opacity-0"
+        data-animation="animate-fade-up"
+      >
+        <Faq />
+      </div>
+
       <div 
         className="scroll-reveal opacity-0"
         data-animation="animate-fade-left"

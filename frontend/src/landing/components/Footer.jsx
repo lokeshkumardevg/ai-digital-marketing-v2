@@ -24,6 +24,7 @@ const footerGroups = [
       { label: "Tutorial", href: "/tutorial" },
       { label: "Resources", href: "/resources" },
       { label: "Help", href: "/help" },
+      { label: "Security", href: "/security" },
       { label: "Privacy Policy", href: "/privacy-policy.html" },
       { label: "Contact", href: "/contact" },
     ],
