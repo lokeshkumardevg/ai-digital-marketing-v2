@@ -184,6 +184,21 @@ const CampaignLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+import { useLocation } from 'react-router-dom';
+
+function ScrollToTop() {
+  const { pathname, search, hash } = useLocation();
+
+  useEffect(() => {
+    // If not navigating with a specific agent deep-link or hash, scroll immediately to top
+    if (!hash && !search.includes('agent=')) {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname]);
+
+  return null;
+}
+
 const App: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated } = useSelector((state: any) => state.auth);
@@ -247,6 +262,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/landing" element={<Home />} />
