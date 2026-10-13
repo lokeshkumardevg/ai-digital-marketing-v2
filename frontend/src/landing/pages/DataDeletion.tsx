@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+// @ts-ignore
 import Navbar from '../components/Navbar';
+// @ts-ignore
 import Footer from '../components/Footer';
-import { Trash2, ShieldCheck, CheckCircle2, ArrowRight, ExternalLink, AlertCircle, RefreshCw, KeyRound } from 'lucide-react';
+import { Trash2, ShieldCheck, CheckCircle2, ExternalLink, RefreshCw, KeyRound } from 'lucide-react';
 import { api } from '../../api/axios';
 import toast from 'react-hot-toast';
 

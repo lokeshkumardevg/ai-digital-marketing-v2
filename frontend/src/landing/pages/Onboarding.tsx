@@ -12,17 +12,14 @@ import {
   Layers, 
   Check, 
   ExternalLink,
-  ChevronRight,
   ChevronDown,
   ChevronUp,
   HelpCircle,
   Info,
   TrendingUp,
-  AlertCircle,
   Upload,
   FileCheck,
-  AlertOctagon,
-  BadgeCheck
+  AlertOctagon
 } from 'lucide-react';
 import { api } from '../../api/axios';
 import { hydrateSession } from '../../store/slices/authSlice';

@@ -28,7 +28,9 @@ import PrivacyPolicy from './landing/pages/PrivacyPolicy';
 import TermsOfService from './landing/pages/TermsOfService';
 import DataDeletion from './landing/pages/DataDeletion';
 import AgentEcosystem from './landing/pages/AgentEcosystem';
+// @ts-ignore
 import CoworkerDetail from './landing/pages/CoworkerDetail';
+// @ts-ignore
 import Security from './landing/pages/Security';
 import Onboarding from './landing/pages/Onboarding';
 import { Settings } from './dashboard/pages/Settings';

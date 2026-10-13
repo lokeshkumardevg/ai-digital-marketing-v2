@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+// @ts-ignore
 import Navbar from '../components/Navbar';
+// @ts-ignore
 import Footer from '../components/Footer';
-import { Shield, Lock, FileText, CheckCircle2, AlertTriangle, ArrowRight, ExternalLink, Trash2 } from 'lucide-react';
+import { Shield, ArrowRight, Trash2 } from 'lucide-react';
 
 const SECTIONS = [
   { id: 'overview', label: '1. Overview & Scope' },

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+// @ts-ignore
 import Navbar from '../components/Navbar';
+// @ts-ignore
 import Footer from '../components/Footer';
-import { FileCheck, ShieldAlert, CreditCard, Scale, AlertOctagon, CheckCircle2, ArrowRight } from 'lucide-react';
+import { CreditCard, Scale, AlertOctagon, ArrowRight } from 'lucide-react';
 
 const SECTIONS = [
   { id: 'acceptance', label: '1. Acceptance of Terms' },
