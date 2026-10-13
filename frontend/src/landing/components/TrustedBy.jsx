@@ -13,7 +13,7 @@ const brands = [
   },
   {
     name: "OpenAI",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg",
+    logo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/ChatGPT-Logo.svg/960px-ChatGPT-Logo.svg.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
     description: "AI model provider",
   },
   {
@@ -23,7 +23,7 @@ const brands = [
   },
   {
     name: "Razorpay",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Razorpay_logo.svg",
+    logo: "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b3/Razorpay_logo.webp/960px-Razorpay_logo.webp?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
     description: "Billing & payments",
   },
   {

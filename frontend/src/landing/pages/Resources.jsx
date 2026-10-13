@@ -14,7 +14,7 @@ import heroDashboard from '../assets/images/futuristic-ai-dashboard.png'       /
 // ─── 1. Hero ──────────────────────────────────────────────────────────────────
 function ResourcesHero() {
   return (
-    <section className="relative pt-32 pb-20 overflow-hidden text-center">
+    <section className="relative pt-28 pb-10 overflow-hidden text-center">
       {/* Background radial glow */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -34,32 +34,31 @@ function ResourcesHero() {
         }}
       />
  
-      <div className="section-shell relative z-10">
+      <div className="section-shell relative z-10 max-w-5xl mx-auto">
         {/* Eyebrow */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#0665ff]/30 bg-[#0665ff]/10 mb-6">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#0665ff]/30 bg-[#0665ff]/10 mb-4">
           <span className="w-1.5 h-1.5 rounded-full bg-[#0665ff] shadow-[0_0_8px_#0665ff] animate-pulse" />
           <span className="text-[11px] font-semibold tracking-[0.12em] text-[#60a5fa] uppercase">Resources</span>
         </div>
  
-        <h1 className="text-4xl sm:text-5xl lg:text-[3.75rem] font-bold text-white leading-tight tracking-tight mb-5">
+        <h1 className="text-3xl sm:text-4xl lg:text-[44px] font-extrabold text-white leading-tight tracking-tight mb-3">
           AI-Driven Growth, Right at{' '}
           <span className="bg-gradient-to-r from-[#0665ff] via-[#22d3ee] to-[#818cf8] bg-clip-text text-transparent">
             Your Fingertips
           </span>
         </h1>
  
-        <p className="max-w-2xl mx-auto text-base sm:text-lg text-white/50 leading-relaxed mb-10">
-          Wheedle.ai empowers businesses with autonomous advertising and marketing automation. Our
-          AI-driven platform manages campaigns end-to-end, delivering smarter, faster and more
-          efficient growth for brands around the globe.
+        <p className="max-w-lg mx-auto text-xs sm:text-sm text-white/50 leading-relaxed mb-6">
+          Wheedle.ai empowers businesses with autonomous advertising and marketing automation.
+          Our AI manages campaigns end-to-end, delivering smarter growth.
         </p>
  
         {/* CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
           <Link to="/register">
             <Button
               variant="primary"
-              className="!h-[46px] !px-8 !text-[13px] !rounded-xl !bg-gradient-to-r !from-[#0665ff] !to-[#1abfdf] hover:!opacity-90 !shadow-[0_0_24px_rgba(6,101,255,0.4)] !normal-case !tracking-normal whitespace-nowrap"
+              className="!h-[42px] !px-7 !text-[12.5px] !rounded-xl !bg-gradient-to-r !from-[#0665ff] !to-[#1abfdf] hover:!opacity-90 !shadow-[0_0_20px_rgba(6,101,255,0.4)] !normal-case !tracking-normal whitespace-nowrap"
             >
               Start 3-days trial for free
             </Button>
@@ -67,7 +66,7 @@ function ResourcesHero() {
           <Link to="/demo">
             <Button
               variant="secondary"
-              className="!h-[46px] !px-8 !text-[13px] !rounded-xl !border-[#0665ff]/50 !bg-[#0665ff]/10 hover:!bg-[#0665ff]/20 !text-[#60a5fa] !normal-case !tracking-normal whitespace-nowrap"
+              className="!h-[42px] !px-7 !text-[12.5px] !rounded-xl !border-[#0665ff]/50 !bg-[#0665ff]/10 hover:!bg-[#0665ff]/20 !text-[#60a5fa] !normal-case !tracking-normal whitespace-nowrap"
             >
               Watch live demo
             </Button>
@@ -75,17 +74,16 @@ function ResourcesHero() {
         </div>
  
         {/* Hero visual — dark card with AI dashboard mock */}
-<div className="relative mx-auto max-w-6xl group">
-  <div className="absolute -inset-2 bg-gradient-to-r from-[#0665ff] via-[#22d3ee] to-[#818cf8] rounded-3xl opacity-20 blur-2xl group-hover:opacity-30 transition-all duration-500" />
-
-  <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#050b18]">
-    <img
-      src={heroDashboard}
-      alt="AI Marketing Dashboard"
-      className="w-full h-auto object-cover"
-    />
-  </div>
-</div>
+        <div className="relative mx-auto max-w-4xl group">
+          <div className="absolute -inset-2 bg-gradient-to-r from-[#0665ff] via-[#22d3ee] to-[#818cf8] rounded-2xl opacity-20 blur-xl group-hover:opacity-30 transition-all duration-500" />
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#050b18]">
+            <img
+              src={heroDashboard}
+              alt="AI Marketing Dashboard"
+              className="w-full h-auto object-cover"
+            />
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -94,58 +92,56 @@ function ResourcesHero() {
 // ─── 2. Trusted Global Partner ────────────────────────────────────────────────
 function TrustedGlobal() {
   return (
-    <section className="section-shell py-16">
+    <section className="section-shell py-10 max-w-5xl mx-auto">
       <div
-        className="relative rounded-3xl overflow-hidden border border-white/10 p-8 sm:p-12"
+        className="relative rounded-2xl overflow-hidden border border-white/10 p-6 sm:p-8"
         style={{
           background: 'linear-gradient(135deg, #0d1a3a 0%, #07111f 100%)',
         }}
       >
         {/* Glow */}
-        <div className="absolute top-0 left-0 w-80 h-60 bg-[#0665ff]/10 blur-[80px] pointer-events-none" />
+        <div className="absolute top-0 left-0 w-60 h-40 bg-[#0665ff]/10 blur-[60px] pointer-events-none" />
  
-        <div className="relative z-10 flex flex-col lg:flex-row items-center gap-10">
+        <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8">
           {/* Person image */}
-          <div className="shrink-0 w-56 sm:w-92 lg:w-[400px]">
+          <div className="shrink-0 w-44 sm:w-56 lg:w-64">
             <img
               src={personImage}
               alt="Person with VR headset"
-              className="w-full object-contain drop-shadow-2xl"
-              style={{ filter: 'drop-shadow(0 0 30px rgba(6,101,255,0.3))' }}
+              className="w-full object-contain drop-shadow-xl"
+              style={{ filter: 'drop-shadow(0 0 20px rgba(6,101,255,0.25))' }}
             />
           </div>
  
           {/* Text */}
-          <div className="flex flex-col gap-4 max-w-xl">
-            <div className="inline-flex items-center gap-2 w-fit px-3 py-1 rounded-full border border-[#0665ff]/30 bg-[#0665ff]/10">
+          <div className="flex flex-col gap-3 max-w-lg">
+            <div className="inline-flex items-center gap-2 w-fit px-2.5 py-0.5 rounded-full border border-[#0665ff]/30 bg-[#0665ff]/10">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0665ff]" />
               <span className="text-[10px] font-semibold tracking-widest text-[#60a5fa] uppercase">About Us</span>
             </div>
  
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-tight">
               A Trusted Global Digital{' '}
               <span className="bg-gradient-to-r from-[#0665ff] to-[#22d3ee] bg-clip-text text-transparent">
                 Growth Partner
               </span>
             </h2>
  
-            <p className="text-sm sm:text-base text-white/55 leading-relaxed">
+            <p className="text-xs sm:text-sm text-white/55 leading-relaxed">
               Wheedle.ai is redefining digital advertising with autonomous AI agents that manage
-              marketing campaigns from strategy to optimization. By combining advanced AI technology
-              with performance-driven insights, we help businesses reach broader audience, maximize
-              ROI, and scale growth worldwide.
+              marketing campaigns from strategy to optimization, helping businesses reach broader audience.
             </p>
  
             {/* Stats row */}
-            <div className="flex flex-wrap gap-6 pt-2">
+            <div className="flex flex-wrap gap-5 pt-1">
               {[
                 { value: '1,200+', label: 'Active Brands' },
                 { value: '3.4×', label: 'Avg. ROAS Lift' },
                 { value: '6+', label: 'Ad Platforms' },
               ].map(({ value, label }) => (
                 <div key={label}>
-                  <p className="text-xl font-bold text-white">{value}</p>
-                  <p className="text-xs text-white/40">{label}</p>
+                  <p className="text-lg font-bold text-white">{value}</p>
+                  <p className="text-[11px] text-white/40">{label}</p>
                 </div>
               ))}
             </div>
@@ -166,49 +162,48 @@ function AchieveProfessional() {
   ];
  
   return (
-    <section className="section-shell py-8">
+    <section className="section-shell py-6 max-w-5xl mx-auto">
       <div
-        className="relative rounded-3xl overflow-hidden border border-white/10 p-8 sm:p-12"
+        className="relative rounded-2xl overflow-hidden border border-white/10 p-6 sm:p-8"
         style={{
           background: 'linear-gradient(135deg, #070f24 0%, #030812 100%)',
         }}
       >
-        <div className="absolute bottom-0 right-0 w-72 h-72 bg-[#22d3ee]/8 blur-[80px] pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-60 h-60 bg-[#22d3ee]/8 blur-[60px] pointer-events-none" />
  
-        <div className="relative z-10 flex flex-col lg:flex-row items-center gap-10">
+        <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8">
           {/* Text side */}
-          <div className="flex-1 flex flex-col gap-5">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
+          <div className="flex-1 flex flex-col gap-4">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-tight">
               Achieve Professional Marketing Results
               <span className="text-white/40"> — Without Hiring a Full Team.</span>
             </h2>
  
-            <p className="text-sm text-white/55 leading-relaxed max-w-lg">
-              Wheedle.ai makes business growth simple. Our fully automated AI marketing platform handles
-              the complexity of digital advertising, enabling growing businesses to attract, convert,
-              and retain customers more efficiently.
+            <p className="text-xs sm:text-sm text-white/55 leading-relaxed max-w-md">
+              Our fully automated platform handles digital advertising complexity, enabling
+              businesses to attract and convert customers efficiently.
             </p>
  
             {/* Numbered list */}
-            <ol className="flex flex-col gap-3 mt-1">
+            <ol className="flex flex-col gap-2.5 mt-0.5">
               {points.map((point, i) => (
-                <li key={i} className="flex items-center gap-3">
+                <li key={i} className="flex items-center gap-2.5">
                   <span
-                    className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                    className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
                     style={{ background: 'linear-gradient(135deg, #0665ff, #22d3ee)' }}
                   >
                     {i + 1}
                   </span>
-                  <span className="text-sm text-white/70">{point}</span>
+                  <span className="text-xs sm:text-sm text-white/70">{point}</span>
                 </li>
               ))}
             </ol>
  
-            <div className="pt-2">
+            <div className="pt-1">
               <Link to="/register">
                 <Button
                   variant="primary"
-                  className="!h-[44px] !px-7 !text-[13px] !rounded-xl !bg-gradient-to-r !from-[#0665ff] !to-[#1abfdf] hover:!opacity-90 !normal-case !tracking-normal"
+                  className="!h-[40px] !px-6 !text-[12.5px] !rounded-xl !bg-gradient-to-r !from-[#0665ff] !to-[#1abfdf] hover:!opacity-90 !normal-case !tracking-normal"
                 >
                   Start Free Trial
                 </Button>
@@ -217,12 +212,12 @@ function AchieveProfessional() {
           </div>
  
           {/* Hand / robot image */}
-          <div className="shrink-0 w-56 sm:w-92 lg:w-[400px]">
+          <div className="shrink-0 w-44 sm:w-56 lg:w-64">
             <img
               src={handImage}
               alt="AI robot hand"
               className="w-full object-contain"
-              style={{ filter: 'drop-shadow(0 0 40px rgba(34,211,238,0.25))' }}
+              style={{ filter: 'drop-shadow(0 0 30px rgba(34,211,238,0.25))' }}
             />
           </div>
         </div>
@@ -297,14 +292,14 @@ const RESOURCE_CARDS = [
  
 function CuriositySection() {
   return (
-    <section className="section-shell py-16">
+    <section className="section-shell py-10 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#0665ff]/30 bg-[#0665ff]/10 mb-4">
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#0665ff]/30 bg-[#0665ff]/10 mb-3">
           <span className="w-1.5 h-1.5 rounded-full bg-[#0665ff] shadow-[0_0_8px_#0665ff]" />
-          <span className="text-[11px] font-semibold tracking-[0.12em] text-[#60a5fa] uppercase">Knowledge Base</span>
+          <span className="text-[10px] font-semibold tracking-[0.12em] text-[#60a5fa] uppercase">Knowledge Base</span>
         </div>
-        <h2 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
+        <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
           Where Curiosity Meets Genius:{' '}
           <span className="bg-gradient-to-r from-[#0665ff] to-[#22d3ee] bg-clip-text text-transparent">
             The Wheedle.ai Edition
@@ -313,11 +308,11 @@ function CuriositySection() {
       </div>
  
       {/* 4-column cards */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {RESOURCE_CARDS.map(({ icon, title, subtitle, articles, color, colorDim, colorBorder }) => (
           <div
             key={title}
-            className="group rounded-2xl border p-5 flex flex-col gap-4 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            className="group rounded-2xl border p-4 flex flex-col gap-3 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
             style={{
               borderColor: colorBorder,
               background: `linear-gradient(135deg, ${colorDim} 0%, rgba(7,11,30,0.9) 100%)`,
@@ -325,7 +320,7 @@ function CuriositySection() {
           >
             {/* Icon */}
             <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center border shrink-0"
+              className="w-9 h-9 rounded-lg flex items-center justify-center border shrink-0"
               style={{ background: colorDim, borderColor: colorBorder, color }}
             >
               {icon}

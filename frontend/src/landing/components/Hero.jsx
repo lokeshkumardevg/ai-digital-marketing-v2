@@ -67,7 +67,7 @@ function Hero() {
   return (
     <section
       ref={heroRef}
-      className="relative overflow-hidden px-6 pb-28 pt-[140px] lg:pt-[160px] h-screen "
+      className="relative overflow-hidden px-6 pb-28 pt-[140px] lg:pt-[160px] min-h-screen flex flex-col justify-center"
     >
       {/* Animated particles */}
       {particles.map((particle) => (

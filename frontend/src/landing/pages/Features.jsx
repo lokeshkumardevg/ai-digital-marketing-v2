@@ -191,76 +191,73 @@ const FEATURE_FAQS = [
 
 function FeaturesHero() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#020817]">
+    <section className="relative pt-28 pb-14 overflow-hidden bg-[#020817]">
       
       {/* Background Glow */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/2 left-1/2 w-[900px] h-[900px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0B5FFF]/15 blur-[180px]" />
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/3 left-1/2 w-[700px] h-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0B5FFF]/15 blur-[160px]" />
       </div>
 
       {/* Concentric Rings */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="absolute w-[1200px] h-[1200px] rounded-full border border-white/[0.03]" />
-        <div className="absolute w-[950px] h-[950px] rounded-full border border-white/[0.04]" />
-        <div className="absolute w-[700px] h-[700px] rounded-full border border-white/[0.05]" />
+        <div className="absolute w-[900px] h-[900px] rounded-full border border-white/[0.03]" />
+        <div className="absolute w-[700px] h-[700px] rounded-full border border-white/[0.04]" />
+        <div className="absolute w-[500px] h-[500px] rounded-full border border-white/[0.05]" />
       </div>
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 text-center">
+      <div className="relative z-10 w-full max-w-5xl mx-auto px-6 text-center">
 
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-[#0665ff] to-[#28b7ff] mb-10">
-          <span className="bg-white text-[#0665ff] text-[10px] font-bold px-2 py-0.5 rounded-full">
-            NEW
-          </span>
-
-          <span className="text-white text-sm font-medium">
-            Latest integration just arrived
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#0665ff]/30 bg-[#0665ff]/10 mb-6 backdrop-blur-md">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#22d3ee] shadow-[0_0_8px_#22d3ee] animate-pulse" />
+          <span className="text-[11px] font-semibold tracking-[0.14em] text-[#60a5fa] uppercase">
+            Campaign Intelligence Suite
           </span>
         </div>
 
         {/* Heading */}
-        <h1 className="text-white font-bold leading-none tracking-tight">
-          <span className="block text-[56px] md:text-[72px]">
+        <h1 className="text-white font-extrabold tracking-tight leading-tight mb-4">
+          <span className="block text-3xl sm:text-4xl lg:text-5xl">
             Plan High-Performing Campaigns
           </span>
 
-          <span className="block mt-3 text-[50px] md:text-[66px] font-medium text-[#a9b8ff]">
+          <span className="block mt-2 text-2xl sm:text-3xl lg:text-[40px] font-semibold text-[#a9b8ff]">
             With AI-Driven Advertising Strategy
           </span>
         </h1>
 
         {/* Bottom Card */}
-        <div className="mt-16 border border-white/10 rounded-3xl bg-white/[0.02] backdrop-blur-xl overflow-hidden">
+        <div className="mt-10 border border-white/10 rounded-2xl bg-white/[0.02] backdrop-blur-xl overflow-hidden shadow-[0_10px_35px_rgba(6,101,255,0.08)]">
           <div className="grid md:grid-cols-3">
 
-            <div className="p-10 border-b md:border-b-0 md:border-r border-white/10">
-              <h3 className="text-white text-2xl font-semibold mb-5">
+            <div className="p-6 sm:p-7 border-b md:border-b-0 md:border-r border-white/10 text-left">
+              <h3 className="text-white text-lg font-semibold mb-2">
                 The Challenge
               </h3>
 
-              <p className="text-[#a5b4cf] text-sm leading-relaxed">
+              <p className="text-[#a5b4cf] text-xs sm:text-sm leading-relaxed">
                 Planning campaigns means juggling audience research,
                 competitor analysis, budgeting and performance projections.
               </p>
             </div>
 
-            <div className="p-10 border-b md:border-b-0 md:border-r border-white/10">
-              <h3 className="text-white text-2xl font-semibold mb-5">
+            <div className="p-6 sm:p-7 border-b md:border-b-0 md:border-r border-white/10 text-left">
+              <h3 className="text-white text-lg font-semibold mb-2">
                 The Solution
               </h3>
 
-              <p className="text-[#a5b4cf] text-sm leading-relaxed">
+              <p className="text-[#a5b4cf] text-xs sm:text-sm leading-relaxed">
                 Get a comprehensive, AI-generated advertising strategy
                 in minutes with market analysis and audience insights.
               </p>
             </div>
 
-            <div className="p-10">
-              <h3 className="text-white text-2xl font-semibold mb-5">
+            <div className="p-6 sm:p-7 text-left">
+              <h3 className="text-white text-lg font-semibold mb-2">
                 The Result
               </h3>
 
-              <p className="text-[#a5b4cf] text-sm leading-relaxed">
+              <p className="text-[#a5b4cf] text-xs sm:text-sm leading-relaxed">
                 Launch campaigns confidently with data-backed strategies
                 that drive results, not guesswork.
               </p>
@@ -289,31 +286,25 @@ function FeatureGrid() {
   ];
 
   return (
-   <section
-  className="relative px-16 lg:px-20 xl:px-30 py-10 rounded-2xl"
-  style={{
-    background:
-      "linear-gradient(135deg,#060818 0%,#0a0e24 50%,#060e1a 100%)"
-  }}
->
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+    <section className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {cards.map((card) => (
           <div
             key={card.title}
-            className="relative flex flex-col items-center text-center px-6 pt-7 pb-6 rounded-[22px] overflow-hidden transition-transform duration-200 hover:-translate-y-0.5"
+            className="relative flex flex-col items-center text-center px-5 py-6 rounded-2xl overflow-hidden transition-all duration-200 hover:-translate-y-1"
             style={{
               background: "linear-gradient(180deg,#07091B 0%,#090C22 100%)",
               border: card.active
                 ? "2px solid #0EA5FF"
-                : "1px solid rgba(96,112,255,.38)",
+                : "1px solid rgba(96,112,255,.3)",
               boxShadow: card.active
-                ? "0 0 28px rgba(14,165,255,.22)"
+                ? "0 0 24px rgba(14,165,255,.18)"
                 : "none",
             }}
           >
             {/* top radial glow */}
             <div
-              className="absolute inset-0 rounded-[22px] pointer-events-none"
+              className="absolute inset-0 rounded-2xl pointer-events-none"
               style={{
                 background:
                   "radial-gradient(circle at 50% 0%,rgba(45,80,255,.10),transparent 65%)",
@@ -322,13 +313,13 @@ function FeatureGrid() {
 
             <div className="relative z-10 w-full">
               {/* icon */}
-              <div className="text-[42px] leading-none mb-[18px]">
+              <div className="text-3xl leading-none mb-3">
                 {card.icon}
               </div>
 
               {/* title */}
               <h3
-                className="text-[18px] font-bold mb-[14px] tracking-wide"
+                className="text-base font-bold mb-3 tracking-wide"
                 style={{
                   background: card.active
                     ? "linear-gradient(90deg,#38BDF8,#7DD3FC)"
@@ -342,11 +333,11 @@ function FeatureGrid() {
               </h3>
 
               {/* bullet list */}
-              <ul className="flex flex-col gap-[6px]">
+              <ul className="flex flex-col gap-1.5">
                 {card.items.map((item) => (
                   <li
                     key={item}
-                    className="flex items-start gap-[6px] text-[13px] text-[#9BA3C0]"
+                    className="flex items-start gap-1.5 text-xs text-[#9BA3C0]"
                   >
                     <span className="text-[#6070FF] flex-shrink-0">•</span>
                     {item}
@@ -361,19 +352,13 @@ function FeatureGrid() {
   );
 }
 
-
-
 // ─── Testimonials (real results strip) ───────────────────────────────────────
 
 function RealResults() {
-  // No fabricated reviewer identities here on purpose — a fake name, stock photo and
-  // invented quote under a "Real results from Real marketers" headline is misleading.
-  // Swap this array for genuine customer quotes (with their permission) when you have them;
-  // until then this section describes what the platform does, honestly.
   const pillars = [
     {
       title: "One coworker, not ten tools",
-      body: "Teams that used to juggle separate review, listing, social and reporting tools run all of it from one dashboard.",
+      body: "Teams that used to juggle separate review, listing, social and reporting tools run all of it from one centralized dashboard.",
     },
     {
       title: "Every post stays on-brand",
@@ -386,41 +371,42 @@ function RealResults() {
   ];
 
   return (
-    <section className="relative py-24 overflow-hidden bg-black">
+    <section className="relative py-16 overflow-hidden bg-[#00040f]">
       {/* Background Glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#0f3cff30,transparent_70%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,101,255,0.15),transparent_70%)] pointer-events-none" />
 
-      <div className="relative max-w-7xl mx-auto px-6">
+      <div className="relative max-w-6xl mx-auto px-6">
+        {/* Eyebrow */}
+        <div className="text-center mb-3">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#0665ff]/30 bg-[#0665ff]/10 mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#22d3ee] shadow-[0_0_8px_#22d3ee]" />
+            <span className="text-[10px] font-semibold tracking-[0.12em] text-[#60a5fa] uppercase">Authentic Architecture</span>
+          </div>
+        </div>
+
         {/* Heading */}
-<h2
-  className="
-    text-center
-    text-[40px]
-    md:text-[56px]
-    font-medium
-    mb-16
-    bg-gradient-to-r
-    from-white
-    via-[#d7d8ff]
-    to-[#7b8cff]
-    bg-clip-text
-    text-transparent
-  "
->
-  Built for marketing teams, not marketing theater
-</h2>
+        <h2 className="text-center text-2xl sm:text-3xl lg:text-4xl font-bold mb-10 bg-gradient-to-r from-white via-[#d7d8ff] to-[#7b8cff] bg-clip-text text-transparent">
+          Built for marketing teams, not marketing theater
+        </h2>
 
         {/* Cards */}
-        <div className="flex flex-wrap justify-center gap-9">
+        <div className="flex flex-wrap justify-center gap-6">
           {pillars.map((pillar, index) => (
             <div
               key={index}
-              className="w-[350px] bg-white rounded-xl p-6 shadow-lg"
+              className="w-full sm:w-[330px] rounded-2xl border border-white/10 bg-[#07122A]/80 backdrop-blur-xl p-6 shadow-[0_8px_30px_rgba(6,101,255,0.08)] hover:border-[#0665ff]/50 hover:-translate-y-1 transition-all duration-300"
             >
-              <h4 className="text-base font-bold text-gray-900 mb-2">
-                {pillar.title}
-              </h4>
-              <p className="text-[13px] leading-relaxed text-gray-600">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0665ff]/20 border border-[#0665ff]/30 text-[#22d3ee]">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </span>
+                <h4 className="text-base font-bold text-white">
+                  {pillar.title}
+                </h4>
+              </div>
+              <p className="text-xs sm:text-sm leading-relaxed text-slate-300/80">
                 {pillar.body}
               </p>
             </div>
