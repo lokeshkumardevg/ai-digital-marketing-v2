@@ -1,6 +1,7 @@
 import { UsersService } from '../users/users.service';
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   InternalServerErrorException,
@@ -290,7 +291,7 @@ export class CampaignService {
   // ============================================
   // 6. PUBLISH
   // ============================================
-  async publish(campaignId: string, updateData?: any) {
+  async publish(campaignId: string, updateData?: any, authUserId?: string) {
     // Strip platform suffix if present (e.g. 8f7b..._x -> 8f7b...)
     let baseCampaignId = campaignId;
     let platformFromSuffix = '';
@@ -342,9 +343,16 @@ export class CampaignService {
       }
     }
 
+    if (campaign && authUserId && campaign.userId && campaign.userId !== authUserId) {
+      throw new ForbiddenException('Access Denied: You do not have permission to publish this campaign.');
+    }
+
     if (!campaign) {
       // Gracefully create a campaign if it's not found (e.g. direct publish from dashboard for X/LinkedIn)
-      if (updateData && updateData.userId) {
+      if (updateData && (updateData.userId || authUserId)) {
+        if (authUserId) {
+          updateData.userId = authUserId;
+        }
         const plat = updateData.platform || platformFromSuffix || 'x';
         const platLabel = plat.charAt(0).toUpperCase() + plat.slice(1);
         const name = updateData.campaignName || updateData.name || `${platLabel} Campaign`;
@@ -518,19 +526,29 @@ export class CampaignService {
   // ============================================
   // 7. STATUS
   // ============================================
-  getStatus(campaignId: string) {
-    const c = this.campaigns.get(campaignId);
+  async getStatus(campaignId: string, authUserId?: string) {
+    let campaign = this.campaigns.get(campaignId);
+    if (!campaign && campaignId) {
+      if (Types.ObjectId.isValid(campaignId)) {
+        campaign = await this.campaignModel.findById(campaignId);
+      } else {
+        campaign = await this.campaignModel.findOne({ campaignId });
+      }
+    }
+    if (campaign && authUserId && campaign.userId && campaign.userId !== authUserId) {
+      throw new ForbiddenException('Access Denied: You do not have permission to view this campaign.');
+    }
 
     return {
       campaignId,
-      status: c?.status || 'DRAFT',
+      status: campaign?.status || 'DRAFT',
     };
   }
 
   // ============================================
   // 8. LIVE DASHBOARD
   // ============================================
-  async getLiveDashboard(campaignId: string) {
+  async getLiveDashboard(campaignId: string, authUserId?: string) {
     let campaign = this.campaigns.get(campaignId);
     if (!campaign) {
       if (Types.ObjectId.isValid(campaignId)) {
@@ -560,6 +578,10 @@ export class CampaignService {
     }
 
     if (!campaign) throw new Error('Campaign not found');
+
+    if (authUserId && campaign.userId && campaign.userId !== authUserId) {
+      throw new ForbiddenException('Access Denied: You do not have permission to view this campaign.');
+    }
 
     const isActive = campaign.status === 'ACTIVE';
 
@@ -2115,6 +2137,16 @@ Return ONLY JSON.
     }
 
     const { campaignName, dailyBudget, objective, pageId, pixelId, imageUrl, caption, headline, finalUrl, location, includeLocations, excludeLocations } = data;
+    
+    // Strict Meta Platform Policy: Enforce tenant authorization of target ad account
+    if (data.adAccountId || data.metaAdAccountId) {
+      const requestedId = (data.adAccountId || data.metaAdAccountId).replace('act_', '');
+      const tenantId = user.metaAdAccountId.replace('act_', '');
+      if (requestedId !== tenantId) {
+        throw new ForbiddenException(`Unauthorized Meta Ad Account: You do not have permission to publish to ad account ${data.adAccountId || data.metaAdAccountId}`);
+      }
+    }
+
     const adAccountId = user.metaAdAccountId;
     const token = user.metaAccessToken;
 
@@ -2623,6 +2655,10 @@ Return ONLY JSON.
     }
     if (!campaign) throw new Error('Campaign not found');
 
+    if (campaign.userId && campaign.userId !== userId) {
+      throw new ForbiddenException('Access Denied: You do not have permission to update this campaign.');
+    }
+
     const googleResources = campaign.data?.googleResources;
     if (!googleResources || !googleResources.campaignResourceName) {
       throw new Error('This campaign was not fully published to Google Ads or is missing resource identifiers. It cannot be updated natively.');
@@ -2985,18 +3021,23 @@ Return ONLY JSON.
               }
             }
 
-            // If we STILL couldn't find the customer in the user's accessible list, 
-            // it must be a System-created account. We must switch to system auth!
             if (!isOwned) {
-              throw new Error("NOT_OWNED");
+              throw new ForbiddenException(`Unauthorized Google Ads Account: Customer account ${customerId} is not authorized or accessible by this user.`);
             }
-          } catch (e) {
-            this.logger.warn(`User token does not have access to ${customerId}, falling back to System Token`);
-            // Switch back to system token
-            workingRefreshToken = systemRefreshToken;
-            loginCustomerId = systemMccId.replace(/-/g, '');
+          } catch (e: any) {
+            if (e instanceof ForbiddenException) throw e;
+            this.logger.error(`Error verifying Google Ads account authorization for customer ${customerId}: ${e.message}`);
+            throw new ForbiddenException(`Google Ads Authorization Failed: Customer account ${customerId} is not authorized for your account.`);
           }
         } else {
+          // If using system-managed flow, tenant cannot operate on an arbitrary/unauthorized customer ID
+          if (data.googleAccountId) {
+            const requestedId = data.googleAccountId.replace(/-/g, '');
+            if (user.googleCustomerId && requestedId !== user.googleCustomerId.replace(/-/g, '') && requestedId !== systemCustomerId.replace(/-/g, '')) {
+              throw new ForbiddenException(`Unauthorized Google Ads Account: You do not have permission to operate on account ${requestedId}`);
+            }
+          }
+
           try {
             const listRes = await clientAuth.listAccessibleCustomers(systemRefreshToken);
             const accessibleCids = (listRes.resource_names || []).map((rn: string) => rn.split('/')[1]);
@@ -4687,7 +4728,7 @@ Return ONLY JSON.
     }
   }
 
-  async toggleCampaignStatus(id: string, status: string) {
+  async toggleCampaignStatus(id: string, status: string, authUserId?: string) {
     try {
       const campaign = await this.campaignModel.findById(id);
       if (!campaign) {
@@ -4695,6 +4736,10 @@ Return ONLY JSON.
       }
 
       const userId = campaign.userId;
+      if (userId && authUserId && userId !== authUserId) {
+        throw new ForbiddenException('Access Denied: You do not have permission to modify this campaign.');
+      }
+
       const user = await this.usersService.findById(userId);
       if (!user) {
         throw new BadRequestException('User not found in system');

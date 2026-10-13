@@ -48,55 +48,71 @@ export class CampaignController {
   }
 
   @Post('publish/:id')
-  publish(@Param('id') id: string) {
-    return this.service.publish(id);
+  @UseGuards(AuthGuard('jwt'))
+  publish(@Param('id') id: string, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    return this.service.publish(id, undefined, authUserId);
   }
 
   @Post('publish')
-  async publishWithBody(@Body() body: any) {
+  @UseGuards(AuthGuard('jwt'))
+  async publishWithBody(@Body() body: any, @Req() req: any) {
     try {
-      return await this.service.publish(body.campaignId || body.id, body);
+      const authUserId = req.user?.id ?? req.user?.sub;
+      return await this.service.publish(body.campaignId || body.id, body, authUserId);
     } catch (err: any) {
+      if (err instanceof ForbiddenException) throw err;
       const msg = err?.message || 'Failed to publish campaign';
       throw new BadRequestException(msg);
     }
   }
 
   @Post('optimize')
-  async optimizeCampaign(@Body() body: any) {
+  @UseGuards(AuthGuard('jwt'))
+  async optimizeCampaign(@Body() body: any, @Req() req: any) {
     try {
-      return await this.service.optimizeCampaign(body);
+      const authUserId = req.user?.id ?? req.user?.sub;
+      return await this.service.optimizeCampaign({ ...body, authUserId });
     } catch (err: any) {
+      if (err instanceof ForbiddenException) throw err;
       const msg = err?.message || 'Failed to optimize campaign';
       throw new BadRequestException(msg);
     }
   }
 
   @Put('google/:id')
+  @UseGuards(AuthGuard('jwt'))
   async updateGoogleCampaign(
     @Param('id') id: string,
-    @Body() body: any
+    @Body() body: any,
+    @Req() req: any,
   ) {
     try {
-      const userId = body.userId;
-      if (!userId) {
-        throw new BadRequestException('User ID is required');
+      const authUserId = req.user?.id ?? req.user?.sub;
+      const targetUserId = body.userId || authUserId;
+      if (authUserId !== targetUserId && req.user?.role !== 'superadmin' && req.user?.role !== 'admin') {
+        throw new ForbiddenException('Access Denied: You can only update Google campaigns for your own tenant.');
       }
-      return await this.service.updateGoogleCampaign(userId, id, body);
+      return await this.service.updateGoogleCampaign(targetUserId, id, body);
     } catch (err: any) {
+      if (err instanceof ForbiddenException) throw err;
       const msg = err?.message || 'Failed to update Google campaign';
       throw new BadRequestException(msg);
     }
   }
 
   @Get(':id/status')
-  status(@Param('id') id: string) {
-    return this.service.getStatus(id);
+  @UseGuards(AuthGuard('jwt'))
+  status(@Param('id') id: string, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    return this.service.getStatus(id, authUserId);
   }
 
   @Get(':id/live-dashboard')
-  live(@Param('id') id: string) {
-    return this.service.getLiveDashboard(id);
+  @UseGuards(AuthGuard('jwt'))
+  live(@Param('id') id: string, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    return this.service.getLiveDashboard(id, authUserId);
   }
 
   // ============================================
@@ -280,49 +296,79 @@ export class CampaignController {
     );
   }
 
-@Post('draft')
-saveDraft(@Body() body: any) {
-  return this.service.saveDraft(body);
-}
-
-@Get('draft/:userId')
-@UseGuards(AuthGuard('jwt'))
-getDrafts(
-  @Param('userId') userId: string,
-  @Req() req: any,
-) {
-  const authUserId = req.user?.id ?? req.user?.sub;
-  if (authUserId !== userId) {
-    throw new ForbiddenException('Access Denied: You can only access your own drafts.');
+  @Post('draft')
+  @UseGuards(AuthGuard('jwt'))
+  saveDraft(@Body() body: any, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    if (body.userId && body.userId !== authUserId && req.user?.role !== 'superadmin' && req.user?.role !== 'admin') {
+      throw new ForbiddenException('Access Denied: You can only save drafts for your own tenant.');
+    }
+    body.userId = authUserId;
+    return this.service.saveDraft(body);
   }
-  return this.service.getDraftsByUser(userId);
-}
+
+  @Get('draft/:userId')
+  @UseGuards(AuthGuard('jwt'))
+  getDrafts(
+    @Param('userId') userId: string,
+    @Req() req: any,
+  ) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    if (authUserId !== userId && req.user?.role !== 'superadmin' && req.user?.role !== 'admin') {
+      throw new ForbiddenException('Access Denied: You can only access your own drafts.');
+    }
+    return this.service.getDraftsByUser(userId);
+  }
 
   @Post('x/publish')
-  async publishX(@Body() body: any) {
-    return this.service.publishXCampaign(body.userId, body);
+  @UseGuards(AuthGuard('jwt'))
+  async publishX(@Body() body: any, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    const targetUserId = body.userId || authUserId;
+    if (authUserId !== targetUserId && req.user?.role !== 'superadmin' && req.user?.role !== 'admin') {
+      throw new ForbiddenException('Access Denied: You can only publish campaigns for your own tenant.');
+    }
+    return this.service.publishXCampaign(targetUserId, body);
   }
 
   @Post('meta/publish')
-  async publishMeta(@Body() body: any) {
-    return this.service.publishMetaCampaign(body.userId, body);
+  @UseGuards(AuthGuard('jwt'))
+  async publishMeta(@Body() body: any, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    const targetUserId = body.userId || authUserId;
+    if (authUserId !== targetUserId && req.user?.role !== 'superadmin' && req.user?.role !== 'admin') {
+      throw new ForbiddenException('Access Denied: You can only publish campaigns for your own tenant.');
+    }
+    return this.service.publishMetaCampaign(targetUserId, body);
   }
 
   @Post('google/publish')
-  async publishGoogle(@Body() body: any) {
-    return this.service.publishGoogleCampaign(body.userId, body);
+  @UseGuards(AuthGuard('jwt'))
+  async publishGoogle(@Body() body: any, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    const targetUserId = body.userId || authUserId;
+    if (authUserId !== targetUserId && req.user?.role !== 'superadmin' && req.user?.role !== 'admin') {
+      throw new ForbiddenException('Access Denied: You can only publish campaigns for your own tenant.');
+    }
+    return this.service.publishGoogleCampaign(targetUserId, body);
   }
 
   @Post('linkedin/publish')
-  async publishLinkedin(@Body() body: any) {
-    return this.service.publishLinkedinCampaign(body.userId, body);
+  @UseGuards(AuthGuard('jwt'))
+  async publishLinkedin(@Body() body: any, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    const targetUserId = body.userId || authUserId;
+    if (authUserId !== targetUserId && req.user?.role !== 'superadmin' && req.user?.role !== 'admin') {
+      throw new ForbiddenException('Access Denied: You can only publish campaigns for your own tenant.');
+    }
+    return this.service.publishLinkedinCampaign(targetUserId, body);
   }
 
   @Get('linkedin/status/:userId')
   @UseGuards(AuthGuard('jwt'))
   async linkedinStatus(@Param('userId') userId: string, @Req() req: any) {
     const authUserId = req.user?.id ?? req.user?.sub;
-    if (authUserId !== userId) {
+    if (authUserId !== userId && req.user?.role !== 'superadmin' && req.user?.role !== 'admin') {
       throw new ForbiddenException('Access Denied: You can only access your own LinkedIn status.');
     }
     return this.service.getLinkedinStatus(userId);
@@ -332,32 +378,41 @@ getDrafts(
   @UseGuards(AuthGuard('jwt'))
   async getCampaigns(@Param('userId') userId: string, @Req() req: any) {
     const authUserId = req.user?.id ?? req.user?.sub;
-    if (authUserId !== userId) {
+    if (authUserId !== userId && req.user?.role !== 'superadmin' && req.user?.role !== 'admin') {
       throw new ForbiddenException('Access Denied: You can only access your own campaigns.');
     }
     return this.service.getCampaignsByUser(userId);
   }
 
   @Post(':id/toggle-status')
+  @UseGuards(AuthGuard('jwt'))
   async toggleStatus(
     @Param('id') id: string,
     @Body('status') status: string,
+    @Req() req: any,
   ) {
-    return this.service.toggleCampaignStatus(id, status);
+    const authUserId = req.user?.id ?? req.user?.sub;
+    return this.service.toggleCampaignStatus(id, status, authUserId);
   }
 
   @Get('meta/billing-status/:userId')
   @UseGuards(AuthGuard('jwt'))
   async getMetaBillingStatus(@Param('userId') userId: string, @Req() req: any) {
     const authUserId = req.user?.id ?? req.user?.sub;
-    if (authUserId !== userId) {
+    if (authUserId !== userId && req.user?.role !== 'superadmin' && req.user?.role !== 'admin') {
       throw new ForbiddenException('Access Denied: You can only access your own Meta billing status.');
     }
     return this.service.getMetaBillingStatus(userId);
   }
 
   @Post('google/provision')
-  async provisionGoogleAds(@Body('userId') userId: string) {
-    return this.service.provisionGoogleAdsAccount(userId);
+  @UseGuards(AuthGuard('jwt'))
+  async provisionGoogleAds(@Body('userId') userId: string, @Req() req: any) {
+    const authUserId = req.user?.id ?? req.user?.sub;
+    const targetUserId = userId || authUserId;
+    if (authUserId !== targetUserId && req.user?.role !== 'superadmin' && req.user?.role !== 'admin') {
+      throw new ForbiddenException('Access Denied: You can only provision accounts for your own tenant.');
+    }
+    return this.service.provisionGoogleAdsAccount(targetUserId);
   }
 }

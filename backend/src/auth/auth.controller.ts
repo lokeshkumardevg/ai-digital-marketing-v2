@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UnauthorizedException, Get, Request, UseGuards, Query, BadRequestException, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, UnauthorizedException, Get, Request, UseGuards, Query, BadRequestException, HttpCode, HttpStatus, Param } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -397,6 +397,37 @@ export class AuthController {
       console.log('[AuthController] linkedinCallback error', e?.message || e);
       return `<html><head><meta http-equiv="refresh" content="0; url=${redirectBase}?linkedinConnected=error" /></head><body>Redirecting...</body></html>`;
     }
+  }
+
+  // ================= META & GOOGLE DATA DELETION ENDPOINTS =================
+
+  /**
+   * Meta Platform Data Deletion Callback (Required by Meta Platform Term 4.a)
+   * Receives signed_request or direct deletion payload and returns tracking URL & confirmation code.
+   */
+  @Post('meta/data-deletion')
+  @HttpCode(HttpStatus.OK)
+  async metaDataDeletion(@Body() body: any) {
+    const signedRequest = body?.signed_request;
+    const userIdentifier = body?.user_id || body?.email;
+    return this.authService.handleMetaDataDeletion(signedRequest, userIdentifier);
+  }
+
+  /**
+   * Query status of user data deletion request
+   */
+  @Get('data-deletion/status/:code')
+  async getDataDeletionStatus(@Param('code') code: string) {
+    return this.authService.getDataDeletionStatus(code);
+  }
+
+  /**
+   * User Self-Service Account & Advertising Data Erasure (Right to be Forgotten)
+   */
+  @UseGuards(AuthGuard('jwt'))
+  @Post('request-data-deletion')
+  async requestSelfDataDeletion(@Request() req: any) {
+    return this.authService.handleUserSelfDataDeletion(req.user.id);
   }
 }
 

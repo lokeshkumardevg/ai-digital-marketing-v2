@@ -452,6 +452,12 @@ function Register() {
     });
   };
 
+  const getRedirectTarget = (userData: any) => {
+    if (userData?.role === 'superadmin') return "/admin-dashboard";
+    if (userData?.onboardingCompleted === false) return "/onboarding";
+    return "/campaigns";
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const fbToken = params.get('fb_token');
@@ -461,7 +467,7 @@ function Register() {
         const fbUser = JSON.parse(decodeURIComponent(fbUserRaw));
         handleAuthSuccess({ access_token: fbToken, user: fbUser });
         setSuccess("Signed in with Facebook! Redirecting…");
-        setTimeout(() => { window.location.href = "/campaigns"; }, 1000);
+        setTimeout(() => { window.location.href = getRedirectTarget(fbUser); }, 1000);
       } catch (e) {
         console.error("Failed to parse Facebook user data from URL:", e);
         setError("Facebook login failed to load user profile.");
@@ -482,7 +488,7 @@ function Register() {
       const { data } = await api.post(endpoint, payload);
       handleAuthSuccess(data);
       setSuccess(mode === "signup" ? "Account created! Redirecting…" : "Signed in! Redirecting…");
-      setTimeout(() => { window.location.href = "/campaigns"; }, 1000);
+      setTimeout(() => { window.location.href = getRedirectTarget(data.user); }, 1000);
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Invalid credentials.");
     } finally { setLoading(false); }
@@ -505,7 +511,7 @@ function Register() {
         });
         handleAuthSuccess(data);
         setSuccess("Signed in with Google! Redirecting…");
-        setTimeout(() => { window.location.href = "/campaigns"; }, 1000);
+        setTimeout(() => { window.location.href = getRedirectTarget(data.user); }, 1000);
       } catch (err: any) {
         setError(err?.response?.data?.message || err?.message || "Google login failed.");
       } finally {
@@ -767,9 +773,9 @@ function Register() {
                   </a>
                   <br />
                   By proceeding, you agree to our{" "}
-                  <a href="#" style={{ color: "rgba(238,238,245,0.48)", textDecoration: "underline" }}>Terms</a>
+                  <a href="/terms" target="_blank" rel="noreferrer" style={{ color: "rgba(238,238,245,0.48)", textDecoration: "underline" }}>Terms of Service</a>
                   {" "}and{" "}
-                  <a href="/privacy-policy.html" style={{ color: "rgba(238,238,245,0.48)", textDecoration: "underline" }}>Privacy Policy</a>.
+                  <a href="/privacy-policy" target="_blank" rel="noreferrer" style={{ color: "rgba(238,238,245,0.48)", textDecoration: "underline" }}>Privacy Policy</a>.
 
                 </p>
               </div>

@@ -25,7 +25,9 @@ const footerGroups = [
       { label: "Resources", href: "/resources" },
       { label: "Help", href: "/help" },
       { label: "Security", href: "/security" },
-      { label: "Privacy Policy", href: "/privacy-policy.html" },
+      { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Data Deletion", href: "/data-deletion" },
       { label: "Contact", href: "/contact" },
     ],
   },
@@ -258,13 +260,13 @@ function Footer() {
           </p>
           <div className="flex gap-6">
             <Link to="/terms" className="transition-colors duration-300 hover:text-white/80">
-              Terms
+              Terms of Service
             </Link>
-            <a href="/privacy-policy.html" className="transition-colors duration-300 hover:text-white/80">
+            <Link to="/privacy-policy" className="transition-colors duration-300 hover:text-white/80">
               Privacy Policy
-            </a>
-            <Link to="/cookies" className="transition-colors duration-300 hover:text-white/80">
-              Cookies
+            </Link>
+            <Link to="/data-deletion" className="transition-colors duration-300 hover:text-white/80">
+              Data Deletion
             </Link>
           </div>
         </div>

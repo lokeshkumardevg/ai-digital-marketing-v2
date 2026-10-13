@@ -119,6 +119,37 @@ export class User {
 
   @Prop({ default: 'India' })
   country: string;
+
+  @Prop({ default: false })
+  onboardingCompleted: boolean;
+
+  @Prop()
+  brandName?: string;
+
+  @Prop()
+  websiteUrl?: string;
+
+  @Prop()
+  industry?: string;
+
+  @Prop()
+  metaPixelId?: string;
+
+  @Prop()
+  metaPageId?: string;
+
+  // Regulatory & Restricted Niches Compliance (Protects against Google/Meta suspensions)
+  @Prop()
+  regulatoryLicenseType?: string;
+
+  @Prop()
+  regulatoryLicenseNumber?: string;
+
+  @Prop()
+  regulatoryCertificateUrl?: string;
+
+  @Prop({ default: false })
+  isRestrictedNicheCertified?: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

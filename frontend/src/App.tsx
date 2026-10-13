@@ -24,11 +24,13 @@ Resources from './landing/pages/Resources';
 import Register from './landing/pages/Register';
 // @ts-ignore
 import Contact from './landing/pages/Contact';
-// @ts-ignore
-// import PrivacyPolicy from './landing/pages/PrivacyPolicy';
+import PrivacyPolicy from './landing/pages/PrivacyPolicy';
+import TermsOfService from './landing/pages/TermsOfService';
+import DataDeletion from './landing/pages/DataDeletion';
 import AgentEcosystem from './landing/pages/AgentEcosystem';
 import CoworkerDetail from './landing/pages/CoworkerDetail';
 import Security from './landing/pages/Security';
+import Onboarding from './landing/pages/Onboarding';
 import { Settings } from './dashboard/pages/Settings';
 import { Seo } from './dashboard/pages/Seo';
 import { Social } from './dashboard/pages/Social';
@@ -70,7 +72,15 @@ import DashboardPage from './dashboard/pages/DashboardPage';
 import GoogleBusinessTester from './dashboard/pages/Googlebusinesstester';
 import PostsPage from './dashboard/pages/PostsPage';
 
-const ProtectedRoute = ({ children, requiredPermission }: { children: React.ReactNode, requiredPermission?: string }) => {
+const ProtectedRoute = ({ 
+  children, 
+  requiredPermission,
+  allowIncompleteOnboarding
+}: { 
+  children: React.ReactNode, 
+  requiredPermission?: string,
+  allowIncompleteOnboarding?: boolean
+}) => {
   const { isAuthenticated, status, user } = useSelector((state: any) => state.auth);
 
   if (status === 'loading' || (status === 'idle' && localStorage.getItem('access_token'))) {
@@ -83,6 +93,11 @@ const ProtectedRoute = ({ children, requiredPermission }: { children: React.Reac
 
   if (!isAuthenticated && (status === 'failed' || (status === 'idle' && !localStorage.getItem('access_token')))) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Pre-Dashboard Policy Gate: Enforce Google & Meta account setup before entering dashboard
+  if (user && user.onboardingCompleted === false && user.role !== 'superadmin' && !allowIncompleteOnboarding) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   // RBAC Engine Validation
@@ -244,12 +259,19 @@ const App: React.FC = () => {
         <Route path="/login" element={<Register />} />
         <Route path="/signup" element={<Register />} />
         <Route path="/contact" element={<Contact />} />
-        {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} /> */}
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/terms-and-conditions" element={<TermsOfService />} />
+        <Route path="/data-deletion" element={<DataDeletion />} />
+        <Route path="/data-deletion-instructions" element={<DataDeletion />} />
         <Route path="/agent-ecosystem" element={<AgentEcosystem />} />
         <Route path="/coworkers/:id" element={<CoworkerDetail />} />
         <Route path="/security" element={<Security />} />
         <Route path="/chatbot-embed/:id" element={<ChatEmbed />} />
         <Route path="/presentation" element={<Presentation />} />
+        <Route path="/onboarding" element={<ProtectedRoute allowIncompleteOnboarding={true}><Onboarding /></ProtectedRoute>} />
 
         {/* Dashboard Routes — AdsGo full-bleed pages */}
         <Route path="/crm" element={<ProtectedRoute><DarkDashboardLayoutFull><Crm /></DarkDashboardLayoutFull></ProtectedRoute>} />
