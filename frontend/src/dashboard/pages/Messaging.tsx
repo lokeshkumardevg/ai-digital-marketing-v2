@@ -4,8 +4,10 @@ import {
   Upload, X, Clock, AlertCircle, Zap, FileSpreadsheet,
   RefreshCw, Radio, AtSign, Phone, User, Layers, History,
 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { messageLogApi, type MessageLog } from '../../services/messageLogApi';
+import MessagingInbox from '../components/MessagingInbox';
 
 // ─── Dark Theme Tokens ────────────────────────────────────────────────────────
 const D = {
@@ -94,7 +96,7 @@ const formatDate = (iso: string): string => {
 };
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export const Messaging: React.FC = () => {
+const BroadcastHub: React.FC = () => {
   const [activeTab, setActiveTab]               = useState<CampaignType>('whatsapp');
   const [message, setMessage]                   = useState('');
   const [audiences, setAudiences]               = useState<any[]>([]);
@@ -260,24 +262,11 @@ export const Messaging: React.FC = () => {
         ::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.3); border-radius: 3px; }
       `}</style>
 
-      {/* ── Page Header ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
-        <div>
-          <h1 style={{ fontSize: '1.9rem', fontWeight: 700, marginBottom: 6, color: D.textPrimary }}>
-            Omni-Channel{' '}
-            <span style={{ background: 'linear-gradient(135deg, #a78bfa, #6366f1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Messaging Hub
-            </span>
-          </h1>
-          <p style={{ color: D.textMuted, fontSize: '0.9rem' }}>
-            Bulk broadcast via WhatsApp and Email — powered by Twilio and AI personalization
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <StatBadge icon={<Zap size={16} color={D.purpleText} />}   label="Queued"  value={queuedCount}  color={D.purpleSoft} />
-          <StatBadge icon={<Users size={16} color={D.greenText} />}   label="Reached" value={queuedCount}  color={D.greenSoft} />
-          <StatBadge icon={<AlertCircle size={16} color={D.yellow} />} label="Skipped" value={skippedCount} color={D.yellowSoft} />
-        </div>
+      {/* ── Broadcast stats ── */}
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
+        <StatBadge icon={<Zap size={16} color={D.purpleText} />}   label="Queued"  value={queuedCount}  color={D.purpleSoft} />
+        <StatBadge icon={<Users size={16} color={D.greenText} />}   label="Reached" value={queuedCount}  color={D.greenSoft} />
+        <StatBadge icon={<AlertCircle size={16} color={D.yellow} />} label="Skipped" value={skippedCount} color={D.yellowSoft} />
       </div>
 
       {/* ── Main Grid ── */}
@@ -624,6 +613,69 @@ export const Messaging: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+
+// ─── Page: Conversations (reply) + Broadcast (bulk send) ─────────────────────
+type HubMode = 'inbox' | 'broadcast';
+
+export const Messaging: React.FC = () => {
+  const [params, setParams] = useSearchParams();
+  const mode: HubMode = params.get('tab') === 'broadcast' ? 'broadcast' : 'inbox';
+  const [unread, setUnread] = useState(0);
+  const setMode = (m: HubMode) => setParams(m === 'inbox' ? {} : { tab: m }, { replace: true });
+
+  const tabs: { key: HubMode; label: string; Icon: typeof Mail }[] = [
+    { key: 'inbox',     label: 'Conversations', Icon: MessageCircle },
+    { key: 'broadcast', label: 'Broadcast',     Icon: Send },
+  ];
+
+  return (
+    <div style={{ paddingBottom: 48, background: D.bg, minHeight: '100%' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h1 style={{ fontSize: '1.9rem', fontWeight: 700, marginBottom: 6, color: D.textPrimary }}>
+            
+            <span style={{ background: 'linear-gradient(135deg, #0665ff 50%, #22d3ee 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              Messaging Hub
+            </span>
+          </h1>
+          <p style={{ color: D.textMuted, fontSize: '0.9rem', margin: 0 }}>
+            Reply to customers from Facebook, Instagram, Google, WhatsApp and Email, or send a bulk broadcast
+          </p>
+        </div>
+
+        <div role="tablist" aria-label="Messaging sections" style={{ display: 'flex', background: D.white004, padding: 4, borderRadius: 12, gap: 4, border: `1px solid ${D.border}` }}>
+          {tabs.map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={mode === key}
+              onClick={() => setMode(key)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                fontSize: '0.82rem', fontWeight: 600, transition: 'all 0.2s',
+                background: mode === key ? D.purple : 'transparent', color: mode === key ? '#fff' : D.textMuted,
+              }}
+            >
+              <Icon size={15} /> {label}
+              {key === 'inbox' && unread > 0 && (
+                <span style={{ background: mode === key ? 'rgba(255,255,255,0.28)' : D.purple, color: '#fff', borderRadius: 999, padding: '0 7px', fontSize: 11, fontWeight: 700 }}>{unread}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* both stay mounted so the inbox keeps its state, socket and unread count while you broadcast */}
+      <div style={{ display: mode === 'inbox' ? 'block' : 'none' }}>
+        <MessagingInbox onUnreadChange={setUnread} />
+      </div>
+      <div style={{ display: mode === 'broadcast' ? 'block' : 'none' }}>
+        <BroadcastHub />
       </div>
     </div>
   );

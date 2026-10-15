@@ -21,7 +21,13 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter());
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  app.use(express.json({ limit: '15mb' }));
+  app.use(express.json({
+    limit: '15mb',
+    // Inbox webhooks (Meta) are signed over the raw request bytes
+    verify: (req: any, _res: any, buf: Buffer) => {
+      if (req.originalUrl?.startsWith('/messaging/inbox/webhooks')) req.rawBody = buf;
+    },
+  }));
   app.use(express.urlencoded({ limit: '15mb', extended: true }));
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 

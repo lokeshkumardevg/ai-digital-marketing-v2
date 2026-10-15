@@ -22,6 +22,7 @@ import { RolesModule } from './roles/roles.module';
 import { WorkflowsModule } from './workflows/workflows.module';
 import { WalletModule } from './wallet/wallet.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { InboxModule } from './messaging/inbox/inbox.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { BrandModule } from './brand/brand.module';
 import { PlatformPostsModule } from './platformposts/platformposts.module';
@@ -84,6 +85,7 @@ import { LogsModule } from './logs/logs.module';
     WorkflowsModule,
     ProductsModule,
     MessagingModule,
+    InboxModule,
     NotificationsModule,
     BrandModule,
     PlatformPostsModule,

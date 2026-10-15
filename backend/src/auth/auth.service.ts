@@ -389,7 +389,12 @@ export class AuthService {
       'business_management',
       'pages_show_list',
       'pages_read_engagement',
-      'pages_manage_ads'
+      'pages_manage_ads',
+      // Unified Inbox (Facebook + Instagram DMs)
+      'pages_messaging',
+      'pages_manage_metadata',
+      'instagram_basic',
+      'instagram_manage_messages'
     ].join(',');
 
     return `https://www.facebook.com/v20.0/dialog/oauth?client_id=${appId}` +

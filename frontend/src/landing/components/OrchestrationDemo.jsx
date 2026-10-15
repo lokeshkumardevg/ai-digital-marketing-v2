@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import {
   AlertCircle,
   CheckCircle2,
   Clock,
   ArrowRight,
-  Sparkles,
   Play,
   Pause,
-  MessageSquare,
-  ShieldAlert,
-  Calendar,
   Send,
   Zap,
   Check,
-  RotateCcw,
   Star,
   ThumbsUp,
   Activity,
@@ -171,44 +165,49 @@ function OrchestrationDemo() {
     return () => clearInterval(timer);
   }, [isAutoPlaying]);
 
+  // Step badalne par "Approved" state reset
+  useEffect(() => {
+    setIsApproved(false);
+  }, [active]);
+
   const step = STEPS[active];
 
   return (
-    <section className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 sm:py-20 overflow-hidden">
+    <section className="relative mx-auto max-w-7xl overflow-hidden px-3 py-10 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
       {/* Background radial atmosphere glow */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="pointer-events-none absolute inset-0">
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full blur-[160px] opacity-20 transition-all duration-700"
+          className="absolute left-1/2 top-1/2 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-20 blur-[100px] transition-all duration-700 sm:h-[420px] sm:w-[560px] sm:blur-[140px] lg:h-[500px] lg:w-[700px] lg:blur-[160px]"
           style={{ background: step.accent }}
         />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_35%,rgba(6,101,255,0.07)_0%,transparent_75%)]" />
       </div>
 
       {/* Header section */}
-      <div className="relative z-10 text-center mb-10 sm:mb-12">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#0665ff]/30 bg-[#0665ff]/10 mb-3.5 backdrop-blur-md">
-          <Zap className="w-3.5 h-3.5 text-[#22d3ee] animate-pulse" />
-          <span className="text-[11px] font-semibold tracking-[0.14em] text-[#60a5fa] uppercase">
+      <div className="relative z-10 mb-8 text-center sm:mb-12">
+        <div className="mb-3.5 inline-flex items-center gap-2 rounded-full border border-[#0665ff]/30 bg-[#0665ff]/10 px-3 py-1 backdrop-blur-md sm:px-3.5">
+          <Zap className="h-3.5 w-3.5 animate-pulse text-[#22d3ee]" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#60a5fa] sm:text-[11px] sm:tracking-[0.14em]">
             Autonomous Collaboration
           </span>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white mb-3">
+        <h2 className="mb-3 px-2 text-xl font-extrabold leading-tight tracking-tight text-white min-[400px]:text-2xl sm:text-3xl lg:text-4xl">
           One Incident.{" "}
           <span className="bg-gradient-to-r from-[#22d3ee] via-[#0665ff] to-[#a855f7] bg-clip-text text-transparent">
             Four AI Coworkers in Total Sync.
           </span>
         </h2>
 
-        <p className="max-w-2xl mx-auto text-xs sm:text-sm text-slate-400 leading-relaxed">
+        <p className="mx-auto max-w-2xl px-2 text-xs leading-relaxed text-slate-400 sm:text-sm">
           Watch how Wheedle.ai&apos;s autonomous coworkers detect, respond, diagnose, and retain
           customers in real time — with zero manual coordination between teams.
         </p>
       </div>
 
       {/* ── Top Coworker Squad Mesh / Interactive Pipeline Selector ── */}
-      <div className="relative z-10 mb-8 max-w-5xl mx-auto">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="relative z-10 mx-auto mb-6 max-w-5xl sm:mb-8">
+        <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
           {STEPS.map((s, i) => {
             const isActive = i === active;
             return (
@@ -219,28 +218,29 @@ function OrchestrationDemo() {
                   setActive(i);
                   setIsAutoPlaying(false);
                 }}
-                className={`group relative flex flex-col items-start p-3 sm:p-3.5 rounded-2xl border text-left transition-all duration-300 ${
+                aria-pressed={isActive}
+                className={`group relative flex min-w-0 flex-col items-start rounded-2xl border p-2.5 text-left transition-all duration-300 sm:p-3.5 ${
                   isActive
-                    ? "bg-gradient-to-b from-[#0d1d3d] to-[#07122a] border-white/30 shadow-[0_8px_30px_rgba(6,101,255,0.3)] scale-[1.02] ring-1"
+                    ? "bg-gradient-to-b from-[#0d1d3d] to-[#07122a] border-white/30 shadow-[0_8px_30px_rgba(6,101,255,0.3)] sm:scale-[1.02] ring-1"
                     : "bg-[#050c1e]/70 border-white/10 hover:border-white/20 hover:bg-white/[0.03]"
                 }`}
                 style={{
                   borderColor: isActive ? s.accent : undefined,
-                  ringColor: isActive ? `${s.accent}40` : undefined,
+                  "--tw-ring-color": isActive ? `${s.accent}40` : undefined,
                 }}
               >
                 {/* Active Neon Bar indicator at top */}
                 {isActive && (
                   <div
-                    className="absolute top-0 left-3 right-3 h-[2px] rounded-full shadow-[0_0_12px_currentColor]"
+                    className="absolute left-3 right-3 top-0 h-[2px] rounded-full shadow-[0_0_12px_currentColor]"
                     style={{ background: s.accent, color: s.accent }}
                   />
                 )}
 
-                <div className="flex items-center gap-3 w-full mb-2">
+                <div className="mb-2 flex w-full items-center gap-2 sm:gap-3">
                   {/* Coworker Mascot Avatar */}
                   <div
-                    className="relative flex h-12 w-12 sm:h-13 sm:w-13 items-center justify-center rounded-xl overflow-hidden shrink-0 border transition-transform duration-300 group-hover:scale-105"
+                    className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border transition-transform duration-300 group-hover:scale-105 sm:h-12 sm:w-12 lg:h-14 lg:w-14"
                     style={{
                       borderColor: isActive ? s.accent : "rgba(255,255,255,0.15)",
                       background: `linear-gradient(135deg, ${s.accent}30, #040915)`,
@@ -253,7 +253,7 @@ function OrchestrationDemo() {
                     />
                     {isActive && (
                       <span
-                        className="absolute inset-0 rounded-xl animate-pulse opacity-25"
+                        className="absolute inset-0 animate-pulse rounded-xl opacity-25"
                         style={{ background: s.accent }}
                       />
                     )}
@@ -261,47 +261,51 @@ function OrchestrationDemo() {
 
                   {/* Coworker Details */}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-1">
                       <span
-                        className="text-[10px] font-mono font-bold"
+                        className="text-[9px] font-mono font-bold sm:text-[10px]"
                         style={{ color: isActive ? s.accent : "rgba(255,255,255,0.5)" }}
                       >
                         STEP {s.step}
                       </span>
                       {isActive && (
-                        <span className="flex h-2 w-2 relative">
+                        <span className="relative flex h-2 w-2 shrink-0">
                           <span
-                            className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                            className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
                             style={{ background: s.accent }}
                           />
                           <span
-                            className="relative inline-flex rounded-full h-2 w-2"
+                            className="relative inline-flex h-2 w-2 rounded-full"
                             style={{ background: s.accent }}
                           />
                         </span>
                       )}
                     </div>
-                    <div className="text-sm font-bold text-white truncate flex items-center gap-1.5">
-                      <span>{s.coworker}</span>
-                      <span className="text-[11px] font-normal text-slate-400">({s.character})</span>
+                    <div className="flex items-center gap-1 truncate text-[13px] font-bold text-white sm:gap-1.5 sm:text-sm">
+                      <span className="truncate">{s.coworker}</span>
+                      <span className="hidden text-[11px] font-normal text-slate-400 sm:inline">
+                        ({s.character})
+                      </span>
                     </div>
-                    <span className="block text-[11px] text-slate-400 truncate">
+                    <span className="block truncate text-[10px] text-slate-400 sm:text-[11px]">
                       {s.domain}
                     </span>
                   </div>
                 </div>
 
                 {/* Subtag / action description */}
-                <div className="w-full pt-2 border-t border-white/5 flex items-center justify-between text-[10px]">
+                <div className="flex w-full items-center justify-between gap-1 border-t border-white/5 pt-2 text-[10px]">
                   <span
-                    className="font-medium truncate"
+                    className="truncate font-medium"
                     style={{ color: isActive ? s.accent : "rgba(148, 163, 184, 0.8)" }}
                   >
                     {s.role}
                   </span>
                   <ArrowRight
-                    className={`w-3 h-3 transition-transform duration-300 shrink-0 ${
-                      isActive ? "translate-x-0.5 text-white" : "text-white/20 group-hover:translate-x-0.5"
+                    className={`h-3 w-3 shrink-0 transition-transform duration-300 ${
+                      isActive
+                        ? "translate-x-0.5 text-white"
+                        : "text-white/20 group-hover:translate-x-0.5"
                     }`}
                   />
                 </div>
@@ -311,24 +315,26 @@ function OrchestrationDemo() {
         </div>
 
         {/* Play / Pause toggle bar & Progress */}
-        <div className="mt-3 flex items-center justify-between text-xs px-2">
+        <div className="mt-3 flex flex-col gap-2 px-1 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-2">
           <div className="flex items-center gap-2 text-[11px] text-slate-400">
-            <Activity className="w-3.5 h-3.5 text-[#22d3ee]" />
-            <span>Multi-Agent Live Pipeline · Step {active + 1} of 4</span>
+            <Activity className="h-3.5 w-3.5 shrink-0 text-[#22d3ee]" />
+            <span>Multi-Agent Live Pipeline · Step {active + 1} of {STEPS.length}</span>
           </div>
           <button
             type="button"
             onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 hover:bg-white/10 text-[11px] text-slate-300 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 self-start rounded-md bg-white/5 px-2.5 py-1.5 text-[11px] text-slate-300 transition-colors hover:bg-white/10 sm:self-auto"
           >
             {isAutoPlaying ? (
               <>
-                <Pause className="w-3 h-3 text-[#22d3ee]" />
-                <span>Auto-playing flow (click to pause)</span>
+                <Pause className="h-3 w-3 text-[#22d3ee]" />
+                <span>
+                  Auto-playing<span className="hidden sm:inline"> flow (click to pause)</span>
+                </span>
               </>
             ) : (
               <>
-                <Play className="w-3 h-3 text-[#60a5fa]" />
+                <Play className="h-3 w-3 text-[#60a5fa]" />
                 <span>Play automated demo</span>
               </>
             )}
@@ -337,59 +343,59 @@ function OrchestrationDemo() {
       </div>
 
       {/* ── Main Interactive Stage Card ── */}
-      <div className="relative z-10 rounded-2xl border border-[#0665ff]/30 bg-gradient-to-br from-[#07122A] via-[#050c1f] to-[#020510] p-5 sm:p-7 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.85)] max-w-5xl mx-auto overflow-hidden">
-        
+      <div className="relative z-10 mx-auto max-w-5xl overflow-hidden rounded-2xl border border-[#0665ff]/30 bg-gradient-to-br from-[#07122A] via-[#050c1f] to-[#020510] p-3 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.85)] sm:p-6 lg:p-7">
         {/* Glow corners */}
         <div
-          className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-[120px] pointer-events-none transition-colors duration-700"
+          className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full blur-[90px] transition-colors duration-700 sm:-right-32 sm:-top-32 sm:h-80 sm:w-80 sm:blur-[120px]"
           style={{ background: step.glowColor }}
         />
 
-        <div className="grid gap-6 lg:grid-cols-12 items-stretch">
-          
-          {/* LEFT: Prominent Coworker Mascot Spotlight Card (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col justify-between rounded-xl border border-white/10 bg-[#040915]/80 p-5 sm:p-6 backdrop-blur-md relative overflow-hidden">
-            
+        <div className="grid items-stretch gap-4 sm:gap-6 lg:grid-cols-12">
+          {/* LEFT: Coworker Mascot Spotlight Card (5 cols) */}
+          <div className="relative flex min-w-0 flex-col justify-between overflow-hidden rounded-xl border border-white/10 bg-[#040915]/80 p-4 backdrop-blur-md sm:p-6 lg:col-span-5">
             {/* Top Mascot Hero Display */}
-            <div className="relative text-center mb-4">
+            <div className="relative mb-4 text-center">
               {/* Status beacon badge */}
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-wider uppercase mb-3"
+              <div
+                className="mb-3 inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider sm:text-[10px]"
                 style={{
                   borderColor: `${step.accent}50`,
                   background: `${step.accent}15`,
                   color: step.accent,
                 }}
               >
-                <span className="w-1.5 h-1.5 rounded-full animate-ping" style={{ background: step.accent }} />
-                <span>COWORKER ON DUTY · {step.domain}</span>
+                <span
+                  className="h-1.5 w-1.5 shrink-0 animate-ping rounded-full"
+                  style={{ background: step.accent }}
+                />
+                <span className="truncate">COWORKER ON DUTY · {step.domain}</span>
               </div>
 
               {/* Large Mascot Character Portrait */}
-              <div className="relative mx-auto w-36 h-36 sm:w-44 sm:h-44 rounded-2xl p-1 shadow-2xl transition-all duration-500"
+              <div
+                className="relative mx-auto h-32 w-32 rounded-2xl p-1 shadow-2xl transition-all duration-500 min-[400px]:h-36 min-[400px]:w-36 sm:h-44 sm:w-44"
                 style={{
                   background: `linear-gradient(135deg, ${step.accent}50, rgba(255,255,255,0.05))`,
                 }}
               >
-                <div className="w-full h-full rounded-[14px] overflow-hidden bg-[#030712] relative">
+                <div className="relative h-full w-full overflow-hidden rounded-[14px] bg-[#030712]">
                   <img
                     src={step.mascot}
                     alt={`${step.coworker} Mascot`}
-                    className="w-full h-full object-cover object-top filter brightness-105 contrast-105"
+                    className="h-full w-full object-cover object-top brightness-105 contrast-105"
                   />
-                  <div
-                    className="absolute inset-0 bg-gradient-to-t from-[#030712] via-transparent to-transparent opacity-60"
-                  />
-                  <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between text-left">
-                    <div>
-                      <h4 className="text-xs font-extrabold text-white leading-tight">
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#030712] via-transparent to-transparent opacity-60" />
+                  <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-1 text-left">
+                    <div className="min-w-0">
+                      <h4 className="truncate text-xs font-extrabold leading-tight text-white">
                         {step.coworker}
                       </h4>
-                      <p className="text-[10px] text-slate-300 font-mono">
+                      <p className="truncate font-mono text-[10px] text-slate-300">
                         {step.character} · {step.role.split("&")[0]}
                       </p>
                     </div>
                     <span
-                      className="px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold text-white shadow"
+                      className="shrink-0 rounded px-1.5 py-0.5 font-mono text-[9px] font-semibold text-white shadow"
                       style={{ background: step.accent }}
                     >
                       {step.step}
@@ -400,33 +406,34 @@ function OrchestrationDemo() {
             </div>
 
             {/* Coworker Autonomous Thought Bubble */}
-            <div className="relative rounded-xl border border-white/10 bg-black/40 p-3.5 mb-4 shadow-inner">
-              <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider mb-1"
+            <div className="relative mb-4 rounded-xl border border-white/10 bg-black/40 p-3 shadow-inner sm:p-3.5">
+              <div
+                className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider"
                 style={{ color: step.accent }}
               >
-                <Bot className="w-3 h-3" />
+                <Bot className="h-3 w-3 shrink-0" />
                 <span>Autonomous Agent Directive</span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed italic">
+              <p className="break-words text-xs italic leading-relaxed text-slate-300">
                 &ldquo;{step.thought}&rdquo;
               </p>
             </div>
 
             {/* Checklist */}
-            <div className="space-y-2 mb-5">
+            <div className="mb-5 space-y-2">
               {step.checks.map((check, idx) => (
                 <div key={idx} className="flex items-start gap-2 text-xs text-slate-300">
                   <CheckCircle2
-                    className="w-3.5 h-3.5 shrink-0 mt-0.5"
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0"
                     style={{ color: step.accent }}
                   />
-                  <span className="leading-snug">{check}</span>
+                  <span className="min-w-0 break-words leading-snug">{check}</span>
                 </div>
               ))}
             </div>
 
             {/* Stepper controls */}
-            <div className="flex items-center justify-between pt-3 border-t border-white/10 mt-auto">
+            <div className="mt-auto flex items-center justify-between gap-2 border-t border-white/10 pt-3">
               <button
                 type="button"
                 onClick={() => {
@@ -434,7 +441,7 @@ function OrchestrationDemo() {
                   setIsAutoPlaying(false);
                 }}
                 disabled={active === 0}
-                className="px-3 py-1.5 rounded-lg border border-white/10 text-xs font-semibold text-white/70 hover:bg-white/5 hover:text-white disabled:opacity-30 transition-all"
+                className="rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 transition-all hover:bg-white/5 hover:text-white disabled:opacity-30"
               >
                 Previous
               </button>
@@ -444,96 +451,97 @@ function OrchestrationDemo() {
                   setActive((a) => (a + 1) % STEPS.length);
                   setIsAutoPlaying(false);
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold text-white shadow-md transition-all hover:opacity-90"
+                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold text-white shadow-md transition-all hover:opacity-90 sm:px-4"
                 style={{
                   background: `linear-gradient(135deg, ${step.accent}, #0665ff)`,
                 }}
               >
                 <span>{active === STEPS.length - 1 ? "Restart Flow" : "Next Milestone"}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
 
           {/* RIGHT: Live Simulation Terminal & Telemetry (7 cols) */}
-          <div className="lg:col-span-7 flex flex-col justify-between rounded-xl border border-white/10 bg-[#030712]/90 p-5 sm:p-6 backdrop-blur-xl shadow-2xl relative">
-            
+          <div className="relative flex min-w-0 flex-col justify-between rounded-xl border border-white/10 bg-[#030712]/90 p-4 shadow-2xl backdrop-blur-xl sm:p-6 lg:col-span-7">
             {/* Terminal Window Chrome */}
-            <div className="flex items-center justify-between pb-3.5 border-b border-white/10 mb-4">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+            <div className="mb-4 flex flex-col gap-2 border-b border-white/10 pb-3.5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/80" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
                 </div>
-                <span className="text-[11px] font-mono text-slate-400 pl-2">
+                <span className="truncate pl-2 font-mono text-[10px] text-slate-400 sm:text-[11px]">
                   wheedle://orchestration/step-{step.step}
                 </span>
               </div>
 
               <span
-                className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-semibold flex items-center gap-1"
+                className="inline-flex max-w-full items-center gap-1 self-start rounded-full px-2.5 py-0.5 font-mono text-[10px] font-semibold sm:self-auto"
                 style={{
                   background: `${step.mockData.statusColor}20`,
                   color: step.mockData.statusColor,
                   border: `1px solid ${step.mockData.statusColor}40`,
                 }}
               >
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: step.mockData.statusColor }} />
-                {step.mockData.statusText}
+                <span
+                  className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full"
+                  style={{ background: step.mockData.statusColor }}
+                />
+                <span className="truncate">{step.mockData.statusText}</span>
               </span>
             </div>
 
             {/* Autonomous Multi-Coworker Handshake Pipeline */}
-            <div className="mb-4 p-2.5 rounded-lg bg-black/40 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
-              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
+            <div className="mb-4 flex flex-col justify-between gap-2 rounded-lg border border-white/5 bg-black/40 p-2.5 text-[11px] sm:flex-row sm:items-center">
+              <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 [scrollbar-width:none] sm:gap-2 [&::-webkit-scrollbar]:hidden">
                 {STEPS.map((s, idx) => (
                   <React.Fragment key={s.coworker}>
                     <div
-                      className={`flex items-center gap-1 px-2 py-0.5 rounded-md shrink-0 transition-all ${
+                      className={`flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 transition-all ${
                         idx === active
-                          ? "bg-white/15 text-white font-bold ring-1"
-                          : "text-slate-400 font-normal"
+                          ? "bg-white/15 font-bold text-white ring-1"
+                          : "font-normal text-slate-400"
                       }`}
                       style={{
-                        ringColor: idx === active ? s.accent : "transparent",
+                        "--tw-ring-color": idx === active ? s.accent : "transparent",
                       }}
                     >
                       <img
                         src={s.mascot}
                         alt=""
-                        className="w-4 h-4 rounded-full object-cover shrink-0"
+                        className="h-4 w-4 shrink-0 rounded-full object-cover"
                       />
                       <span>{s.coworker}</span>
                     </div>
                     {idx < STEPS.length - 1 && (
-                      <span className="text-slate-600 font-mono text-[10px] shrink-0">➔</span>
+                      <span className="shrink-0 font-mono text-[10px] text-slate-600">➔</span>
                     )}
                   </React.Fragment>
                 ))}
               </div>
-              <span className="text-[10px] font-mono text-slate-300 shrink-0 self-end sm:self-auto px-1.5 py-0.5 rounded bg-white/5">
+              <span className="shrink-0 self-start rounded bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-slate-300 sm:self-auto">
                 {step.metric}
               </span>
             </div>
 
             {/* Dynamic Interactive Mock Simulator Box */}
-            <div className="flex-1 flex flex-col justify-center rounded-xl bg-slate-950/90 border border-white/5 p-4 sm:p-5 mb-4 shadow-inner">
-              
+            <div className="mb-4 flex flex-1 flex-col justify-center rounded-xl border border-white/5 bg-slate-950/90 p-3.5 shadow-inner sm:p-5">
               {/* Header inside mock */}
-              <div className="flex items-center justify-between pb-3 border-b border-white/5 mb-3">
-                <div className="flex items-center gap-2.5">
+              <div className="mb-3 flex items-center justify-between gap-2 border-b border-white/5 pb-3">
+                <div className="flex min-w-0 items-center gap-2.5">
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow shrink-0"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow"
                     style={{ background: step.mockData.avatarBg }}
                   >
                     {step.mockData.author.charAt(0)}
                   </div>
-                  <div>
-                    <h5 className="text-xs font-bold text-white">
+                  <div className="min-w-0">
+                    <h5 className="truncate text-xs font-bold text-white">
                       {step.mockData.author}
                     </h5>
-                    <p className="text-[10px] text-slate-400 font-mono">
+                    <p className="truncate font-mono text-[10px] text-slate-400">
                       {step.mockData.time}
                     </p>
                   </div>
@@ -541,11 +549,11 @@ function OrchestrationDemo() {
 
                 {/* Rating stars */}
                 {step.mockData.rating && (
-                  <div className="flex items-center gap-0.5">
+                  <div className="flex shrink-0 items-center gap-0.5">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-3.5 h-3.5 ${
+                        className={`h-3 w-3 sm:h-3.5 sm:w-3.5 ${
                           i < step.mockData.rating
                             ? "fill-amber-400 text-amber-400"
                             : "text-slate-600"
@@ -557,33 +565,33 @@ function OrchestrationDemo() {
               </div>
 
               {/* Mock Body content */}
-              <div className="text-xs sm:text-[13px] text-slate-200 leading-relaxed mb-4">
+              <div className="mb-4 break-words text-xs leading-relaxed text-slate-200 sm:text-[13px]">
                 &ldquo;{step.mockData.text}&rdquo;
               </div>
 
               {/* Step Specific Interactive Controls & Feedback */}
               {step.mockType === "review" && (
-                <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 text-red-300">
-                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                <div className="flex items-start justify-between gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs">
+                  <div className="flex items-start gap-2 text-red-300">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
                     <span>Auto-escalation: Ticket #TK-8402 opened with High CSAT Risk</span>
                   </div>
-                  <span className="font-mono text-[11px] text-red-400 font-bold hidden sm:inline">
+                  <span className="hidden shrink-0 font-mono text-[11px] font-bold text-red-400 sm:inline">
                     Score: -0.82
                   </span>
                 </div>
               )}
 
               {step.mockType === "draft" && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-white/5">
-                  <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                    <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                <div className="flex flex-col items-stretch justify-between gap-3 border-t border-white/5 pt-3 sm:flex-row sm:items-center">
+                  <span className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                    <UserCheck className="h-3.5 w-3.5 shrink-0 text-amber-400" />
                     <span>Trained on clinic guidelines & tone</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => setIsApproved(!isApproved)}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-md"
+                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold shadow-md transition-all sm:w-auto"
                     style={{
                       background: isApproved ? "#10b981" : "#f59e0b",
                       color: "#fff",
@@ -591,12 +599,12 @@ function OrchestrationDemo() {
                   >
                     {isApproved ? (
                       <>
-                        <Check className="w-3.5 h-3.5" />
+                        <Check className="h-3.5 w-3.5" />
                         <span>Approved & Published!</span>
                       </>
                     ) : (
                       <>
-                        <Send className="w-3.5 h-3.5" />
+                        <Send className="h-3.5 w-3.5" />
                         <span>1-Click Approve Reply</span>
                       </>
                     )}
@@ -605,51 +613,52 @@ function OrchestrationDemo() {
               )}
 
               {step.mockType === "audit" && (
-                <div className="space-y-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-300">
-                  <div className="flex items-center justify-between font-mono text-[11px] font-bold text-emerald-400 pb-1 border-b border-emerald-500/20">
+                <div className="space-y-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-300">
+                  <div className="flex flex-col gap-0.5 border-b border-emerald-500/20 pb-1 font-mono text-[10px] font-bold text-emerald-400 sm:flex-row sm:items-center sm:justify-between sm:text-[11px]">
                     <span>TIMELINE AUDIT LOG</span>
                     <span>ROOM 4 DR. OVERRUN</span>
                   </div>
-                  <div className="flex items-center gap-2 pt-1 text-[11px]">
-                    <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>10:15 AM: Patient Check-in ➔ 10:50 AM: 35-min emergency overrun identified</span>
+                  <div className="flex items-start gap-2 pt-1 text-[11px]">
+                    <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                    <span className="min-w-0 break-words">
+                      10:15 AM: Patient Check-in ➔ 10:50 AM: 35-min emergency overrun identified
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px]">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span>Auto-action: Priority VIP voucher code #VIP-771 sent via SMS</span>
+                  <div className="flex items-start gap-2 text-[11px]">
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                    <span className="min-w-0 break-words">
+                      Auto-action: Priority VIP voucher code #VIP-771 sent via SMS
+                    </span>
                   </div>
                 </div>
               )}
 
               {step.mockType === "resolved" && (
-                <div className="rounded-lg bg-cyan-500/10 border border-cyan-500/20 p-3 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 text-cyan-300">
-                    <ThumbsUp className="w-4 h-4 text-cyan-400 shrink-0" />
+                <div className="flex items-start justify-between gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 p-3 text-xs">
+                  <div className="flex items-start gap-2 text-cyan-300">
+                    <ThumbsUp className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
                     <span>Reconciliation complete · Review revised from 2★ to 5★</span>
                   </div>
-                  <span className="font-mono text-[11px] text-cyan-400 font-bold hidden sm:inline">
+                  <span className="hidden shrink-0 font-mono text-[11px] font-bold text-cyan-400 sm:inline">
                     100% Retained
                   </span>
                 </div>
               )}
-
             </div>
 
             {/* Bottom Telemetry Bar */}
-            <div className="flex items-center justify-between text-[11px] text-slate-400 pt-3 border-t border-white/5">
-              <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="flex flex-col gap-1.5 border-t border-white/5 pt-3 text-[11px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+              <span className="flex items-center gap-1.5 font-medium text-emerald-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                 Multi-Coworker Handshake Synced
               </span>
-              <div className="flex items-center gap-3 font-mono text-[10px] text-slate-400">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] text-slate-400">
                 <span>Zero Human Delay</span>
-                <span className="text-white/40">|</span>
-                <span className="text-cyan-400 font-semibold">Wheedle Core v2.4</span>
+                <span className="hidden text-white/40 sm:inline">|</span>
+                <span className="font-semibold text-cyan-400">Wheedle Core v2.4</span>
               </div>
             </div>
-
           </div>
-
         </div>
       </div>
     </section>
