@@ -5,6 +5,7 @@ import { api } from '../../api/axios';
 import { fetchBotById } from '../../store/slices/chatbotSlice';
 import type { AppDispatch } from '../../store';
 import { Bot, Send, Loader2 } from 'lucide-react';
+import { PageLoader } from '../components/Loader';
 
 export const ChatEmbed: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,9 +58,10 @@ export const ChatEmbed: React.FC = () => {
 
   if (!bot) {
     return (
-      <div className="flex items-center justify-center h-screen bg-transparent">
-        <Loader2 className="animate-spin text-indigo-500" size={32} />
-      </div>
+      <PageLoader
+        message="Loading Chat Widget..."
+        submessage="Initializing AI chatbot configuration"
+      />
     );
   }
 

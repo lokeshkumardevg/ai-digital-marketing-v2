@@ -10,6 +10,11 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PublishSocialDto } from './dto/publish-social.dto';
 import { ScheduleSocialDto } from './dto/schedule-social.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { YoutubeService } from './youtube.service';
+
+type PublishResult = { success: boolean; postId?: string; url?: string; note?: string; error?: string };
+const VIDEO_RE = /\.(mp4|mov|m4v|webm|avi|mkv)(\?.*)?$/i;
+const IMAGE_RE = /\.(jpe?g|png|webp|gif)(\?.*)?$/i;
 
 @Injectable()
 export class SocialService {
@@ -21,6 +26,7 @@ export class SocialService {
     private readonly usersService: UsersService,
     private readonly socialAuthService: SocialAuthService,
     private readonly notifService: NotificationsService,
+    private readonly youtube: YoutubeService,
   ) { }
 
   async findAll(userId: string, workspaceId?: string): Promise<SocialPost[]> {
@@ -45,10 +51,11 @@ export class SocialService {
       media: dto.media || [],
       platforms: dto.platforms.map((p) => p.toLowerCase()),
       status: 'processing',
+      options: dto.youtube ? { youtube: dto.youtube } : {},
       workspaceId: dto.workspaceId || 'default',
     });
 
-    const results = await this.publishToPlatforms(userId, dto.content, dto.media || [], dto.platforms);
+    const results = await this.publishToPlatforms(userId, dto.content, dto.media || [], dto.platforms, post.options);
     const hasFailures = Object.values(results).some((result) => !result.success);
     const platforms = dto.platforms.map((platform) => platform.toLowerCase());
     const successCount = Object.values(results).filter((result) => result.success).length;
@@ -73,6 +80,7 @@ export class SocialService {
       platforms: dto.platforms.map((p) => p.toLowerCase()),
       status: 'scheduled',
       scheduledFor: scheduledDate,
+      options: dto.youtube ? { youtube: dto.youtube } : {},
       workspaceId: dto.workspaceId || 'default',
     });
     return post;
@@ -224,6 +232,7 @@ export class SocialService {
           post.content,
           post.media || [],
           post.platforms || [],
+          post.options,
         );
         const hasFailures = Object.values(results).some((result) => !result.success);
         post.status = hasFailures ? 'partial_failed' : 'published';
@@ -240,30 +249,78 @@ export class SocialService {
     }
   }
 
+  async postToYouTube(userId: string, content: string, media: string[], options?: Record<string, any>): Promise<PublishResult> {
+    const video = media.find((m) => VIDEO_RE.test(m));
+    if (!video) {
+      return { success: false, error: '[youtube] YouTube par post karne ke liye ek video attach karo.' };
+    }
+    const yt = options?.youtube || {};
+    // no title given -> use the first line of the post text
+    const title = (yt.title || content.split('\n')[0] || '').trim();
+    try {
+      const r = await this.youtube.upload(userId, {
+        videoPath: video,
+        title,
+        description: content,
+        tags: yt.tags,
+        privacy: yt.privacy,
+        categoryId: yt.categoryId,
+        madeForKids: yt.madeForKids,
+      });
+      return { success: true, postId: r.id, url: r.url, note: r.note };
+    } catch (error) {
+      const message = this.getPlatformError('youtube', error);
+      this.logger.error('youtube publish failed', error instanceof Error ? error.stack : '');
+      return { success: false, error: message };
+    }
+  }
+
+  private toPublicUrl(media: string): string {
+    // files uploaded through POST /social/media are stored as '/uploads/x.png'; other platforms need a public link
+    return media.startsWith('/uploads/') ? `${(process.env.BACKEND_URL || '').replace(/\/$/, '')}${media}` : media;
+  }
+
+  /** One platform failing (not connected, token expired ...) must never stop the others. */
+  private async runPlatform(platform: string, fn: () => Promise<PublishResult>): Promise<PublishResult> {
+    try {
+      return await fn();
+    } catch (error) {
+      this.logger.warn(`${platform} publish skipped: ${error instanceof Error ? error.message : error}`);
+      return { success: false, error: this.getPlatformError(platform, error) };
+    }
+  }
+
   private async publishToPlatforms(
     userId: string,
     content: string,
     media: string[],
     platforms: string[],
-  ): Promise<Record<string, { success: boolean; postId?: string; error?: string }>> {
+    options?: Record<string, any>,
+  ): Promise<Record<string, PublishResult>> {
     const normalized = platforms.map((platform) => platform.toLowerCase());
-    const results: Record<string, { success: boolean; postId?: string; error?: string }> = {};
+    const results: Record<string, PublishResult> = {};
+    // everything except YouTube takes images (as public URLs)
+    const images = media.filter((m) => !VIDEO_RE.test(m)).map((m) => this.toPublicUrl(m));
 
     for (const platform of normalized) {
       if (platform === 'linkedin') {
-        results[platform] = await this.postToLinkedIn(userId, content, media);
+        results[platform] = await this.runPlatform(platform, () => this.postToLinkedIn(userId, content, images));
         continue;
       }
       if (platform === 'twitter') {
-        results[platform] = await this.postToTwitter(userId, content, media);
+        results[platform] = await this.runPlatform(platform, () => this.postToTwitter(userId, content, images));
         continue;
       }
       if (platform === 'facebook') {
-        results[platform] = await this.postToFacebook(userId, content, media);
+        results[platform] = await this.runPlatform(platform, () => this.postToFacebook(userId, content, images));
         continue;
       }
       if (platform === 'instagram') {
-        results[platform] = await this.postToInstagram(userId, content, media);
+        results[platform] = await this.runPlatform(platform, () => this.postToInstagram(userId, content, images));
+        continue;
+      }
+      if (platform === 'youtube') {
+        results[platform] = await this.postToYouTube(userId, content, media, options);
         continue;
       }
       results[platform] = { success: false, error: `Unsupported platform "${platform}"` };
@@ -282,7 +339,7 @@ export class SocialService {
   private async executePlatformCall(
     platform: string,
     operation: () => Promise<string>,
-  ): Promise<{ success: boolean; postId?: string; error?: string }> {
+  ): Promise<PublishResult> {
     try {
       const postId = await operation();
       return { success: true, postId };
@@ -295,9 +352,13 @@ export class SocialService {
 
   private getPlatformError(platform: string, error: unknown): string {
     if (axios.isAxiosError(error)) {
+      const data = error.response?.data as any;
+      // Google APIs: { error: { message, errors: [{ reason }] } } -> keep the reason (quotaExceeded, uploadLimitExceeded ...)
+      const reason = platform === 'youtube' ? data?.error?.errors?.[0]?.reason : undefined;
       const apiMessage =
-        (error.response?.data as any)?.error?.message ||
-        (error.response?.data as any)?.detail ||
+        (reason ? `${reason}: ${data?.error?.message}` : undefined) ||
+        data?.error?.message ||
+        data?.detail ||
         error.message;
       return `[${platform}] ${apiMessage}`;
     }

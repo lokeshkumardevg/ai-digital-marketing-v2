@@ -24,8 +24,12 @@ export class SocialPost extends Document {
   @Prop()
   scheduledFor?: Date;
 
+  /** Per-platform extras, e.g. { youtube: { title, privacy, tags } } */
   @Prop({ type: Object, default: {} })
-  results?: Record<string, { success: boolean; postId?: string; error?: string }>;
+  options?: Record<string, any>;
+
+  @Prop({ type: Object, default: {} })
+  results?: Record<string, { success: boolean; postId?: string; url?: string; note?: string; error?: string }>;
 }
 
 export const SocialPostSchema = SchemaFactory.createForClass(SocialPost);

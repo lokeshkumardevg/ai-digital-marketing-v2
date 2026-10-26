@@ -13,9 +13,9 @@ import {
   CheckCircle,
   XCircle,
   Search,
-  Eye,
-  Loader
+  Eye
 } from 'lucide-react';
+import { PageLoader } from '../components/Loader';
 
 const D = {
   bg: '#0a0f1e',
@@ -115,10 +115,10 @@ export const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ height: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: D.textPrimary }}>
-        <Loader className="animate-spin" size={36} color="var(--accent-primary)" />
-        <span style={{ marginTop: 12, fontSize: '0.9rem', color: D.textMuted }}>Loading aggregated marketing data...</span>
-      </div>
+      <PageLoader
+        message="Loading Admin Command Center..."
+        submessage="Aggregating workspace users, live ad accounts & tenant telemetry"
+      />
     );
   }
 

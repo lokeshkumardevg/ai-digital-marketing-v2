@@ -105,6 +105,19 @@ export class User {
   @Prop({ required: false })
   twitterAdAccountName?: string;
 
+  // YouTube (Social Hub). Google OAuth, scope youtube.upload + youtube.readonly
+  @Prop()
+  youtubeAccessToken?: string;
+
+  @Prop()
+  youtubeRefreshToken?: string;
+
+  @Prop()
+  youtubeChannelId?: string;
+
+  @Prop()
+  youtubeChannelTitle?: string;
+
   @Prop()
   instagramAccessToken?: string;
 

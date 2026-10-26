@@ -27,6 +27,7 @@ import {
   Lightbulb,
   ChevronsDown,
   Terminal,
+  Share2,
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { refreshUserProfile, stopImpersonating } from '../../store/slices/authSlice';
@@ -50,84 +51,114 @@ interface MenuItem {
   highlight?: boolean;
 }
 
-const BASE_MENU_ITEMS: MenuItem[] = [
-  { path: '/crm', label: 'Home', icon: LayoutDashboard, permission: 'dashboard' },
-  { path: '/admin-dashboard', label: 'Admin Dashboard', icon: ShieldAlert, permission: 'superadmin' },
-  { path: '/campaigns', label: 'New Campaign', icon: Megaphone, permission: 'ads', highlight: true },
-  { path: '/presentation', label: 'Client Presentation', icon: PresentationIcon, permission: 'dashboard' },
+interface MenuCategory {
+  title: string;
+  items: MenuItem[];
+}
+
+const MENU_CATEGORIES: MenuCategory[] = [
   {
-    label: 'AI Optimize',
-    icon: BrainCircuit,
-    permission: 'ads',
-    subItems: [
-      { path: '/ai/ads-manager', label: 'Ads Manager', badge: 'hot' },
-      { path: '/ai/draft-recs', label: 'Draft & AI Recs', badge: 'beta' },
-    ],
-  },
-  { path: '/content', label: 'Creative Hub', icon: Images, permission: 'content' },
-  {
-    label: 'Analytics',
-    icon: BarChart3,
-    permission: 'analytics',
-    subItems: [
-      { path: '/analytics/insights', label: 'Ad Insights' },
-      { path: '/analytics/ai-analysis', label: 'AI Analysis', badge: 'new' },
-      { path: '/analytics/ai-reports', label: 'AI Reports', badge: 'new' },
+    title: 'Core & Campaigns',
+    items: [
+      { path: '/crm', label: 'Home Matrix', icon: LayoutDashboard, permission: 'dashboard' },
+      { path: '/campaigns', label: 'New Campaign', icon: Megaphone, permission: 'ads', highlight: true },
+      { path: '/presentation', label: 'Client Presentation', icon: PresentationIcon, permission: 'dashboard' },
     ],
   },
   {
-    label: 'Brand Center',
-    icon: Gem,
-    permission: 'settings',
-    subItems: [
-      { path: '/brand/goal', label: 'Optimize Goal' },
-      { path: '/brand/profile', label: 'Brand Profile' },
+    title: 'Publishing & Content',
+    items: [
+      { path: '/post-publisher', label: 'Post & Auto-Pilot', icon: Share2, permission: 'automation', highlight: true },
+      { path: '/content', label: 'Creative Hub', icon: Images, permission: 'content' },
+      { path: '/social', label: 'Social Channels', icon: GitBranch, permission: 'automation' },
     ],
   },
   {
-    label: 'SEO Intelligence',
-    icon: Search,
-    permission: 'automation',
-    subItems: [
-      { path: '/seo', label: 'Dashboard' },
-      { path: '/seo/audit', label: 'Site Audit' },
-      { path: '/seo/tracking', label: 'Position Tracking' },
-      { path: '/seo/keywords', label: 'Organic Research' },
-      { path: '/seo/backlinks', label: 'Backlink Audit' },
-      { path: '/seo/link-building', label: 'Link Building' },
+    title: 'Growth & Ads Intelligence',
+    items: [
+      {
+        label: 'AI Optimize',
+        icon: BrainCircuit,
+        permission: 'ads',
+        subItems: [
+          { path: '/ai/ads-manager', label: 'Ads Manager', badge: 'hot' },
+          { path: '/ai/draft-recs', label: 'Draft & AI Recs', badge: 'beta' },
+        ],
+      },
+      {
+        label: 'Analytics',
+        icon: BarChart3,
+        permission: 'analytics',
+        subItems: [
+          { path: '/analytics/insights', label: 'Ad Insights' },
+          { path: '/analytics/ai-analysis', label: 'AI Analysis', badge: 'new' },
+          { path: '/analytics/ai-reports', label: 'AI Reports', badge: 'new' },
+        ],
+      },
+      {
+        label: 'SEO Intelligence',
+        icon: Search,
+        permission: 'automation',
+        subItems: [
+          { path: '/seo', label: 'Dashboard' },
+          { path: '/seo/audit', label: 'Site Audit' },
+          { path: '/seo/tracking', label: 'Position Tracking' },
+          { path: '/seo/keywords', label: 'Organic Research' },
+          { path: '/seo/backlinks', label: 'Backlink Audit' },
+          { path: '/seo/link-building', label: 'Link Building' },
+        ],
+      },
+      {
+        label: 'ReputationIQ',
+        icon: ThumbsUp,
+        permission: 'automation',
+        subItems: [
+          { path: '/reputation/dashboard', label: 'Dashboard', icon: BarChart2 },
+          { path: '/reputation/inbox', label: 'Profile reviews', icon: Star },
+          { path: '/reputation/posts', label: 'Post & ad reviews', icon: Megaphone },
+          { path: '/reputation/customers', label: 'Customers', icon: Users },
+          { path: '/reputation/analytics', label: 'Analytics', icon: TrendingUp },
+          { path: '/reputation/recommendations', label: 'Recommendations', icon: Lightbulb, notifBadge: 3 },
+        ],
+      },
     ],
   },
   {
-    label: 'ReputationIQ',
-    icon: ThumbsUp,
-    permission: 'automation',
-    subItems: [
-      { path: '/reputation/dashboard', label: 'Dashboard', icon: BarChart2 },
-      { path: '/reputation/inbox', label: 'Profile reviews', icon: Star },
-      { path: '/reputation/posts', label: 'Post & ad reviews', icon: Megaphone },
-      { path: '/reputation/customers', label: 'Customers', icon: Users },
-      { path: '/reputation/analytics', label: 'Analytics', icon: TrendingUp },
-      { path: '/reputation/recommendations', label: 'Recommendations', icon: Lightbulb, notifBadge: 3 },
+    title: 'AI Conversational Suite',
+    items: [
+      { path: '/chatbot', label: 'AI Chatbot & WhatsApp', icon: Sparkles, permission: 'automation', highlight: true },
+      { path: '/ai-agents', label: 'Autonomous Agents', icon: BrainCircuit, permission: 'automation' },
+      { path: '/calling-agent', label: 'Voice Calling Agent', icon: Terminal, permission: 'automation' },
+      { path: '/messaging', label: 'Omnichannel Messaging', icon: Bell, permission: 'automation' },
     ],
   },
   {
-    label: 'More Tools',
-    icon: GitBranch,
-    permission: 'automation',
-    subItems: [
-      { path: '/social', label: 'Social Hub' },
-      { path: '/chatbot', label: 'AI Chatbot', badge: 'beta' },
-      { path: '/messaging', label: 'Messaging' },
-      { path: '/ai-agents', label: 'AI Agents', badge: 'new' },
-      { path: '/calling-agent', label: 'Voice Calling', badge: 'beta' },
+    title: 'Brand & CRM',
+    items: [
+      {
+        label: 'Brand Center',
+        icon: Gem,
+        permission: 'settings',
+        subItems: [
+          { path: '/brand/goal', label: 'Optimize Goal' },
+          { path: '/brand/profile', label: 'Brand Profile' },
+        ],
+      },
+      { path: '/linkedin-crm', label: 'LinkedIn CRM', icon: Briefcase, permission: 'dashboard' },
     ],
   },
-  { path: '/billing', label: 'Billing', icon: CreditCard, permission: 'billing' },
-  { path: '/linkedin-crm', label: 'LinkedIn CRM', icon: Briefcase, permission: 'dashboard' },
-  { path: '/users', label: 'Users', icon: UserPlus, permission: 'view_users' },
-  { path: '/roles', label: 'Roles & Access', icon: ShieldAlert, permission: 'superadmin' },
-  { path: '/log', label: 'System Logs', icon: Terminal, permission: 'superadmin' },
-  { path: '/settings', label: 'Settings', icon: Settings, permission: 'settings' },
+  {
+    title: 'Administration & System',
+    items: [
+      { path: '/admin-dashboard', label: 'Admin Command', icon: ShieldAlert, permission: 'superadmin' },
+      { path: '/notifications', label: 'Notifications', icon: Bell, permission: 'dashboard' },
+      { path: '/users', label: 'Users Management', icon: UserPlus, permission: 'view_users' },
+      { path: '/roles', label: 'Roles & Access', icon: ShieldAlert, permission: 'superadmin' },
+      { path: '/log', label: 'System Logs', icon: Terminal, permission: 'superadmin' },
+      { path: '/billing', label: 'Billing & Plans', icon: CreditCard, permission: 'billing' },
+      { path: '/settings', label: 'Settings', icon: Settings, permission: 'settings' },
+    ],
+  },
 ];
 
 export const Sidebar: React.FC = () => {
@@ -142,28 +173,26 @@ export const Sidebar: React.FC = () => {
     dispatch(refreshUserProfile());
   }, [location.pathname, dispatch]);
 
-  const settingsIndex = BASE_MENU_ITEMS.findIndex((i) => i.path === '/settings');
+  // Clone categories and attach dynamic notification badge
+  const categories: MenuCategory[] = MENU_CATEGORIES.map((cat) => ({
+    ...cat,
+    items: cat.items.map((item) =>
+      item.path === '/notifications'
+        ? { ...item, badge: unreadCount > 0 ? unreadCount : null }
+        : item
+    ),
+  }));
 
-  const MENU_ITEMS: MenuItem[] = [
-    ...BASE_MENU_ITEMS.slice(0, settingsIndex),
-    {
-      icon: Bell,
-      label: 'Notifications',
-      path: '/notifications',
-      permission: 'dashboard',
-      badge: unreadCount > 0 ? unreadCount : null,
-    },
-    ...BASE_MENU_ITEMS.slice(settingsIndex),
-  ];
-
-  // FIX: Single open menu at a time — find initially active submenu
+  // Find initially active submenu across all categories
   const getInitialOpenMenu = (): string | null => {
-    for (const item of MENU_ITEMS) {
-      if (item.subItems && item.subItems.length > 0) {
-        const isChildActive = item.subItems.some((sub) =>
-          location.pathname.startsWith(sub.path)
-        );
-        if (isChildActive) return item.label;
+    for (const cat of categories) {
+      for (const item of cat.items) {
+        if (item.subItems && item.subItems.length > 0) {
+          const isChildActive = item.subItems.some((sub) =>
+            location.pathname.startsWith(sub.path)
+          );
+          if (isChildActive) return item.label;
+        }
       }
     }
     return null;
@@ -463,217 +492,254 @@ export const Sidebar: React.FC = () => {
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '2px',
+            gap: '6px',
             flex: 1,
-            padding: '12px',
+            padding: '10px 12px 24px',
           }}
         >
-          {MENU_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isAllowed = hasAccess(item.permission);
-
-            if (!isAllowed) return null;
-
-            // Leaf nav item (no subItems)
-            if (!item.subItems) {
-              return (
-                <NavLink
-                  key={item.path}
-                  to={item.path!}
-                  end={item.path === '/crm'}
-                  className="sidebar-nav-link"
-                  style={({ isActive }) => ({
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '9px 14px',
-                    borderRadius: '12px',
-                    color: isActive ? '#fff' : isAllowed ? '#a1a1aa' : 'rgba(161,161,170,0.45)',
-                    background: isActive ? 'var(--accent-gradient)' : 'transparent',
-                    fontWeight: isActive ? 600 : 500,
-                    fontSize: '0.875rem',
-                    transition: 'background 0.18s ease, color 0.18s ease',
-                    boxShadow: isActive ? '0 6px 16px rgba(112,51,245,0.18)' : 'none',
-                    textDecoration: 'none',
-                    marginBottom: '1px',
-                    opacity: isAllowed ? 1 : 0.55,
-                    position: 'relative',
-                  })}
-                >
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                    <Icon size={17} />
-                    {item.highlight && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: '-3px',
-                          right: '-4px',
-                          width: '6px',
-                          height: '6px',
-                          borderRadius: '50%',
-                          background: '#f59e0b',
-                          boxShadow: '0 0 6px rgba(245,158,11,0.6)',
-                          animation: 'pulse 2s infinite',
-                        }}
-                      />
-                    )}
-                  </div>
-                  <span style={{ flex: 1, color: 'var(--text-primary)' }}>{item.label}</span>
-                  {item.badge && (
-                    <span
-                      style={{
-                        background: 'var(--error)',
-                        color: 'var(--text-primary)',
-                        borderRadius: 999,
-                        padding: '1px 7px',
-                        fontSize: '0.7rem',
-                        fontWeight: 700,
-                        lineHeight: 1.3,
-                        boxShadow: '0 2px 4px rgba(239,68,68,0.3)',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {item.badge > 99 ? '99+' : item.badge}
-                    </span>
-                  )}
-                </NavLink>
-              );
-            }
-
-            // FIX: Use single openMenu state
-            const isOpen = openMenu === item.label;
-            const isActive = item.subItems.length > 0 && isSubActive(item.subItems);
+          {categories.map((cat, catIdx) => {
+            const catVisibleItems = cat.items.filter((item) => hasAccess(item.permission));
+            if (catVisibleItems.length === 0) return null;
 
             return (
-              <div key={item.label}>
-                <button
-                  onClick={() => item.subItems!.length > 0 && toggleMenu(item.label)}
-                  className="sidebar-parent-btn"
+              <div key={cat.title} style={{ marginBottom: catIdx === categories.length - 1 ? '0px' : '12px' }}>
+                <div
                   style={{
+                    padding: '8px 12px 6px',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    color: '#64748b',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px',
-                    width: '100%',
-                    padding: '9px 14px',
-                    borderRadius: '12px',
-                    color: isActive ? 'var(--accent-primary)' : isAllowed ? '#a1a1aa' : 'rgba(161,161,170,0.55)',
-                    background: isActive && !isOpen ? 'rgba(112,51,245,0.07)' : 'transparent',
-                    fontWeight: isActive ? 600 : 500,
-                    fontSize: '0.875rem',
-                    cursor: item.subItems!.length > 0 ? 'pointer' : 'default',
-                    border: 'none',
-                    transition: 'background 0.18s ease, color 0.18s ease',
-                    marginBottom: '1px',
-                    textAlign: 'left',
-                    opacity: isAllowed ? 1 : 0.55,
-                    position: 'relative',
+                    justifyContent: 'space-between',
+                    userSelect: 'none',
                   }}
                 >
-                  <Icon size={17} style={{ flexShrink: 0 }} />
-                  <span style={{ flex: 1, color: 'var(--text-primary)' }}>{item.label}</span>
-                  {item.subItems.length > 0 && (
-                    <ChevronRight
-                      size={14}
-                      style={{
-                        transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                        color: isActive ? 'var(--accent-primary)' : '#6b7280',
-                        flexShrink: 0,
-                      }}
-                    />
-                  )}
-                  {/* Active indicator strip when collapsed */}
-                  {isActive && !isOpen && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        right: '-2px',
-                        width: '3px',
-                        height: '20px',
-                        background: 'var(--accent-primary)',
-                        borderRadius: '2px',
-                        opacity: 0.6,
-                      }}
-                    />
-                  )}
-                </button>
+                  <span>{cat.title}</span>
+                  <span
+                    style={{
+                      fontSize: '0.58rem',
+                      padding: '1px 5px',
+                      borderRadius: 99,
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      color: '#94a3b8',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {catVisibleItems.length}
+                  </span>
+                </div>
 
-                {/* FIX: Smooth open/close with proper max-height calculation */}
-                <div
-                  className="submenu-wrapper"
-                  style={{
-                    maxHeight: isOpen ? `${item.subItems.length * 44}px` : '0px',
-                    opacity: isOpen ? 1 : 0,
-                  }}
-                >
-                  {item.subItems.map((sub, idx) => {
-                    const SubIcon = sub.icon;
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  {catVisibleItems.map((item) => {
+                    const Icon = item.icon;
+                    const isAllowed = hasAccess(item.permission);
+
+                    // Leaf nav item (no subItems)
+                    if (!item.subItems) {
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path!}
+                          end={item.path === '/crm'}
+                          className="sidebar-nav-link"
+                          style={({ isActive }) => ({
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '9px 14px',
+                            borderRadius: '12px',
+                            color: isActive ? '#fff' : isAllowed ? '#a1a1aa' : 'rgba(161,161,170,0.45)',
+                            background: isActive ? 'var(--accent-gradient)' : 'transparent',
+                            fontWeight: isActive ? 600 : 500,
+                            fontSize: '0.875rem',
+                            transition: 'background 0.18s ease, color 0.18s ease',
+                            boxShadow: isActive ? '0 6px 16px rgba(112,51,245,0.18)' : 'none',
+                            textDecoration: 'none',
+                            marginBottom: '1px',
+                            opacity: isAllowed ? 1 : 0.55,
+                            position: 'relative',
+                          })}
+                        >
+                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                            <Icon size={17} />
+                            {item.highlight && (
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: '-3px',
+                                  right: '-4px',
+                                  width: '6px',
+                                  height: '6px',
+                                  borderRadius: '50%',
+                                  background: '#f59e0b',
+                                  boxShadow: '0 0 6px rgba(245,158,11,0.6)',
+                                  animation: 'pulse 2s infinite',
+                                }}
+                              />
+                            )}
+                          </div>
+                          <span style={{ flex: 1, color: 'var(--text-primary)' }}>{item.label}</span>
+                          {item.badge && (
+                            <span
+                              style={{
+                                background: 'var(--error)',
+                                color: 'var(--text-primary)',
+                                borderRadius: 999,
+                                padding: '1px 7px',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                lineHeight: 1.3,
+                                boxShadow: '0 2px 4px rgba(239,68,68,0.3)',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {item.badge > 99 ? '99+' : item.badge}
+                            </span>
+                          )}
+                        </NavLink>
+                      );
+                    }
+
+                    // Collapsible parent with sub-items
+                    const isOpen = openMenu === item.label;
+                    const isActive = item.subItems.length > 0 && isSubActive(item.subItems);
+
                     return (
-                      <NavLink
-                        key={sub.path}
-                        to={sub.path}
-                        className="sidebar-sub-link"
-                        style={({ isActive: subActive }) => ({
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          padding: '9px 14px 9px 16px',
-                          borderRadius: '10px',
-                          color: subActive ? 'var(--accent-primary)' : '#9ca3af',
-                          background: subActive
-                            ? `
-                              linear-gradient(to bottom, #0665ff 50%, #22d3ee 100%) left / 4px 100% no-repeat,
-                              rgba(112,51,245,0.08)
-                            `
-                            : 'transparent',
-                          fontWeight: subActive ? 600 : 400,
-                          fontSize: '0.85rem',
-                          transition: 'background 0.15s ease, color 0.15s ease',
-                          textDecoration: 'none',
-                          marginLeft: '12px',
-                          marginBottom: '1px',
-                          animation: isOpen ? `slideIn 0.22s ease ${idx * 0.04}s both` : 'none',
-                        })}
-                      >
-                        {SubIcon && (
-                          <SubIcon size={15} style={{ flexShrink: 0, opacity: 0.75 }} />
-                        )}
-                        {!SubIcon && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', opacity: 0.4, flexShrink: 0 }} />}
-                        <span style={{ flex: 1 }}>{sub.label}</span>
-                        {sub.notifBadge != null && (
-                          <span
-                            style={{
-                              background: '#3b82f6',
-                              color: 'var(--text-primary)',
-                              borderRadius: '999px',
-                              padding: '1px 7px',
-                              fontSize: '0.7rem',
-                              fontWeight: 700,
-                              lineHeight: 1.4,
-                              flexShrink: 0,
-                              boxShadow: '0 2px 6px rgba(59,130,246,0.4)',
-                            }}
-                          >
-                            {sub.notifBadge}
-                          </span>
-                        )}
-                        {sub.badge && (
-                          <span
-                            style={{
-                              padding: '1px 6px',
-                              borderRadius: '8px',
-                              fontSize: '0.6rem',
-                              fontWeight: 700,
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.05em',
-                              flexShrink: 0,
-                              ...getBadgeStyle(sub.badge),
-                            }}
-                          >
-                            {sub.badge}
-                          </span>
-                        )}
-                      </NavLink>
+                      <div key={item.label}>
+                        <button
+                          onClick={() => item.subItems!.length > 0 && toggleMenu(item.label)}
+                          className="sidebar-parent-btn"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            width: '100%',
+                            padding: '9px 14px',
+                            borderRadius: '12px',
+                            color: isActive ? 'var(--accent-primary)' : isAllowed ? '#a1a1aa' : 'rgba(161,161,170,0.55)',
+                            background: isActive && !isOpen ? 'rgba(112,51,245,0.07)' : 'transparent',
+                            fontWeight: isActive ? 600 : 500,
+                            fontSize: '0.875rem',
+                            cursor: item.subItems!.length > 0 ? 'pointer' : 'default',
+                            border: 'none',
+                            transition: 'background 0.18s ease, color 0.18s ease',
+                            marginBottom: '1px',
+                            textAlign: 'left',
+                            opacity: isAllowed ? 1 : 0.55,
+                            position: 'relative',
+                          }}
+                        >
+                          <Icon size={17} style={{ flexShrink: 0 }} />
+                          <span style={{ flex: 1, color: 'var(--text-primary)' }}>{item.label}</span>
+                          {item.subItems.length > 0 && (
+                            <ChevronRight
+                              size={14}
+                              style={{
+                                transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                                color: isActive ? 'var(--accent-primary)' : '#6b7280',
+                                flexShrink: 0,
+                              }}
+                            />
+                          )}
+                          {/* Active indicator strip when collapsed */}
+                          {isActive && !isOpen && (
+                            <div
+                              style={{
+                                position: 'absolute',
+                                right: '-2px',
+                                width: '3px',
+                                height: '20px',
+                                background: 'var(--accent-primary)',
+                                borderRadius: '2px',
+                                opacity: 0.6,
+                              }}
+                            />
+                          )}
+                        </button>
+
+                        <div
+                          className="submenu-wrapper"
+                          style={{
+                            maxHeight: isOpen ? `${item.subItems.length * 44}px` : '0px',
+                            opacity: isOpen ? 1 : 0,
+                          }}
+                        >
+                          {item.subItems.map((sub, idx) => {
+                            const SubIcon = sub.icon;
+                            return (
+                              <NavLink
+                                key={sub.path}
+                                to={sub.path}
+                                className="sidebar-sub-link"
+                                style={({ isActive: subActive }) => ({
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  padding: '9px 14px 9px 16px',
+                                  borderRadius: '10px',
+                                  color: subActive ? 'var(--accent-primary)' : '#9ca3af',
+                                  background: subActive
+                                    ? `
+                                      linear-gradient(to bottom, #0665ff 50%, #22d3ee 100%) left / 4px 100% no-repeat,
+                                      rgba(112,51,245,0.08)
+                                    `
+                                    : 'transparent',
+                                  fontWeight: subActive ? 600 : 400,
+                                  fontSize: '0.85rem',
+                                  transition: 'background 0.15s ease, color 0.15s ease',
+                                  textDecoration: 'none',
+                                  marginLeft: '12px',
+                                  marginBottom: '1px',
+                                  animation: isOpen ? `slideIn 0.22s ease ${idx * 0.04}s both` : 'none',
+                                })}
+                              >
+                                {SubIcon && (
+                                  <SubIcon size={15} style={{ flexShrink: 0, opacity: 0.75 }} />
+                                )}
+                                {!SubIcon && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor', opacity: 0.4, flexShrink: 0 }} />}
+                                <span style={{ flex: 1 }}>{sub.label}</span>
+                                {sub.notifBadge != null && (
+                                  <span
+                                    style={{
+                                      background: '#3b82f6',
+                                      color: 'var(--text-primary)',
+                                      borderRadius: '999px',
+                                      padding: '1px 7px',
+                                      fontSize: '0.7rem',
+                                      fontWeight: 700,
+                                      lineHeight: 1.4,
+                                      flexShrink: 0,
+                                      boxShadow: '0 2px 6px rgba(59,130,246,0.4)',
+                                    }}
+                                  >
+                                    {sub.notifBadge}
+                                  </span>
+                                )}
+                                {sub.badge && (
+                                  <span
+                                    style={{
+                                      padding: '1px 6px',
+                                      borderRadius: '8px',
+                                      fontSize: '0.6rem',
+                                      fontWeight: 700,
+                                      textTransform: 'uppercase',
+                                      letterSpacing: '0.05em',
+                                      flexShrink: 0,
+                                      ...getBadgeStyle(sub.badge),
+                                    }}
+                                  >
+                                    {sub.badge}
+                                  </span>
+                                )}
+                              </NavLink>
+                            );
+                          })}
+                        </div>
+                      </div>
                     );
                   })}
                 </div>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { GlassCard } from '../components/GlassCard';
-import { Share2, Clock, Send, Image as ImageIcon, Link, X } from 'lucide-react';
+import { Share2, Clock, Send, Image as ImageIcon, Link, X, Video, Sparkles, Zap } from 'lucide-react';
 import {
   connectPlatform,
   disconnectPlatform,
@@ -10,12 +11,15 @@ import {
   publishPost,
   schedulePost,
 } from '../../store/slices/socialSlice';
+import type { SocialPlatformId } from '../../store/slices/socialSlice';
+import { uploadSocialMedia, isVideoUrl, mediaSrc } from '../../services/socialMediaApi';
 import { addNotification } from '../../store/slices/notificationSlice';
 import { SmartTable } from '../components/SmartTable';
 import type { AppDispatch, RootState } from '../../store';
 import toast from 'react-hot-toast';
 
 export const Social: React.FC = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { posts, status, scheduling, publishing, connections, connecting, lastPublishResults } = useSelector(
     (state: RootState) => state.social,
@@ -25,6 +29,12 @@ export const Social: React.FC = () => {
 
   const [content, setContent] = useState('');
   const [media, setMedia] = useState<string[]>([]);
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
+  // YouTube-only settings
+  const [ytTitle, setYtTitle] = useState('');
+  const [ytPrivacy, setYtPrivacy] = useState<'public' | 'unlisted' | 'private'>('public');
+  const [ytTags, setYtTags] = useState('');
+  const [ytKids, setYtKids] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -34,8 +44,10 @@ export const Social: React.FC = () => {
     dispatch(fetchConnections())
       .unwrap()
       .then((connected) => {
+        // pre-select connected text/image platforms. YouTube is left out on purpose: it needs a video,
+        // so the user picks it only when they attach one. (Also skips non-platform keys like youtubeChannel.)
         const initialSelection = Object.entries(connected)
-          .filter(([, isConnected]) => isConnected)
+          .filter(([platform, isConnected]) => ['linkedin', 'twitter', 'facebook', 'instagram'].includes(platform) && Boolean(isConnected))
           .map(([platform]) => platform);
         setSelectedPlatforms(initialSelection);
       })
@@ -67,12 +79,13 @@ export const Social: React.FC = () => {
     { id: 'twitter', label: 'Twitter / X', badge: 'X', color: '#1da1f2' },
     { id: 'facebook', label: 'Facebook', badge: 'f', color: '#1877f2' },
     { id: 'instagram', label: 'Instagram', badge: 'ig', color: '#ec4899' },
+    { id: 'youtube', label: 'YouTube', badge: '▶', color: '#ff0000' },
   ];
 
   const [linkedinStatus, setLinkedinStatus] = useState<any>(null);
   const [checkingLinkedin, setCheckingLinkedin] = useState(false);
 
-  const handleConnect = async (platform: 'linkedin' | 'twitter' | 'facebook' | 'instagram') => {
+  const handleConnect = async (platform: SocialPlatformId) => {
     try {
       const result = await dispatch(connectPlatform(platform)).unwrap();
       window.location.assign(result.url);
@@ -81,7 +94,7 @@ export const Social: React.FC = () => {
     }
   };
 
-  const handleDisconnect = async (platform: 'linkedin' | 'twitter' | 'facebook' | 'instagram') => {
+  const handleDisconnect = async (platform: SocialPlatformId) => {
     await dispatch(disconnectPlatform(platform));
     if (platform === 'linkedin') setLinkedinStatus(null);
     toast.success(`${platform} disconnected.`);
@@ -125,24 +138,28 @@ export const Social: React.FC = () => {
     );
   };
 
-  const handleMediaUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files?.length) {
-      return;
-    }
-    const readers = Array.from(files).map(
-      (file) =>
-        new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(String(reader.result));
-          reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
-          reader.readAsDataURL(file);
-        }),
-    );
+  const handleMediaUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    event.target.value = ''; // lets the same file be picked again
+    if (!files.length) return;
 
-    Promise.all(readers)
-      .then((urls) => setMedia((current) => [...current, ...urls]))
-      .catch(() => toast.error('Could not load one or more images.'));
+    for (const file of files) {
+      const video = file.type.startsWith('video/');
+      if (video && media.some(isVideoUrl)) {
+        toast.error('Ek post mein sirf ek video attach ho sakti hai.');
+        continue;
+      }
+      try {
+        setUploadPercent(0);
+        const uploaded = await uploadSocialMedia(file, setUploadPercent);
+        setMedia((current) => [...current, uploaded.url]);
+      } catch (err: any) {
+        const msg = err?.response?.data?.message;
+        toast.error(`${file.name}: ${Array.isArray(msg) ? msg.join(', ') : msg || 'upload fail ho gaya.'}`);
+      } finally {
+        setUploadPercent(null);
+      }
+    }
   };
 
   const handleRemoveImage = (indexToRemove: number) => {
@@ -156,11 +173,30 @@ export const Social: React.FC = () => {
   const handlePost = async () => {
     if (!content.trim()) return toast.error('Post content cannot be empty.');
     if (!selectedPlatforms.length) return toast.error('Select at least one connected platform.');
+    if (uploadPercent !== null) return toast.error('Upload poora hone do, phir post karo.');
+
+    const hasVideo = media.some(isVideoUrl);
+    const toYoutube = selectedPlatforms.includes('youtube');
+    if (toYoutube && !hasVideo) return toast.error('YouTube par post karne ke liye ek video attach karo.');
+    if (toYoutube && !(ytTitle.trim() || content.trim())) return toast.error('YouTube video ka title likho.');
+    if (selectedPlatforms.includes('instagram') && !media.some((m) => !isVideoUrl(m))) {
+      return toast.error('Instagram ke liye ek image attach karo.');
+    }
 
     const payload = {
       content,
       media,
       platforms: selectedPlatforms,
+      ...(toYoutube
+        ? {
+            youtube: {
+              title: (ytTitle.trim() || content.split('\n')[0]).slice(0, 100),
+              privacy: ytPrivacy,
+              tags: ytTags.split(',').map((t) => t.trim()).filter(Boolean),
+              madeForKids: ytKids,
+            },
+          }
+        : {}),
       workspaceId: activeWebsiteId || 'default',
     };
 
@@ -195,6 +231,8 @@ export const Social: React.FC = () => {
       }));
       setContent('');
       setMedia([]);
+      setYtTitle('');
+      setYtTags('');
       setScheduledTime('');
       setShowDatePicker(false);
       setPreviewOpen(false);
@@ -219,6 +257,58 @@ export const Social: React.FC = () => {
           Social <span className="text-gradient">Hub</span>
         </h1>
         <p style={{ color: 'var(--text-secondary)' }}>Connect channels, publish instantly, and schedule future social drops.</p>
+      </div>
+
+      {/* NEW FEATURE HIGHLIGHT BANNER */}
+      <div
+        className="glass-card"
+        style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '16px 20px',
+          marginBottom: '24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '14px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', background: 'rgba(6, 101, 255, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Zap size={22} color="var(--accent-primary)" />
+          </div>
+          <div>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              Multi-Platform Post Publisher & AI Auto-Pilot
+              <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '10px', background: 'var(--accent-primary)', color: '#fff', fontWeight: 800 }}>NEW</span>
+            </div>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              Want to auto-post daily on your industry topics with AI or broadcast simultaneously to all channels?
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => navigate('/post-publisher')}
+          style={{
+            padding: '10px 18px',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--accent-gradient)',
+            color: '#fff',
+            border: 'none',
+            fontSize: '13px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 4px 14px rgba(6, 101, 255, 0.35)',
+          }}
+        >
+          <Sparkles size={15} /> Launch Post & Auto-Pilot
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(400px, 1fr) 1fr', gap: '24px' }}>
@@ -297,7 +387,7 @@ export const Social: React.FC = () => {
                         style={{ padding: '6px 10px', fontSize: '0.75rem'}}
                         onClick={(event) => {
                           event.stopPropagation();
-                          handleDisconnect(platform.id as 'linkedin' | 'twitter' | 'facebook' | 'instagram');
+                          handleDisconnect(platform.id as SocialPlatformId);
                         }}
                         title="Disconnect"
                       >
@@ -308,7 +398,7 @@ export const Social: React.FC = () => {
                     <button
                       onClick={(event) => {
                         event.stopPropagation();
-                        handleConnect(platform.id as 'linkedin' | 'twitter' | 'facebook' | 'instagram');
+                        handleConnect(platform.id as SocialPlatformId);
                       }}
                       className="btn-primary"
                       style={{ padding: '6px 16px', fontSize: '0.8rem' }}
@@ -373,11 +463,20 @@ export const Social: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '8px' }}>
                 {media.map((url, index) => (
                   <div key={`${url}-${index}`} style={{ position: 'relative' }}>
-                    <img
-                      src={url}
-                      alt={`uploaded-${index}`}
-                      style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
-                    />
+                    {isVideoUrl(url) ? (
+                      <video
+                        src={mediaSrc(url)}
+                        muted
+                        preload="metadata"
+                        style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px', background: '#000' }}
+                      />
+                    ) : (
+                      <img
+                        src={mediaSrc(url)}
+                        alt={`uploaded-${index}`}
+                        style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
+                      />
+                    )}
                     <div
                       style={{
                         position: 'absolute',
@@ -412,11 +511,57 @@ export const Social: React.FC = () => {
               </div>
             )}
 
+            {uploadPercent !== null && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Uploading… {uploadPercent}%
+                <div style={{ height: 4, borderRadius: 4, background: 'var(--glass-border)', marginTop: 6 }}>
+                  <div style={{ width: `${uploadPercent}%`, height: '100%', borderRadius: 4, background: 'var(--accent-primary)', transition: 'width .2s' }} />
+                </div>
+              </div>
+            )}
+
+            {media.some(isVideoUrl) && selectedPlatforms.some((p) => p !== 'youtube') && (
+              <div style={{ fontSize: '0.78rem', color: 'var(--warning, #f59e0b)', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, padding: '8px 10px' }}>
+                Video abhi sirf <strong>YouTube</strong> par jayegi. LinkedIn, X, Facebook aur Instagram par sirf image post hoti hai.
+              </div>
+            )}
+
+            {selectedPlatforms.includes('youtube') && (
+              <div style={{ border: '1px solid var(--glass-border)', borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(255,0,0,0.04)' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Video size={16} color="#ff0000" /> YouTube settings
+                  {connections.youtubeChannel && <span style={{ fontWeight: 500, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>· {connections.youtubeChannel}</span>}
+                </div>
+                <input
+                  className="input-field"
+                  placeholder="Video title (max 100 characters)"
+                  maxLength={100}
+                  value={ytTitle}
+                  onChange={(e) => setYtTitle(e.target.value)}
+                />
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <select className="input-field" style={{ flex: 1, minWidth: 140 }} value={ytPrivacy} onChange={(e) => setYtPrivacy(e.target.value as 'public' | 'unlisted' | 'private')} aria-label="Visibility">
+                    <option value="public">Public</option>
+                    <option value="unlisted">Unlisted</option>
+                    <option value="private">Private</option>
+                  </select>
+                  <input className="input-field" style={{ flex: 2, minWidth: 160 }} placeholder="Tags, comma separated" value={ytTags} onChange={(e) => setYtTags(e.target.value)} />
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={ytKids} onChange={(e) => setYtKids(e.target.checked)} />
+                  Ye video bachon ke liye bani hai (Made for kids)
+                </label>
+                <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  Post ka text video ka description banega. Agar tumhare Google API project ka YouTube audit pass nahi hua hai, to YouTube video ko apne aap <strong>private</strong> rakhta hai.
+                </div>
+              </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <label className="btn-primary" style={{ padding: '8px 12px', cursor: 'pointer' }} title="Attach Image">
+                <label className="btn-primary" style={{ padding: '8px 12px', cursor: uploadPercent === null ? 'pointer' : 'wait', opacity: uploadPercent === null ? 1 : 0.6 }} title="Attach image or video">
                   <ImageIcon size={18} />
-                  <input type="file" accept="image/*" multiple onChange={handleMediaUpload} style={{ display: 'none' }} />
+                  <input type="file" accept="image/*,video/*" multiple onChange={handleMediaUpload} disabled={uploadPercent !== null} style={{ display: 'none' }} />
                 </label>
                 <button
                   className="btn-primary"
@@ -468,7 +613,7 @@ export const Social: React.FC = () => {
 
             {Object.keys(lastPublishResults).length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {Object.entries(lastPublishResults as Record<string, { success: boolean; error?: string; postId?: string }>).map(([platform, result]) => (
+                {Object.entries(lastPublishResults).map(([platform, result]) => (
                   <div
                     key={platform}
                     style={{
@@ -479,7 +624,21 @@ export const Social: React.FC = () => {
                     }}
                   >
                     <strong style={{ textTransform: 'capitalize' }}>{platform}</strong>:{' '}
-                    {result.success ? `Published (ID: ${result.postId || 'ok'})` : result.error || 'Failed'}
+                    {result.success ? (
+                      <>
+                        Published{' '}
+                        {result.url ? (
+                          <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+                            View post
+                          </a>
+                        ) : (
+                          `(ID: ${result.postId || 'ok'})`
+                        )}
+                        {result.note && <div style={{ marginTop: 4, opacity: 0.85 }}>{result.note}</div>}
+                      </>
+                    ) : (
+                      result.error || 'Failed'
+                    )}
                   </div>
                 ))}
               </div>
@@ -594,13 +753,15 @@ export const Social: React.FC = () => {
             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
               Platforms: {selectedPlatforms.join(', ') || 'none selected'}
             </p>
-            {media.length > 0 && (
+            {media.length > 0 && (isVideoUrl(media[0]) ? (
+              <video src={mediaSrc(media[0])} controls style={{ width: '100%', maxHeight: '280px', borderRadius: '10px', background: '#000' }} />
+            ) : (
               <img
-                src={media[0]}
+                src={mediaSrc(media[0])}
                 alt="preview"
                 style={{ width: '100%', maxHeight: '280px', objectFit: 'cover', borderRadius: '10px' }}
               />
-            )}
+            ))}
           </div>
         </div>
       )}

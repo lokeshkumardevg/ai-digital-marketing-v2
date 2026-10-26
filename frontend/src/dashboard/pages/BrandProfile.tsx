@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { InlineLoader } from '../components/Loader';
 import { useSelector } from 'react-redux';
 import { upsertBrandLocally } from '../../store/slices/workspaceSlice';
 import type { RootState } from '../../store';
@@ -734,7 +735,7 @@ export const BrandProfile = () => {
           <div style={{ background: 'var(--bg-card)', borderRadius: '14px', border: '1px solid var(--glass-border)', padding: '20px', marginBottom: '20px' }}>
             <SectionTitle color="#0284c7" label="LinkedIn Overview" />
             {liLoading && (
-              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '10px' }}>Loading LinkedIn data...</div>
+              <InlineLoader message="Loading LinkedIn data..." />
             )}
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginTop: '14px' }}>

@@ -7,9 +7,10 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  RefreshCw, AlertCircle, MessageSquare, Star,
+  AlertCircle, MessageSquare, Star,
   ThumbsUp, ThumbsDown, Send, TrendingUp, Sparkles,
 } from 'lucide-react';
+import { PageLoader } from '../components/Loader';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -126,13 +127,10 @@ const DashboardPage: React.FC = () => {
   // ── Loading ───────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '40vh' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', color: 'var(--accent-primary)' }}>
-          <RefreshCw size={36} style={{ animation: 'spin 1s linear infinite' }} />
-          <p style={{ color: 'var(--text-secondary)' }}>Loading dashboard...</p>
-        </div>
-        <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-      </div>
+      <PageLoader
+        message="Loading Dashboard..."
+        submessage="Syncing reviews, ratings & reputation signals"
+      />
     );
   }
 

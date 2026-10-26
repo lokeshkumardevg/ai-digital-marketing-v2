@@ -1,5 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Image as ImageIcon, Trash2, Eye, Pencil, Clock3, ChevronLeft, ChevronRight, RefreshCcw } from 'lucide-react';
+import {
+  Image as ImageIcon,
+  Trash2,
+  Eye,
+  Pencil,
+  Clock3,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCcw,
+  Sparkles,
+  Plus,
+} from 'lucide-react';
+import LoadingScreen from './LoadingScreen';
 
 export interface CreativeItem {
   _id?: string;
@@ -33,6 +45,8 @@ interface CreativesTableProps {
   onRepromptCreative: (creative: CreativeItem) => void;
   deletingCreativeId?: string | null;
   loading?: boolean;
+  onOpenAiModal?: () => void;
+  onOpenUploadModal?: () => void;
 }
 
 const ITEMS_PER_PAGE = 8;
@@ -46,6 +60,8 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
   onRepromptCreative,
   deletingCreativeId,
   loading = false,
+  onOpenAiModal,
+  onOpenUploadModal,
 }) => {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -95,52 +111,127 @@ const CreativesTable: React.FC<CreativesTableProps> = ({
     return pages;
   };
 
+  if (loading && !normalizedCreatives.length) {
+    return (
+      <div
+        style={{
+          borderRadius: '24px',
+          border: '1px solid var(--glass-border, rgba(99, 102, 241, 0.18))',
+          background: 'var(--bg-secondary, #0a0f1e)',
+          padding: '40px 24px',
+          minHeight: '360px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <LoadingScreen
+          text="Syncing Creative Assets..."
+          subtext="Loading visual templates, ad creatives & media assets..."
+          inline={true}
+        />
+      </div>
+    );
+  }
+
   if (!normalizedCreatives.length && !loading) {
     return (
       <div
         style={{
           borderRadius: '24px',
-          border: '1px solid var(--glass-border)',
-          background: 'var(--bg-secondary)',
+          border: '1px solid var(--glass-border, rgba(99, 102, 241, 0.18))',
+          background: 'var(--bg-secondary, #0a0f1e)',
           padding: '64px 24px',
           textAlign: 'center',
         }}
       >
         <div
           style={{
-            width: '64px',
-            height: '64px',
+            width: '68px',
+            height: '68px',
             borderRadius: '999px',
-            background: 'var(--bg-elevated)',
+            background: 'var(--bg-elevated, #0f172a)',
+            border: '1px solid var(--glass-border, rgba(99, 102, 241, 0.2))',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 16px',
+            margin: '0 auto 18px',
+            color: '#38bdf8',
           }}
         >
-          <ImageIcon size={28} color="var(--text-dim)" />
+          <ImageIcon size={30} />
         </div>
 
         <h3
           style={{
             margin: 0,
-            fontSize: '1rem',
-            fontWeight: 700,
-            color: 'var(--text-primary)',
+            fontSize: '1.15rem',
+            fontWeight: 800,
+            color: 'var(--text-primary, #fff)',
+            fontFamily: 'Outfit, sans-serif',
           }}
         >
-          No content found
+          No Creatives in this View
         </h3>
 
         <p
           style={{
-            margin: '6px 0 0',
-            fontSize: '0.92rem',
-            color: 'var(--text-secondary)',
+            margin: '8px auto 24px',
+            fontSize: '0.88rem',
+            color: 'var(--text-secondary, #94a3b8)',
+            maxWidth: '460px',
+            lineHeight: 1.5,
           }}
         >
-          AI generated content will appear here after you add it to Content Hub.
+          Generate fresh ad creatives using our AI Image Studio, or upload your own visual assets to organize and deploy.
         </p>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          {onOpenAiModal && (
+            <button
+              onClick={onOpenAiModal}
+              type="button"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 22px',
+                borderRadius: '999px',
+                background: 'var(--accent-gradient, linear-gradient(135deg, #0665ff 0%, #22d3ee 100%))',
+                color: '#fff',
+                border: 'none',
+                fontWeight: 700,
+                fontSize: '0.86rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 18px rgba(6, 101, 255, 0.35)',
+              }}
+            >
+              <Sparkles size={15} /> Generate with AI Studio
+            </button>
+          )}
+
+          {onOpenUploadModal && (
+            <button
+              onClick={onOpenUploadModal}
+              type="button"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 20px',
+                borderRadius: '999px',
+                background: 'var(--bg-elevated, #0f172a)',
+                border: '1px solid var(--glass-border, rgba(99, 102, 241, 0.25))',
+                color: 'var(--text-primary, #fff)',
+                fontWeight: 600,
+                fontSize: '0.86rem',
+                cursor: 'pointer',
+              }}
+            >
+              <Plus size={15} color="#38bdf8" /> Upload Assets
+            </button>
+          )}
+        </div>
       </div>
     );
   }

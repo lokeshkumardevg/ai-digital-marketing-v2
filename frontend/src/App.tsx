@@ -36,6 +36,7 @@ import Onboarding from './landing/pages/Onboarding';
 import { Settings } from './dashboard/pages/Settings';
 import { Seo } from './dashboard/pages/Seo';
 import { Social } from './dashboard/pages/Social';
+import { PostPublisher } from './dashboard/pages/PostPublisher';
 import { Agents } from './dashboard/pages/Agents';
 import { Roles } from './dashboard/pages/Roles';
 import { Users } from './dashboard/pages/Users';
@@ -304,6 +305,8 @@ const App: React.FC = () => {
         <Route path="/seo" element={<ProtectedRoute><DashboardLayout><Seo /></DashboardLayout></ProtectedRoute>} />
         <Route path="/seo/:view" element={<ProtectedRoute><DashboardLayout><Seo /></DashboardLayout></ProtectedRoute>} />
         <Route path="/social" element={<ProtectedRoute><DashboardLayout><Social /></DashboardLayout></ProtectedRoute>} />
+        <Route path="/post-publisher" element={<ProtectedRoute><DashboardLayoutFull><PostPublisher /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/autopost" element={<Navigate to="/post-publisher" replace />} />
         <Route path="/ai-agents" element={<ProtectedRoute><DashboardLayout><Agents /></DashboardLayout></ProtectedRoute>} />
         <Route path="/admin-dashboard" element={<ProtectedRoute requiredPermission="superadmin"><DashboardLayoutFull><AdminDashboard /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />

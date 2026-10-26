@@ -7,7 +7,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Search, RefreshCw, Send, ArrowLeft, Inbox as InboxIcon, Star, Mail, Check, Clock, Link2,
+  Search, RefreshCw, Send, Plus, X, ArrowLeft, Inbox as InboxIcon, Star, Mail, Check, Clock, Link2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import io from 'socket.io-client';
@@ -18,8 +18,8 @@ import {
 
 // ─── Channel look ────────────────────────────────────────────
 const CH: Record<InboxChannel, { label: string; color: string; letter?: string }> = {
-  facebook:  { label: 'Facebook',  color: '#1877f2', letter: 'F' },
-  instagram: { label: 'Instagram', color: '#e1306c', letter: 'I' },
+  facebook:  { label: 'Facebook',  color: '#1877f2', letter: 'f' },
+  instagram: { label: 'Instagram', color: '#e1306c', letter: 'ig' },
   google:    { label: 'Google',    color: '#ea4335', letter: 'G' },
   whatsapp:  { label: 'WhatsApp',  color: '#25d366', letter: 'W' },
   email:     { label: 'Email',     color: '#8b5cf6' },
@@ -168,6 +168,7 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
   const [syncing, setSyncing] = useState(false);
   const [syncErrors, setSyncErrors] = useState<SyncError[]>([]);
   const [connecting, setConnecting] = useState(false);
+  const [newOpen, setNewOpen] = useState(false);
   const [view, setView] = useState<'list' | 'thread'>('list');
 
   const activeIdRef = useRef<string | null>(null);
@@ -193,7 +194,7 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
       setItems(r.items);
       setCursor(r.nextCursor);
     } catch (e) {
-      if (!silent) toast.error(apiError(e, 'Could not load conversations.'));
+      if (!silent) toast.error(apiError(e, 'Conversations load nahi hue.'));
     } finally {
       if (id === listReq.current) setListLoading(false);
     }
@@ -213,7 +214,7 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
       setMessages(r.items);
       setHasOlder(r.hasMore);
     } catch (e) {
-      if (!silent) toast.error(apiError(e, 'Could not load messages.'));
+      if (!silent) toast.error(apiError(e, 'Messages load nahi hue.'));
     } finally {
       if (!silent) setThreadLoading(false);
     }
@@ -226,7 +227,7 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
       setSyncErrors(r.errors || []);
       if (force && !(r.errors || []).length) toast.success('Inbox updated');
     } catch (e) {
-      if (force) toast.error(apiError(e, 'Sync failed.'));
+      if (force) toast.error(apiError(e, 'Sync fail ho gaya.'));
     } finally {
       setSyncing(false);
     }
@@ -316,7 +317,7 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
       setDraft('');
       touchConversation(active.id, text);
     } catch (e) {
-      toast.error(apiError(e, 'Message could not be sent.')); // draft stays so nothing is lost
+      toast.error(apiError(e, 'Message nahi gaya.')); // draft stays so nothing is lost
     } finally { setSending(false); }
   };
 
@@ -341,7 +342,7 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
       toast.success(`${r.connected} account connected`);
       r.warnings?.forEach(w => toast(w, { icon: '⚠️', duration: 6000 }));
       await doSync(true);
-    } catch (e) { toast.error(apiError(e, 'Could not connect Meta.')); }
+    } catch (e) { toast.error(apiError(e, 'Meta connect nahi ho paya.')); }
     finally { setConnecting(false); }
   };
 
@@ -356,7 +357,6 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
 
   const noChannels = channels && CHANNEL_ORDER.every(c => !channels.channels[c].connected);
   const metaMissing = channels && (!channels.channels.facebook.connected || !channels.channels.instagram.connected);
-  const totalUnread = channels ? CHANNEL_ORDER.reduce((n, c) => n + (channels.channels[c].unread || 0), 0) : 0;
   const left = active ? windowLeft(active.replyBy, now) : null;
   const limit = active ? MAX_LEN[active.channel] : 2000;
 
@@ -383,17 +383,6 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
         .ux-row[aria-current="true"]{background:var(--bg-elevated);box-shadow:inset 3px 0 0 var(--accent-primary)}
         .ux-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;border:1px solid var(--glass-border);background:transparent;color:var(--text-secondary);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap}
         .ux-chip[aria-pressed="true"]{background:var(--accent-primary);border-color:transparent;color:#fff}
-        .ux-head{display:flex;align-items:center;gap:12px;padding:18px 16px 12px}
-        .ux-title{margin:0;font-size:18px;font-weight:800;line-height:1.2}
-        .ux-sub{font-size:12.5px;color:var(--text-secondary);margin-top:2px}
-        .ux-block{padding:0 16px 12px}
-        .ux-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px}
-        .ux-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
-        .ux-seg{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--bg-card);border:1px solid var(--glass-border)}
-        .ux-seg-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 10px;border:0;border-radius:9px;background:transparent;color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;text-transform:capitalize}
-        .ux-seg-btn[aria-selected="true"]{background:var(--accent-primary);color:#fff}
-        .ux-pill{background:var(--accent-primary);color:#fff;border-radius:999px;padding:0 6px;font-size:11px;font-weight:700}
-        .ux-seg-btn[aria-selected="true"] .ux-pill{background:rgba(255,255,255,.28)}
         .ux-back{display:none}
         .ux-scroll::-webkit-scrollbar{width:8px}.ux-scroll::-webkit-scrollbar-thumb{background:var(--glass-border);border-radius:8px}
         .ux-bubble{max-width:min(75%,560px);padding:10px 14px;border-radius:18px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
@@ -409,28 +398,24 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
 
       {/* ───── Left: conversation list ───── */}
       <section className="ux-list" aria-label="Conversations">
-        <div className="ux-head">
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 className="ux-title">Conversations</h2>
-            <div className="ux-sub">{totalUnread > 0 ? `${totalUnread} unread` : 'All caught up'}</div>
-          </div>
+        <div style={{ padding: '18px 16px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, flex: 1 }}>Conversations</h2>
           <button aria-label="Refresh inbox" title="Refresh" onClick={() => doSync(true)} disabled={syncing}
             style={{ width: 36, height: 36, borderRadius: '50%', border: '1px solid var(--glass-border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
             <RefreshCw size={16} style={syncing ? { animation: 'ux-spin 1s linear infinite' } : undefined} />
           </button>
+          <Btn primary onClick={() => setNewOpen(true)}><Plus size={16} /> New</Btn>
         </div>
         <style>{`@keyframes ux-spin{to{transform:rotate(360deg)}}`}</style>
 
-        <div className="ux-block" style={{ position: 'relative' }}>
+        <div style={{ padding: '0 16px 10px', position: 'relative' }}>
           <Search size={15} style={{ position: 'absolute', left: 28, top: 11, color: 'var(--text-dim)' }} />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or message" aria-label="Search conversations"
             style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px 9px 36px', borderRadius: 12, border: '1px solid var(--glass-border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 14, outline: 'none' }} />
         </div>
 
         {/* channel filter */}
-        <div className="ux-block">
-          <div className="ux-label">Channels</div>
-          <div className="ux-chips">
+        <div style={{ display: 'flex', gap: 6, padding: '0 16px 10px', overflowX: 'auto' }}>
           <button className="ux-chip" aria-pressed={filterChannel === 'all'} onClick={() => setFilterChannel('all')}>All</button>
           {CHANNEL_ORDER.map(c => {
             const info = channels?.channels[c];
@@ -441,19 +426,13 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
               </button>
             );
           })}
-          </div>
         </div>
 
         {/* status tabs */}
-        <div className="ux-block" style={{ borderBottom: '1px solid var(--glass-border)' }}>
-          <div className="ux-seg" role="tablist" aria-label="Conversation status">
-            {(['open', 'unread', 'resolved'] as Tab[]).map(t => (
-              <button key={t} role="tab" aria-selected={tab === t} className="ux-seg-btn" onClick={() => setTab(t)}>
-                {t}
-                {t === 'unread' && totalUnread > 0 && <span className="ux-pill">{totalUnread}</span>}
-              </button>
-            ))}
-          </div>
+        <div style={{ display: 'flex', gap: 4, padding: '0 16px 10px', borderBottom: '1px solid var(--glass-border)' }}>
+          {(['open', 'unread', 'resolved'] as Tab[]).map(t => (
+            <button key={t} className="ux-chip" aria-pressed={tab === t} onClick={() => setTab(t)} style={{ textTransform: 'capitalize' }}>{t}</button>
+          ))}
         </div>
 
         {syncErrors.length > 0 && (
@@ -475,7 +454,7 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
               <InboxIcon size={34} style={{ color: 'var(--text-dim)' }} />
               <h2 style={{ fontSize: 17, margin: '10px 0 6px' }}>Connect your channels</h2>
               <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.5, margin: '0 0 14px' }}>
-                All your Facebook, Instagram, Google reviews, WhatsApp and Email messages will show up here in one place.
+                Facebook, Instagram, Google reviews, WhatsApp aur Email ke saare messages yahin ek jagah aayenge.
               </p>
               <Btn primary onClick={connectMeta} disabled={connecting}><Link2 size={15} /> {channels?.metaLoginDone ? 'Connect Facebook & Instagram' : 'Open Settings to connect Meta'}</Btn>
             </div>
@@ -483,7 +462,7 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
 
           {!listLoading && !items.length && !noChannels && (
             <p style={{ padding: 24, textAlign: 'center', color: 'var(--text-dim)', fontSize: 14 }}>
-              {debouncedSearch ? 'No matches found.' : tab === 'unread' ? 'All caught up. 🎉' : 'No conversations yet.'}
+              {debouncedSearch ? 'Koi match nahi mila.' : tab === 'unread' ? 'Sab padh liya. 🎉' : 'Abhi koi conversation nahi hai.'}
             </p>
           )}
 
@@ -524,7 +503,7 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
         {!active ? (
           <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-dim)', padding: 24 }}>
             <InboxIcon size={44} />
-            <p style={{ marginTop: 12, fontSize: 15 }}>Select a conversation to view it.</p>
+            <p style={{ marginTop: 12, fontSize: 15 }}>Koi conversation chuno ya naya message shuru karo.</p>
           </div>
         ) : (
           <>
@@ -578,19 +557,19 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
             <footer style={{ padding: '10px 16px 14px', borderTop: '1px solid var(--glass-border)', background: 'var(--bg-primary)' }}>
               {active.replyBy && active.canReply && left && (
                 <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Clock size={13} /> Reply window: {left} left (Meta allows replies for up to 24 hours after the customer's last message)
+                  <Clock size={13} /> Reply window: {left} baaki (Meta customer ke last message ke 24 ghante tak allow karta hai)
                 </div>
               )}
               {!active.canReply && (
                 <div role="alert" style={{ fontSize: 12.5, marginBottom: 8, padding: '8px 12px', borderRadius: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                  More than 24 hours have passed, so you can no longer reply on {CH[active.channel].label}. You will be able to reply once the customer messages again.
+                  24 ghante se zyada ho gaye, ab {CH[active.channel].label} par reply nahi ho sakta. Customer dobara message kare tab reply kar paoge.
                 </div>
               )}
-              {active.channel === 'google' && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>This reply will be shown publicly to everyone, under the review on Google.</div>}
+              {active.channel === 'google' && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 8 }}>Ye reply Google par review ke neeche sabko public dikhega.</div>}
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
                 <textarea value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={onKey} rows={Math.min(5, Math.max(1, draft.split('\n').length))}
                   disabled={!active.canReply || sending} maxLength={limit} aria-label="Type your reply"
-                  placeholder={active.canReply ? (active.channel === 'google' ? 'Write a reply to the review…' : 'Write a reply… (Enter = send, Shift+Enter = new line)') : 'Reply window is closed'}
+                  placeholder={active.canReply ? (active.channel === 'google' ? 'Review par reply likho…' : 'Reply likho… (Enter = send, Shift+Enter = nayi line)') : 'Reply window band hai'}
                   style={{ flex: 1, resize: 'none', padding: '11px 14px', borderRadius: 14, border: '1px solid var(--glass-border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 14.5, fontFamily: 'inherit', outline: 'none' }} />
                 <Btn primary onClick={send} disabled={!draft.trim() || !active.canReply || sending} aria-label="Send reply" style={{ height: 44, padding: '0 18px' }}>
                   <Send size={16} /> {sending ? 'Sending…' : 'Send'}
@@ -601,6 +580,91 @@ const MessagingInbox: React.FC<{ onUnreadChange?: (n: number) => void }> = ({ on
           </>
         )}
       </section>
+
+      {newOpen && (
+        <NewMessageModal
+          onClose={() => setNewOpen(false)}
+          onSent={async conversationId => {
+            setNewOpen(false);
+            setTab('open');
+            setFilterChannel('all');
+            await Promise.all([loadList(true), loadChannels()]);
+            const r = await inboxApi.messages(conversationId).catch(() => null);
+            if (r) openConversation(r.conversation);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// ─── New message (WhatsApp / Email) ──────────────────────────
+const NewMessageModal: React.FC<{ onClose: () => void; onSent: (conversationId: string) => void }> = ({ onClose, onSent }) => {
+  const [channel, setChannel] = useState<'whatsapp' | 'email'>('whatsapp');
+  const [to, setTo] = useState('');
+  const [name, setName] = useState('');
+  const [subject, setSubject] = useState('');
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onEsc);
+    return () => window.removeEventListener('keydown', onEsc);
+  }, [onClose]);
+
+  const submit = async () => {
+    setBusy(true);
+    try {
+      const r = await inboxApi.start({ channel, to: to.trim(), name: name.trim() || undefined, subject: subject.trim() || undefined, text: text.trim() });
+      toast.success('Message bhej diya');
+      onSent(r.conversationId);
+    } catch (e) { toast.error(apiError(e, 'Message nahi gaya.')); }
+    finally { setBusy(false); }
+  };
+
+  const input: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: 12, border: '1px solid var(--glass-border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', fontFamily: 'inherit' };
+  const label: React.CSSProperties = { display: 'block', fontSize: 12.5, fontWeight: 600, color: 'var(--text-secondary)', margin: '12px 0 5px' };
+  const valid = to.trim().length > 3 && text.trim().length > 0;
+
+  return (
+    <div role="dialog" aria-modal="true" aria-label="New message" onClick={onClose}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 'min(480px, 100%)', maxHeight: '90vh', overflowY: 'auto', background: 'var(--bg-elevated)', border: '1px solid var(--glass-border)', borderRadius: 20, padding: 22 }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <h2 style={{ margin: 0, fontSize: 18, flex: 1 }}>New message</h2>
+          <button aria-label="Close" onClick={onClose} style={{ background: 'none', border: 0, color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+          {(['whatsapp', 'email'] as const).map(c => (
+            <button key={c} className="ux-chip" aria-pressed={channel === c} onClick={() => setChannel(c)}><ChannelBadge channel={c} size={15} /> {CH[c].label}</button>
+          ))}
+        </div>
+
+        <label style={label} htmlFor="ux-to">{channel === 'whatsapp' ? 'Phone number' : 'Email address'}</label>
+        <input id="ux-to" style={input} value={to} onChange={e => setTo(e.target.value)} placeholder={channel === 'whatsapp' ? '+91 98765 43210' : 'name@company.com'} inputMode={channel === 'whatsapp' ? 'tel' : 'email'} />
+
+        <label style={label} htmlFor="ux-name">Name (optional)</label>
+        <input id="ux-name" style={input} value={name} onChange={e => setName(e.target.value)} />
+
+        {channel === 'email' && (<>
+          <label style={label} htmlFor="ux-subj">Subject</label>
+          <input id="ux-subj" style={input} value={subject} onChange={e => setSubject(e.target.value)} />
+        </>)}
+
+        <label style={label} htmlFor="ux-text">Message</label>
+        <textarea id="ux-text" style={{ ...input, minHeight: 110, resize: 'vertical' }} value={text} onChange={e => setText(e.target.value)} maxLength={2000} />
+
+        <p style={{ fontSize: 12, color: 'var(--text-dim)', margin: '10px 0 0', lineHeight: 1.5 }}>
+          Facebook, Instagram aur Google par pehle customer message kare tabhi reply ho sakta hai, wahan naya message shuru nahi kiya ja sakta.
+        </p>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
+          <Btn onClick={onClose}>Cancel</Btn>
+          <Btn primary onClick={submit} disabled={!valid || busy}><Send size={15} /> {busy ? 'Sending…' : 'Send'}</Btn>
+        </div>
+      </div>
     </div>
   );
 };

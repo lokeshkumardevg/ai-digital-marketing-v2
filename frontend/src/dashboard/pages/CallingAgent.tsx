@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { Phone, Users, FileText, PlayCircle, Loader2, StopCircle } from 'lucide-react';
+import { SectionLoader } from '../components/Loader';
 
 interface CallCampaign {
   _id: string;
@@ -249,7 +250,7 @@ export const CallingAgent: React.FC = () => {
               {!selectedCampaign ? (
                 <div className="flex items-center justify-center h-full text-gray-400">Select a campaign to view records</div>
               ) : isLoadingRecords ? (
-                <div className="flex justify-center mt-10"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
+                <SectionLoader message="Loading Call Records..." submessage="Fetching transcripts & call history" />
               ) : records.length === 0 ? (
                 <p className="text-center text-gray-500 mt-10">No records found.</p>
               ) : (

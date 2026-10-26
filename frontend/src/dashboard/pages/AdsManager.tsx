@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { BrainCircuit, TrendingUp, Zap, BarChart2, RefreshCw, Search, ArrowUpRight, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
+import { PageLoader, SectionLoader } from '../components/Loader';
 import { SmartTable } from '../components/SmartTable';
 import { EditGoogleCampaignModal } from '../components/EditGoogleCampaignModal';
 import { api } from '../../api/axios';
@@ -378,9 +379,10 @@ Recommended Action: Replace headline with dynamic benefit-focused copy and restr
   const avgScoreVal = ads.length > 0 ? Math.round(totalScoreVal / ads.length) : 70;
 
   if (loading) return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
-      <div className="animate-fade-in" style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Loading Ads Manager...</div>
-    </div>
+    <PageLoader
+      message="Loading Ads Manager..."
+      submessage="Fetching live ad campaigns, ROAS scores & platform data"
+    />
   );
 
   return (
@@ -764,11 +766,10 @@ Recommended Action: Replace headline with dynamic benefit-focused copy and restr
             </div>
 
             {isOptimizing ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 0', gap: '16px' }}>
-                <RefreshCw className="animate-spin" size={32} color="#0665ff" style={{ animation: 'spin 1.5s linear infinite' }} />
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600 }}>Analyzing campaign metrics & ad copy...</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>AI is evaluating CTR anomalies and keyword matching...</div>
-              </div>
+              <SectionLoader
+                message="Analyzing Campaign Metrics & Ad Copy..."
+                submessage="AI is evaluating CTR anomalies and keyword matching..."
+              />
             ) : optimizationResult ? (
               <div>
                 {/* Diagnostics / Problem Section */}

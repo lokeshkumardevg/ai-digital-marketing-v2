@@ -2,12 +2,26 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api/axios';
 import { hydrateSession } from './authSlice';
 
+export type SocialPlatformId = 'linkedin' | 'twitter' | 'facebook' | 'instagram' | 'youtube';
+
 interface PlatformConnections {
   linkedin: boolean;
   twitter: boolean;
   facebook: boolean;
   instagram: boolean;
+  youtube: boolean;
+  /** name of the connected YouTube channel */
+  youtubeChannel?: string | null;
 }
+
+export interface YoutubeOptions {
+  title: string;
+  privacy: 'public' | 'unlisted' | 'private';
+  tags?: string[];
+  madeForKids?: boolean;
+}
+
+export type PublishResultMap = Record<string, { success: boolean; error?: string; postId?: string; url?: string; note?: string }>;
 
 interface SocialState {
   posts: Record<string, unknown>[];
@@ -16,7 +30,7 @@ interface SocialState {
   publishing: boolean;
   connections: PlatformConnections;
   connecting: Record<string, boolean>;
-  lastPublishResults: Record<string, { success: boolean; error?: string; postId?: string }>;
+  lastPublishResults: PublishResultMap;
   error: string | null;
 }
 
@@ -24,6 +38,7 @@ interface SocialPublishPayload {
   content: string;
   media?: string[];
   platforms: string[];
+  youtube?: YoutubeOptions;
   workspaceId?: string;
 }
 
@@ -44,7 +59,7 @@ export const fetchConnections = createAsyncThunk('social/fetchConnections', asyn
 
 export const connectPlatform = createAsyncThunk(
   'social/connectPlatform',
-  async (platform: 'linkedin' | 'twitter' | 'facebook' | 'instagram') => {
+  async (platform: SocialPlatformId) => {
     const response = await api.get(`/social/auth/${platform}`);
     return { platform, url: response.data.data.url as string };
   },
@@ -52,7 +67,7 @@ export const connectPlatform = createAsyncThunk(
 
 export const disconnectPlatform = createAsyncThunk(
   'social/disconnectPlatform',
-  async (platform: 'linkedin' | 'twitter' | 'facebook' | 'instagram', thunkAPI) => {
+  async (platform: SocialPlatformId, thunkAPI) => {
     await api.post(`/social/auth/${platform}/disconnect`);
     thunkAPI.dispatch(hydrateSession());
     return platform;
@@ -79,6 +94,7 @@ const initialState: SocialState = {
     twitter: false,
     facebook: false,
     instagram: false,
+    youtube: false,
   },
   connecting: {},
   lastPublishResults: {},

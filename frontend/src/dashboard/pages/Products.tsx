@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, MoreHorizontal, Inbox } from 'lucide-react';
+import { PageLoader } from '../components/Loader';
 
 
 
@@ -34,9 +35,10 @@ export const Products: React.FC = () => {
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
 
   if (loading) return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)' }}>
-      <div className="animate-fade-in" style={{ fontSize: '1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Loading Products...</div>
-    </div>
+    <PageLoader
+      message="Loading Products..."
+      submessage="Fetching your product catalog & inventory data"
+    />
   );
 
   return (

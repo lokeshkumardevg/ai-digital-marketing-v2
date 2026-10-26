@@ -65,6 +65,7 @@ import {
   Image,
   Wand2,
 } from 'lucide-react';
+import { SectionLoader } from '../components/Loader';
 
 const PIPELINE_STAGES = [
   { key: 'new', label: 'New', color: '#6366f1', icon: Sparkles },
@@ -1672,9 +1673,10 @@ const MyPostsView: React.FC<{
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: 'var(--text-dim)' }}>
-        <Loader2 size={32} className="spin" style={{ animation: 'spin 1s linear infinite' }} />
-      </div>
+      <SectionLoader
+        message="Loading LinkedIn Posts..."
+        submessage="Fetching engagement metrics, impressions & post history"
+      />
     );
   }
 
@@ -2145,9 +2147,10 @@ const MyPostsView: React.FC<{
 const AdsManagerView: React.FC<{ campaigns: any[]; loading: boolean }> = ({ campaigns, loading }) => {
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: 'var(--text-dim)' }}>
-        <Loader2 size={32} className="spin" style={{ animation: 'spin 1s linear infinite' }} />
-      </div>
+      <SectionLoader
+        message="Loading LinkedIn Ad Campaigns..."
+        submessage="Fetching campaign performance, spend & targeting data"
+      />
     );
   }
 

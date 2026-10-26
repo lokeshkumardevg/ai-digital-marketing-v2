@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { InlineLoader } from '../components/Loader';
 import {
   Inbox, Clock, Search, Grid3x3, List,
   ChevronDown, ChevronRight, Send, RefreshCw, AlertCircle,
@@ -551,7 +552,7 @@ function CommentCard({ comment, postId, pageAccessToken, aiEntry, onAiGenerated,
 
           {showReplies && (
             <div className="par-replies-wrap">
-              {loadingReplies && <p className="par-replies-status">Loading replies…</p>}
+              {loadingReplies && <InlineLoader message="Loading replies…" />}
               {repliesError && <p className="par-reply-error">{repliesError}</p>}
               {!loadingReplies && displayReplies.length === 0 && <p className="par-replies-status">No replies yet.</p>}
               {displayReplies.map((r) => (

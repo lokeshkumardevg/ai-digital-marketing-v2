@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { SectionLoader } from '../components/Loader';
 import { useSelector } from 'react-redux';
 import { api } from '../../api/axios';
 import { SmartTable } from '../components/SmartTable';
@@ -412,7 +413,7 @@ export const Users: React.FC = () => {
         </div>
       )}
 
-      {loading && <div style={{ marginTop: 14, color: 'var(--text-secondary)' }}>Loading users…</div>}
+      {loading && <SectionLoader message="Loading users…" />}
     </div>
   );
 };

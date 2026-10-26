@@ -638,8 +638,8 @@ export const Messaging: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h1 style={{ fontSize: '1.9rem', fontWeight: 700, marginBottom: 6, color: D.textPrimary }}>
-            
-            <span style={{ background: 'linear-gradient(135deg, #0665ff 50%, #22d3ee 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Omni-Channel{' '}
+            <span style={{ background: 'linear-gradient(135deg, #a78bfa, #6366f1)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Messaging Hub
             </span>
           </h1>

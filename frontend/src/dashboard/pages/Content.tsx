@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { api } from '../../api/axios';
+import { Sparkles } from 'lucide-react';
 
 import ContentTabs from '../components/content/ContentTabs';
 import ContentActions from '../components/content/ContentActions';
@@ -9,8 +10,6 @@ import ContentFilters from '../components/content/ContentFilters';
 import CreativesTable from '../components/content/CreativesTable';
 import AiCreativeModal from '../components/content/AiCreativeModal';
 import UploadByGroupModal from '../components/content/UploadByGroupModal';
-// import AiCreativeWorkspace from '../components/content/AiCreativeWorkspace';
-import { PageLoader } from '../components/Loader';
 import type { CreativeItem } from '../components/content/CreativesTable';
 
 type UploadedGroupItem = {
@@ -610,10 +609,27 @@ const handleGroupFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     }
   };
 
+const counts = {
+  all: creatives.length,
+  images: creatives.filter((c) => c.type === 'image').length,
+  videos: creatives.filter((c) => c.type === 'video').length,
+  ai: creatives.filter((c) => !c.isManualCreative).length,
+};
+
 const filtered = creatives.filter((c) => {
   const matchesSearch = (c.name || '')
     .toLowerCase()
     .includes(search.toLowerCase());
+
+  // Category Tab filtering
+  let matchesTab = true;
+  if (activeTab === 'Images') {
+    matchesTab = c.type === 'image';
+  } else if (activeTab === 'Videos') {
+    matchesTab = c.type === 'video';
+  } else if (activeTab === 'AI Generated') {
+    matchesTab = !c.isManualCreative;
+  }
 
   const createdAt = c.createdAtRaw
     ? new Date(c.createdAtRaw)
@@ -653,74 +669,146 @@ const filtered = creatives.filter((c) => {
 
   return (
     matchesSearch &&
+    matchesTab &&
     matchesUploadStart &&
     matchesUploadEnd &&
     matchesLifetimeStart &&
     matchesLifetimeEnd
   );
 });
+
   return (
     <div style={{ minHeight: '100%', background: 'var(--bg-primary)' }}>
-      <ContentTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* ── HERO BANNER ── */}
+      <div style={{ padding: '24px 32px 0 32px' }}>
+        <div
+          className="glass-card"
+          style={{
+            padding: '24px 28px',
+            marginBottom: '20px',
+            position: 'relative',
+            background: 'var(--bg-card, rgba(10, 15, 30, 0.8))',
+            borderColor: 'var(--glass-border, rgba(99, 102, 241, 0.18))',
+            borderRadius: '20px',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: -60,
+              right: -60,
+              width: 240,
+              height: 240,
+              background: 'radial-gradient(circle, var(--accent-glow, rgba(6, 101, 255, 0.25)) 0%, transparent 70%)',
+              pointerEvents: 'none',
+            }}
+          />
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+            <div>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '4px 12px',
+                  borderRadius: '999px',
+                  background: 'rgba(6, 101, 255, 0.15)',
+                  border: '1px solid rgba(6, 101, 255, 0.3)',
+                  marginBottom: '10px',
+                }}
+              >
+                <Sparkles size={14} color="#38bdf8" />
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#38bdf8', letterSpacing: '0.5px' }}>
+                  CREATIVE HUB & ASSET MATRIX
+                </span>
+              </div>
+              <h1 style={{ fontSize: '26px', fontWeight: 800, color: 'var(--text-primary, #fff)', margin: 0, fontFamily: 'Outfit, sans-serif' }}>
+                Creative Studio Hub & Media Library
+              </h1>
+              <p style={{ margin: '6px 0 0 0', color: 'var(--text-secondary, #94a3b8)', fontSize: '13.5px', maxWidth: '640px', lineHeight: 1.5 }}>
+                Generate high-converting ad visuals with AI, manage multi-platform creative assets, and deploy them directly to your campaigns and social media channels.
+              </p>
+            </div>
+
+            {/* Live Metrics */}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div style={{ background: 'var(--bg-elevated, #0f172a)', padding: '12px 18px', borderRadius: '12px', border: '1px solid var(--glass-border, rgba(99, 102, 241, 0.2))', textAlign: 'center', minWidth: '85px' }}>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--accent-primary, #0665ff)', fontFamily: 'Outfit, sans-serif' }}>{counts.all}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-dim, #64748b)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Total Assets</div>
+              </div>
+              <div style={{ background: 'var(--bg-elevated, #0f172a)', padding: '12px 18px', borderRadius: '12px', border: '1px solid var(--glass-border, rgba(99, 102, 241, 0.2))', textAlign: 'center', minWidth: '85px' }}>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: '#34d399', fontFamily: 'Outfit, sans-serif' }}>{counts.images}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-dim, #64748b)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Images</div>
+              </div>
+              <div style={{ background: 'var(--bg-elevated, #0f172a)', padding: '12px 18px', borderRadius: '12px', border: '1px solid var(--glass-border, rgba(99, 102, 241, 0.2))', textAlign: 'center', minWidth: '85px' }}>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: '#c084fc', fontFamily: 'Outfit, sans-serif' }}>{counts.ai}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-dim, #64748b)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>AI Studio</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ContentTabs activeTab={activeTab} onTabChange={setActiveTab} counts={counts} />
 
       <div style={{ padding: '20px 32px' }}>
-       <ContentActions
-  addCreativeButtonRef={addCreativeButtonRef}
-  addCreativeMenuRef={addCreativeMenuRef}
-  showAddCreativeMenu={showAddCreativeMenu}
-  onAddCreativeClick={handleAddCreativeClick}
-  onShowAiCreativePanel={handleOpenAiCreative}
-  onUploadByGroup={handleUploadByGroup}
-  onBulkUploadByFilename={handleBulkUploadByFilename}
-/>
+        <ContentActions
+          addCreativeButtonRef={addCreativeButtonRef}
+          addCreativeMenuRef={addCreativeMenuRef}
+          showAddCreativeMenu={showAddCreativeMenu}
+          onAddCreativeClick={handleAddCreativeClick}
+          onShowAiCreativePanel={handleOpenAiCreative}
+          onUploadByGroup={handleUploadByGroup}
+          onBulkUploadByFilename={handleBulkUploadByFilename}
+          onNavigateToPublisher={() => navigate('/post-publisher')}
+          onRefresh={fetchCreatives}
+          isRefreshing={loading}
+        />
 
-         
+        {/* Shimmer line if reloading in background */}
+        {loading && creatives.length > 0 && (
+          <div
+            style={{
+              height: '3px',
+              width: '100%',
+              background: 'linear-gradient(90deg, #0665ff 0%, #22d3ee 50%, #0665ff 100%)',
+              backgroundSize: '200% 100%',
+              borderRadius: '999px',
+              marginBottom: '14px',
+              animation: 'pulse 1.2s ease-in-out infinite',
+            }}
+          />
+        )}
 
-<div style={{ position: 'relative' }}>
-  <ContentFilters
-    uploadDateStart={uploadDateStart}
-    uploadDateEnd={uploadDateEnd}
-    lifetimeStart={lifetimeStart}
-    lifetimeEnd={lifetimeEnd}
-    search={search}
-    setUploadDateStart={setUploadDateStart}
-    setUploadDateEnd={setUploadDateEnd}
-    setLifetimeStart={setLifetimeStart}
-    setLifetimeEnd={setLifetimeEnd}
-    setSearch={setSearch}
-  />
+        <div style={{ position: 'relative' }}>
+          <ContentFilters
+            uploadDateStart={uploadDateStart}
+            uploadDateEnd={uploadDateEnd}
+            lifetimeStart={lifetimeStart}
+            lifetimeEnd={lifetimeEnd}
+            search={search}
+            setUploadDateStart={setUploadDateStart}
+            setUploadDateEnd={setUploadDateEnd}
+            setLifetimeStart={setLifetimeStart}
+            setLifetimeEnd={setLifetimeEnd}
+            setSearch={setSearch}
+          />
+        </div>
 
-  {loading && (
-    <div
-      style={{
-        position: 'absolute',
-        inset: 0,
-        // background: 'rgba(15,17,23,0.65)',
-        backdropFilter: 'blur(2px)',
-        borderRadius: '20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: '280px',
-        zIndex: 20,
-
-      }}
-    >
-      <PageLoader message="Loading filters..." />
-    </div>
-  )}
-</div>
-
-<CreativesTable
-  creatives={filtered}
-  onPreviewCreative={handlePreviewCreative}
-  onWatchCreative={handleWatchCreative}
-  onEditCreative={handleOpenEditCreative}
-  onDeleteCreative={handleDeleteCreative}
-  onRepromptCreative={handleRepromptCreative}
-  deletingCreativeId={deletingCreativeId}
-  loading={loading}
-/>
+        <CreativesTable
+          creatives={filtered}
+          onPreviewCreative={handlePreviewCreative}
+          onWatchCreative={handleWatchCreative}
+          onEditCreative={handleOpenEditCreative}
+          onDeleteCreative={handleDeleteCreative}
+          onRepromptCreative={handleRepromptCreative}
+          onOpenAiModal={handleOpenAiCreative}
+          onOpenUploadModal={handleUploadByGroup}
+          deletingCreativeId={deletingCreativeId}
+          loading={loading}
+        />
 
 
 {showAiCreativePanel && (

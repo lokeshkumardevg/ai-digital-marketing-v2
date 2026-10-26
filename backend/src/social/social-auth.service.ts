@@ -9,7 +9,7 @@ import { UsersService } from '../users/users.service';
 import axios from 'axios';
 import { createHmac, randomBytes } from 'crypto';
 
-type SocialPlatform = 'linkedin' | 'twitter' | 'facebook' | 'instagram' | 'meta';
+type SocialPlatform = 'linkedin' | 'twitter' | 'facebook' | 'instagram' | 'meta' | 'youtube';
 
 @Injectable()
 export class SocialAuthService {
@@ -38,6 +38,16 @@ export class SocialAuthService {
         'tweet.read tweet.write users.read offline.access';
       const codeChallenge = this.buildCodeVerifier(userId);
       return `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}&code_challenge=${encodeURIComponent(codeChallenge)}&code_challenge_method=plain`;
+    }
+
+    if (normalized === 'youtube') {
+      const { clientId } = this.getGoogleCredentials();
+      // youtube.upload = post videos, youtube.readonly = read the channel name/id.
+      // access_type=offline + prompt=consent so Google always returns a refresh token.
+      const scope =
+        this.configService.get<string>('YOUTUBE_SCOPES') ||
+        'https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly';
+      return `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}&access_type=offline&prompt=consent&include_granted_scopes=true`;
     }
 
     const clientId = this.getEnv('META_APP_ID');
@@ -125,6 +135,46 @@ export class SocialAuthService {
       return { platform: 'twitter', connected: true };
     }
 
+    if (normalized === 'youtube') {
+      const { clientId, clientSecret } = this.getGoogleCredentials();
+      const tokenResponse = await axios.post(
+        'https://oauth2.googleapis.com/token',
+        new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: this.getRedirectUri('youtube'),
+          client_id: clientId,
+          client_secret: clientSecret,
+        }).toString(),
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+      );
+
+      const accessToken: string = tokenResponse.data.access_token;
+      const refreshToken: string | undefined = tokenResponse.data.refresh_token;
+      if (!refreshToken && !user.youtubeRefreshToken) {
+        throw new BadRequestException('Google did not return a refresh token. Remove the app from your Google account permissions and connect again.');
+      }
+
+      // Which channel will the videos go to?
+      const channels = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
+        params: { part: 'snippet', mine: 'true' },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const channel = channels.data?.items?.[0];
+      if (!channel?.id) {
+        throw new BadRequestException('This Google account has no YouTube channel. Create a channel on youtube.com first.');
+      }
+
+      await this.usersService.update(String(user._id), {
+        youtubeAccessToken: accessToken,
+        youtubeRefreshToken: refreshToken || user.youtubeRefreshToken,
+        youtubeChannelId: channel.id,
+        youtubeChannelTitle: channel.snippet?.title || null,
+      });
+
+      return { platform: 'youtube', connected: true };
+    }
+
     const shortLived = await axios.get('https://graph.facebook.com/v20.0/oauth/access_token', {
       params: {
         client_id: this.getEnv('META_APP_ID'),
@@ -179,6 +229,8 @@ export class SocialAuthService {
       twitter: Boolean(user.twitterAccessToken && user.twitterUserId),
       facebook: Boolean(user.metaAccessToken),
       instagram: Boolean(user.instagramAccessToken && user.instagramUserId),
+      youtube: Boolean(user.youtubeRefreshToken && user.youtubeChannelId),
+      youtubeChannel: user.youtubeChannelTitle || null,
     };
   }
 
@@ -202,6 +254,20 @@ export class SocialAuthService {
     } else if (platform === 'instagram') {
       updates.instagramAccessToken = null;
       updates.instagramUserId = null;
+    } else if (platform === 'youtube') {
+      // best effort: also revoke the grant at Google so the app disappears from the user's account permissions
+      const token = user.youtubeRefreshToken || user.youtubeAccessToken;
+      if (token) {
+        await axios
+          .post('https://oauth2.googleapis.com/revoke', new URLSearchParams({ token }).toString(), {
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          })
+          .catch(() => undefined);
+      }
+      updates.youtubeAccessToken = null;
+      updates.youtubeRefreshToken = null;
+      updates.youtubeChannelId = null;
+      updates.youtubeChannelTitle = null;
     }
 
     await this.usersService.update(String(user._id), updates);
@@ -263,9 +329,48 @@ export class SocialAuthService {
     return null;
   }
 
+  /** Google access tokens last ~1 hour, so we exchange the stored refresh token every time we upload. */
+  async getYoutubeAccessToken(userId: string): Promise<string> {
+    const user = await this.usersService.findById(userId);
+    if (!user?.youtubeRefreshToken) {
+      throw new NotFoundException('YouTube is not connected. Connect it from the Social Hub page.');
+    }
+    const { clientId, clientSecret } = this.getGoogleCredentials();
+    try {
+      const res = await axios.post(
+        'https://oauth2.googleapis.com/token',
+        new URLSearchParams({
+          grant_type: 'refresh_token',
+          refresh_token: user.youtubeRefreshToken,
+          client_id: clientId,
+          client_secret: clientSecret,
+        }).toString(),
+        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+      );
+      await this.usersService.update(userId, { youtubeAccessToken: res.data.access_token });
+      return res.data.access_token as string;
+    } catch (e: any) {
+      if (e?.response?.data?.error === 'invalid_grant') {
+        // user revoked access or the token expired (Google testing-mode apps: 7 days)
+        await this.usersService.update(userId, { youtubeAccessToken: null, youtubeRefreshToken: null, youtubeChannelId: null, youtubeChannelTitle: null });
+        throw new NotFoundException('YouTube connection expired. Please connect YouTube again.');
+      }
+      throw e;
+    }
+  }
+
+  private getGoogleCredentials(): { clientId: string; clientSecret: string } {
+    const clientId = this.configService.get<string>('YOUTUBE_CLIENT_ID') || this.configService.get<string>('GOOGLE_CLIENT_ID');
+    const clientSecret = this.configService.get<string>('YOUTUBE_CLIENT_SECRET') || this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+    if (!clientId || !clientSecret) {
+      throw new InternalServerErrorException('Google credentials (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET) are not configured.');
+    }
+    return { clientId, clientSecret };
+  }
+
   private normalizePlatform(platform: string): SocialPlatform {
     const value = platform?.toLowerCase();
-    if (!['linkedin', 'twitter', 'facebook', 'instagram', 'meta'].includes(value)) {
+    if (!['linkedin', 'twitter', 'facebook', 'instagram', 'meta', 'youtube'].includes(value)) {
       throw new BadRequestException('Unsupported social platform.');
     }
     return value as SocialPlatform;

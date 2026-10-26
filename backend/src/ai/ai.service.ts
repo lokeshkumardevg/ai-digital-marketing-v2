@@ -10,6 +10,8 @@ import { Model } from 'mongoose';
 import OpenAI from 'openai';
 import { GoogleGenAI } from '@google/genai';
 import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 import { AiAnalysis, AiAnalysisDocument } from './schemas/ai-analysis.schema';
 import { BrandProfile, BrandProfileDocument } from './schemas/brand-profile.schema';
 
@@ -376,11 +378,113 @@ ${contentSnippet}`;
 
       return schema ? JSON.parse(content) : content;
     } catch (error: any) {
+      this.logger.warn(`OpenAI Error: ${error.message}. Attempting Gemini fallback...`);
+
+      if (this.googleGenAi) {
+        try {
+          const contents: any[] = [];
+          if (systemPrompt) {
+            contents.push({ text: `[System Instruction]: ${systemPrompt}\n\n` });
+          }
+          if (userPrompt) {
+            contents.push({ text: userPrompt });
+          }
+
+          if (imageBase64) {
+            const match = imageBase64.match(/^data:([^;]+);base64,(.*)$/);
+            if (match) {
+              contents.push({
+                inlineData: {
+                  mimeType: match[1],
+                  data: match[2],
+                },
+              });
+            }
+          }
+
+          const geminiRes = await this.googleGenAi.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents,
+          });
+
+          const geminiText = geminiRes.text || '';
+          if (schema) {
+            try {
+              const cleaned = geminiText.replace(/```json|```/g, '').trim();
+              return JSON.parse(cleaned);
+            } catch {
+              return geminiText;
+            }
+          }
+          return geminiText;
+        } catch (geminiErr: any) {
+          this.logger.error('Gemini Fallback Error', geminiErr);
+        }
+      }
+
       this.logger.error('OpenAI Error', error);
       throw new BadRequestException(
         'Failed to generate content: ' + (error.message || 'Unknown error'),
       );
     }
+  }
+
+  /**
+   * Generates viral, platform-optimized social media copy based on an attached image/creative.
+   */
+  async generateFromImage(
+    userPrompt: string,
+    imageUrl: string,
+    tone = 'engaging & viral',
+    platforms = ['linkedin', 'twitter'],
+  ): Promise<string> {
+    let dataUrl = imageUrl;
+
+    try {
+      let pathname = imageUrl;
+      if (/^https?:\/\//i.test(imageUrl)) {
+        pathname = new URL(imageUrl).pathname;
+      }
+
+      if (pathname.startsWith('/uploads/')) {
+        const filename = path.basename(pathname);
+        const fullPath = path.join(process.cwd(), 'uploads', filename);
+        if (fs.existsSync(fullPath)) {
+          const ext = path.extname(filename).toLowerCase().replace('.', '');
+          const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+          const b64 = fs.readFileSync(fullPath).toString('base64');
+          dataUrl = `data:${mime};base64,${b64}`;
+        }
+      }
+    } catch (e: any) {
+      this.logger.warn(`Could not resolve local image for vision: ${e.message}`);
+    }
+
+    const prompt = userPrompt
+      ? `${userPrompt}\n\nTone: ${tone}\nTarget Platforms: ${platforms.join(', ')}`
+      : `Analyze this image and write a high-engagement, viral social media post for ${platforms.join(', ')}.
+Tone: ${tone}
+
+Requirements:
+- Catchy first hook that directly references the visual theme of the image
+- 2-3 concise paragraphs or bullet points explaining key insights or message
+- High-converting Call to Action (CTA)
+- 3 to 5 trending, highly relevant hashtags
+- Do NOT wrap in quotes or markdown code blocks
+- Return ONLY the caption text.`;
+
+    const systemPrompt = `You are an elite creative director and social media copywriter. You inspect creative graphics and write perfectly matched, viral social media posts.`;
+
+    const result = await this.generateContent(
+      prompt,
+      systemPrompt,
+      undefined,
+      'gpt-4o-mini',
+      2000,
+      dataUrl,
+    );
+
+    return typeof result === 'string' ? result.trim() : JSON.stringify(result);
   }
 
   // ── MESSAGE TEMPLATES ────────────────────────────────────

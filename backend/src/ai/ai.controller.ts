@@ -10,7 +10,8 @@ import {
   Request,
   Param,
   Delete,
-  Query
+  Query,
+  BadRequestException
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AiService } from './ai.service';
@@ -39,15 +40,47 @@ export class AiController {
   @UseGuards(AuthGuard('jwt'))
   @Post('generate')
   @HttpCode(HttpStatus.OK)
-  async generateText(@Body() body: { prompt: string; context?: string }, @Request() req: any) {
+  async generateText(
+    @Body() body: { prompt: string; context?: string; imageUrl?: string; tone?: string; platforms?: string[] },
+    @Request() req: any,
+  ) {
+    if (body.imageUrl) {
+      const result = await this.aiService.generateFromImage(
+        body.prompt,
+        body.imageUrl,
+        body.tone || 'engaging & viral',
+        body.platforms || ['linkedin', 'twitter'],
+      );
+      return { success: true, data: result, userId: req.user?.id };
+    }
+
     const context = body.context || '';
     const result = await this.aiService.generateContent(body.prompt, context);
 
     return {
       success: true,
       data: result,
-      userId: req.user?.id
+      userId: req.user?.id,
     };
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('generate-from-image')
+  @HttpCode(HttpStatus.OK)
+  async generateFromImage(
+    @Body() body: { imageUrl: string; prompt?: string; tone?: string; platforms?: string[] },
+    @Request() req: any,
+  ) {
+    if (!body.imageUrl) {
+      throw new BadRequestException('imageUrl is required.');
+    }
+    const result = await this.aiService.generateFromImage(
+      body.prompt || '',
+      body.imageUrl,
+      body.tone || 'engaging & viral',
+      body.platforms || ['linkedin', 'twitter'],
+    );
+    return { success: true, data: result, userId: req.user?.id };
   }
 
   @UseGuards(AuthGuard('jwt'))
