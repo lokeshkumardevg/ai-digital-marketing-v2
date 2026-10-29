@@ -14,6 +14,7 @@ import { workflowsReducer } from './slices/workflowsSlice';
 import { linkedinCrmReducer } from './slices/linkedinCrmSlice';
 import reviewsReducer from './slices/reviewsSlice';
 import themeReducer from './slices/themeSlice';
+import { approvalsReducer } from './slices/approvalsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -32,6 +33,7 @@ export const store = configureStore({
     reputation: reputationReducer,
     reviews: reviewsReducer,
     theme: themeReducer,
+    approvals: approvalsReducer,
   },
 });
 

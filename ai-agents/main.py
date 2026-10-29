@@ -7,6 +7,7 @@ import os
 load_dotenv()
 
 from src.api.routes import router
+from src.api.v1_coworker_routes import coworker_router
 
 app = FastAPI(
     title="Autonomous AI Digital Marketing Agents",
@@ -23,6 +24,8 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix="/api/v1")
+app.include_router(coworker_router, prefix="/api/v1")
+app.include_router(coworker_router, prefix="/v1")
 
 @app.get("/health")
 def health_check():

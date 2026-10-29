@@ -74,6 +74,9 @@ import InboxPage from './dashboard/pages/InboxPage';
 import DashboardPage from './dashboard/pages/DashboardPage';
 import GoogleBusinessTester from './dashboard/pages/Googlebusinesstester';
 import PostsPage from './dashboard/pages/PostsPage';
+import { ApprovalsPage } from './dashboard/pages/ApprovalsPage';
+import { CoworkersPage } from './dashboard/pages/CoworkersPage';
+import { fetchPendingCount, incrementPendingCount } from './store/slices/approvalsSlice';
 
 const ProtectedRoute = ({ 
   children, 
@@ -238,6 +241,9 @@ const App: React.FC = () => {
 
       // Listen for Global App Notifications emitted by Backend logic
       socket.on('notification', (data) => {
+        if (data.category === 'approval') {
+          dispatch(incrementPendingCount());
+        }
         dispatch(addNotification({
           id: data.id || Date.now().toString(),
           title: data.title,
@@ -260,6 +266,7 @@ const App: React.FC = () => {
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(fetchNotifications({ limit: 50 }));
+      dispatch(fetchPendingCount());
     }
   }, [isAuthenticated, dispatch]);
 
@@ -294,6 +301,9 @@ const App: React.FC = () => {
 
         {/* Dashboard Routes — AdsGo full-bleed pages */}
         <Route path="/crm" element={<ProtectedRoute><DarkDashboardLayoutFull><Crm /></DarkDashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/approvals" element={<ProtectedRoute><DashboardLayoutFull><ApprovalsPage /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/coworkers" element={<ProtectedRoute><DashboardLayoutFull><CoworkersPage /></DashboardLayoutFull></ProtectedRoute>} />
+        <Route path="/coworkers/:id" element={<ProtectedRoute><DashboardLayoutFull><CoworkersPage /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/campaigns" element={<ProtectedRoute><CampaignLayout><Campaigns /></CampaignLayout></ProtectedRoute>} />
         <Route path="/templates" element={<ProtectedRoute><DashboardLayoutFull><Templates /></DashboardLayoutFull></ProtectedRoute>} />
         <Route path="/content" element={<ProtectedRoute><DashboardLayoutFull><Content /></DashboardLayoutFull></ProtectedRoute>} />

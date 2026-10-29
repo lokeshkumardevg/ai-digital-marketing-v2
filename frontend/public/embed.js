@@ -1,11 +1,16 @@
 (function() {
     // Configuration
     const script = document.currentScript;
-    const agentId = script.getAttribute('data-agent-id');
-    const baseUrl = window.location.origin; // Assuming the script is served from the same domain as the app
-    // In production, you'd replace this with the actual production URL
-    const productionUrl = 'http://localhost:5173'; 
-    const embedUrl = `${productionUrl}/chatbot-embed/${agentId}`;
+    const agentId = script ? script.getAttribute('data-agent-id') : null;
+    const brandColor = (script && script.getAttribute('data-color')) || '#0665ff';
+    const position = (script && script.getAttribute('data-position')) === 'left' ? 'left' : 'right';
+    
+    // Compute server URL dynamically from script source location
+    const scriptSrc = script ? script.src : '';
+    const serverUrl = scriptSrc && scriptSrc.startsWith('http') 
+        ? new URL(scriptSrc).origin 
+        : (window.location.origin.includes('localhost') ? 'http://localhost:5173' : 'https://wheedletechnologies.tech');
+    const embedUrl = `${serverUrl}/chatbot-embed/${agentId}`;
 
     if (!agentId) {
         console.error('AI Chatbot: data-agent-id is missing');
@@ -16,8 +21,8 @@
     const styles = `
         #ai-chatbot-widget {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 24px;
+            ${position === 'left' ? 'left: 24px;' : 'right: 24px;'}
             z-index: 999999;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
@@ -25,8 +30,8 @@
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: #8b5cf6;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: ${brandColor};
+            box-shadow: 0 6px 20px ${brandColor}66, 0 8px 30px rgba(0,0,0,0.18);
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -43,8 +48,8 @@
         }
         #ai-chatbot-container {
             position: fixed;
-            bottom: 90px;
-            right: 20px;
+            bottom: 96px;
+            ${position === 'left' ? 'left: 24px;' : 'right: 24px;'}
             width: 380px;
             height: 600px;
             max-height: calc(100vh - 120px);

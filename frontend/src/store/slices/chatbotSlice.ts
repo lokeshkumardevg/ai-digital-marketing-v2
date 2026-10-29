@@ -16,6 +16,11 @@ export const fetchBotById = createAsyncThunk('chatbot/fetchBotById', async (id: 
   return response.data;
 });
 
+export const deleteBot = createAsyncThunk('chatbot/deleteBot', async (id: string) => {
+  await api.delete(`/chatbot/${id}`);
+  return id;
+});
+
 const chatbotSlice = createSlice({
   name: 'chatbot',
   initialState: {
@@ -56,6 +61,9 @@ const chatbotSlice = createSlice({
         } else {
           state.bots.push(action.payload as never);
         }
+      })
+      .addCase(deleteBot.fulfilled, (state, action) => {
+        state.bots = state.bots.filter((b: any) => b._id !== action.payload);
       });
   },
 });

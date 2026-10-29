@@ -135,7 +135,7 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   /* Subtle mesh gradient background */
   background-image:
     radial-gradient(circle at top, var(--body-gradient-1), transparent 40%),
@@ -385,5 +385,86 @@ html.light .logo-text {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ── SweetAlert2 Premium Theme Customization ── */
+.swal2-popup.swal-custom-dark {
+  background: var(--bg-card, #0f172a) !important;
+  color: var(--text-primary, #ffffff) !important;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12)) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(16px) !important;
+  font-family: 'Inter', sans-serif !important;
+  padding: 26px 24px !important;
+}
+
+.swal2-title {
+  color: var(--text-primary, #ffffff) !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 19px !important;
+  font-weight: 800 !important;
+  margin-top: 10px !important;
+}
+
+.swal2-html-container {
+  color: var(--text-secondary, #94a3b8) !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+}
+
+.swal2-actions {
+  gap: 10px !important;
+  margin-top: 22px !important;
+}
+
+.swal2-confirm.swal-btn-danger {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  padding: 10px 22px !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4) !important;
+  border: none !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+}
+
+.swal2-confirm.swal-btn-success {
+  background: #25D366 !important;
+  color: #000000 !important;
+  font-weight: 800 !important;
+  border-radius: 10px !important;
+  padding: 10px 22px !important;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.4) !important;
+  border: none !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+}
+
+.swal2-cancel.swal-btn-cancel {
+  background: var(--bg-elevated, #1e293b) !important;
+  color: var(--text-secondary, #94a3b8) !important;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1)) !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  padding: 10px 20px !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+}
+
+.swal2-input {
+  background: var(--bg-elevated, #1e293b) !important;
+  color: var(--text-primary, #ffffff) !important;
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15)) !important;
+  border-radius: 10px !important;
+  font-size: 13.5px !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+}
+
+.swal2-input:focus {
+  border-color: #25D366 !important;
+  box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.25) !important;
 }
 

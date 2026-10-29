@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ChatbotService } from './chatbot.service';
 
@@ -22,6 +22,12 @@ export class ChatbotController {
   @Get(':id')
   async getChatbot(@Param('id') id: string) {
     return this.chatbotService.getChatbotById(id);
+  }
+
+  @Delete(':id')
+  async deleteChatbot(@Param('id') id: string, @Req() req: any) {
+    const userId = req.user?.id;
+    return this.chatbotService.deleteChatbot(id, userId);
   }
 
   @Post(':id/chat')

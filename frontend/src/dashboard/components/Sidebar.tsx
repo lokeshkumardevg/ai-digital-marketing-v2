@@ -13,6 +13,7 @@ import {
   GitBranch,
   CreditCard,
   ShieldAlert,
+  ShieldCheck,
   Search,
   Bell,
   Presentation as PresentationIcon,
@@ -31,6 +32,7 @@ import {
 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { refreshUserProfile, stopImpersonating } from '../../store/slices/authSlice';
+import { fetchPendingCount } from '../../store/slices/approvalsSlice';
 import type { AppDispatch } from '../../store';
 
 interface SubItem {
@@ -63,6 +65,23 @@ const MENU_CATEGORIES: MenuCategory[] = [
       { path: '/crm', label: 'Home Matrix', icon: LayoutDashboard, permission: 'dashboard' },
       { path: '/campaigns', label: 'New Campaign', icon: Megaphone, permission: 'ads', highlight: true },
       { path: '/presentation', label: 'Client Presentation', icon: PresentationIcon, permission: 'dashboard' },
+    ],
+  },
+  {
+    title: 'AI Coworkers & Governance',
+    items: [
+      {
+        label: 'Coworkers',
+        icon: Users,
+        permission: 'automation',
+        subItems: [
+          { path: '/coworkers/max', label: 'Max (Growth)' },
+          { path: '/coworkers/stella', label: 'Stella (Presence)' },
+          { path: '/coworkers/atlas', label: 'Atlas (Operations)' },
+          { path: '/coworkers/echo', label: 'Echo (Experience)' },
+        ],
+      },
+      { path: '/approvals', label: 'Approvals Queue', icon: ShieldCheck, permission: 'automation', highlight: true },
     ],
   },
   {
@@ -166,21 +185,27 @@ export const Sidebar: React.FC = () => {
   const adminUser = useSelector((state: any) => state.auth.adminUser);
   const isImpersonating = Boolean(adminUser || user?.isImpersonated);
   const { unreadCount } = useSelector((state: any) => state.notifications);
+  const pendingApprovalsCount = useSelector((state: any) => state.approvals?.pendingCount || 0);
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     dispatch(refreshUserProfile());
+    dispatch(fetchPendingCount());
   }, [location.pathname, dispatch]);
 
   // Clone categories and attach dynamic notification badge
   const categories: MenuCategory[] = MENU_CATEGORIES.map((cat) => ({
     ...cat,
-    items: cat.items.map((item) =>
-      item.path === '/notifications'
-        ? { ...item, badge: unreadCount > 0 ? unreadCount : null }
-        : item
-    ),
+    items: cat.items.map((item) => {
+      if (item.path === '/notifications') {
+        return { ...item, badge: unreadCount > 0 ? unreadCount : null };
+      }
+      if (item.path === '/approvals') {
+        return { ...item, badge: pendingApprovalsCount > 0 ? pendingApprovalsCount : null };
+      }
+      return item;
+    }),
   }));
 
   // Find initially active submenu across all categories

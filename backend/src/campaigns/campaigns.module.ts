@@ -28,5 +28,6 @@ import { CampaigndSchema } from './schemas/campaind.schema';
   ],
   providers: [CampaignService, CampaignCronService],
   controllers: [CampaignController],
+  exports: [CampaignService],
 })
 export class CampaignModule {}

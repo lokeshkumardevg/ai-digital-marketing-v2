@@ -170,7 +170,7 @@ const DashboardPage: React.FC = () => {
 
   const ratingData = [1, 2, 3, 4, 5].map(r => ({
     star: `${r} Star`,
-    count: (stats.ratingDistribution as Record<string, number>)?.[r] || 0,
+    count: (stats.ratingDistribution as Record<string, number>)?.[String(r)] || 0,
   }));
 
   const trendData = (stats.trend || []).map(t => ({

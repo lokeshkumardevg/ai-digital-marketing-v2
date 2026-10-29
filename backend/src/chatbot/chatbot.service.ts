@@ -42,6 +42,16 @@ export class ChatbotService {
     return chatbot as any;
   }
 
+  async deleteChatbot(id: string, userId?: string): Promise<{ success: boolean; message: string }> {
+    const filter: any = { _id: id };
+    if (userId) filter.userId = userId;
+    const result = await this.chatbotModel.findOneAndDelete(filter).exec();
+    if (!result) {
+      throw new NotFoundException('Chatbot not found or access denied');
+    }
+    return { success: true, message: 'Chatbot deleted successfully' };
+  }
+
   /**
    * Processes an incoming message for a specific chatbot instance using its custom System Prompt.
    */

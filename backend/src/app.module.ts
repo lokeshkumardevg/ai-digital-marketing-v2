@@ -38,6 +38,7 @@ import { MetaReviewsModule } from './meta-reviews/meta-reviews.module';
 import { UploadModule } from './upload/upload.module';
 import { ReviewAgentModule } from './reviewagent/reviewagent.module';
 import { LogsModule } from './logs/logs.module';
+import { PlatformModule } from './platform/platform.module';
 
 @Module({
   imports: [
@@ -97,7 +98,8 @@ import { LogsModule } from './logs/logs.module';
     GoogleBusinessModule,
     MetaReviewsModule,
     UploadModule,
-    ReviewAgentModule
+    ReviewAgentModule,
+    PlatformModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppLogger],
