@@ -165,11 +165,42 @@ export class OrchestratorService implements OnModuleInit {
 
   /**
    * Generates structured proposed actions based on agent specialty.
+   * Directly bridges to Python FastAPI Microservice with resilient local fallback.
    */
   private async generateAgentAction(
     agent: any,
     payload: Record<string, any>,
   ): Promise<{ actionType: string; summary: string; targetId?: string; payload: any }> {
+    // 1. Try invoking the dedicated Python AI microservice first
+    const pythonEndpoint = process.env.AI_AGENTS_URL || 'http://localhost:8003';
+    try {
+      const response = await fetch(`${pythonEndpoint}/api/v1/agents/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          coworker: agent.coworker,
+          agent_id: agent.agentId,
+          inputs: payload,
+        }),
+        signal: AbortSignal.timeout(3000),
+      });
+
+      if (response.ok) {
+        const result: any = await response.json();
+        if (result && result.proposed_action?.actionType) {
+          this.logger.log(`[PYTHON BRAIN DISPATCH] Agent ${agent.agentId} proposed action: ${result.proposed_action.actionType}`);
+          return {
+            actionType: result.proposed_action.actionType,
+            summary: result.summary || `${agent.name} executed successfully`,
+            targetId: result.proposed_action.payload?.targetId || payload.id || `act_${Date.now()}`,
+            payload: result.proposed_action.payload || result.data || payload,
+          };
+        }
+      }
+    } catch {
+      // Python service offline or test mode: smoothly fall back to local handlers
+    }
+
     switch (agent.agentId) {
       // ── REVIEW RESPONSE AGENT ──
       case 'review_response': {

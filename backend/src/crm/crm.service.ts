@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Contact, ContactDocument } from './schemas/contact.schema';
 import { Audience, AudienceDocument } from './schemas/audience.schema';
 import { AiService } from '../ai/ai.service'; // Inject AI Service
+import { PlatformEventBusService } from '../platform/event-bus/platform-event-bus.service';
 
 @Injectable()
 export class CrmService {
@@ -13,11 +14,34 @@ export class CrmService {
     @InjectModel(Contact.name) private contactModel: Model<ContactDocument>,
     @InjectModel(Audience.name) private audienceModel: Model<AudienceDocument>,
     private readonly aiService: AiService,
+    @Optional() private readonly eventBus?: PlatformEventBusService,
   ) {}
 
   async createContact(data: Partial<Contact>): Promise<Contact> {
     const contact = new this.contactModel(data);
-    return await contact.save();
+    const saved = await contact.save();
+
+    if (this.eventBus) {
+      try {
+        await this.eventBus.publish({
+          eventType: 'lead.created',
+          idempotencyKey: `lead_${saved._id || Date.now()}`,
+          orgId: (saved as any).userId?.toString() || 'default_org',
+          payload: {
+            contactId: saved._id,
+            name: `${(saved as any).firstName || ''} ${(saved as any).lastName || ''}`.trim() || 'New Lead',
+            email: (saved as any).email,
+            phone: (saved as any).phone,
+            source: (saved as any).source || 'CRM Direct',
+            status: (saved as any).status || 'Lead',
+          },
+        });
+      } catch (err: any) {
+        this.logger.warn(`Failed to publish lead.created: ${err.message}`);
+      }
+    }
+
+    return saved;
   }
 
   async getAllContacts(userId: string): Promise<Contact[]> {

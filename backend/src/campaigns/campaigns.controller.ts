@@ -67,6 +67,21 @@ export class CampaignController {
     }
   }
 
+  @Post('ai-enhance')
+  async aiEnhance(@Body() body: {
+    brandName: string;
+    industry: string;
+    websiteUrl: string;
+    platforms: string[];
+    budget: number;
+    objective: string;
+    keywords?: string[];
+    competitors?: string[];
+    adCopy?: { headlines?: string[]; primaryTexts?: string[] };
+  }) {
+    return this.service.aiEnhanceCampaign(body);
+  }
+
   @Post('optimize')
   @UseGuards(AuthGuard('jwt'))
   async optimizeCampaign(@Body() body: any, @Req() req: any) {

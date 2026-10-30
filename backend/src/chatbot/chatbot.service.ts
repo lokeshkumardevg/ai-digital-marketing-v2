@@ -1,8 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection } from 'mongoose';
 import { Chatbot, ChatbotDocument } from './schemas/chatbot.schema';
 import { AiService } from '../ai/ai.service'; // Ensure Orchestrator is wired
+import { PlatformEventBusService } from '../platform/event-bus/platform-event-bus.service';
 
 @Injectable()
 export class ChatbotService {
@@ -15,6 +16,7 @@ export class ChatbotService {
     @InjectModel('Review') private reviewModel: Model<any>,
     private readonly aiService: AiService,
     @InjectConnection() private readonly connection: Connection,
+    @Optional() private readonly eventBus?: PlatformEventBusService,
   ) {}
 
   async getAllChatbots(userId?: string): Promise<Chatbot[]> {
@@ -265,6 +267,28 @@ Current Balance: ${wallet.balance || 0}`;
       
       // Update analytics async
       this.chatbotModel.findByIdAndUpdate(chatbotId, { $inc: { totalConversations: 1 } }).exec().catch();
+
+      // Check if user shared contact details or requested appointment
+      if (this.eventBus) {
+        const phoneMatch = message.match(/(\+?\d{10,13})/);
+        const emailMatch = message.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+        const isBookingSignal = /(appointment|book|schedule|consultation|call me|contact me)/i.test(message);
+
+        if (phoneMatch || emailMatch || isBookingSignal) {
+          this.eventBus.publish({
+            eventType: 'lead.created',
+            idempotencyKey: `chat_lead_${chatbotId}_${Date.now()}`,
+            orgId: userId || 'web_visitor',
+            payload: {
+              source: 'Web Chatbot',
+              phone: phoneMatch ? phoneMatch[0] : undefined,
+              email: emailMatch ? emailMatch[0] : undefined,
+              message,
+              chatbotId,
+            },
+          }).catch(() => {});
+        }
+      }
 
       return { reply: response };
     } catch (error) {

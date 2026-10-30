@@ -117,6 +117,60 @@ export class ActionExecutorService {
           break;
         }
 
+        // ── 6. ATLAS: Send Appointment Reminder (WhatsApp/SMS) ──
+        case 'send_reminder': {
+          this.logger.log(`Dispatching appointment reminder to ${dto.payload?.to || dto.payload?.phone || 'customer'}`);
+          executionResult = {
+            channel: dto.payload?.channel || 'whatsapp',
+            recipient: dto.payload?.to || dto.payload?.customer_name,
+            messageSnippet: (dto.payload?.reminder_message || dto.payload?.message || '').slice(0, 60),
+            status: 'reminder_dispatched',
+            timestamp: new Date().toISOString(),
+          };
+          break;
+        }
+
+        // ── 7. STELLA: Send Review Request ──
+        case 'send_review_request': {
+          this.logger.log(`Sending compliant review invite via ${dto.payload?.channel || 'whatsapp'}`);
+          executionResult = {
+            channel: dto.payload?.channel || 'whatsapp',
+            recipient: dto.payload?.to || dto.payload?.phone,
+            status: 'review_invite_sent',
+            timestamp: new Date().toISOString(),
+          };
+          break;
+        }
+
+        // ── 8. ECHO: Create Support Ticket with SLA ──
+        case 'create_support_ticket': {
+          this.logger.log(`Creating support ticket for negative feedback (SLA: 24h)`);
+          executionResult = {
+            ticketId: `TCK_${Date.now().toString().slice(-6)}`,
+            title: dto.payload?.ticket?.title || 'Customer Escalation Ticket',
+            priority: dto.payload?.ticket?.priority || 'high',
+            slaHours: 24,
+            assignedTo: dto.payload?.manager_alert?.manager || 'Location Lead',
+            status: 'ticket_created',
+            timestamp: new Date().toISOString(),
+          };
+          break;
+        }
+
+        // ── 9. ECHO: Executive KPI Briefing Report ──
+        case 'generate_report':
+        case 'deliver_executive_briefing': {
+          this.logger.log(`Compiling executive performance report for ${dto.payload?.brand_name || dto.orgId}`);
+          executionResult = {
+            reportId: `REP_${Date.now()}`,
+            reportType: dto.payload?.report_type || 'weekly',
+            pdfReady: true,
+            status: 'report_generated',
+            timestamp: new Date().toISOString(),
+          };
+          break;
+        }
+
         default: {
           this.logger.log(`Generic executor handled: ${dto.actionType}`);
           executionResult = { actionType: dto.actionType, executed: true, at: new Date() };

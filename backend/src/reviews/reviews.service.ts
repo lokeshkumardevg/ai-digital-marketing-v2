@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import OpenAI from 'openai';
+import { PlatformEventBusService } from '../platform/event-bus/platform-event-bus.service';
  
 @Injectable()
 export class ReviewsService {
@@ -10,6 +11,7 @@ export class ReviewsService {
  
   constructor(
     @InjectModel('Review') private reviewModel: Model<any>,
+    @Optional() private readonly eventBus?: PlatformEventBusService,
   ) {}
  
   // ─── GET ALL REVIEWS ──────────────────────────────────────
@@ -143,6 +145,25 @@ export class ReviewsService {
     }));
  
     await this.reviewModel.insertMany(docs);
+
+    if (this.eventBus) {
+      const firstPending = docs.find((d) => !d.isReplied);
+      if (firstPending) {
+        this.eventBus.publish({
+          eventType: 'review.created',
+          idempotencyKey: `rev_seed_${firstPending.reviewerName}_${Date.now()}`,
+          orgId: brandId,
+          payload: {
+            reviewerName: firstPending.reviewerName,
+            rating: firstPending.rating,
+            reviewText: firstPending.content,
+            platform: firstPending.platform,
+            reviewDate: firstPending.reviewDate,
+          },
+        }).catch((err) => this.logger.warn(`Failed to publish review.created: ${err.message}`));
+      }
+    }
+
     return { seeded: true, count: docs.length };
   }
  

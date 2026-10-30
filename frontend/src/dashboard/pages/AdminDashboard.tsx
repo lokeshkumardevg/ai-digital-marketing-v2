@@ -16,6 +16,7 @@ import {
   Eye
 } from 'lucide-react';
 import { PageLoader } from '../components/Loader';
+import { AgentFleetHealthSection } from '../components/AgentFleetHealthSection';
 
 const D = {
   bg: '#0a0f1e',
@@ -253,6 +254,9 @@ export const AdminDashboard: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Autonomous AI Agents Fleet Health Section (Superadmin / Admin exclusive) */}
+      <AgentFleetHealthSection />
 
       {/* Clients Overview Section */}
       <div style={{ background: D.surface, border: `1px solid ${D.border}`, borderRadius: '20px', padding: '24px' }}>

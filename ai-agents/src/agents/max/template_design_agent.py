@@ -34,7 +34,11 @@ async def run_template_design_agent(
     brand_name = brand_profile.get("name", "Your Brand")
     industry = brand_profile.get("industry", "healthcare")
     tone = brand_profile.get("tone", "professional and warm")
-    colors = brand_profile.get("colors", {"primary": "#1a73e8", "secondary": "#ffffff"})
+    raw_colors = brand_profile.get("colors", {"primary": "#1a73e8", "secondary": "#ffffff"})
+    if isinstance(raw_colors, dict):
+        colors = raw_colors
+    else:
+        colors = {"primary": str(raw_colors), "secondary": "#ffffff"}
     tagline = brand_profile.get("tagline", "Your Health, Our Priority")
 
     if template_type not in VALID_TEMPLATE_TYPES:

@@ -63,6 +63,10 @@ interface BrandDetails {
   website?: string;
   websiteAudit?: any; keywords?: any; competition?: any;
   analyticsDashboard?: any; budget?: any; auditData?: any;
+  adCopy?: { headlines?: string[]; primaryTexts?: string[]; callToAction?: string };
+  plan?: any;
+  brandContext?: any;
+  competitorData?: any;
   assets?: BrandAssets;
 }
 
@@ -850,21 +854,62 @@ const BrandValueCard: React.FC<{ brand: BrandDetails }> = ({ brand }) => {
 const EditablePromoObjective: React.FC<{
   brandName: string;
   initialData: PromoObjectiveData;
+  brandDetails?: BrandDetails | null;
   onGenerate: (data: PromoObjectiveData) => void;
   onDecline: () => void;
-  user: any
-}> = ({ brandName, initialData, onGenerate, onDecline: _onDecline, user }) => {
+  user: any;
+}> = ({ brandName, initialData, brandDetails, onGenerate, onDecline: _onDecline, user }) => {
   const [data, setData] = useState<PromoObjectiveData>(initialData);
   const [submitted, setSubmitted] = useState(false);
+  const [activeTab, setActiveTab] = useState<'strategy' | 'adCopy' | 'insights'>('strategy');
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhanceSuccess, setEnhanceSuccess] = useState(false);
+
   const businessTypes = ['Online Shopping', 'Solution & Online Service', 'Local Store & Service', 'App'];
   const set = (key: keyof PromoObjectiveData, val: any) => setData(prev => ({ ...prev, [key]: val }));
+
+  const handleAiEnhance = async () => {
+    setIsEnhancing(true);
+    setEnhanceSuccess(false);
+    try {
+      const res = await axios.post(`${API_BASE}/campaign/ai-enhance`, {
+        brandName,
+        industry: brandDetails?.brand?.industry || brandDetails?.industry || 'General Business',
+        websiteUrl: brandDetails?.website || data.finalUrl || '',
+        platforms: data.platforms || ['meta', 'google'],
+        budget: data.dailyBudget || 35,
+        objective: data.businessGoal || 'Sales',
+        keywords: brandDetails?.keywords?.primary || [],
+        competitors: brandDetails?.competition?.competitors?.map((c: any) => c.name) || [],
+      });
+
+      const copyData = res.data?.data;
+      if (copyData) {
+        if (copyData.headlines?.length) {
+          set('headlines', copyData.headlines);
+        }
+        if (copyData.primary_texts?.length) {
+          set('primaryTexts', copyData.primary_texts);
+        }
+        if (copyData.call_to_action) {
+          set('callToAction', copyData.call_to_action);
+        }
+        setEnhanceSuccess(true);
+        setTimeout(() => setEnhanceSuccess(false), 3000);
+      }
+    } catch (e) {
+      console.error('Failed to AI-enhance ad copy with Max Agent:', e);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
   const PLATFORM_OPTIONS = [
     {
       value: 'meta',
       label: 'Meta',
       icon: <FacebookIcon />,
       connected: !!user?.metaAccessToken,
-
     },
     {
       value: 'google',
@@ -905,87 +950,233 @@ const EditablePromoObjective: React.FC<{
       </div>
       <div className="promo-obj-header">
         <div className="promo-obj-icon"><Rocket size={22} /></div>
-        <div>
+        <div style={{ flex: 1 }}>
           <h3>Promotion Objective</h3>
-          <p>AI-analyzed <strong>{brandName}</strong> — edit any field below</p>
+          <p>AI-analyzed <strong>{brandName}</strong> — review & customize campaign</p>
         </div>
+        <button
+          type="button"
+          className="promo-ai-enhance-btn"
+          onClick={handleAiEnhance}
+          disabled={isEnhancing}
+          title="Regenerate copy with Max AI Ads Agent"
+        >
+          {isEnhancing ? (
+            <><Loader2 size={13} className="camp-spin" /> Max Agent Enhancing...</>
+          ) : enhanceSuccess ? (
+            <><CheckCircle2 size={13} color="#10b981" /> Copy Enhanced!</>
+          ) : (
+            <><Brain size={13} /> Enhance with Max AI</>
+          )}
+        </button>
       </div>
-      <div className="promo-obj-grid">
-        <div className="promo-field">
-          <label>Business Type</label>
-          <select className="promo-select" value={data.businessType} onChange={e => set('businessType', e.target.value)}>
-            {businessTypes.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-        <div className="promo-field">
-          <label>Ad Performance Goal</label>
-          <select className="promo-select" value={data.adGoal} onChange={e => set('adGoal', e.target.value)}>
-            {['In-web actions', 'Brand awareness', 'Lead generation', 'App installs', 'Video views', 'Store visits'].map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-        </div>
-        <div className="promo-field">
-          <label>Business Goal</label>
-          <select className="promo-select" value={data.businessGoal} onChange={e => set('businessGoal', e.target.value)}>
-            {['Sales', 'Lead generation', 'Brand awareness', 'Customer retention', 'App growth', 'Traffic'].map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-        </div>
-        <div className="promo-field">
-          <label>Target Locations</label>
-          <input className="promo-input" value={data.targetLocations} onChange={e => set('targetLocations', e.target.value)} placeholder="e.g. India, USA" />
-        </div>
-        <div className="promo-field">
-          <label>Ad Platforms</label>
 
-          <div className="promo-platform-row">
-            {PLATFORM_OPTIONS.map(p => {
-              const isActive = data.platforms?.includes(p.value);
+      {/* Navigation Sub-Tabs */}
+      <div className="promo-sub-tabs">
+        <button
+          type="button"
+          className={`promo-sub-tab ${activeTab === 'strategy' ? 'active' : ''}`}
+          onClick={() => setActiveTab('strategy')}
+        >
+          🎯 Strategy & Platforms
+        </button>
+        <button
+          type="button"
+          className={`promo-sub-tab ${activeTab === 'adCopy' ? 'active' : ''}`}
+          onClick={() => setActiveTab('adCopy')}
+        >
+          ✍️ AI Ad Copy ({data.headlines?.length || 3})
+        </button>
+        <button
+          type="button"
+          className={`promo-sub-tab ${activeTab === 'insights' ? 'active' : ''}`}
+          onClick={() => setActiveTab('insights')}
+        >
+          🧠 Max Deep Insights
+        </button>
+      </div>
 
-              return (
-                <div key={p.value} className="platform-wrapper">
-                  <button
-                    type="button"
-                    className={`promo-plat-btn ${isActive ? 'active' : ''}`}
-                    onClick={() => {
-
-                      const current = data.platforms || [];
-
-                      const updated = isActive
-                        ? current.filter(v => v !== p.value)
-                        : [...current, p.value];
-
-                      set('platforms', updated);
-                    }}
-                  >
-                    {p.icon}
-                    <span>{p.label}</span>
-                  </button>
-
-                  {/* 👇 Tooltip */}
-                  {!p.connected && (
-                    <div className="platform-tooltip">
-                      Please connect {p.label} account in AdStudio first
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+      {/* Tab 1: Strategy & Platforms */}
+      {activeTab === 'strategy' && (
+        <div className="promo-obj-grid">
+          <div className="promo-field">
+            <label>Business Type</label>
+            <select className="promo-select" value={data.businessType} onChange={e => set('businessType', e.target.value)}>
+              {businessTypes.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="promo-field">
+            <label>Ad Performance Goal</label>
+            <select className="promo-select" value={data.adGoal} onChange={e => set('adGoal', e.target.value)}>
+              {['In-web actions', 'Brand awareness', 'Lead generation', 'App installs', 'Video views', 'Store visits'].map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div className="promo-field">
+            <label>Business Goal</label>
+            <select className="promo-select" value={data.businessGoal} onChange={e => set('businessGoal', e.target.value)}>
+              {['Sales', 'Lead generation', 'Brand awareness', 'Customer retention', 'App growth', 'Traffic'].map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div className="promo-field">
+            <label>Target Locations</label>
+            <input className="promo-input" value={data.targetLocations} onChange={e => set('targetLocations', e.target.value)} placeholder="e.g. India, USA" />
+          </div>
+          <div className="promo-field">
+            <label>Ad Platforms</label>
+            <div className="promo-platform-row">
+              {PLATFORM_OPTIONS.map(p => {
+                const isActive = data.platforms?.includes(p.value);
+                return (
+                  <div key={p.value} className="platform-wrapper">
+                    <button
+                      type="button"
+                      className={`promo-plat-btn ${isActive ? 'active' : ''}`}
+                      onClick={() => {
+                        const current = data.platforms || [];
+                        const updated = isActive
+                          ? current.filter(v => v !== p.value)
+                          : [...current, p.value];
+                        set('platforms', updated);
+                      }}
+                    >
+                      {p.icon}
+                      <span>{p.label}</span>
+                    </button>
+                    {!p.connected && (
+                      <div className="platform-tooltip">
+                        Please connect {p.label} account in AdStudio first
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="promo-field">
+            <label>Promotion Type</label>
+            <select className="promo-select" value={data.promotionType} onChange={e => set('promotionType', e.target.value)}>
+              {['Long-term', 'Short-term', 'Seasonal', 'Event-based', 'Always-on'].map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div className="promo-field promo-field-full">
+            <label>Suggested Daily Limit (USD)</label>
+            <div className="promo-budget-row">
+              <input className="promo-input promo-budget-input" type="number" min={1}
+                value={data.dailyBudget} onChange={e => set('dailyBudget', Number(e.target.value))} />
+              <span className="promo-budget-unit">USD / day</span>
+            </div>
           </div>
         </div>
-        <div className="promo-field">
-          <label>Promotion Type</label>
-          <select className="promo-select" value={data.promotionType} onChange={e => set('promotionType', e.target.value)}>
-            {['Long-term', 'Short-term', 'Seasonal', 'Event-based', 'Always-on'].map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-        </div>
-        <div className="promo-field promo-field-full">
-          <label>Suggested Daily Limit (USD)</label>
-          <div className="promo-budget-row">
-            <input className="promo-input promo-budget-input" type="number" min={1}
-              value={data.dailyBudget} onChange={e => set('dailyBudget', Number(e.target.value))} />
-            <span className="promo-budget-unit">USD / day</span>
+      )}
+
+      {/* Tab 2: AI Ad Copy Preview & Editor */}
+      {activeTab === 'adCopy' && (
+        <div className="promo-ad-copy-section">
+          <div className="promo-copy-group">
+            <div className="promo-copy-label">
+              <span>Headlines (Google & Meta Ads)</span>
+              <span className="promo-copy-tag">Generated by Max Agent</span>
+            </div>
+            {(data.headlines || []).map((h, i) => (
+              <div key={i} className="promo-copy-row">
+                <span className="promo-copy-num">H{i + 1}</span>
+                <input
+                  className="promo-input promo-copy-input"
+                  value={h}
+                  onChange={e => {
+                    const next = [...(data.headlines || [])];
+                    next[i] = e.target.value;
+                    set('headlines', next);
+                  }}
+                  placeholder="Headline..."
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="promo-copy-group">
+            <div className="promo-copy-label">
+              <span>Primary Ad Texts / Captions</span>
+              <span className="promo-copy-tag">Optimized for CTR</span>
+            </div>
+            {(data.primaryTexts || []).map((t, i) => (
+              <div key={i} className="promo-copy-row">
+                <span className="promo-copy-num">T{i + 1}</span>
+                <textarea
+                  rows={2}
+                  className="promo-input promo-copy-textarea"
+                  value={t}
+                  onChange={e => {
+                    const next = [...(data.primaryTexts || [])];
+                    next[i] = e.target.value;
+                    set('primaryTexts', next);
+                  }}
+                  placeholder="Ad description text..."
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="promo-field">
+            <label>Call to Action Button</label>
+            <select
+              className="promo-select"
+              value={data.callToAction || 'Learn More'}
+              onChange={e => set('callToAction', e.target.value)}
+            >
+              {['Learn More', 'Get Started', 'Sign Up', 'Contact Us', 'Book Now', 'Shop Now'].map(cta => (
+                <option key={cta} value={cta}>{cta}</option>
+              ))}
+            </select>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Tab 3: Max Deep Insights */}
+      {activeTab === 'insights' && (
+        <div className="promo-insights-section">
+          {brandDetails?.keywords?.primary?.length > 0 && (
+            <div className="promo-insight-block">
+              <div className="promo-insight-title">
+                <Brain size={14} color="#60a5fa" /> Top Keywords Target by Max Deep Research:
+              </div>
+              <div className="promo-kw-chips">
+                {brandDetails.keywords.primary.slice(0, 10).map((kw: string, idx: number) => (
+                  <span key={idx} className="promo-kw-chip">#{kw}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {brandDetails?.competition?.competitors?.length > 0 && (
+            <div className="promo-insight-block">
+              <div className="promo-insight-title">
+                <TrendingUp size={14} color="#34d399" /> Competitor Positioning Gaps to Exploit:
+              </div>
+              <div className="promo-comp-gaps">
+                {brandDetails.competition.competitors.slice(0, 3).map((comp: any, idx: number) => (
+                  <div key={idx} className="promo-comp-row">
+                    <strong>{comp.name}</strong>: {comp.weaknesses?.[0] ? `Weakness: ${comp.weaknesses[0]}` : 'Less automated outreach'}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {brandDetails?.budget?.estimatedCPCRange && (
+            <div className="promo-insight-block">
+              <div className="promo-insight-title">
+                <DollarSign size={14} color="#f59e0b" /> Estimated CPC & Channels:
+              </div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                Target CPC: <strong>{brandDetails.budget.estimatedCPCRange}</strong> &nbsp;·&nbsp;
+                Estimated ROI: <strong>{brandDetails.budget.roiPotential || '3x - 5x'}</strong>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="promo-benefits">
         {['AI-optimized budget allocation', 'Multi-platform campaign setup', 'Real-time performance tracking', 'Automatic ROI optimization'].map(item => (
           <div key={item} className="promo-benefit-row">
@@ -1321,19 +1512,37 @@ export const Campaigns: React.FC = () => {
       targetLocations: 'India',
       platform: 'meta',
       promotionType: 'Long-term',
-      dailyBudget: 35,
-      platforms: ['meta', 'google'],
+      dailyBudget: (() => {
+        if (typeof updatedBrand.budget?.estimatedAdSpend === 'string') {
+          const match = updatedBrand.budget.estimatedAdSpend.match(/\$?(\d+)/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > 100) return Math.min(150, Math.max(25, Math.round(num / 30)));
+            return num;
+          }
+        }
+        return 35;
+      })(),
+      platforms: (updatedBrand.budget?.recommendedChannels?.length
+        ? updatedBrand.budget.recommendedChannels
+            .map((c: string) => c.toLowerCase().includes('google') ? 'google' : c.toLowerCase().includes('meta') ? 'meta' : c.toLowerCase().includes('linkedin') ? 'linkedin' : c.toLowerCase().includes('twitter') ? 'twitter' : null)
+            .filter(Boolean)
+        : ['meta', 'google']) as string[],
       finalUrl: data.brandUrl,
-      headlines: [
-        `Discover ${data.brandName} Today`,
-        `Trusted by Thousands — ${data.brandName}`,
-        `Get Started with ${data.brandName}`,
-      ],
-      primaryTexts: [
-        `Discover our latest campaign — built for results.`,
-        `Affordable and trusted solutions from ${data.brandName}.`,
-      ],
-      callToAction: 'Learn More',
+      headlines: updatedBrand.adCopy?.headlines?.length
+        ? updatedBrand.adCopy.headlines
+        : [
+            `Discover ${data.brandName} Today`,
+            `Trusted by Thousands — ${data.brandName}`,
+            `Get Started with ${data.brandName}`,
+          ],
+      primaryTexts: updatedBrand.adCopy?.primaryTexts?.length
+        ? updatedBrand.adCopy.primaryTexts
+        : [
+            `Discover our latest campaign — built for results.`,
+            `Affordable and trusted solutions from ${data.brandName}.`,
+          ],
+      callToAction: updatedBrand.adCopy?.callToAction || 'Learn More',
     };
 
     const newMsgs: Omit<Message, 'id'>[] = [
@@ -1703,6 +1912,7 @@ export const Campaigns: React.FC = () => {
                           <EditablePromoObjective
                             brandName={msg.content?.brandName}
                             initialData={msg.content?.promoData}
+                            brandDetails={brandDetails}
                             onGenerate={handleGenerateCampaign}
                             onDecline={handleCampaignDecline}
                             user={user}
@@ -1937,6 +2147,28 @@ const CSS = `
   .promo-obj-icon { width: 48px; height: 48px; border-radius: 14px; background: rgba(92,151,246,0.15); border: 1px solid rgba(92,146,246,0.3); display: flex; align-items: center; justify-content: center; color: #0066ff; flex-shrink: 0; }
   .promo-obj-header h3 { margin: 0 0 4px; font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
   .promo-obj-header p { margin: 0; font-size: 0.78rem; color: var(--text-dim); }
+  .promo-ai-enhance-btn { display: flex; align-items: center; gap: 6px; padding: 7px 12px; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.4); border-radius: 9px; color: #93c5fd; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .promo-ai-enhance-btn:hover:not(:disabled) { background: rgba(59,130,246,0.25); border-color: #60a5fa; color: #ffffff; }
+  .promo-ai-enhance-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+  .promo-sub-tabs { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; overflow-x: auto; }
+  .promo-sub-tab { padding: 6px 12px; background: transparent; border: 1px solid transparent; border-radius: 8px; font-size: 0.78rem; font-weight: 600; color: var(--text-dim); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .promo-sub-tab:hover { color: var(--text-primary); }
+  .promo-sub-tab.active { background: rgba(59,130,246,0.15); border-color: rgba(59,130,246,0.3); color: #60a5fa; }
+  .promo-ad-copy-section { display: flex; flex-direction: column; gap: 14px; margin-bottom: 18px; }
+  .promo-copy-group { display: flex; flex-direction: column; gap: 7px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px; }
+  .promo-copy-label { display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; }
+  .promo-copy-tag { font-size: 0.65rem; color: #38bdf8; background: rgba(56,189,248,0.12); padding: 2px 7px; border-radius: 6px; text-transform: none; }
+  .promo-copy-row { display: flex; align-items: center; gap: 8px; }
+  .promo-copy-num { font-size: 0.72rem; font-weight: 700; color: var(--text-dim); width: 22px; flex-shrink: 0; }
+  .promo-copy-input { font-size: 0.82rem; padding: 8px 12px; }
+  .promo-copy-textarea { font-size: 0.82rem; padding: 8px 12px; resize: vertical; min-height: 54px; }
+  .promo-insights-section { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+  .promo-insight-block { background: rgba(0,0,0,0.18); border: 1px solid var(--glass-border); border-radius: 12px; padding: 12px; }
+  .promo-insight-title { display: flex; align-items: center; gap: 7px; font-size: 0.76rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+  .promo-kw-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .promo-kw-chip { font-size: 0.72rem; color: #93c5fd; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); border-radius: 6px; padding: 3px 8px; }
+  .promo-comp-gaps { display: flex; flex-direction: column; gap: 6px; font-size: 0.78rem; color: var(--text-secondary); }
+  .promo-comp-row { padding: 4px 8px; background: rgba(255,255,255,0.03); border-radius: 6px; }
   .promo-obj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
   .promo-field { display: flex; flex-direction: column; gap: 7px; }
   .promo-field-full { grid-column: 1 / -1; }

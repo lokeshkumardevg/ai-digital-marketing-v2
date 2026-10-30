@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 // Schemas
@@ -17,6 +17,7 @@ import { AuditService } from './audit/audit.service';
 import { ActionExecutorService } from './executors/action-executor.service';
 import { ApprovalsService } from './approvals/approvals.service';
 import { OrchestratorService } from './orchestrator/orchestrator.service';
+import { CoworkerSchedulerService } from './scheduler/coworker-scheduler.service';
 
 // Controllers
 import { ApprovalsController } from './approvals/approvals.controller';
@@ -29,6 +30,7 @@ import { CrmModule } from '../crm/crm.module';
 import { SocialModule } from '../social/social.module';
 import { CampaignModule } from '../campaigns/campaigns.module';
 
+@Global()
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -52,6 +54,7 @@ import { CampaignModule } from '../campaigns/campaigns.module';
     ActionExecutorService,
     ApprovalsService,
     OrchestratorService,
+    CoworkerSchedulerService,
   ],
   controllers: [
     ApprovalsController,
@@ -64,6 +67,7 @@ import { CampaignModule } from '../campaigns/campaigns.module';
     ApprovalsService,
     ActionExecutorService,
     AuditService,
+    CoworkerSchedulerService,
   ],
 })
 export class PlatformModule {}
